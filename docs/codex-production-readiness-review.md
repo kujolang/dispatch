@@ -2,7 +2,7 @@
 
 Date: 2026-05-25
 Reviewer: GPT-5.3 Codex
-Repository: /Users/robertdevore/Documents/Kujolang/kujo-repos/dispatch
+Repository: /path/to/dispatch
 Primary runtime: Kujo language runtime (`./kujo`)
 
 ## Executive Verdict

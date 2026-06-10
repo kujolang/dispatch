@@ -231,7 +231,7 @@ When interpreter mode emits KUJORUN001 warning blocks, treat them as advisory un
 
 ```bash
 export KUJO_BIN="./kujo"
-cd /Users/robertdevore/Documents/Kujolang/kujo-repos/dispatch
+cd /path/to/dispatch
 
 # 1. Run contract tests
 $KUJO_BIN test

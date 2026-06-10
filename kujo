@@ -15,8 +15,7 @@ if [ -n "${KUJO_RUNTIME_BIN:-}" ]; then
 fi
 
 BIN_CANDIDATES+=(
-	"$HOME/2026/kujo/target/release/kujo"
-	"/Users/robertdevore/2026/kujo/target/release/kujo"
+	"/path/to/kujo/target/release/kujo"
 )
 
 if command -v kujo >/dev/null 2>&1; then
