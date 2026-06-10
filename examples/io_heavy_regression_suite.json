@@ -16,28 +16,28 @@
       "name": "cli entrypoint exists",
       "check": "file_exists",
       "params": {
-        "path": "main.ruff"
+        "path": "main.kujo"
       }
     },
     {
       "name": "core checks module exists",
       "check": "file_exists",
       "params": {
-        "path": "src/checks.ruff"
+        "path": "src/checks.kujo"
       }
     },
     {
       "name": "eval core module exists",
       "check": "file_exists",
       "params": {
-        "path": "src/eval_core.ruff"
+        "path": "src/eval_core.kujo"
       }
     },
     {
       "name": "report module exists",
       "check": "file_exists",
       "params": {
-        "path": "src/report.ruff"
+        "path": "src/report.kujo"
       }
     },
     {
@@ -81,7 +81,7 @@
       "name": "checks include dispatcher",
       "check": "file_contains",
       "params": {
-        "path": "src/checks.ruff",
+        "path": "src/checks.kujo",
         "expected": "Check dispatcher"
       }
     },
@@ -89,7 +89,7 @@
       "name": "eval core includes run suite export",
       "check": "file_contains",
       "params": {
-        "path": "src/eval_core.ruff",
+        "path": "src/eval_core.kujo",
         "expected": "export func run_suite"
       }
     },
@@ -97,7 +97,7 @@
       "name": "report module includes markdown generation",
       "check": "file_contains",
       "params": {
-        "path": "src/report.ruff",
+        "path": "src/report.kujo",
         "expected": "save_report"
       }
     },
@@ -106,7 +106,7 @@
       "check": "directory_contains",
       "params": {
         "dir": "src",
-        "pattern": ".ruff",
+        "pattern": ".kujo",
         "min_files": 6
       }
     },
@@ -164,7 +164,7 @@
       "name": "checks module is non-trivial size",
       "check": "file_size_greater_than",
       "params": {
-        "path": "src/checks.ruff",
+        "path": "src/checks.kujo",
         "bytes": 2000
       }
     },

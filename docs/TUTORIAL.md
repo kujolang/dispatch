@@ -17,7 +17,7 @@ Important:
 
 ```bash
 cd your-project
-kujo run main.ruff init --name my-first-suite
+kujo run main.kujo init --name my-first-suite
 ```
 
 This creates an `eval.json` file with 3 example tests. Choose a template with `--template`:
@@ -70,7 +70,7 @@ Edit `eval.json` to test YOUR code. Here's an example testing a CLI tool:
 ## Step 5: Run Your Suite
 
 ```bash
-kujo run main.ruff run
+kujo run main.kujo run
 ```
 
 Output:
@@ -85,13 +85,13 @@ Running eval suite: eval.json
 ## Step 6: View the Report
 
 ```bash
-kujo run main.ruff report
+kujo run main.kujo report
 ```
 
 Generates a markdown report at `eval_results/eval-report.md`. For HTML:
 
 ```bash
-kujo run main.ruff report --format html
+kujo run main.kujo report --format html
 ```
 
 ## Step 7: Add More Checks
@@ -99,7 +99,7 @@ kujo run main.ruff report --format html
 Explore available check types:
 
 ```bash
-kujo run main.ruff list-checks
+kujo run main.kujo list-checks
 # Lists all 27 check types
 ```
 
@@ -110,7 +110,7 @@ See `docs/eval-suite-reference.md` for parameters for each check type.
 ```yaml
 # .github/workflows/eval.yml
 - name: Run Eval
-  run: kujo run main.ruff run --quiet --json
+  run: kujo run main.kujo run --quiet --json
 ```
 
 Eval exits with code 1 on any failure — perfect for CI gates.
@@ -121,9 +121,9 @@ Eval exits with code 1 on any failure — perfect for CI gates.
 - **Tags**: Add `"tags": ["smoke"]` to tests, then `--tags smoke`
 - **Retry**: Add `"retry": 2` to flaky tests
 - **Snapshots**: Use `check: "snapshot_matches"` and `--update-snapshots`
-- **Watch mode**: `kujo run main.ruff watch`
-- **Lint**: `kujo run main.ruff lint`
-- **Export**: `kujo run main.ruff export`
+- **Watch mode**: `kujo run main.kujo watch`
+- **Lint**: `kujo run main.kujo lint`
+- **Export**: `kujo run main.kujo export`
 
 ## Next Steps
 

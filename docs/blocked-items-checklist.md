@@ -20,13 +20,13 @@
 ### Problem
 
 5 different modules return 5 different result shapes with no consistent envelope:
-- `checks.ruff`: `{ok, check, message, details}`
-- `snapshot.ruff`: `{ok, path, name, message}` or `{match, snapshot_path, name, message, diff}`
-- `config.ruff`: `{ok, error, config, path}`
-- `report.ruff`: `{ok, path, message, report}` or `{ok, message}`
-- `eval_core.ruff`: `{ok, error, suite_name, passed, failed, ...}` or `{ok, run_a, run_b, ...}`
+- `checks.kujo`: `{ok, check, message, details}`
+- `snapshot.kujo`: `{ok, path, name, message}` or `{match, snapshot_path, name, message, diff}`
+- `config.kujo`: `{ok, error, config, path}`
+- `report.kujo`: `{ok, path, message, report}` or `{ok, message}`
+- `eval_core.kujo`: `{ok, error, suite_name, passed, failed, ...}` or `{ok, run_a, run_b, ...}`
 
-### Target envelope (defined in `src/common.ruff`)
+### Target envelope (defined in `src/common.kujo`)
 
 ```
 {
@@ -38,9 +38,9 @@
 
 ### Step-by-step plan
 
-#### [x] 3.4.1 — Define the standard envelope in `src/common.ruff`
+#### [x] 3.4.1 — Define the standard envelope in `src/common.kujo`
 
-**File**: `src/common.ruff`
+**File**: `src/common.kujo`
 
 Add:
 ```kujo
@@ -61,24 +61,24 @@ export func make_error_result(error_msg, data_dict) {
 }
 ```
 
-**Verification**: Add a unit test in `tests/contract_tests.ruff` that calls `make_success_result` and `make_error_result` and verifies the shape.
+**Verification**: Add a unit test in `tests/contract_tests.kujo` that calls `make_success_result` and `make_error_result` and verifies the shape.
 
 ---
 
 #### [x] 3.4.2 — Bump contract version to `2.0.0`
 
-**Files**: `src/eval_core.ruff` (contract_version function), `kennel.toml` (version field)
+**Files**: `src/eval_core.kujo` (contract_version function), `kennel.toml` (version field)
 
 - Change `contract_version()` to return `"2.0.0"`
 - Update `kennel.toml` version to `"0.2.0"` (package version, not contract version)
 
-**Verification**: Run `kujo run main.ruff --interpreter version` and verify output.
+**Verification**: Run `kujo run main.kujo --interpreter version` and verify output.
 
 ---
 
-#### [x] 3.4.3 — Refactor `src/checks.ruff` result shapes
+#### [x] 3.4.3 — Refactor `src/checks.kujo` result shapes
 
-**File**: `src/checks.ruff`
+**File**: `src/checks.kujo`
 
 All 20 check functions currently return `{ok, check, message, details}`. Refactor to:
 ```
@@ -111,15 +111,15 @@ Steps:
 19. Refactor `check_stdout_json_matches_shape` — test passes
 20. Refactor `check_http_status` — test passes
 
-**Also update**: `make_check_error` and `make_check_success` in `src/common.ruff` to use the new envelope.
+**Also update**: `make_check_error` and `make_check_success` in `src/common.kujo` to use the new envelope.
 
 **Verification**: Run `kujo test` after each check refactor. All tests must pass before moving to the next check.
 
 ---
 
-#### [x] 3.4.4 — Refactor `src/snapshot.ruff` result shapes
+#### [x] 3.4.4 — Refactor `src/snapshot.kujo` result shapes
 
-**File**: `src/snapshot.ruff`
+**File**: `src/snapshot.kujo`
 
 Functions to refactor:
 1. `save_snapshot` — currently returns `{ok, path, name, message}` → wrap in envelope
@@ -127,13 +127,13 @@ Functions to refactor:
 3. `list_snapshots` — currently returns `{ok, snapshots, count, message}` → envelope
 4. `delete_snapshot` — currently returns `{ok, message}` → envelope
 
-**Verification**: All snapshot tests in `tests/contract_tests.ruff` pass.
+**Verification**: All snapshot tests in `tests/contract_tests.kujo` pass.
 
 ---
 
-#### [x] 3.4.5 — Refactor `src/config.ruff` result shapes
+#### [x] 3.4.5 — Refactor `src/config.kujo` result shapes
 
-**File**: `src/config.ruff`
+**File**: `src/config.kujo`
 
 Functions to refactor:
 1. `load_config` — currently returns `{ok, error, config, path}` → envelope with `data.config` and `data.path`
@@ -144,9 +144,9 @@ Functions to refactor:
 
 ---
 
-#### [x] 3.4.6 — Refactor `src/report.ruff` result shapes
+#### [x] 3.4.6 — Refactor `src/report.kujo` result shapes
 
-**File**: `src/report.ruff`
+**File**: `src/report.kujo`
 
 Functions to refactor:
 1. `save_report` — currently returns `{ok, path, message, report}` → envelope
@@ -156,23 +156,23 @@ Functions to refactor:
 
 ---
 
-#### [x] 3.4.7 — Refactor `src/eval_core.ruff` result shapes
+#### [x] 3.4.7 — Refactor `src/eval_core.kujo` result shapes
 
-**File**: `src/eval_core.ruff`
+**File**: `src/eval_core.kujo`
 
 Functions to refactor:
 1. `run_suite` — currently returns `{ok, error, suite_name, passed, failed, ...}` → envelope with all suite data in `data`
 2. `compare_runs` — currently returns `{ok, run_a, run_b, regression, improvement, summary}` → envelope
 
-**This is the most impactful change** — `main.ruff` and all callers of `run_suite` access fields like `results["passed"]`, `results["failed"]`, `results["total"]`, `results["test_results"]` directly. After refactoring, these become `results["data"]["passed"]`, etc.
+**This is the most impactful change** — `main.kujo` and all callers of `run_suite` access fields like `results["passed"]`, `results["failed"]`, `results["total"]`, `results["test_results"]` directly. After refactoring, these become `results["data"]["passed"]`, etc.
 
-**Verification**: All tests pass. Run `kujo run main.ruff --interpreter run examples/basic_suite.json --json` and verify JSON output structure.
+**Verification**: All tests pass. Run `kujo run main.kujo --interpreter run examples/basic_suite.json --json` and verify JSON output structure.
 
 ---
 
-#### [x] 3.4.8 — Update `main.ruff` callers
+#### [x] 3.4.8 — Update `main.kujo` callers
 
-**File**: `main.ruff`
+**File**: `main.kujo`
 
 Update all callers that access result fields directly:
 - `command_run`: `results["ok"]`, `results["error"]`, `results["failed"]`, etc.
@@ -184,13 +184,13 @@ For each field access, add `.data` level:
 - `results["passed"]` → `results["data"]["passed"]`
 - etc.
 
-**Verification**: Run `kujo run main.ruff --interpreter run examples/basic_suite.json --json` and verify output. Run `kujo run main.ruff --interpreter report --json`.
+**Verification**: Run `kujo run main.kujo --interpreter run examples/basic_suite.json --json` and verify output. Run `kujo run main.kujo --interpreter report --json`.
 
 ---
 
-#### [x] 3.4.9 — Update `tests/contract_tests.ruff` assertions
+#### [x] 3.4.9 — Update `tests/contract_tests.kujo` assertions
 
-**File**: `tests/contract_tests.ruff`
+**File**: `tests/contract_tests.kujo`
 
 All test assertions that access result fields directly must be updated to use the new envelope. This is the largest change — ~100+ assertions across 60+ tests.
 
@@ -207,9 +207,9 @@ Search for patterns:
 
 ---
 
-#### [x] 3.4.10 — Update `tests/security_tests.ruff` assertions
+#### [x] 3.4.10 — Update `tests/security_tests.kujo` assertions
 
-**File**: `tests/security_tests.ruff`
+**File**: `tests/security_tests.kujo`
 
 Same pattern as 3.4.9 — update field access paths for all assertions.
 
@@ -217,9 +217,9 @@ Same pattern as 3.4.9 — update field access paths for all assertions.
 
 ---
 
-#### [x] 3.4.11 — Update `tests/cli_integration_tests.ruff` assertions
+#### [x] 3.4.11 — Update `tests/cli_integration_tests.kujo` assertions
 
-**File**: `tests/cli_integration_tests.ruff`
+**File**: `tests/cli_integration_tests.kujo`
 
 Same pattern — update field access paths.
 
@@ -232,8 +232,8 @@ Same pattern — update field access paths.
 **Files**: `examples/self_check.json`, `examples/basic_suite.json`, `examples/snapshot_suite.json`
 
 These JSON files don't need structural changes since they define test configs, not consume results. But verify by running them:
-- `kujo run main.ruff --interpreter run examples/self_check.json --json`
-- `kujo run main.ruff --interpreter run examples/basic_suite.json --json`
+- `kujo run main.kujo --interpreter run examples/self_check.json --json`
+- `kujo run main.kujo --interpreter run examples/basic_suite.json --json`
 
 **Verification**: All example suites execute successfully.
 
@@ -243,10 +243,10 @@ These JSON files don't need structural changes since they define test configs, n
 
 Run all validations:
 1. `kujo test` — all 3 suites pass
-2. `kujo run main.ruff --interpreter version` — prints "2.0.0"
-3. `kujo run main.ruff --interpreter list-checks` — all 20 types
-4. `kujo run main.ruff --interpreter run examples/basic_suite.json --json` — valid JSON
-5. `kujo run main.ruff --interpreter report --json` — valid report
+2. `kujo run main.kujo --interpreter version` — prints "2.0.0"
+3. `kujo run main.kujo --interpreter list-checks` — all 20 types
+4. `kujo run main.kujo --interpreter run examples/basic_suite.json --json` — valid JSON
+5. `kujo run main.kujo --interpreter report --json` — valid report
 6. `bash scripts/supply_chain_policy_check.sh` — all 8 gates pass
 7. `bash scripts/release_quality_gates.sh` — all 8 gates pass
 
@@ -277,20 +277,20 @@ Kujo's `execute_status` has no timeout parameter. There is no process-level time
 
 #### [x] 5.6.2 — Remove `timeout_seconds` from default config and docs
 
-**Files**: `src/config.ruff` (init_config), `README.md`, `docs/eval-suite-reference.md`
+**Files**: `src/config.kujo` (init_config), `README.md`, `docs/eval-suite-reference.md`
 
 Actions:
 1. In `init_config`, remove `"timeout_seconds": 60` from the default template
 2. In `docs/eval-suite-reference.md`, mark `timeout_seconds` as "Reserved — not yet functional" with a note
 3. In README, add a note that timeout enforcement is pending Kujo runtime support
 
-**Verification**: Run `kujo run main.ruff --interpreter init --name test` and verify the generated `eval.json` does not contain `timeout_seconds`.
+**Verification**: Run `kujo run main.kujo --interpreter init --name test` and verify the generated `eval.json` does not contain `timeout_seconds`.
 
 ---
 
 #### [x] 5.6.3 — Add timeout wrapper (conditional on runtime support)
 
-**File**: `src/checks.ruff`, function `run_shell`
+**File**: `src/checks.kujo`, function `run_shell`
 
 If the Kujo runtime has added timeout support since this document was written:
 1. Add a `timeout_ms` parameter to `run_shell`
@@ -318,7 +318,7 @@ A self-contained HTML report requires generating ~150+ lines of HTML/CSS using K
 
 #### [x] 6.4.1 — Add CSS styles as a constant
 
-**File**: `src/report.ruff`
+**File**: `src/report.kujo`
 
 Define a `HTML_REPORT_CSS` constant with embedded styles:
 - Body font, colors, max-width
@@ -334,7 +334,7 @@ Use minimal, clean CSS — no external dependencies.
 
 #### [x] 6.4.2 — Implement `generate_html_report(results)` header and summary
 
-**File**: `src/report.ruff`
+**File**: `src/report.kujo`
 
 Build the HTML document structure:
 - `<!DOCTYPE html>` + `<html><head>` with inline CSS
@@ -347,7 +347,7 @@ Build the HTML document structure:
 
 #### [x] 6.4.3 — Implement test results table
 
-**File**: `src/report.ruff`
+**File**: `src/report.kujo`
 
 Build the test results table:
 - Columns: #, Status (✅/❌), Test Name, Check Type, Message
@@ -360,7 +360,7 @@ Build the test results table:
 
 #### [x] 6.4.4 — Implement collapsible failure details
 
-**File**: `src/report.ruff`
+**File**: `src/report.kujo`
 
 For each failed test, add a collapsible `<details>` section below the table row containing:
 - Full error message
@@ -371,20 +371,20 @@ For each failed test, add a collapsible `<details>` section below the table row 
 
 #### [x] 6.4.5 — Add `--format html` CLI flag
 
-**Files**: `src/cli.ruff` (help text), `main.ruff` (command_run, command_report)
+**Files**: `src/cli.kujo` (help text), `main.kujo` (command_run, command_report)
 
 1. Add `--format html` to help text
 2. In `command_run`, if `--format html`, call `generate_html_report` instead of `print_report`
 3. In `command_report`, same treatment
 4. Add `--format` to `parse_cli_flags`
 
-**Verification**: Run `kujo run main.ruff --interpreter run examples/basic_suite.json --format html` and verify HTML output.
+**Verification**: Run `kujo run main.kujo --interpreter run examples/basic_suite.json --format html` and verify HTML output.
 
 ---
 
 #### [x] 6.4.6 — Add HTML format tests
 
-**File**: `tests/contract_tests.ruff`
+**File**: `tests/contract_tests.kujo`
 
 Add tests:
 1. `generate_html_report` produces valid HTML structure (has `<!DOCTYPE`, `<html>`, `<head>`, `<body>`)
@@ -413,13 +413,13 @@ Add tests:
 
 | File | What changes in 3.4 |
 |------|---------------------|
-| `src/common.ruff` | Add `make_result`, `make_success_result`, `make_error_result` |
-| `src/checks.ruff` | 20 check functions + `run_shell` → new envelope |
-| `src/snapshot.ruff` | 4 functions → new envelope |
-| `src/config.ruff` | 3 functions → new envelope |
-| `src/report.ruff` | 2 functions → new envelope |
-| `src/eval_core.ruff` | `run_suite`, `compare_runs` → new envelope |
-| `main.ruff` | All result field accesses → add `.data` level |
-| `tests/contract_tests.ruff` | ~100 assertions → new paths |
-| `tests/security_tests.ruff` | ~20 assertions → new paths |
-| `tests/cli_integration_tests.ruff` | ~10 assertions → new paths |
+| `src/common.kujo` | Add `make_result`, `make_success_result`, `make_error_result` |
+| `src/checks.kujo` | 20 check functions + `run_shell` → new envelope |
+| `src/snapshot.kujo` | 4 functions → new envelope |
+| `src/config.kujo` | 3 functions → new envelope |
+| `src/report.kujo` | 2 functions → new envelope |
+| `src/eval_core.kujo` | `run_suite`, `compare_runs` → new envelope |
+| `main.kujo` | All result field accesses → add `.data` level |
+| `tests/contract_tests.kujo` | ~100 assertions → new paths |
+| `tests/security_tests.kujo` | ~20 assertions → new paths |
+| `tests/cli_integration_tests.kujo` | ~10 assertions → new paths |

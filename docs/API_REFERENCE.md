@@ -2,7 +2,7 @@
 
 Generated from `describe_*_module()` functions (contract v2.0.0).
 
-## `src/common.ruff` — Shared Utilities
+## `src/common.kujo` — Shared Utilities
 
 **Exports**: `dict_get_or`, `normalize_string`, `normalize_int`, `normalize_bool`, `normalize_array`, `normalize_dict`, `make_result`, `make_success_result`, `make_error_result`, `make_check_error`, `make_check_success`
 
@@ -18,14 +18,14 @@ Generated from `describe_*_module()` functions (contract v2.0.0).
 - `make_check_error(check, message, details)` — Check-specific error result
 - `make_check_success(check, message, details)` — Check-specific success result
 
-## `src/cli.ruff` — CLI Argument Parsing
+## `src/cli.kujo` — CLI Argument Parsing
 
 **Exports**: `parse_cli_flags`, `print_help`
 
 - `parse_cli_flags(args)` — Parses CLI args into `{flags, positionals}`
 - `print_help()` — Prints help text with all commands and options
 
-## `src/config.ruff` — Configuration
+## `src/config.kujo` — Configuration
 
 **Exports**: `load_config`, `validate_config`, `init_config`, `KNOWN_CHECKS`, `default_config_path`, `lint_config_file`, `policy_explain_config`
 
@@ -37,7 +37,7 @@ Generated from `describe_*_module()` functions (contract v2.0.0).
 - `lint_config_file(path)` — Returns structured lint diagnostics with code/location/suggested fix
 - `policy_explain_config(cfg, stage)` — Returns effective merged policy view for local/ci/release stage
 
-## `src/checks.ruff` — Check Implementations
+## `src/checks.kujo` — Check Implementations
 
 **Exports**: `run_check`, `run_shell`, `run_shell_timed`, `is_command_safe`, `is_path_safe`, `redact_sensitive`
 
@@ -85,7 +85,7 @@ Generated from `describe_*_module()` functions (contract v2.0.0).
 - `is_path_safe(path, allowed)` — Validates path against traversal/system access
 - `redact_sensitive(text)` — Scrubs sensitive patterns from output
 
-## `src/eval_core.ruff` — Core Engine
+## `src/eval_core.kujo` — Core Engine
 
 **Exports**: `run_suite`, `compare_runs`, `contract_version`, `shuffle_tests`, `build_dep_graph`, `has_matching_tag`
 
@@ -96,7 +96,7 @@ Generated from `describe_*_module()` functions (contract v2.0.0).
 - `build_dep_graph(tests)` — Builds dependency map from test definitions
 - `has_matching_tag(test_tags, filter_tags)` — Tag intersection check
 
-## `src/report.ruff` — Report Generation
+## `src/report.kujo` — Report Generation
 
 **Exports**: `generate_markdown_report`, `generate_html_report`, `generate_junit_report`, `generate_tap_report`, `generate_ndjson_report`, `save_report`, `save_report_with_options`, `print_report`, `write_github_summary`
 
@@ -114,7 +114,7 @@ Generated from `describe_*_module()` functions (contract v2.0.0).
 
 The generated CLI command surface is tracked in `docs/COMMAND_INVENTORY.md` and validated by `scripts/generate_command_inventory.sh --check`.
 
-## `src/snapshot.ruff` — Snapshot Management
+## `src/snapshot.kujo` — Snapshot Management
 
 **Exports**: `save_snapshot`, `compare_snapshot`, `list_snapshots`, `delete_snapshot`
 

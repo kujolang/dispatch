@@ -46,11 +46,11 @@ jobs:
         run: |
           set -euo pipefail
           test -f docs/eval-suite-reference.md
-          grep -q "kujo run main.ruff init" README.md
-          grep -q "kujo run main.ruff run" README.md
-          grep -q "kujo run main.ruff report" README.md
-          grep -q "src/eval_core.ruff" README.md
-          grep -q "src/checks.ruff" README.md
+          grep -q "kujo run main.kujo init" README.md
+          grep -q "kujo run main.kujo run" README.md
+          grep -q "kujo run main.kujo report" README.md
+          grep -q "src/eval_core.kujo" README.md
+          grep -q "src/checks.kujo" README.md
 
       - name: Verify legal metadata parity
         shell: bash
@@ -84,7 +84,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          scratch_files="$(find . -maxdepth 1 -type f -name 'test_*.ruff' -print)"
+          scratch_files="$(find . -maxdepth 1 -type f -name 'test_*.kujo' -print)"
           if [ -n "$scratch_files" ]; then
             echo "Found disallowed root scratch Kujo files:"
             echo "$scratch_files"
@@ -103,7 +103,7 @@ jobs:
           fi
 
       - name: Run contract tests
-        run: kujo test-run tests/contract_tests.ruff -v
+        run: kujo test-run tests/contract_tests.kujo -v
 
       - name: Verify artifact contract
         shell: bash

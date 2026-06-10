@@ -3,8 +3,8 @@
 # Run before tagging a release to verify all quality checks pass.
 set -euo pipefail
 
-export KUJO_BIN="${KUJO_BIN:-$PROJECT_ROOT/kujo}"
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+export KUJO_BIN="${KUJO_BIN:-$PROJECT_ROOT/kujo}"
 cd "$PROJECT_ROOT"
 
 echo "=== Kujo Eval Release Quality Gates ==="
@@ -28,7 +28,7 @@ echo ""
 # Gate 1B: Benchmark suite timing budget
 echo "[GATE 1B] Benchmark suite timing budget..."
 BENCH_ARTIFACT="eval_results/benchmarks.json"
-BENCH_SUITE_MS="$(echo "$TEST_OUT" | sed -nE 's#.*tests/benchmark_tests\.ruff \(([0-9]+\.[0-9]+)ms\).*#\1#p' | head -n1)"
+BENCH_SUITE_MS="$(echo "$TEST_OUT" | sed -nE 's#.*tests/benchmark_tests\.[^[:space:]]+ \(([0-9]+\.[0-9]+)ms\).*#\1#p' | head -n1)"
 if [ -z "$BENCH_SUITE_MS" ]; then
     echo "FAIL: Could not parse benchmark suite timing from test output"
     exit 1
@@ -73,7 +73,7 @@ run_benchmark_suite_duration_ms() {
     log_file="$(mktemp "${TMPDIR:-/tmp}/kujo-eval-bench-${label}.XXXXXX.log")"
 
     rm -rf "$out_dir"
-    if ! "$KUJO_BIN" run main.ruff run "$config_path" --output-dir "$out_dir" --summary-only > "$log_file" 2>&1; then
+    if ! "$KUJO_BIN" run main.kujo run "$config_path" --output-dir "$out_dir" --summary-only > "$log_file" 2>&1; then
         echo "FAIL: ${label} benchmark suite command failed"
         cat "$log_file"
         rm -f "$log_file"
@@ -267,7 +267,7 @@ echo ""
 
 # Gate 2: CLI help displays all subcommands
 echo "[GATE 2] CLI help output..."
-if ! HELP_OUT="$($KUJO_BIN run main.ruff 2>&1)"; then
+if ! HELP_OUT="$($KUJO_BIN run main.kujo 2>&1)"; then
     echo "FAIL: CLI help command execution failed"
     echo "$HELP_OUT"
     exit 1
@@ -283,7 +283,7 @@ echo ""
 
 # Gate 3: Version command works
 echo "[GATE 3] Version command..."
-if ! VER_OUT="$($KUJO_BIN run main.ruff version 2>&1)"; then
+if ! VER_OUT="$($KUJO_BIN run main.kujo version 2>&1)"; then
     echo "FAIL: Version command execution failed"
     echo "$VER_OUT"
     exit 1
@@ -302,7 +302,7 @@ GATE_LOG_FILE="$(mktemp "${TMPDIR:-/tmp}/kujo-eval-gate4.XXXXXX.log")"
 GATE_TIMEOUT_SECONDS="${KUJO_EVAL_GATE_TIMEOUT_SECONDS:-120}"
 rm -rf "$GATE_OUT_DIR"
 
-"$KUJO_BIN" run main.ruff run examples/release_gate_suite.json --output-dir "$GATE_OUT_DIR" --summary-only > "$GATE_LOG_FILE" 2>&1 &
+"$KUJO_BIN" run main.kujo run examples/release_gate_suite.json --output-dir "$GATE_OUT_DIR" --summary-only > "$GATE_LOG_FILE" 2>&1 &
 GATE_PID=$!
 
 gate_success=0
@@ -382,7 +382,7 @@ echo ""
 
 # Gate 5: List checks shows all 20 types
 echo "[GATE 5] Check type count..."
-if ! CHECKS_OUT="$($KUJO_BIN run main.ruff list-checks 2>&1)"; then
+if ! CHECKS_OUT="$($KUJO_BIN run main.kujo list-checks 2>&1)"; then
     echo "FAIL: list-checks command execution failed"
     echo "$CHECKS_OUT"
     exit 1
@@ -408,7 +408,7 @@ echo ""
 
 # Gate 7: No root scratch Kujo files
 echo "[GATE 7] Root file hygiene..."
-SCRATCH_FILES="$(find . -maxdepth 1 -type f -name 'test_*.ruff' -print)"
+SCRATCH_FILES="$(find . -maxdepth 1 -type f -name 'test_*.kujo' -print)"
 if [ -n "$SCRATCH_FILES" ]; then
     echo "FAIL: Found disallowed root scratch Kujo files:"
     echo "$SCRATCH_FILES"
@@ -420,7 +420,7 @@ echo ""
 # Gate 8: kennel.toml exports match actual src files
 echo "[GATE 8] Kennel exports consistency..."
 for mod in common cli eval_core checks report snapshot config; do
-    SRC_FILE="src/${mod}.ruff"
+    SRC_FILE="src/${mod}.kujo"
     if [ ! -f "$SRC_FILE" ]; then
         echo "FAIL: Exported module has no source file: $SRC_FILE"
         exit 1
@@ -510,7 +510,7 @@ if [ -z "$ALL_CHANGED_FILES" ]; then
     echo "PASS: No changed files detected for changelog coverage"
     echo ""
 else
-    BEHAVIOR_CHANGED_FILES="$(echo "$ALL_CHANGED_FILES" | grep -E '^main\.ruff$|^kennel\.toml$|^(src|scripts|examples|schema|tests)/' || true)"
+    BEHAVIOR_CHANGED_FILES="$(echo "$ALL_CHANGED_FILES" | grep -E '^main\.kujo$|^kennel\.toml$|^(src|scripts|examples|schema|tests)/' || true)"
     CHANGELOG_CHANGED="$(echo "$ALL_CHANGED_FILES" | grep -E '^CHANGELOG\.md$' || true)"
 
     if [ -n "$BEHAVIOR_CHANGED_FILES" ] && [ -z "$CHANGELOG_CHANGED" ]; then

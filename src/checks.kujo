@@ -8,7 +8,7 @@
 #   "data": { "check": "...", "message": "...", "details": {...} }
 # }
 #
-# 20 check types supported — see KNOWN_CHECKS() in src/config.ruff
+# 20 check types supported — see KNOWN_CHECKS() in src/config.kujo
 
 from src.common import dict_get_or, normalize_string, normalize_int, contains_text, make_check_error, make_check_success
 

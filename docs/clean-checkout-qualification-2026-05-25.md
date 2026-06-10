@@ -9,16 +9,16 @@ Runtime: ./kujo
 
 All qualification commands exited 0 from a clean checkout.
 
-Note: Interpreter-mode commands continue to emit RUFRUN001 type-check warnings in stderr. These warnings are currently non-fatal and expected in this runtime, and command success is validated by exit code + output signals.
+Note: Interpreter-mode commands continue to emit KUJORUN001 type-check warnings in stderr. These warnings are currently non-fatal and expected in this runtime, and command success is validated by exit code + output signals.
 
 ## Command Matrix
 
 | Command | Exit | Signal Observed |
 |---|---:|---|
-| `kujo run main.ruff --interpreter version` | 0 | Printed `Kujo Eval v2.0.0` and contract version |
-| `kujo run main.ruff --interpreter list-checks` | 0 | Printed check list with `Total: 27 check types` |
-| `kujo run main.ruff --interpreter run examples/release_gate_suite.json --output-dir .eval_clean --json` | 0 | JSON envelope included `"ok":true` |
-| `kujo run main.ruff --interpreter report examples/release_gate_suite.json --rerun --output-dir .eval_clean --json` | 0 | JSON envelope included `"ok":true` |
+| `kujo run main.kujo --interpreter version` | 0 | Printed `Kujo Eval v2.0.0` and contract version |
+| `kujo run main.kujo --interpreter list-checks` | 0 | Printed check list with `Total: 27 check types` |
+| `kujo run main.kujo --interpreter run examples/release_gate_suite.json --output-dir .eval_clean --json` | 0 | JSON envelope included `"ok":true` |
+| `kujo run main.kujo --interpreter report examples/release_gate_suite.json --rerun --output-dir .eval_clean --json` | 0 | JSON envelope included `"ok":true` |
 | `kujo test` | 0 | Passed 7/7 test suites |
 | `kujo test --runtime interpreter` | 0 | Passed 7/7 test suites |
 | `bash scripts/verify_test_runtime_parity.sh` | 0 | Parity script confirmed dual/interpreter 7/7 alignment |

@@ -11,7 +11,7 @@ Eval uses Kennel-compatible package metadata for local/source workflows.
 cat kennel.toml
 
 # Work with the package locally
-kujo run main.ruff version
+kujo run main.kujo version
 ```
 
 The `kennel.toml` manifest exports all 7 source modules:
@@ -34,7 +34,7 @@ Scout can analyze a codebase and generate eval suites automatically:
 scout analyze ./my-project --output eval-suggestions.json
 
 # Convert Scout suggestions to eval.json
-kujo run main.ruff init --from-scout eval-suggestions.json
+kujo run main.kujo init --from-scout eval-suggestions.json
 ```
 
 Scout detects:
@@ -54,7 +54,7 @@ workflow:
     run: kujo build
   
   - name: eval-gate
-    run: kujo run eval/main.ruff --interpreter run --quiet --json
+    run: kujo run eval/main.kujo --interpreter run --quiet --json
     on_fail: halt
   
   - name: deploy

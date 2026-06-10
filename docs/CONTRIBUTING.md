@@ -4,16 +4,16 @@
 
 1. Clone the repo and ensure the Kujo language runtime is available
 2. Run tests: `kujo test` (from the repo root)
-3. Run CLI smoke: `kujo run main.ruff version`
+3. Run CLI smoke: `kujo run main.kujo version`
 
 ## Development Workflow
 
 ### Adding a New Check Type
 
-1. Implement in `src/checks.ruff` using the `make_check_error`/`make_check_success` helpers
-2. Register in `KNOWN_CHECKS()` in `src/config.ruff`
-3. Add dispatch case in `run_check()` in `src/checks.ruff`
-4. Add tests in `tests/contract_tests.ruff` (success, failure, edge cases)
+1. Implement in `src/checks.kujo` using the `make_check_error`/`make_check_success` helpers
+2. Register in `KNOWN_CHECKS()` in `src/config.kujo`
+3. Add dispatch case in `run_check()` in `src/checks.kujo`
+4. Add tests in `tests/contract_tests.kujo` (success, failure, edge cases)
 5. Update `docs/eval-suite-reference.md` with the new check's parameters
 
 ### Code Conventions
@@ -27,40 +27,40 @@
 
 ### Adding a New Report Format
 
-1. Add `generate_<format>_report(results)` to `src/report.ruff`
+1. Add `generate_<format>_report(results)` to `src/report.kujo`
 2. Add `--format <name>` CLI flag
 3. Add tests verifying output structure
 
 ### Before Submitting
 
 - Run `kujo test` — all suites must pass
-- Run `kujo run main.ruff run examples/basic_suite.json --json`
-- Run `kujo run main.ruff list-checks` — verify new checks appear
+- Run `kujo run main.kujo run examples/basic_suite.json --json`
+- Run `kujo run main.kujo list-checks` — verify new checks appear
 - Update `CHANGELOG.md` with the appropriate category for user-visible behavior changes
 - Run `scripts/release_quality_gates.sh` (or CI equivalent). The release gate enforces changelog coverage when behavior-affecting files change.
 
 ### Changelog Gate Notes
 
 - The release gate uses `KUJO_EVAL_CHANGELOG_BASE_REF` (default: `origin/main`) to determine diff scope for behavior changes.
-- If behavior-affecting files (`main.ruff`, `src/`, `scripts/`, `examples/`, `schema/`, `tests/`, `kennel.toml`) change, `CHANGELOG.md` must also be updated.
+- If behavior-affecting files (`main.kujo`, `src/`, `scripts/`, `examples/`, `schema/`, `tests/`, `kennel.toml`) change, `CHANGELOG.md` must also be updated.
 
 ## Project Structure
 
 ```
 kujo-eval/
-├── main.ruff              # CLI entry point
+├── main.kujo              # CLI entry point
 ├── kennel.toml            # Package manifest
 ├── src/
-│   ├── common.ruff        # Shared utilities
-│   ├── cli.ruff           # CLI argument parsing
-│   ├── config.ruff        # Config loading/validation
-│   ├── checks.ruff        # All check implementations
-│   ├── eval_core.ruff     # Suite runner
-│   ├── report.ruff        # Report generators
-│   └── snapshot.ruff      # Snapshot management
+│   ├── common.kujo        # Shared utilities
+│   ├── cli.kujo           # CLI argument parsing
+│   ├── config.kujo        # Config loading/validation
+│   ├── checks.kujo        # All check implementations
+│   ├── eval_core.kujo     # Suite runner
+│   ├── report.kujo        # Report generators
+│   └── snapshot.kujo      # Snapshot management
 ├── tests/
-│   ├── contract_tests.ruff   # API contract tests
-│   └── security_tests.ruff   # Security regression tests
+│   ├── contract_tests.kujo   # API contract tests
+│   └── security_tests.kujo   # Security regression tests
 ├── examples/              # Example eval suites
 └── docs/                  # Documentation
 ```

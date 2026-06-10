@@ -34,9 +34,9 @@ Work:
 - Add optional redaction metadata (`redaction_hits`, `redaction_patterns`) to command-check details.
 - Keep payloads sanitized while exposing safe telemetry.
 Files likely affected:
-- src/checks.ruff
-- src/report.ruff
-- tests/security_tests.ruff
+- src/checks.kujo
+- src/report.kujo
+- tests/security_tests.kujo
 - docs/SECURITY.md
 Verification:
 - Security tests validate metadata presence without leaking original secrets.
@@ -48,10 +48,10 @@ Work:
 - Add token-aware mode for allow/deny argument checks.
 - Preserve existing substring mode for backward compatibility.
 Files likely affected:
-- src/checks.ruff
-- src/config.ruff
+- src/checks.kujo
+- src/config.kujo
 - schema/eval-suite.schema.json
-- tests/security_tests.ruff
+- tests/security_tests.kujo
 Verification:
 - False-positive/false-negative cases covered by new tests.
 
@@ -61,7 +61,7 @@ Why:
 Work:
 - Add optional named policy profiles (e.g., strict-ci, local-dev, release-gate).
 Files likely affected:
-- src/config.ruff
+- src/config.kujo
 - examples/
 - README.md
 Verification:
@@ -75,8 +75,8 @@ Why:
 Work:
 - Generate `eval_results/benchmarks.json` with run-to-run timing summaries.
 Files likely affected:
-- tests/benchmark_tests.ruff
-- tests/stress_tests.ruff
+- tests/benchmark_tests.kujo
+- tests/stress_tests.kujo
 - scripts/release_quality_gates.sh
 Verification:
 - Artifact generated consistently and validated by gate script.
@@ -87,7 +87,7 @@ Why:
 Work:
 - Add realistic mixed-check fixture with tags, dependencies, retries, and skips.
 Files likely affected:
-- tests/stress_tests.ruff
+- tests/stress_tests.kujo
 - examples/
 Verification:
 - Stable pass/fail/skipped totals in dual and interpreter runtimes.
@@ -98,8 +98,8 @@ Why:
 Work:
 - Add configurable retention for `history.json` and auxiliary run artifacts.
 Files likely affected:
-- main.ruff
-- src/config.ruff
+- main.kujo
+- src/config.kujo
 - README.md
 Verification:
 - Integration test confirms pruning behavior without data corruption.
@@ -112,9 +112,9 @@ Why:
 Work:
 - Emit `artifact-manifest.json` listing generated report/checkpoint files.
 Files likely affected:
-- main.ruff
-- src/report.ruff
-- tests/cli_integration_tests.ruff
+- main.kujo
+- src/report.kujo
+- tests/cli_integration_tests.kujo
 Verification:
 - Manifest paths are accurate and exist on disk.
 
@@ -124,8 +124,8 @@ Why:
 Work:
 - Add fixture-driven tests that validate key structural expectations of JUnit XML and TAP outputs.
 Files likely affected:
-- src/report.ruff
-- tests/contract_tests.ruff
+- src/report.kujo
+- tests/contract_tests.kujo
 Verification:
 - Conformance tests pass in both runtimes.
 
@@ -135,8 +135,8 @@ Why:
 Work:
 - Write a normalized summary artifact for dashboards and status collectors.
 Files likely affected:
-- main.ruff
-- tests/cli_integration_tests.ruff
+- main.kujo
+- tests/cli_integration_tests.kujo
 Verification:
 - Summary file always produced on successful run.
 

@@ -9,7 +9,7 @@
 > 4. Mark the item `[x]` in this document when done.
 > 5. Move to the next item.
 >
-> **Verification for each item**: Run `kujo test-run tests/contract_tests.ruff -v` after every change to catch regressions.
+> **Verification for each item**: Run `kujo test-run tests/contract_tests.kujo -v` after every change to catch regressions.
 
 ---
 
@@ -19,15 +19,15 @@ These items fix things that are currently broken or non-functional. Do these fir
 
 ### [x] 1.1 — Fix `--update-snapshots` CLI flag (dead code)
 
-**File**: `main.ruff`, function `command_run` (approx. lines 130-145)
+**File**: `main.kujo`, function `command_run` (approx. lines 130-145)
 
 **Problem**: The `should_update` variable is computed from CLI flags but never passed to the check runner or used anywhere. The `--update-snapshots` flag has zero effect. Individual snapshot checks read `params["update"]` which can only be set in `eval.json`, not from the CLI.
 
 **Fix**:
 - In `command_run`, after parsing `should_update`, inject `params["update"] = "true"` into each test definition's params before calling `run_suite`, but only for tests whose `check` is `snapshot_matches`.
-- Alternatively, modify `run_suite` in `src/eval_core.ruff` to accept an `update_snapshots` flag and thread it through to the check dispatcher.
+- Alternatively, modify `run_suite` in `src/eval_core.kujo` to accept an `update_snapshots` flag and thread it through to the check dispatcher.
 
-**Verification**: Add a test in `tests/contract_tests.ruff` that runs `check_snapshot_matches` with `update: "true"` and verifies the snapshot file is created/updated. Then test end-to-end that `--update-snapshots` flag works from the CLI.
+**Verification**: Add a test in `tests/contract_tests.kujo` that runs `check_snapshot_matches` with `update: "true"` and verifies the snapshot file is created/updated. Then test end-to-end that `--update-snapshots` flag works from the CLI.
 
 ---
 
@@ -35,20 +35,20 @@ These items fix things that are currently broken or non-functional. Do these fir
 
 **File**: `kennel.toml`, line 38
 
-**Problem**: The `[scripts]` section has `smoke = "kujo run examples/basic_suite.ruff --interpreter"` but the actual file is `examples/basic_suite.json`. This command will fail because Kujo can't run a JSON file as a script.
+**Problem**: The `[scripts]` section has `smoke = "kujo run examples/basic_suite.kujo --interpreter"` but the actual file is `examples/basic_suite.json`. This command will fail because Kujo can't run a JSON file as a script.
 
 **Fix**: The smoke script needs to run the eval suite using the JSON config file. Change to:
 ```toml
-smoke = "kujo run main.ruff --interpreter run examples/basic_suite.json --json"
+smoke = "kujo run main.kujo --interpreter run examples/basic_suite.json --json"
 ```
 
-**Verification**: Run `kujo run main.ruff --interpreter run examples/basic_suite.json --json` and confirm it executes and produces output.
+**Verification**: Run `kujo run main.kujo --interpreter run examples/basic_suite.json --json` and confirm it executes and produces output.
 
 ---
 
 ### [x] 1.3 — Fix `command_report` re-running the entire suite instead of reading saved results
 
-**File**: `main.ruff`, function `command_report` (approx. lines 165-200)
+**File**: `main.kujo`, function `command_report` (approx. lines 165-200)
 
 **Problem**: `command_report` calls `run_suite(config_path)` which re-executes ALL tests just to generate a report. If tests are slow or have side effects, this is wasteful and potentially dangerous. The `command_run` already saves results via `save_report()`, but `command_report` ignores that saved file.
 
@@ -63,9 +63,9 @@ smoke = "kujo run main.ruff --interpreter run examples/basic_suite.json --json"
 
 ### [x] 1.4 — Remove inline import inside `check_snapshot_matches` function body
 
-**File**: `src/checks.ruff`, line 644
+**File**: `src/checks.kujo`, line 644
 
-**Problem**: The function `check_snapshot_matches` has `from src.config import normalize_string, dict_get_or` inside the function body. This is unusual and may cause issues with the Kujo interpreter (imports belong at the top of the file). These functions are already defined at the top of `checks.ruff` anyway — the import is redundant.
+**Problem**: The function `check_snapshot_matches` has `from src.config import normalize_string, dict_get_or` inside the function body. This is unusual and may cause issues with the Kujo interpreter (imports belong at the top of the file). These functions are already defined at the top of `checks.kujo` anyway — the import is redundant.
 
 **Fix**: Delete the inline import line. Use the module-level `normalize_string` and `dict_get_or` that are already defined above in the same file.
 
@@ -75,7 +75,7 @@ smoke = "kujo run main.ruff --interpreter run examples/basic_suite.json --json"
 
 ### [x] 1.5 — Add missing `run_shell` error-handling tests
 
-**File**: `tests/contract_tests.ruff`
+**File**: `tests/contract_tests.kujo`
 
 **Problem**: The `run_shell` helper (used by 6 check types) is never tested directly. If `execute_status` returns a ProcessResult with unexpected field types, or if the command produces very large output, the behavior is undefined and untested.
 
@@ -95,7 +95,7 @@ These items address security concerns. They are important before anyone runs unt
 
 ### [x] 2.1 — Add command allowlisting/validation to `run_shell`
 
-**File**: `src/checks.ruff`, function `run_shell`
+**File**: `src/checks.kujo`, function `run_shell`
 
 **Problem**: The `run_shell` function passes raw user-provided strings directly to `execute_status` with zero validation. An `eval.json` from an untrusted source can execute arbitrary commands. For example: `{"check": "command_succeeds", "params": {"command": "rm -rf /"}}` would execute.
 
@@ -105,13 +105,13 @@ These items address security concerns. They are important before anyone runs unt
 - Extract the first word of the command (the executable name) and validate it against the allowlist.
 - Document the security model in README.md.
 
-**Verification**: Add security tests in a new `tests/security_tests.ruff` that verify dangerous commands are rejected.
+**Verification**: Add security tests in a new `tests/security_tests.kujo` that verify dangerous commands are rejected.
 
 ---
 
 ### [x] 2.2 — Add path boundary enforcement for file checks
 
-**File**: `src/checks.ruff`, all file-related check functions
+**File**: `src/checks.kujo`, all file-related check functions
 
 **Problem**: File checks (`file_exists`, `file_contains`, `file_does_not_contain`, `json_matches_shape`, `snapshot_matches`) accept arbitrary paths with no validation. A malicious eval suite could read sensitive files like `/etc/passwd` or `~/.ssh/id_rsa`.
 
@@ -127,7 +127,7 @@ These items address security concerns. They are important before anyone runs unt
 
 ### [x] 2.3 — Add output redaction for sensitive data
 
-**File**: `src/report.ruff` and `src/checks.ruff`
+**File**: `src/report.kujo` and `src/checks.kujo`
 
 **Problem**: Command output (stdout/stderr) is included verbatim in check results and reports. If a command outputs API keys, tokens, passwords, or PII, those secrets appear in markdown reports and JSON output.
 
@@ -143,7 +143,7 @@ These items address security concerns. They are important before anyone runs unt
 
 ### [x] 2.4 — Add config size/depth limits to prevent JSON bombing
 
-**File**: `src/config.ruff`, function `load_config`
+**File**: `src/config.kujo`, function `load_config`
 
 **Problem**: `eval.json` is parsed without any size or depth limits. A malicious config could contain deeply nested JSON or arrays with millions of elements, causing memory exhaustion.
 
@@ -160,68 +160,68 @@ These items address security concerns. They are important before anyone runs unt
 
 These items reduce duplication and improve maintainability. They make the codebase easier to extend.
 
-### [x] 3.1 — Create `src/common.ruff` shared utilities module
+### [x] 3.1 — Create `src/common.kujo` shared utilities module
 
-**Files affected**: All `src/*.ruff` files and `main.ruff`
+**Files affected**: All `src/*.kujo` files and `main.kujo`
 
 **Problem**: `dict_get_or`, `normalize_string`, `normalize_int`, `normalize_bool`, `normalize_array`, and `normalize_dict` are copy-pasted into 5 different files (~120 lines of duplicated code). Every new module reinvents these.
 
 **Fix**:
-- Create `src/common.ruff` with all shared utility functions exported.
-- Update all source files to import from `src/common.ruff` instead of defining locally.
+- Create `src/common.kujo` with all shared utility functions exported.
+- Update all source files to import from `src/common.kujo` instead of defining locally.
 - Ensure the module has a `describe_common_module()` contract function.
-- Update `kennel.toml` exports to include `common = "src/common.ruff"`.
+- Update `kennel.toml` exports to include `common = "src/common.kujo"`.
 
 **Verification**: All existing contract tests must pass unchanged. The total line count across src/ should decrease noticeably.
 
 ---
 
-### [x] 3.2 — Extract CLI argument parsing into `src/cli.ruff`
+### [x] 3.2 — Extract CLI argument parsing into `src/cli.kujo`
 
-**Files**: `main.ruff`, new file `src/cli.ruff`
+**Files**: `main.kujo`, new file `src/cli.kujo`
 
-**Problem**: `main.ruff` is ~340 lines, mixing CLI dispatch, argument parsing, help text, and command implementations. The `parse_cli_flags` function is long and complex. Following the kujo-rag pattern (which has `src/cli_args.ruff`), CLI parsing should be in its own module.
+**Problem**: `main.kujo` is ~340 lines, mixing CLI dispatch, argument parsing, help text, and command implementations. The `parse_cli_flags` function is long and complex. Following the kujo-rag pattern (which has `src/cli_args.kujo`), CLI parsing should be in its own module.
 
 **Fix**:
-- Move `parse_cli_flags`, `print_help`, `dict_get_or`, and `normalize_string` into `src/cli.ruff`.
+- Move `parse_cli_flags`, `print_help`, `dict_get_or`, and `normalize_string` into `src/cli.kujo`.
 - Export `parse_cli_flags` and `print_help`.
-- In `main.ruff`, import from `src/cli.ruff` and `src/common.ruff`.
-- Keep command implementations (`command_init`, `command_run`, etc.) in `main.ruff` but slim them down by using shared utilities.
+- In `main.kujo`, import from `src/cli.kujo` and `src/common.kujo`.
+- Keep command implementations (`command_init`, `command_run`, etc.) in `main.kujo` but slim them down by using shared utilities.
 
-**Verification**: Run `kujo run main.ruff --interpreter help` and verify output is identical.
+**Verification**: Run `kujo run main.kujo --interpreter help` and verify output is identical.
 
 ---
 
 ### [x] 3.3 — Extract result-building helpers to reduce per-check boilerplate
 
-**File**: `src/checks.ruff`
+**File**: `src/checks.kujo`
 
 **Problem**: Every check function repeats the same boilerplate: validate that a required param exists, return an error result dict if missing, build a result dict with `ok`/`check`/`message`/`details`. Each check is ~40% boilerplate.
 
-**Fix**: Add helper functions to `src/checks.ruff` (or `src/common.ruff`):
+**Fix**: Add helper functions to `src/checks.kujo` (or `src/common.kujo`):
 - `make_check_error(check_type, message, details)` — returns `{ok: false, check: check_type, message, details}`
 - `make_check_success(check_type, message, details)` — returns `{ok: true, check: check_type, message, details}`
 - `validate_required_param(params, key, check_type)` — returns either an error result or the param value
 - Refactor 1-2 checks as a proof of concept, then the rest.
 
-**Verification**: All contract tests pass. The `checks.ruff` file should be noticeably shorter.
+**Verification**: All contract tests pass. The `checks.kujo` file should be noticeably shorter.
 
 ---
 
 ### [x] 3.4 — Standardize result dict shape across all modules
 
-**Files**: `src/eval_core.ruff`, `src/checks.ruff`, `src/report.ruff`, `src/snapshot.ruff`, `src/config.ruff`
+**Files**: `src/eval_core.kujo`, `src/checks.kujo`, `src/report.kujo`, `src/snapshot.kujo`, `src/config.kujo`
 
 **Problem**: Different modules return slightly different result shapes:
-- `checks.ruff`: `{ok, check, message, details}`
-- `snapshot.ruff`: `{ok, path, name, message}` or `{match, snapshot_path, name, message, diff}`
-- `config.ruff`: `{ok, error, config, path}` or `{ok, error, config}`
-- `report.ruff`: `{ok, path, message, report}` or `{ok, message}`
-- `eval_core.ruff`: `{ok, error, suite_name, ...}` or `{ok, run_a, run_b, ...}`
+- `checks.kujo`: `{ok, check, message, details}`
+- `snapshot.kujo`: `{ok, path, name, message}` or `{match, snapshot_path, name, message, diff}`
+- `config.kujo`: `{ok, error, config, path}` or `{ok, error, config}`
+- `report.kujo`: `{ok, path, message, report}` or `{ok, message}`
+- `eval_core.kujo`: `{ok, error, suite_name, ...}` or `{ok, run_a, run_b, ...}`
 
 There's no consistent contract. This makes it harder to compose modules and harder for external consumers.
 
-**Fix**: Define a standard result envelope in `src/common.ruff`:
+**Fix**: Define a standard result envelope in `src/common.kujo`:
 ```
 {
   "ok": bool,
@@ -237,7 +237,7 @@ Refactor each module to use this envelope. This is a breaking change to the API 
 
 ### [x] 3.5 — Remove the unused `mismatched_types` variable in `check_json_matches_shape`
 
-**File**: `src/checks.ruff`, function `check_json_matches_shape`
+**File**: `src/checks.kujo`, function `check_json_matches_shape`
 
 **Problem**: The variable `mismatched_types` is declared and populated in the loop but never checked in the condition `if len(missing_keys) > 0 || len(mismatched_types) > 0`. However, `mismatched_types` is always empty because no code adds to it (the type-checking loop was never written). This is dead code and misleading.
 
@@ -257,7 +257,7 @@ These items add new assertion capabilities. Each is a self-contained feature add
 
 **Params**: `path` (string), `pattern` (string — regex pattern)
 
-**Implementation**: Add `check_file_matches_regex` to `src/checks.ruff`, register in `KNOWN_CHECKS` in `src/config.ruff`, add to the dispatcher in `run_check`, add tests, update `docs/eval-suite-reference.md`, update README check table.
+**Implementation**: Add `check_file_matches_regex` to `src/checks.kujo`, register in `KNOWN_CHECKS` in `src/config.kujo`, add to the dispatcher in `run_check`, add tests, update `docs/eval-suite-reference.md`, update README check table.
 
 **Note**: Kujo's regex support may be limited. If native regex isn't available, implement basic glob matching as `file_matches_glob` instead.
 
@@ -351,7 +351,7 @@ These items improve the test execution and developer experience.
 - Add optional `tags` field to test definitions in `eval.json`: `"tags": ["smoke", "critical", "slow"]`.
 - Add `--tags <tag1,tag2>` CLI flag to run only tests matching any of the given tags.
 - Add `--skip-tags <tag1,tag2>` to skip tests with those tags.
-- Update `config.ruff` to validate tags are arrays of strings.
+- Update `config.kujo` to validate tags are arrays of strings.
 
 **Verification**: Add tests with tags to the contract tests.
 
@@ -421,7 +421,7 @@ These items improve output formats and result handling.
 
 **Implementation**:
 - Add `--format junit` CLI flag (default: `markdown`).
-- Implement `generate_junit_report(results)` in `src/report.ruff`.
+- Implement `generate_junit_report(results)` in `src/report.kujo`.
 - JUnit XML structure: `<testsuite>` with `<testcase>` elements, `<failure>` for failed tests, `<skipped>` for skipped, timing info.
 - Write to `eval_results/junit.xml`.
 
@@ -435,7 +435,7 @@ These items improve output formats and result handling.
 
 **Implementation**:
 - Add `--format tap`.
-- Implement `generate_tap_report(results)` in `src/report.ruff`.
+- Implement `generate_tap_report(results)` in `src/report.kujo`.
 - TAP format: `1..N` header, `ok N - test name` or `not ok N - test name`.
 
 **Verification**: Compare output against TAP version 13 spec.
@@ -461,7 +461,7 @@ These items improve output formats and result handling.
 
 **Implementation**:
 - Add `--format html`.
-- Implement `generate_html_report(results)` in `src/report.ruff`.
+- Implement `generate_html_report(results)` in `src/report.kujo`.
 - Include a self-contained HTML page with:
   - Summary cards (pass/fail/skip counts, pass rate bar)
   - Collapsible test details sections
@@ -529,7 +529,7 @@ These items add tests for currently uncovered paths.
 
 ### [x] 8.1 — Add CLI integration tests
 
-**New file**: `tests/cli_integration_tests.ruff`
+**New file**: `tests/cli_integration_tests.kujo`
 
 **Content**: Test each CLI subcommand end-to-end:
 - `init` creates a valid eval.json
@@ -547,7 +547,7 @@ These items add tests for currently uncovered paths.
 
 ### [x] 8.2 — Add edge case tests for existing checks
 
-**File**: `tests/contract_tests.ruff`
+**File**: `tests/contract_tests.kujo`
 
 **Additional tests needed**:
 - `check_file_contains` with empty file
@@ -569,7 +569,7 @@ These items add tests for currently uncovered paths.
 
 ### [x] 8.3 — Add security regression tests
 
-**New file**: `tests/security_tests.ruff`
+**New file**: `tests/security_tests.kujo`
 
 **Content**: Tests for:
 - Path traversal rejection (`../etc/passwd`, `../../root/.ssh`)
@@ -581,7 +581,7 @@ These items add tests for currently uncovered paths.
 
 ### [x] 8.4 — Add `run_suite` integration test
 
-**File**: `tests/contract_tests.ruff`
+**File**: `tests/contract_tests.kujo`
 
 **Additional test**: Create a temporary `eval.json` with a mix of passing and failing tests, call `run_suite`, and verify:
 - The correct number of passed/failed tests is reported
@@ -646,13 +646,13 @@ These items harden the CI pipeline and release process.
 
 | File | Purpose | Lines (approx) |
 |------|---------|----------------|
-| `main.ruff` | CLI entry point, command dispatch | 340 |
-| `src/config.ruff` | Config loading, validation, init | 290 |
-| `src/checks.ruff` | All 12 check implementations + dispatcher | ~800 |
-| `src/eval_core.ruff` | Suite runner, compare_runs | 130 |
-| `src/report.ruff` | Markdown report generation | 250 |
-| `src/snapshot.ruff` | Snapshot CRUD + diff | 200 |
-| `tests/contract_tests.ruff` | All tests | 620 |
+| `main.kujo` | CLI entry point, command dispatch | 340 |
+| `src/config.kujo` | Config loading, validation, init | 290 |
+| `src/checks.kujo` | All 12 check implementations + dispatcher | ~800 |
+| `src/eval_core.kujo` | Suite runner, compare_runs | 130 |
+| `src/report.kujo` | Markdown report generation | 250 |
+| `src/snapshot.kujo` | Snapshot CRUD + diff | 200 |
+| `tests/contract_tests.kujo` | All tests | 620 |
 | `kennel.toml` | Package manifest | 50 |
 | `README.md` | User documentation | ~230 |
 

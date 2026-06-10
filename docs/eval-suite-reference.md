@@ -275,27 +275,27 @@ Use `--json` flag for machine-readable output:
 Legacy command examples may show interpreter-first invocation:
 
 ```bash
-kujo run main.ruff --interpreter run --json
+kujo run main.kujo --interpreter run --json
 ```
 
 Current default guidance is VM-first execution:
 
 ```bash
-kujo run main.ruff run --json
+kujo run main.kujo run --json
 ```
 
 Use interpreter mode only when validating compatibility behavior across runtimes or investigating runtime-specific warnings.
 
 Migration mapping:
 
-- Legacy: `kujo run main.ruff --interpreter <subcommand> ...`
-- Preferred: `kujo run main.ruff <subcommand> ...`
-- Optional parity run: `kujo run main.ruff --interpreter <subcommand> ...`
+- Legacy: `kujo run main.kujo --interpreter <subcommand> ...`
+- Preferred: `kujo run main.kujo <subcommand> ...`
+- Optional parity run: `kujo run main.kujo --interpreter <subcommand> ...`
 
 For CI automation, prefer VM-first commands and validate pass/fail via exit code plus artifact outputs (`summary.json`, `artifact-manifest.json`).
 
 ```bash
-kujo run main.ruff run --json
+kujo run main.kujo run --json
 ```
 
 Output shape:

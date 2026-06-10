@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### FEATURE
-- Added a production-usable multi-stage `Dockerfile` that compiles the Kujo runtime from pinned `RUNTIME_VERSION` (with optional `KUJO_RUNTIME_REF` override) and runs `eval` via `kujo run main.ruff`.
+- Added a production-usable multi-stage `Dockerfile` that compiles the Kujo runtime from pinned `RUNTIME_VERSION` (with optional `KUJO_RUNTIME_REF` override) and runs `eval` via `kujo run main.kujo`.
 - Added `examples/strict_enterprise_policy_gate.json` with minimum-privilege command/path/env policy defaults and redaction audit mode.
 - Added `examples/sandbox_adjacent_policy_gate.json` for constrained fixture-only policy boundaries.
 - Added `init --from-scout <path>` as an alias for `--from` to align Scout workflow docs with CLI behavior.
@@ -26,9 +26,9 @@
 - Updated schema policy fields to stage-aware `path_policy_mode` behavior (`open`/`allowlist-required`) for clearer governance defaults.
 
 ### FIX
-- Hardened command safety evaluation in `src/checks.ruff` by normalizing case/whitespace before policy and dangerous-pattern checks.
+- Hardened command safety evaluation in `src/checks.kujo` by normalizing case/whitespace before policy and dangerous-pattern checks.
 - Added security regression coverage for uppercase dangerous-command bypass attempts.
-- Restored stable report rendering flow after malformed patch collision in `src/report.ruff` and validated with full suite passes.
+- Restored stable report rendering flow after malformed patch collision in `src/report.kujo` and validated with full suite passes.
 - Fixed an unbound-variable bug in `scripts/verify_docs_command_parity.sh` so Scout import parity checks execute deterministically.
 
 ### SECURITY
@@ -53,7 +53,7 @@
 - Added enterprise quickstart risk-tier matrices and copy/paste profile guidance in `README.md`, `docs/QUICKREF.md`, and `docs/COOKBOOK.md`.
 - Added container build/run documentation in `README.md` for pinned-runtime Docker workflows.
 - Added `docs/release-signoff.md` template and runbook guidance for optional human approval enforcement in release gates.
-- Updated `docs/ECOSYSTEM.md` Scout import example to use canonical `kujo run main.ruff init --from-scout ...` invocation.
+- Updated `docs/ECOSYSTEM.md` Scout import example to use canonical `kujo run main.kujo init --from-scout ...` invocation.
 - Added generated command inventory docs (`docs/COMMAND_INVENTORY.md`) with freshness checks via `scripts/generate_command_inventory.sh --check`.
 - Updated release runbook guidance for benchmark trend slope environment overrides and command inventory verification.
 - Corrected `kennel.toml` package status notes to reflect the actual CLI/test surface and remaining release workflow tasks.
@@ -65,7 +65,7 @@
 - `--verbose` flag: prints full check details as tests execute
 - Real timing support: `duration_ms` now records actual elapsed time via `time()`
 - Flaky test retry: `"retry": N` field in test definitions auto-retries failures
-- `describe_module()` contract discovery function on main.ruff
+- `describe_module()` contract discovery function on main.kujo
 - Enhanced `redact_sensitive`: now also catches `token=`, `api_key=`, `apikey=` patterns
 
 ### SECURITY
@@ -73,15 +73,15 @@
 
 ### TWEAK
 - `describe_common_module()` bumped to contract version `2.0.0`
-- Removed dead `DEFAULT_TIMEOUT` constant from config.ruff
-- Removed redundant `export dict_get_or`/`export normalize_string` re-exports from config.ruff
-- Removed unused `generate_markdown_report` import from main.ruff
-- Updated checks.ruff header docs to reflect envelope shape and 20 check types
+- Removed dead `DEFAULT_TIMEOUT` constant from config.kujo
+- Removed redundant `export dict_get_or`/`export normalize_string` re-exports from config.kujo
+- Removed unused `generate_markdown_report` import from main.kujo
+- Updated checks.kujo header docs to reflect envelope shape and 20 check types
 - `kujo.toml` bumped to version `0.3.0` with description
 
 ### FIX
 - All `has_key(...) == 1` → `== true` for interpreter mode compatibility
-- All `contains(...) == 0/1` → `== false/true` across checks.ruff and eval_core.ruff
+- All `contains(...) == 0/1` → `== false/true` across checks.kujo and eval_core.kujo
 - All `found == 0/1` → `== false/true` in file_contains/file_does_not_contain
 - `.gitignore` updated to include `tests/cli_integration_tests.out`
 - Cleaned stale `.out` files from tests/ directory
@@ -90,7 +90,7 @@
 - README: added quiet/verbose, retry, timing, describe_module, expanded features list
 - README: updated Quick Start with more examples, Command Reference with new flags
 - README: updated Repository Layout with all test suites and examples dir
-- main.ruff: updated usage header with all 7 commands and `--format` flag
+- main.kujo: updated usage header with all 7 commands and `--format` flag
 
 ---
 
@@ -99,9 +99,9 @@
 **Status**: All 44 of 44 planned items complete. See `docs/improvement-checklist.md` for full tracking.
 
 ### REFACTOR
-- Standardized result dict envelope (`{ok, error, data}`) across all 8 modules: `checks.ruff`, `snapshot.ruff`, `config.ruff`, `report.ruff`, `eval_core.ruff`, `main.ruff`, and all 3 test suites
+- Standardized result dict envelope (`{ok, error, data}`) across all 8 modules: `checks.kujo`, `snapshot.kujo`, `config.kujo`, `report.kujo`, `eval_core.kujo`, `main.kujo`, and all 3 test suites
 - Contract version bumped to `2.0.0` (breaking change to result shapes)
-- `make_result`, `make_success_result`, `make_error_result` helpers in `src/common.ruff`
+- `make_result`, `make_success_result`, `make_error_result` helpers in `src/common.kujo`
 - All `path_exists(...) == 0` comparisons replaced with `== false` for interpreter mode compatibility
 
 ### FEATURE
@@ -138,16 +138,16 @@
 - `is_command_safe()`: blocks dangerous shell patterns (rm -rf, sudo, chmod, etc.)
 - `is_path_safe()`: blocks `..` traversal and system directory access
 - `redact_sensitive()`: scrubs API keys, tokens, passwords from output
-- `src/cli.ruff`: extracted CLI argument parsing from main.ruff
-- CLI integration test suite (`tests/cli_integration_tests.ruff`)
-- Security regression test suite (`tests/security_tests.ruff`)
+- `src/cli.kujo`: extracted CLI argument parsing from main.kujo
+- CLI integration test suite (`tests/cli_integration_tests.kujo`)
+- Security regression test suite (`tests/security_tests.kujo`)
 - Release quality gates script (8 checks)
 - Supply-chain policy check script (8 checks)
 - Compatibility matrix CI workflow
 - Pinned Kujo runtime version (`RUNTIME_VERSION`)
 
 ### TWEAK
-- Created `src/common.ruff` shared utilities module (~120 lines of duplication eliminated)
+- Created `src/common.kujo` shared utilities module (~120 lines of duplication eliminated)
 - Exported `run_shell` for testability
 - `command_report` now loads cached results from `last_run.json` instead of re-running
 - `command_run` saves `last_run.json` and `last_failures.json` after each run
@@ -156,8 +156,8 @@
 - Replaced all `arr[len(arr)] := value` with `push()` for VM compatibility
 - Fixed positional arg indexing in `command_run`, `command_report`, `command_compare`
 - Removed `#` comments from example JSON files (invalid JSON)
-- Renamed `test` variable to `tdef` in config.ruff (Kujo reserved keyword)
-- Exported `dict_get_or` and `normalize_string` from config.ruff
+- Renamed `test` variable to `tdef` in config.kujo (Kujo reserved keyword)
+- Exported `dict_get_or` and `normalize_string` from config.kujo
 - Moved `eval.json` self-check to `examples/self_check.json`
 
 ### SECURITY
@@ -175,8 +175,8 @@
 - Updated README with all 20 check types, new flags, and current repo layout
 
 ### REFACTOR
-- Extracted `src/cli.ruff` from main.ruff (~80 lines)
-- Created `src/common.ruff` with shared utilities and result-building helpers
+- Extracted `src/cli.kujo` from main.kujo (~80 lines)
+- Created `src/common.kujo` with shared utilities and result-building helpers
 - Added `make_check_error` and `make_check_success` helpers
 
 ---

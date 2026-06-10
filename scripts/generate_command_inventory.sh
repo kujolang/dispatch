@@ -17,8 +17,8 @@ if [ "${1:-}" = "--stdout" ]; then
 fi
 
 HELP_OUT=""
-if ! HELP_OUT="$($KUJO_BIN run main.ruff 2>&1)"; then
-	echo "FAIL: Could not read CLI help output from $KUJO_BIN run main.ruff"
+if ! HELP_OUT="$($KUJO_BIN run main.kujo 2>&1)"; then
+	echo "FAIL: Could not read CLI help output from $KUJO_BIN run main.kujo"
 	echo "$HELP_OUT"
 	exit 1
 fi
@@ -42,7 +42,7 @@ TMP_FILE="$(mktemp "${TMPDIR:-/tmp}/kujo-eval-command-inventory.XXXXXX.md")"
 cat > "$TMP_FILE" <<'EOF'
 # Command Inventory
 
-Generated from `kujo run main.ruff` help output. Do not edit manually; regenerate with `scripts/generate_command_inventory.sh`.
+Generated from `kujo run main.kujo` help output. Do not edit manually; regenerate with `scripts/generate_command_inventory.sh`.
 
 ## Command Surface
 
@@ -57,7 +57,7 @@ cat >> "$TMP_FILE" <<'EOF'
 ## Canonical Invocation
 
 ```bash
-kujo run main.ruff <command> [options]
+kujo run main.kujo <command> [options]
 ```
 EOF
 

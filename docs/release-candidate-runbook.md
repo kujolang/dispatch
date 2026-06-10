@@ -16,7 +16,7 @@ Expected:
 ## 2. Core Validation Sequence
 
 ```bash
-"$KUJO_BIN" run main.ruff version
+"$KUJO_BIN" run main.kujo version
 "$KUJO_BIN" test
 bash scripts/verify_artifact_contract.sh
 bash scripts/cli_smoke_matrix.sh

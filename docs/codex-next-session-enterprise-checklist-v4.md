@@ -16,7 +16,7 @@ Purpose:
 
 ## Completed In This Session (Reference)
 
-- Hardened command safety checks with case/whitespace normalization in `src/checks.ruff`
+- Hardened command safety checks with case/whitespace normalization in `src/checks.kujo`
 - Added security regression test for uppercase dangerous command bypass attempt
 - Removed stale tracked `tests/*.out` files and enforced untracked artifact hygiene
 - Expanded CI workflow coverage to Linux + macOS
@@ -32,10 +32,10 @@ Work:
 - Add config option (for example `require_command_policy`) and enforce in stage overlays.
 - Ensure default local experience stays backwards-compatible.
 Files likely affected:
-- `src/config.ruff`
-- `src/eval_core.ruff`
+- `src/config.kujo`
+- `src/eval_core.kujo`
 - `schema/eval-suite.schema.json`
-- `tests/security_tests.ruff`
+- `tests/security_tests.kujo`
 Verification:
 - Tests show CI/release stage fails when command checks run without an effective command policy.
 
@@ -46,9 +46,9 @@ Work:
 - Expand profile defaults and overlays for path policy presets.
 - Document recommended path profile usage.
 Files likely affected:
-- `src/config.ruff`
+- `src/config.kujo`
 - `docs/SECURITY.md`
-- `tests/security_tests.ruff`
+- `tests/security_tests.kujo`
 Verification:
 - Stage overlay tests validate local/ci/release behavior and precedence.
 
@@ -59,9 +59,9 @@ Work:
 - Support config-driven redaction pattern additions.
 - Keep default behavior deterministic and safe.
 Files likely affected:
-- `src/checks.ruff`
+- `src/checks.kujo`
 - `schema/eval-suite.schema.json`
-- `tests/security_tests.ruff`
+- `tests/security_tests.kujo`
 Verification:
 - Tests confirm custom patterns redact output while preserving command result semantics.
 
@@ -73,9 +73,9 @@ Current parallel mode should prioritize independent, high-latency checks for bet
 Work:
 - Add deterministic grouping/ordering heuristics with explicit guardrails.
 Files likely affected:
-- `src/eval_core.ruff`
-- `tests/stress_tests.ruff`
-- `tests/benchmark_tests.ruff`
+- `src/eval_core.kujo`
+- `tests/stress_tests.kujo`
+- `tests/benchmark_tests.kujo`
 Verification:
 - Benchmark and stress suites show improved wall-clock performance with identical pass/fail outcomes.
 
@@ -97,9 +97,9 @@ Large suites should avoid re-rendering full reports when only small deltas chang
 Work:
 - Add content-aware section caching for report backends.
 Files likely affected:
-- `src/report.ruff`
-- `main.ruff`
-- `tests/cli_integration_tests.ruff`
+- `src/report.kujo`
+- `main.kujo`
+- `tests/cli_integration_tests.kujo`
 Verification:
 - Repeated report runs with minor deltas show reduced render time and unchanged output correctness.
 
@@ -111,10 +111,10 @@ Why:
 Work:
 - Add CLI command (for example `policy-explain`) to print effective merged policy by stage.
 Files likely affected:
-- `main.ruff`
-- `src/config.ruff`
-- `src/cli.ruff`
-- `tests/cli_integration_tests.ruff`
+- `main.kujo`
+- `src/config.kujo`
+- `src/cli.kujo`
+- `tests/cli_integration_tests.kujo`
 Verification:
 - CLI tests validate deterministic output for each stage overlay.
 
@@ -124,9 +124,9 @@ Why:
 Work:
 - Expand `lint` output to include structured error code + suggested fix text.
 Files likely affected:
-- `src/config.ruff`
-- `main.ruff`
-- `tests/coverage_tests.ruff`
+- `src/config.kujo`
+- `main.kujo`
+- `tests/coverage_tests.kujo`
 Verification:
 - Invalid suite fixtures produce stable, actionable diagnostic payloads.
 
@@ -136,9 +136,9 @@ Why:
 Work:
 - Extend JSON path checks to cover array indices and type assertions.
 Files likely affected:
-- `src/checks.ruff`
-- `src/config.ruff`
-- `tests/coverage_tests.ruff`
+- `src/checks.kujo`
+- `src/config.kujo`
+- `tests/coverage_tests.kujo`
 Verification:
 - New fixtures validate pass/fail behavior for nested arrays and mixed object paths.
 

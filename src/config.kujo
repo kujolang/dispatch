@@ -448,7 +448,7 @@ export func lint_config_file(config_path) {
 	diagnostics := []
 
 	if path_exists(path) == false {
-		diagnostics = append_lint_diagnostic(diagnostics, "CFG_FILE_NOT_FOUND", "$", "Config file not found: " + path, "Create the suite with: kujo run main.ruff init --name my-suite")
+		diagnostics = append_lint_diagnostic(diagnostics, "CFG_FILE_NOT_FOUND", "$", "Config file not found: " + path, "Create the suite with: kujo run main.kujo init --name my-suite")
 		return make_result(false, "Config lint failed with 1 diagnostic", {
 			"path": path,
 			"diagnostics": diagnostics,
@@ -560,7 +560,7 @@ export func lint_config_file(config_path) {
 		if check_type == "" {
 			diagnostics = append_lint_diagnostic(diagnostics, "CFG_TEST_CHECK", "tests[" + to_string(ti) + "].check", "Missing required check type", "Set check to one of the values from list-checks.")
 		} else if check_type_is_known(check_type, known_checks) == false {
-			diagnostics = append_lint_diagnostic(diagnostics, "CFG_TEST_CHECK_UNKNOWN", "tests[" + to_string(ti) + "].check", "Unknown check type: " + check_type, "Run `kujo run main.ruff list-checks` and choose a supported check.")
+			diagnostics = append_lint_diagnostic(diagnostics, "CFG_TEST_CHECK_UNKNOWN", "tests[" + to_string(ti) + "].check", "Unknown check type: " + check_type, "Run `kujo run main.kujo list-checks` and choose a supported check.")
 		}
 
 		params := dict_get_or(tdef, "params", {})
@@ -585,7 +585,7 @@ export func lint_config_file(config_path) {
 	if len(diagnostics) == 0 {
 		validated := validate_config(cfg)
 		if validated["ok"] == false {
-			diagnostics = append_lint_diagnostic(diagnostics, "CFG_VALIDATION_FAILED", "$", dict_get_or(validated, "error", "Validation failed"), "Fix the reported field and rerun `kujo run main.ruff lint`.")
+			diagnostics = append_lint_diagnostic(diagnostics, "CFG_VALIDATION_FAILED", "$", dict_get_or(validated, "error", "Validation failed"), "Fix the reported field and rerun `kujo run main.kujo lint`.")
 		} else {
 			validated_data := dict_get_or(validated, "data", {})
 			return make_result(true, "", {

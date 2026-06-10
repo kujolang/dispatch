@@ -1,7 +1,7 @@
 # CLI argument parsing and help text for Kujo Eval.
 #
-# Extracted from main.ruff to keep the entry point focused on
-# command dispatch, following the kujo-rag src/cli_args.ruff pattern.
+# Extracted from main.kujo to keep the entry point focused on
+# command dispatch, following the kujo-rag src/cli_args.kujo pattern.
 
 from src.common import dict_get_or, normalize_string
 
@@ -9,20 +9,20 @@ export func print_help() {
 	print("Kujo Eval — AI-native evaluation framework")
 	print("")
 	print("Usage:")
-	print("  kujo run main.ruff init [--name <name>]")
-	print("  kujo run main.ruff run [<config-path>] [--update-snapshots] [--output-dir <dir>]")
-	print("  kujo run main.ruff report [<config-path>] [--output-dir <dir>]")
-	print("  kujo run main.ruff compare <results-a.json> <results-b.json>")
-	print("  kujo run main.ruff list-checks")
-	print("  kujo run main.ruff snapshots [--snapshot-dir <dir>]")
-	print("  kujo run main.ruff version")
-	print("  kujo run main.ruff watch [--config <path>]")
-	print("  kujo run main.ruff lint [<config-path>]")
-	print("  kujo run main.ruff policy-explain [<config-path>] [--policy-stage <local|ci|release>]")
-	print("  kujo run main.ruff diff <file-a> <file-b>")
-	print("  kujo run main.ruff export [<config-path>]")
-	print("  kujo run main.ruff verify-manifest [--manifest <path>] [--output-dir <dir>]")
-	print("  kujo run main.ruff completion [--shell bash|zsh|fish]")
+	print("  kujo run main.kujo init [--name <name>]")
+	print("  kujo run main.kujo run [<config-path>] [--update-snapshots] [--output-dir <dir>]")
+	print("  kujo run main.kujo report [<config-path>] [--output-dir <dir>]")
+	print("  kujo run main.kujo compare <results-a.json> <results-b.json>")
+	print("  kujo run main.kujo list-checks")
+	print("  kujo run main.kujo snapshots [--snapshot-dir <dir>]")
+	print("  kujo run main.kujo version")
+	print("  kujo run main.kujo watch [--config <path>]")
+	print("  kujo run main.kujo lint [<config-path>]")
+	print("  kujo run main.kujo policy-explain [<config-path>] [--policy-stage <local|ci|release>]")
+	print("  kujo run main.kujo diff <file-a> <file-b>")
+	print("  kujo run main.kujo export [<config-path>]")
+	print("  kujo run main.kujo verify-manifest [--manifest <path>] [--output-dir <dir>]")
+	print("  kujo run main.kujo completion [--shell bash|zsh|fish]")
 	print("")
 	print("Commands:")
 	print("  init          Create an eval.json suite file in the current directory")

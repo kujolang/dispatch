@@ -25,14 +25,14 @@ echo "=== Kujo Eval Supply-Chain Policy Check ==="
 echo ""
 
 # 1. No root scratch Kujo files
-check "No root scratch .ruff files" bash -c '
-    files=$(find . -maxdepth 1 -type f -name "test_*.ruff" -print)
+check "No root scratch .kujo files" bash -c '
+    files=$(find . -maxdepth 1 -type f -name "test_*.kujo" -print)
     [ -z "$files" ]
 '
 
 # 2. All source files parse as valid Kujo
-check "All src/*.ruff files exist" bash -c '
-    for f in src/common.ruff src/cli.ruff src/config.ruff src/checks.ruff src/eval_core.ruff src/report.ruff src/snapshot.ruff; do
+check "All src/*.kujo files exist" bash -c '
+    for f in src/common.kujo src/cli.kujo src/config.kujo src/checks.kujo src/eval_core.kujo src/report.kujo src/snapshot.kujo; do
         [ -f "$f" ] || exit 1
     done
 '
@@ -45,7 +45,7 @@ check "No hardcoded secrets in source" bash -c '
 # 4. kennel.toml exports match actual source files
 check "kennel.toml exports match src files" bash -c '
     for mod in common cli eval_core checks report snapshot config; do
-        [ -f "src/${mod}.ruff" ] || exit 1
+        [ -f "src/${mod}.kujo" ] || exit 1
     done
 '
 

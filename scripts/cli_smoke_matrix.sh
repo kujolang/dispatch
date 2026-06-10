@@ -39,9 +39,9 @@ run_eval() {
 	local mode="$1"
 	shift
 	if [ "$mode" = "interpreter" ]; then
-		"$KUJO_BIN" run main.ruff --interpreter "$@"
+		"$KUJO_BIN" run main.kujo --interpreter "$@"
 	else
-		"$KUJO_BIN" run main.ruff "$@"
+		"$KUJO_BIN" run main.kujo "$@"
 	fi
 }
 
@@ -65,7 +65,7 @@ cleanup_smoke_dir() {
 }
 	trap 'rm -rf "$work_dir"' EXIT
 
-	cp main.ruff "$work_dir/main.ruff"
+	cp main.kujo "$work_dir/main.kujo"
 	cp -R src "$work_dir/src"
 	cp -R examples "$work_dir/examples"
 

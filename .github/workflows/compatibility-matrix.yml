@@ -42,6 +42,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          kujo run main.ruff version
-          kujo run main.ruff list-checks
-          kujo run main.ruff run examples/basic_suite.json --json
+          kujo run main.kujo version
+          kujo run main.kujo list-checks
+          kujo run main.kujo run examples/basic_suite.json --json

@@ -1,0 +1,9 @@
+[
+  {
+    "name": "scout-docs-check",
+    "check": "file_exists",
+    "params": {
+      "path": "kennel.toml"
+    }
+  }
+]

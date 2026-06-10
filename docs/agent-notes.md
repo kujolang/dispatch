@@ -37,7 +37,7 @@ entry := {"key": "value"}
 arr := push(arr, entry)
 ```
 
-**Discovered**: Loop 1, item 1.1. Affected `config.ruff` and `eval_core.ruff`.
+**Discovered**: Loop 1, item 1.1. Affected `config.kujo` and `eval_core.kujo`.
 
 ---
 
@@ -54,7 +54,7 @@ test := normalize_dict(tests[i])
 tdef := normalize_dict(tests[i])
 ```
 
-**Discovered**: Loop 1, item 1.1. In `config.ruff` line 171.
+**Discovered**: Loop 1, item 1.1. In `config.kujo` line 171.
 
 ---
 
@@ -62,13 +62,13 @@ tdef := normalize_dict(tests[i])
 
 **Symptom (historical)**: `[RUFVM001] Cannot call non-function` when calling functions imported from other modules.
 
-**Current rule**: Use VM-first CLI commands (`kujo run main.ruff ...`) as the default path. Keep `--interpreter` only for compatibility checks and runtime-diff debugging.
+**Current rule**: Use VM-first CLI commands (`kujo run main.kujo ...`) as the default path. Keep `--interpreter` only for compatibility checks and runtime-diff debugging.
 ```bash
 # ✅ PRIMARY PATH
-kujo run main.ruff version
+kujo run main.kujo version
 
 # ✅ OPTIONAL COMPATIBILITY CHECK
-kujo run main.ruff --interpreter version
+kujo run main.kujo --interpreter version
 ```
 
 **Status**: Resolved for this repository's CLI path; keep regression tests VM-first.
@@ -132,7 +132,7 @@ func my_func() {
 }
 ```
 
-**Discovered**: Loop 1. Affected `command_list_checks` in `main.ruff` and `check_snapshot_matches` in `checks.ruff`.
+**Discovered**: Loop 1. Affected `command_list_checks` in `main.kujo` and `check_snapshot_matches` in `checks.kujo`.
 
 ---
 
@@ -149,15 +149,15 @@ func dict_get_or(obj, key, default_value) { ... }
 export func dict_get_or(obj, key, default_value) { ... }
 ```
 
-**Discovered**: Loop 1. Affected `dict_get_or` and `normalize_string` in `config.ruff`.
+**Discovered**: Loop 1. Affected `dict_get_or` and `normalize_string` in `config.kujo`.
 
 ---
 
-### 9. RUFRUN001 warnings are benign in interpreter mode
+### 9. KUJORUN001 warnings are benign in interpreter mode
 
-**Symptom**: Large blocks of `[RUFRUN001] Undefined Function` warnings during `--interpreter` execution.
+**Symptom**: Large blocks of `[KUJORUN001] Undefined Function` warnings during `--interpreter` execution.
 
-**Rule**: Ignore RUFRUN001 warnings. Key pass/fail decisions off exit codes and actual output, not warning presence. These are type-checker warnings from the pre-pass that don't affect runtime behavior.
+**Rule**: Ignore KUJORUN001 warnings. Key pass/fail decisions off exit codes and actual output, not warning presence. These are type-checker warnings from the pre-pass that don't affect runtime behavior.
 
 **Discovered**: Loop 1. Confirmed from memory notes.
 
@@ -208,7 +208,7 @@ if path_exists(p) { ... }
 ### Test runner: `kujo test` vs `kujo run`
 
 - `kujo test` runs tests in VM-primary dual mode. Works reliably for contract tests.
-- `kujo run main.ruff ...` is the primary CLI execution path and should be used in docs and smoke checks.
+- `kujo run main.kujo ...` is the primary CLI execution path and should be used in docs and smoke checks.
 - `kujo run --interpreter` remains useful for compatibility parity checks and runtime debugging.
 - The Kujo language runtime binary is at `./kujo`.
 - The system `kujo` binary is the Python linter — NOT the language runtime. Always use the full path or set `KUJO_BIN`.
@@ -219,13 +219,13 @@ Historical command examples may include `--interpreter` as the default execution
 
 ```bash
 # Preferred default
-kujo run main.ruff run examples/release_gate_suite.json --output-dir .eval_out --json
+kujo run main.kujo run examples/release_gate_suite.json --output-dir .eval_out --json
 
 # Optional compatibility/parity check
-kujo run main.ruff --interpreter run examples/release_gate_suite.json --output-dir .eval_out --json
+kujo run main.kujo --interpreter run examples/release_gate_suite.json --output-dir .eval_out --json
 ```
 
-When interpreter mode emits RUFRUN001 warning blocks, treat them as advisory unless command exit code or artifact contract indicates failure.
+When interpreter mode emits KUJORUN001 warning blocks, treat them as advisory unless command exit code or artifact contract indicates failure.
 
 ### Validation pattern for every loop
 
@@ -237,11 +237,11 @@ cd /Users/robertdevore/Documents/Kujolang/kujo-repos/dispatch
 $KUJO_BIN test
 
 # 2. Smoke: basic suite
-$KUJO_BIN run main.ruff run examples/basic_suite.json --json 2>/dev/null
+$KUJO_BIN run main.kujo run examples/basic_suite.json --json 2>/dev/null
 
 # 3. Smoke: CLI commands
-$KUJO_BIN run main.ruff version
-$KUJO_BIN run main.ruff list-checks
+$KUJO_BIN run main.kujo version
+$KUJO_BIN run main.kujo list-checks
 
 # 4. Check exit code
 echo "EXIT: $?"
@@ -280,11 +280,11 @@ eval(<ITEM_ID>): <concise imperative summary>
 
 | File | Lines | Key exports |
 |------|-------|-------------|
-| `main.ruff` | ~340 | CLI dispatch |
-| `src/config.ruff` | ~290 | `load_config`, `validate_config`, `init_config`, `KNOWN_CHECKS`, `dict_get_or`, `normalize_string` |
-| `src/checks.ruff` | ~800 | `run_check`, all 12 `check_*` functions |
-| `src/eval_core.ruff` | ~140 | `run_suite`, `compare_runs`, `contract_version` |
-| `src/report.ruff` | ~250 | `generate_markdown_report`, `save_report`, `print_report` |
-| `src/snapshot.ruff` | ~200 | `save_snapshot`, `compare_snapshot`, `list_snapshots`, `delete_snapshot` |
-| `tests/contract_tests.ruff` | ~690 | All contract tests |
+| `main.kujo` | ~340 | CLI dispatch |
+| `src/config.kujo` | ~290 | `load_config`, `validate_config`, `init_config`, `KNOWN_CHECKS`, `dict_get_or`, `normalize_string` |
+| `src/checks.kujo` | ~800 | `run_check`, all 12 `check_*` functions |
+| `src/eval_core.kujo` | ~140 | `run_suite`, `compare_runs`, `contract_version` |
+| `src/report.kujo` | ~250 | `generate_markdown_report`, `save_report`, `print_report` |
+| `src/snapshot.kujo` | ~200 | `save_snapshot`, `compare_snapshot`, `list_snapshots`, `delete_snapshot` |
+| `tests/contract_tests.kujo` | ~690 | All contract tests |
 | `docs/improvement-checklist.md` | ~450 | 44 checklist items |

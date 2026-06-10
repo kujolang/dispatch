@@ -141,14 +141,14 @@ run_doc_cmd_watchdog() {
 	exit 1
 }
 
-run_doc_cmd "version" "$KUJO_BIN run main.ruff version"
-run_doc_cmd "list-checks" "$KUJO_BIN run main.ruff list-checks"
-run_doc_cmd "policy-explain" "$KUJO_BIN run main.ruff policy-explain examples/release_gate_suite.json --policy-stage release --json"
+run_doc_cmd "version" "$KUJO_BIN run main.kujo version"
+run_doc_cmd "list-checks" "$KUJO_BIN run main.kujo list-checks"
+run_doc_cmd "policy-explain" "$KUJO_BIN run main.kujo policy-explain examples/release_gate_suite.json --policy-stage release --json"
 run_doc_cmd "command inventory freshness" "bash scripts/generate_command_inventory.sh --check"
 
 run_doc_cmd_watchdog \
 	"run release-gate suite (json)" \
-	"$KUJO_BIN run main.ruff run examples/release_gate_suite.json --output-dir $PARITY_OUT_DIR --json" \
+	"$KUJO_BIN run main.kujo run examples/release_gate_suite.json --output-dir $PARITY_OUT_DIR --json" \
 	"$PARITY_TMP_DIR/readme_parity_run.out" \
 	"" \
 	"$PARITY_OUT_DIR/summary.json" \
@@ -156,7 +156,7 @@ run_doc_cmd_watchdog \
 
 run_doc_cmd_watchdog \
 	"run release-gate suite (summary-only)" \
-	"$KUJO_BIN run main.ruff run examples/release_gate_suite.json --output-dir $PARITY_OUT_DIR --summary-only" \
+	"$KUJO_BIN run main.kujo run examples/release_gate_suite.json --output-dir $PARITY_OUT_DIR --summary-only" \
 	"$PARITY_TMP_DIR/readme_parity_run_summary.out" \
 	"" \
 	"$PARITY_OUT_DIR/summary.json" \
@@ -164,7 +164,7 @@ run_doc_cmd_watchdog \
 
 run_doc_cmd_watchdog \
 	"run release-gate suite (summary channel path)" \
-	"$KUJO_BIN run main.ruff run examples/release_gate_suite.json --output-dir $PARITY_OUT_DIR --summary-channel-path $PARITY_OUT_DIR/run-channel.json --json" \
+	"$KUJO_BIN run main.kujo run examples/release_gate_suite.json --output-dir $PARITY_OUT_DIR --summary-channel-path $PARITY_OUT_DIR/run-channel.json --json" \
 	"$PARITY_TMP_DIR/readme_parity_run_channel.out" \
 	"" \
 	"$PARITY_OUT_DIR/run-channel.json" \
@@ -172,17 +172,17 @@ run_doc_cmd_watchdog \
 
 run_doc_cmd_watchdog \
 	"run release-gate suite (artifact checksums)" \
-	"$KUJO_BIN run main.ruff run examples/release_gate_suite.json --output-dir $PARITY_OUT_DIR --artifact-checksums --json" \
+	"$KUJO_BIN run main.kujo run examples/release_gate_suite.json --output-dir $PARITY_OUT_DIR --artifact-checksums --json" \
 	"$PARITY_TMP_DIR/readme_parity_run_checksums.out" \
 	"" \
 	"$PARITY_OUT_DIR/summary.json" \
 	"$PARITY_OUT_DIR/artifact-manifest.json"
 
-run_doc_cmd "verify-manifest" "$KUJO_BIN run main.ruff verify-manifest --output-dir $PARITY_OUT_DIR --json"
+run_doc_cmd "verify-manifest" "$KUJO_BIN run main.kujo verify-manifest --output-dir $PARITY_OUT_DIR --json"
 
 run_doc_cmd_watchdog \
 	"report release-gate suite (rerun json)" \
-	"$KUJO_BIN run main.ruff report examples/release_gate_suite.json --rerun --output-dir $PARITY_OUT_DIR --json" \
+	"$KUJO_BIN run main.kujo report examples/release_gate_suite.json --rerun --output-dir $PARITY_OUT_DIR --json" \
 	"$PARITY_TMP_DIR/readme_parity_report.out" \
 	"" \
 	"$PARITY_OUT_DIR/summary.json" \
@@ -190,7 +190,7 @@ run_doc_cmd_watchdog \
 
 run_doc_cmd_watchdog \
 	"report release-gate suite (incremental json)" \
-	"$KUJO_BIN run main.ruff report examples/release_gate_suite.json --rerun --output-dir $PARITY_OUT_DIR --incremental --json" \
+	"$KUJO_BIN run main.kujo report examples/release_gate_suite.json --rerun --output-dir $PARITY_OUT_DIR --incremental --json" \
 	"$PARITY_TMP_DIR/readme_parity_report_incremental.out" \
 	"" \
 	"$PARITY_OUT_DIR/summary.json" \
@@ -198,7 +198,7 @@ run_doc_cmd_watchdog \
 
 run_doc_cmd_watchdog \
 	"report release-gate suite (junit)" \
-	"$KUJO_BIN run main.ruff report examples/release_gate_suite.json --rerun --output-dir $PARITY_OUT_DIR --format junit" \
+	"$KUJO_BIN run main.kujo report examples/release_gate_suite.json --rerun --output-dir $PARITY_OUT_DIR --format junit" \
 	"$PARITY_TMP_DIR/readme_parity_report_junit.out" \
 	"" \
 	"$PARITY_OUT_DIR/eval-report.xml" \
@@ -206,7 +206,7 @@ run_doc_cmd_watchdog \
 
 run_doc_cmd_watchdog \
 	"report release-gate suite (tap)" \
-	"$KUJO_BIN run main.ruff report examples/release_gate_suite.json --rerun --output-dir $PARITY_OUT_DIR --format tap" \
+	"$KUJO_BIN run main.kujo report examples/release_gate_suite.json --rerun --output-dir $PARITY_OUT_DIR --format tap" \
 	"$PARITY_TMP_DIR/readme_parity_report_tap.out" \
 	"" \
 	"$PARITY_OUT_DIR/eval-report.tap" \
@@ -214,7 +214,7 @@ run_doc_cmd_watchdog \
 
 run_doc_cmd_watchdog \
 	"quickstart: enterprise CLI gate" \
-	"$KUJO_BIN run main.ruff run examples/enterprise_cli_quality_gate.json --output-dir $PARITY_QS_CLI_OUT_DIR --json" \
+	"$KUJO_BIN run main.kujo run examples/enterprise_cli_quality_gate.json --output-dir $PARITY_QS_CLI_OUT_DIR --json" \
 	"$PARITY_TMP_DIR/readme_parity_qs_cli.out" \
 	"" \
 	"$PARITY_QS_CLI_OUT_DIR/summary.json" \
@@ -222,7 +222,7 @@ run_doc_cmd_watchdog \
 
 run_doc_cmd_watchdog \
 	"quickstart: enterprise API gate" \
-	"$KUJO_BIN run main.ruff run examples/enterprise_api_contract_gate.json --output-dir $PARITY_QS_API_OUT_DIR --parallel-workers 8 --json" \
+	"$KUJO_BIN run main.kujo run examples/enterprise_api_contract_gate.json --output-dir $PARITY_QS_API_OUT_DIR --parallel-workers 8 --json" \
 	"$PARITY_TMP_DIR/readme_parity_qs_api.out" \
 	"" \
 	"$PARITY_QS_API_OUT_DIR/summary.json" \
@@ -230,7 +230,7 @@ run_doc_cmd_watchdog \
 
 run_doc_cmd_watchdog \
 	"quickstart: enterprise agent gate" \
-	"$KUJO_BIN run main.ruff run examples/enterprise_agent_output_gate.json --output-dir $PARITY_QS_AGENT_OUT_DIR --parallel-workers 8 --json" \
+	"$KUJO_BIN run main.kujo run examples/enterprise_agent_output_gate.json --output-dir $PARITY_QS_AGENT_OUT_DIR --parallel-workers 8 --json" \
 	"$PARITY_TMP_DIR/readme_parity_qs_agent.out" \
 	"" \
 	"$PARITY_QS_AGENT_OUT_DIR/summary.json" \
@@ -238,7 +238,7 @@ run_doc_cmd_watchdog \
 
 run_doc_cmd_watchdog \
 	"quickstart: strict enterprise policy gate" \
-	"$KUJO_BIN run main.ruff run examples/strict_enterprise_policy_gate.json --output-dir $PARITY_QS_STRICT_OUT_DIR --json" \
+	"$KUJO_BIN run main.kujo run examples/strict_enterprise_policy_gate.json --output-dir $PARITY_QS_STRICT_OUT_DIR --json" \
 	"$PARITY_TMP_DIR/readme_parity_qs_strict.out" \
 	"" \
 	"$PARITY_QS_STRICT_OUT_DIR/summary.json" \
@@ -246,15 +246,15 @@ run_doc_cmd_watchdog \
 
 run_doc_cmd_watchdog \
 	"quickstart: sandbox-adjacent policy gate" \
-	"$KUJO_BIN run main.ruff run examples/sandbox_adjacent_policy_gate.json --output-dir $PARITY_QS_SANDBOX_OUT_DIR --json" \
+	"$KUJO_BIN run main.kujo run examples/sandbox_adjacent_policy_gate.json --output-dir $PARITY_QS_SANDBOX_OUT_DIR --json" \
 	"$PARITY_TMP_DIR/readme_parity_qs_sandbox.out" \
 	"" \
 	"$PARITY_QS_SANDBOX_OUT_DIR/summary.json" \
 	"$PARITY_QS_SANDBOX_OUT_DIR/artifact-manifest.json"
 
-run_doc_cmd "ecosystem: scout import alias" "printf '[{\"name\":\"scout-docs-check\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}}]' > \"$PARITY_TMP_DIR/ecosystem-scout.json\" && $KUJO_BIN run main.ruff init --name scout-docs-suite --from-scout \"$PARITY_TMP_DIR/ecosystem-scout.json\" && grep -q '\"name\":\"scout-docs-suite\"' eval.json && rm -f eval.json"
+run_doc_cmd "ecosystem: scout import alias" "$KUJO_BIN run main.kujo init --name scout-docs-suite --from-scout examples/fixtures/scout_import.json && grep -q '\"name\":\"scout-docs-suite\"' eval.json && rm -f eval.json"
 
-run_doc_cmd "diff identical files" "$KUJO_BIN run main.ruff diff README.md README.md"
+run_doc_cmd "diff identical files" "$KUJO_BIN run main.kujo diff README.md README.md"
 run_doc_cmd "test command" "$KUJO_BIN test"
 
 if [[ ! -f "docs/COMMAND_INVENTORY.md" ]]; then

@@ -14,28 +14,28 @@ Each item must include tests and validation evidence before being marked complet
 ### [ ] 1.1 Fix interpreter-mode module import/export breakage
 
 Problem:
-- Interpreter execution fails with missing symbols (`dict_get_or`/`normalize_string`) when loading `src/eval_core.ruff`.
+- Interpreter execution fails with missing symbols (`dict_get_or`/`normalize_string`) when loading `src/eval_core.kujo`.
 
 Fix:
 - Correct import paths so utility symbols are imported from `src/common` (or exported consistently where intended).
 - Verify no runtime-only unresolved imports remain across modules.
 
 Verification:
-- `./kujo run main.ruff --interpreter version`
-- `./kujo run main.ruff --interpreter list-checks`
-- `./kujo run main.ruff --interpreter run examples/basic_suite.json --json`
-- Expected result: all commands exit 0 without `RUFRUN001` runtime symbol errors.
+- `./kujo run main.kujo --interpreter version`
+- `./kujo run main.kujo --interpreter list-checks`
+- `./kujo run main.kujo --interpreter run examples/basic_suite.json --json`
+- Expected result: all commands exit 0 without `KUJORUN001` runtime symbol errors.
 
 Files likely affected:
-- `src/eval_core.ruff`
-- `src/config.ruff`
-- `src/common.ruff`
-- `main.ruff`
+- `src/eval_core.kujo`
+- `src/config.kujo`
+- `src/common.kujo`
+- `main.kujo`
 
 ### [ ] 1.2 Eliminate test-validity contradiction between `kujo test` and `test-run`
 
 Problem:
-- `kujo test` passes while `test-run tests/contract_tests.ruff -v` fails 136/136.
+- `kujo test` passes while `test-run tests/contract_tests.kujo -v` fails 136/136.
 
 Fix:
 - Align test execution expectations with real runtime behavior.
@@ -43,13 +43,13 @@ Fix:
 
 Verification:
 - `./kujo test`
-- `./kujo test-run tests/contract_tests.ruff -v`
+- `./kujo test-run tests/contract_tests.kujo -v`
 - Expected result: both pass with no setup/runtime symbol failures.
 
 Files likely affected:
-- `tests/contract_tests.ruff`
-- `src/eval_core.ruff`
-- `main.ruff`
+- `tests/contract_tests.kujo`
+- `src/eval_core.kujo`
+- `main.kujo`
 - `.github/workflows/ci.yml`
 
 ### [ ] 1.3 Repair CI runtime pinning and CLI smoke reliability
@@ -103,14 +103,14 @@ Fix:
 Verification:
 - Add tests with allowed/disallowed command/path scenarios.
 - Run:
-  - `./kujo test-run tests/security_tests.ruff -v`
+  - `./kujo test-run tests/security_tests.kujo -v`
 - Expected result: policy fields are enforced exactly as documented.
 
 Files likely affected:
-- `src/config.ruff`
-- `src/eval_core.ruff`
-- `src/checks.ruff`
-- `tests/security_tests.ruff`
+- `src/config.kujo`
+- `src/eval_core.kujo`
+- `src/checks.kujo`
+- `tests/security_tests.kujo`
 - `schema/eval-suite.schema.json`
 
 ### [ ] 2.2 Fix undefined-variable path logic in file content checks
@@ -123,12 +123,12 @@ Fix:
 - Add regression tests for missing-file behavior in both checks.
 
 Verification:
-- `./kujo test-run tests/contract_tests.ruff -v`
+- `./kujo test-run tests/contract_tests.kujo -v`
 - Expected result: missing-file branches behave deterministically and tests pass.
 
 Files likely affected:
-- `src/checks.ruff`
-- `tests/contract_tests.ruff`
+- `src/checks.kujo`
+- `tests/contract_tests.kujo`
 
 ## Tier 3: Test Coverage and Regression Safety
 
@@ -145,9 +145,9 @@ Verification:
 - Expected result: every documented subcommand has a passing test.
 
 Files likely affected:
-- `tests/cli_integration_tests.ruff`
-- `tests/coverage_tests.ruff`
-- `main.ruff`
+- `tests/cli_integration_tests.kujo`
+- `tests/coverage_tests.kujo`
+- `main.kujo`
 
 ### [ ] 3.2 Add docs-command parity test gate
 
@@ -183,14 +183,14 @@ Verification:
 - Expected result: no module imports common utility symbols from non-owner modules.
 
 Files likely affected:
-- `src/*.ruff`
+- `src/*.kujo`
 - `scripts/release_quality_gates.sh`
 - `.github/workflows/ci.yml`
 
 ### [ ] 4.2 Synchronize `describe_module()` metadata with actual command/report surface
 
 Problem:
-- Metadata in `main.ruff` drifts from implemented commands/report formats.
+- Metadata in `main.kujo` drifts from implemented commands/report formats.
 
 Fix:
 - Generate metadata from single source of truth or add parity tests.
@@ -200,9 +200,9 @@ Verification:
 - Expected result: metadata and implementation remain consistent.
 
 Files likely affected:
-- `main.ruff`
-- `src/report.ruff`
-- `tests/coverage_tests.ruff`
+- `main.kujo`
+- `src/report.kujo`
+- `tests/coverage_tests.kujo`
 
 ## Tier 5: Performance and Scalability
 
@@ -220,7 +220,7 @@ Verification:
 - Expected result: stable watch behavior without tight busy loop.
 
 Files likely affected:
-- `main.ruff`
+- `main.kujo`
 - `docs/ARCHITECTURE.md`
 
 ## Tier 6: Functionality and Product Completeness

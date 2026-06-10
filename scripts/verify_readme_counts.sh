@@ -4,9 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
-check_count="$(awk 'BEGIN{inarr=0;c=0} /export func KNOWN_CHECKS\(\)/{inarr=1} inarr && /"[^"]+"/{c++} inarr && /\]/{print c; exit}' src/config.ruff)"
-command_count="$(awk 'BEGIN{in_section=0;c=0} /print\("Commands:"\)/{in_section=1; next} in_section && /print\("Options:"\)/{print c; exit} in_section && /print\("  [a-z]/{c++}' src/cli.ruff)"
-test_suite_count="$(find tests -maxdepth 1 -type f -name '*_tests.ruff' | wc -l | tr -d ' ')"
+check_count="$(awk 'BEGIN{inarr=0;c=0} /export func KNOWN_CHECKS\(\)/{inarr=1} inarr && /"[^"]+"/{c++} inarr && /\]/{print c; exit}' src/config.kujo)"
+command_count="$(awk 'BEGIN{in_section=0;c=0} /print\("Commands:"\)/{in_section=1; next} in_section && /print\("Options:"\)/{print c; exit} in_section && /print\("  [a-z]/{c++}' src/cli.kujo)"
+test_suite_count="$(find tests -maxdepth 1 -type f -name '*_tests.kujo' | wc -l | tr -d ' ')"
 
 summary_line="$(grep -m1 '^> \*\*v' README.md || true)"
 

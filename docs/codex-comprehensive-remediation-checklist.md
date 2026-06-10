@@ -15,10 +15,10 @@ Purpose:
 The repository is considered ready only when all of the following are true:
 
 1. Core interpreter workflows pass:
-- ./kujo run main.ruff --interpreter version
-- ./kujo run main.ruff --interpreter list-checks
-- ./kujo run main.ruff --interpreter run examples/release_gate_suite.json --output-dir .eval_clean --json
-- ./kujo run main.ruff --interpreter report examples/release_gate_suite.json --rerun --output-dir .eval_clean --json
+- ./kujo run main.kujo --interpreter version
+- ./kujo run main.kujo --interpreter list-checks
+- ./kujo run main.kujo --interpreter run examples/release_gate_suite.json --output-dir .eval_clean --json
+- ./kujo run main.kujo --interpreter report examples/release_gate_suite.json --rerun --output-dir .eval_clean --json
 
 2. Test integrity is consistent:
 - ./kujo test
@@ -87,18 +87,18 @@ Priority: P0
 Why:
 - Core CLI currently fails due unresolved symbols.
 Work:
-- Correct utility symbol ownership and imports across src/eval_core.ruff, src/config.ruff, src/common.ruff.
+- Correct utility symbol ownership and imports across src/eval_core.kujo, src/config.kujo, src/common.kujo.
 - Ensure eval_core does not import symbols from modules that do not export them.
 Files likely affected:
-- src/eval_core.ruff
-- src/config.ruff
-- src/common.ruff
+- src/eval_core.kujo
+- src/config.kujo
+- src/common.kujo
 Verification:
-- ./kujo run main.ruff --interpreter version
-- ./kujo run main.ruff --interpreter list-checks
+- ./kujo run main.kujo --interpreter version
+- ./kujo run main.kujo --interpreter list-checks
 Done when:
-- Both commands exit 0 with no RUFRUN001 undefined symbol errors.
-Completed (2026-05-25): Runtime compatibility fixes in shared helpers and eval core resolved hard command failures. Interpreter commands now exit 0 for version/list-checks/run/report paths; RUFRUN001 warnings are documented runtime caveats.
+- Both commands exit 0 with no KUJORUN001 undefined symbol errors.
+Completed (2026-05-25): Runtime compatibility fixes in shared helpers and eval core resolved hard command failures. Interpreter commands now exit 0 for version/list-checks/run/report paths; KUJORUN001 warnings are documented runtime caveats.
 
 ### [x] R1.2 Validate all interpreter command entrypoints
 Priority: P0
@@ -108,10 +108,10 @@ Work:
 - Execute each command path in main dispatch: init, run, report, compare, list-checks, snapshots, version, watch, lint, diff, export, completion.
 - Fix any path-specific breakage found.
 Files likely affected:
-- main.ruff
-- src/cli.ruff
-- src/report.ruff
-- src/eval_core.ruff
+- main.kujo
+- src/cli.kujo
+- src/report.kujo
+- src/eval_core.kujo
 Verification:
 - Run each subcommand at least once with a minimal valid input.
 Done when:
@@ -125,10 +125,10 @@ Why:
 Work:
 - Remove check_type references in file_contains/file_does_not_contain logic and replace with explicit condition paths.
 Files likely affected:
-- src/checks.ruff
-- tests/contract_tests.ruff
+- src/checks.kujo
+- tests/contract_tests.kujo
 Verification:
-- ./kujo test-run tests/contract_tests.ruff -v
+- ./kujo test-run tests/contract_tests.kujo -v
 Done when:
 - Missing-file branches are deterministic and covered by tests.
 Completed (2026-05-25): Removed undefined local variable references in file content checks and added deterministic missing-file branch assertions in contract tests.
@@ -143,10 +143,10 @@ Work:
 - Align test execution model and setup assumptions.
 - Make failures reproducible in both aggregate and direct mode.
 Files likely affected:
-- tests/contract_tests.ruff
-- tests/cli_integration_tests.ruff
-- tests/coverage_tests.ruff
-- src/eval_core.ruff
+- tests/contract_tests.kujo
+- tests/cli_integration_tests.kujo
+- tests/coverage_tests.kujo
+- src/eval_core.kujo
 Verification:
 - ./kujo test
 - ./kujo test --runtime interpreter
@@ -161,13 +161,13 @@ Why:
 Work:
 - Add tests that execute all documented subcommands in interpreter mode.
 Files likely affected:
-- tests/cli_integration_tests.ruff
-- tests/coverage_tests.ruff
+- tests/cli_integration_tests.kujo
+- tests/coverage_tests.kujo
 Verification:
 - Targeted CLI integration suite run passes.
 Done when:
 - Every public command has at least one direct integration assertion.
-Completed (2026-05-25): Interpreter command matrix coverage added in `tests/cli_integration_tests.ruff` and included in standard suite pass path.
+Completed (2026-05-25): Interpreter command matrix coverage added in `tests/cli_integration_tests.kujo` and included in standard suite pass path.
 
 ### [x] R2.3 Add docs-command parity suite
 Priority: P1
@@ -192,13 +192,13 @@ Why:
 Work:
 - Add negative tests for path traversal, command policy denial, malformed JSON path, missing required params.
 Files likely affected:
-- tests/security_tests.ruff
-- tests/contract_tests.ruff
+- tests/security_tests.kujo
+- tests/contract_tests.kujo
 Verification:
 - Security and contract suites pass with new cases.
 Done when:
 - Critical check types have explicit denial/failure coverage.
-Completed (2026-05-25): Added negative-path assertions in `tests/security_tests.ruff` for command allowlist denial, malformed stdout JSON-path checks, and allowed-path enforcement for file/directory comparisons.
+Completed (2026-05-25): Added negative-path assertions in `tests/security_tests.kujo` for command allowlist denial, malformed stdout JSON-path checks, and allowed-path enforcement for file/directory comparisons.
 
 ## Phase 3: Security Hardening And Trust Boundaries
 
@@ -209,9 +209,9 @@ Why:
 Work:
 - Thread allowed_commands through config loading and run/check execution context.
 Files likely affected:
-- src/config.ruff
-- src/eval_core.ruff
-- src/checks.ruff
+- src/config.kujo
+- src/eval_core.kujo
+- src/checks.kujo
 Verification:
 - Add and run tests for allowed/blocked command behavior.
 Done when:
@@ -225,8 +225,8 @@ Why:
 Work:
 - Thread allowed_paths into all file-oriented checks and shared validation helpers.
 Files likely affected:
-- src/eval_core.ruff
-- src/checks.ruff
+- src/eval_core.kujo
+- src/checks.kujo
 - schema/eval-suite.schema.json
 Verification:
 - Tests demonstrate allowlisted path success and disallowed path rejection.
@@ -241,8 +241,8 @@ Why:
 Work:
 - Either implement enforcement or remove/clearly mark as unsupported.
 Files likely affected:
-- src/config.ruff
-- src/checks.ruff
+- src/config.kujo
+- src/checks.kujo
 - schema/eval-suite.schema.json
 - docs/SECURITY.md
 Verification:
@@ -258,8 +258,8 @@ Why:
 Work:
 - Add regression tests for token=, api_key=, bearer token patterns in stdout/stderr.
 Files likely affected:
-- tests/security_tests.ruff
-- src/checks.ruff
+- tests/security_tests.kujo
+- src/checks.kujo
 Verification:
 - Security suite confirms secrets are redacted.
 Done when:
@@ -305,8 +305,8 @@ Work:
 - Repair gate checks and assumptions for current command surface.
 Files likely affected:
 - scripts/release_quality_gates.sh
-- src/cli.ruff
-- main.ruff
+- src/cli.kujo
+- main.kujo
 Verification:
 - bash scripts/release_quality_gates.sh
 Done when:
@@ -372,8 +372,8 @@ Why:
 Work:
 - Update describe_module command/report arrays or generate dynamically.
 Files likely affected:
-- main.ruff
-- src/report.ruff
+- main.kujo
+- src/report.kujo
 Verification:
 - Add tests asserting metadata includes all supported commands/report formats.
 Done when:
@@ -387,8 +387,8 @@ Why:
 Work:
 - Ensure success/failure usage error codes match documented contract.
 Files likely affected:
-- main.ruff
-- src/cli.ruff
+- main.kujo
+- src/cli.kujo
 - README.md
 Verification:
 - Add command-level exit-code tests.
@@ -403,9 +403,9 @@ Why:
 Work:
 - Verify run/report JSON output envelope consistency for success and error cases.
 Files likely affected:
-- main.ruff
-- src/report.ruff
-- tests/contract_tests.ruff
+- main.kujo
+- src/report.kujo
+- tests/contract_tests.kujo
 Verification:
 - Contract tests for JSON keys and types pass.
 Done when:
@@ -510,8 +510,8 @@ Why:
 Work:
 - Add tests or controlled checks validating watch loop responsiveness and non-crashing behavior.
 Files likely affected:
-- main.ruff
-- tests/cli_integration_tests.ruff
+- main.kujo
+- tests/cli_integration_tests.kujo
 Verification:
 - Watch tests pass under controlled file-change simulation.
 Done when:
@@ -524,8 +524,8 @@ Why:
 Work:
 - Calibrate thresholds with baseline runs and include margin rationale.
 Files likely affected:
-- tests/benchmark_tests.ruff
-- tests/stress_tests.ruff
+- tests/benchmark_tests.kujo
+- tests/stress_tests.kujo
 Verification:
 - Bench/stress tests are stable and meaningful across repeated runs.
 Done when:

@@ -66,17 +66,17 @@ Fix:
 - Add tests that create symlinked paths attempting to escape allowed roots and assert rejection.
 
 Verification:
-- `kujo test-run tests/security_tests.ruff -v`
+- `kujo test-run tests/security_tests.kujo -v`
 - Expected result: symlink-escape attempts are rejected with stable policy errors.
 
 Completion notes (2026-05-26):
-- Added policy enforcement in `src/checks.ruff` to reject candidate paths that resolve through symbolic-link segments when `allowed_paths` is active.
-- Added regressions in `tests/security_tests.ruff` for both `check_file_exists` and `check_file_contains` symlink-escape attempts.
+- Added policy enforcement in `src/checks.kujo` to reject candidate paths that resolve through symbolic-link segments when `allowed_paths` is active.
+- Added regressions in `tests/security_tests.kujo` for both `check_file_exists` and `check_file_contains` symlink-escape attempts.
 - Verified with `kujo test` and full release gates (`scripts/release_quality_gates.sh`).
 
 Files likely affected:
-- `tests/security_tests.ruff`
-- `src/checks.ruff`
+- `tests/security_tests.kujo`
+- `src/checks.kujo`
 
 ### [x] 2.2 Add redaction-policy regression for nested structured outputs
 
@@ -87,19 +87,19 @@ Fix:
 - Add tests for deeply nested fields matching `redact_output_patterns` and ensure emitted artifacts are redacted consistently.
 
 Verification:
-- `kujo test-run tests/security_tests.ruff -v`
+- `kujo test-run tests/security_tests.kujo -v`
 - Expected result: no raw secret token appears in result payload or persisted artifacts.
 
 Completion notes (2026-05-26):
-- Expanded `redact_sensitive_with_audit` in `src/checks.ruff` to detect JSON-style nested secrets (for example `"token":`, `"access_token":`, `"password":`, `"secret":`, `"api_key":`) with case-insensitive matching.
-- Added security regression in `tests/security_tests.ruff` for nested JSON token/api_key masking and redaction audit metadata.
-- Added artifact persistence regression in `tests/cli_integration_tests.ruff` to assert `last_run.json` never stores raw nested secret values.
+- Expanded `redact_sensitive_with_audit` in `src/checks.kujo` to detect JSON-style nested secrets (for example `"token":`, `"access_token":`, `"password":`, `"secret":`, `"api_key":`) with case-insensitive matching.
+- Added security regression in `tests/security_tests.kujo` for nested JSON token/api_key masking and redaction audit metadata.
+- Added artifact persistence regression in `tests/cli_integration_tests.kujo` to assert `last_run.json` never stores raw nested secret values.
 - Verified with `kujo test` and full release gates (`scripts/release_quality_gates.sh`).
 
 Files likely affected:
-- `tests/security_tests.ruff`
-- `src/checks.ruff`
-- `src/eval_core.ruff`
+- `tests/security_tests.kujo`
+- `src/checks.kujo`
+- `src/eval_core.kujo`
 
 ## Tier 3: Performance and Scale
 
@@ -112,12 +112,12 @@ Fix:
 - Add threshold fields for benchmark suite duration budgets and fail when exceeded.
 
 Verification:
-- `kujo test-run tests/benchmark_tests.ruff -v`
+- `kujo test-run tests/benchmark_tests.kujo -v`
 - `scripts/release_quality_gates.sh`
 - Expected result: benchmark budget failures are explicit and actionable.
 
 Completion notes (2026-05-26):
-- Added medium and large fixture runtime benchmarks in `tests/benchmark_tests.ruff` (`medium_fixture_suite_x1`, `large_fixture_suite_x1`).
+- Added medium and large fixture runtime benchmarks in `tests/benchmark_tests.kujo` (`medium_fixture_suite_x1`, `large_fixture_suite_x1`).
 - Added configurable benchmark budget gates in `scripts/release_quality_gates.sh`:
 	- `KUJO_EVAL_BENCH_SUITE_BUDGET_MS`
 	- `KUJO_EVAL_BENCH_MEDIUM_SUITE_BUDGET_MS`
@@ -125,7 +125,7 @@ Completion notes (2026-05-26):
 - Gate now fails with explicit budget messages when suite, medium fixture, or large fixture durations exceed configured thresholds.
 
 Files likely affected:
-- `tests/benchmark_tests.ruff`
+- `tests/benchmark_tests.kujo`
 - `scripts/release_quality_gates.sh`
 - `README.md`
 
@@ -138,18 +138,18 @@ Fix:
 - Introduce a larger fixture suite that stresses file checks, manifest generation, and report rendering.
 
 Verification:
-- `kujo run main.ruff run examples/io_heavy_regression_suite.json --output-dir .eval_perf_probe --json`
+- `kujo run main.kujo run examples/io_heavy_regression_suite.json --output-dir .eval_perf_probe --json`
 - `kujo test`
 - Expected result: no regression in pass/fail behavior and bounded runtime increase.
 
 Completion notes (2026-05-26):
 - Added `examples/io_heavy_regression_suite.json` with fixture-heavy file, directory, JSON-shape, and command checks to increase I/O and artifact pressure while remaining deterministic.
-- Added benchmark regression coverage in `tests/benchmark_tests.ruff` (`io_heavy_fixture_suite_x1`).
+- Added benchmark regression coverage in `tests/benchmark_tests.kujo` (`io_heavy_fixture_suite_x1`).
 - Extended release gates in `scripts/release_quality_gates.sh` with `KUJO_EVAL_BENCH_IO_HEAVY_SUITE_BUDGET_MS` and explicit pass/fail output for I/O-heavy suite duration.
 - Documented probe workflow in `docs/ARCHITECTURE.md` and benchmark budget env var in `README.md`.
 
 Files likely affected:
-- `tests/benchmark_tests.ruff`
+- `tests/benchmark_tests.kujo`
 - `examples/`
 - `docs/ARCHITECTURE.md`
 
@@ -164,8 +164,8 @@ Fix:
 - Add new examples showing minimum-privilege `allowed_commands`, `allowed_paths`, `allowed_env_vars`, and redaction defaults.
 
 Verification:
-- `kujo run main.ruff run examples/strict_enterprise_policy_gate.json --output-dir .eval_enterprise_strict --json`
-- `kujo run main.ruff run examples/sandbox_adjacent_policy_gate.json --output-dir .eval_sandbox_adjacent --json`
+- `kujo run main.kujo run examples/strict_enterprise_policy_gate.json --output-dir .eval_enterprise_strict --json`
+- `kujo run main.kujo run examples/sandbox_adjacent_policy_gate.json --output-dir .eval_sandbox_adjacent --json`
 - Expected result: examples execute and demonstrate locked-down policy defaults.
 
 Completion notes (2026-05-26):
@@ -219,7 +219,7 @@ Verification:
 Completion notes (2026-05-26):
 - Added Gate 13 in `scripts/release_quality_gates.sh` to enforce changelog coverage for behavior-affecting file changes.
 - Gate computes diff scope from `KUJO_EVAL_CHANGELOG_BASE_REF` (default `origin/main`) with local fallback (`HEAD~1...HEAD`) and also checks staged/unstaged worktree deltas.
-- Gate classifies behavior changes across `main.ruff`, `kennel.toml`, and files under `src/`, `scripts/`, `examples/`, `schema/`, and `tests/`; if any are present without `CHANGELOG.md`, release gating fails.
+- Gate classifies behavior changes across `main.kujo`, `kennel.toml`, and files under `src/`, `scripts/`, `examples/`, `schema/`, and `tests/`; if any are present without `CHANGELOG.md`, release gating fails.
 - Added an `Unreleased` section in `CHANGELOG.md` covering recent feature/tweak/docs changes.
 - Updated `docs/CONTRIBUTING.md` with changelog gate expectations and base-ref override guidance.
 

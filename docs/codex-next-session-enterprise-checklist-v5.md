@@ -32,9 +32,9 @@ Work:
 - Refactor remaining legacy handlers to use `make_check_success` / `make_check_error`.
 - Verify `run_suite`, report generation, and CLI JSON output maintain stable fields.
 Files likely affected:
-- `src/checks.ruff`
-- `tests/coverage_tests.ruff`
-- `tests/contract_tests.ruff`
+- `src/checks.kujo`
+- `tests/coverage_tests.kujo`
+- `tests/contract_tests.kujo`
 Verification:
 - Contract suite asserts envelope parity for all check handlers.
 - No empty per-test messages/details in run artifacts for converted checks.
@@ -47,7 +47,7 @@ Work:
 - Validate fixtures in CI against generated artifacts.
 Files likely affected:
 - `scripts/verify_artifact_contract.sh`
-- `tests/cli_integration_tests.ruff`
+- `tests/cli_integration_tests.kujo`
 - `docs/API_REFERENCE.md`
 - new fixtures under `examples/fixtures/`
 Verification:
@@ -62,9 +62,9 @@ Work:
 - Extend `policy-explain` output with deterministic risk-tier hints based on effective policy.
 - Include explicit warnings for open command/path posture in `ci` and `release` stages.
 Files likely affected:
-- `src/config.ruff`
-- `main.ruff`
-- `tests/cli_integration_tests.ruff`
+- `src/config.kujo`
+- `main.kujo`
+- `tests/cli_integration_tests.kujo`
 Verification:
 - CLI tests confirm stable warning/hint payloads for permissive and strict configs.
 
@@ -75,10 +75,10 @@ Work:
 - Add optional `blocked_http_hosts` / `allowed_http_hosts` policy controls for `http_status` and `http_body_contains`.
 - Enforce in check layer and document default behavior.
 Files likely affected:
-- `src/checks.ruff`
-- `src/config.ruff`
+- `src/checks.kujo`
+- `src/config.kujo`
 - `schema/eval-suite.schema.json`
-- `tests/security_tests.ruff`
+- `tests/security_tests.kujo`
 Verification:
 - Security tests cover allowed host, blocked host, and mixed policy precedence.
 
@@ -91,9 +91,9 @@ Work:
 - Expand fastpath support to deterministic file-backed checks (`file_line_count`, `file_matches_glob`, `file_matches_regex`) where safe.
 - Preserve deterministic result order and policy semantics.
 Files likely affected:
-- `src/eval_core.ruff`
-- `tests/stress_tests.ruff`
-- `tests/benchmark_tests.ruff`
+- `src/eval_core.kujo`
+- `tests/stress_tests.kujo`
+- `tests/benchmark_tests.kujo`
 Verification:
 - Benchmark suite shows wall-clock improvement on mixed file-only workloads without outcome changes.
 
@@ -103,9 +103,9 @@ Why:
 Work:
 - Emit deterministic counters for cache hit/miss and bytes reused in run results + report summary.
 Files likely affected:
-- `src/eval_core.ruff`
-- `src/report.ruff`
-- `tests/benchmark_tests.ruff`
+- `src/eval_core.kujo`
+- `src/report.kujo`
+- `tests/benchmark_tests.kujo`
 Verification:
 - Tests assert cache metrics presence and monotonic behavior on repeated paths.
 

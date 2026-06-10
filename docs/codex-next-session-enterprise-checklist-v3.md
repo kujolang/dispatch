@@ -31,10 +31,10 @@ Work:
 - Introduce hard-kill timeout semantics in runtime command execution path.
 - Keep backward-compatible behavior for existing suites.
 Files likely affected:
-- `src/checks.ruff`
-- `src/eval_core.ruff`
-- `tests/security_tests.ruff`
-- `tests/cli_integration_tests.ruff`
+- `src/checks.kujo`
+- `src/eval_core.kujo`
+- `tests/security_tests.kujo`
+- `tests/cli_integration_tests.kujo`
 Verification:
 - Add tests that prove timed-out commands are actually terminated and do not leak child processes.
 
@@ -45,9 +45,9 @@ Work:
 - Add first-class machine-readable summary channel that does not rely on stdout capture timing.
 - Keep human-readable output unchanged for local users.
 Files likely affected:
-- `main.ruff`
-- `src/report.ruff`
-- `tests/contract_tests.ruff`
+- `main.kujo`
+- `src/report.kujo`
+- `tests/contract_tests.kujo`
 Verification:
 - New tests verify deterministic completion for run/report in captured output contexts.
 
@@ -60,9 +60,9 @@ Work:
 - Add optional manifest checksum block (`sha256` for generated artifacts).
 - Add verification mode for manifest integrity.
 Files likely affected:
-- `main.ruff`
-- `src/common.ruff`
-- `tests/cli_integration_tests.ruff`
+- `main.kujo`
+- `src/common.kujo`
+- `tests/cli_integration_tests.kujo`
 - `README.md`
 Verification:
 - Integration test validates checksum generation and mismatch detection.
@@ -73,9 +73,9 @@ Why:
 Work:
 - Add per-stage policy overlays without breaking current profile defaults.
 Files likely affected:
-- `src/config.ruff`
+- `src/config.kujo`
 - `schema/eval-suite.schema.json`
-- `tests/security_tests.ruff`
+- `tests/security_tests.kujo`
 - `docs/SECURITY.md`
 Verification:
 - Policy tests confirm stage overlay precedence and safe defaults.
@@ -89,9 +89,9 @@ Work:
 - Add opt-in parallel scheduler for tests without dependency constraints.
 - Preserve deterministic ordering for reporting.
 Files likely affected:
-- `src/eval_core.ruff`
-- `src/report.ruff`
-- `tests/stress_tests.ruff`
+- `src/eval_core.kujo`
+- `src/report.kujo`
+- `tests/stress_tests.kujo`
 Verification:
 - Stress tests compare serial vs parallel result equivalence and timing improvements.
 
@@ -101,9 +101,9 @@ Why:
 Work:
 - Add content hash checks to skip redundant report writes where safe.
 Files likely affected:
-- `main.ruff`
-- `src/report.ruff`
-- `tests/cli_integration_tests.ruff`
+- `main.kujo`
+- `src/report.kujo`
+- `tests/cli_integration_tests.kujo`
 Verification:
 - Integration test proves unchanged reruns avoid redundant writes while preserving correctness.
 

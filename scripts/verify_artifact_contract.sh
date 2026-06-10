@@ -33,7 +33,7 @@ trap cleanup_contract_artifacts EXIT
 rm -rf "$CONTRACT_OUT_DIR"
 
 echo "[CONTRACT] run release gate suite with checksums"
-if ! "$KUJO_BIN" run main.ruff run examples/release_gate_suite.json --output-dir "$CONTRACT_OUT_DIR" --artifact-checksums --json > "$CONTRACT_LOG_FILE" 2>&1; then
+if ! "$KUJO_BIN" run main.kujo run examples/release_gate_suite.json --output-dir "$CONTRACT_OUT_DIR" --artifact-checksums --json > "$CONTRACT_LOG_FILE" 2>&1; then
 	fail_contract "run command failed"
 fi
 
@@ -83,7 +83,7 @@ if [ ! -f "$CHANNEL_REPORT_PATH" ]; then
 fi
 
 echo "[CONTRACT] verify manifest checksums"
-if ! "$KUJO_BIN" run main.ruff verify-manifest --output-dir "$CONTRACT_OUT_DIR" --json > /dev/null 2>&1; then
+if ! "$KUJO_BIN" run main.kujo verify-manifest --output-dir "$CONTRACT_OUT_DIR" --json > /dev/null 2>&1; then
 	fail_contract "verify-manifest failed"
 fi
 

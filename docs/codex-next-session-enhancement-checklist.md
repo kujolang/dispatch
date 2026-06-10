@@ -23,12 +23,12 @@ Work:
 - Add optional `allowed_command_patterns` and `blocked_arg_patterns` policy fields.
 - Enforce in `run_shell_with_policy` before execution.
 Files likely affected:
-- src/checks.ruff
-- src/config.ruff
+- src/checks.kujo
+- src/config.kujo
 - schema/eval-suite.schema.json
 - docs/SECURITY.md
 Verification:
-- Add positive/negative tests in `tests/security_tests.ruff`.
+- Add positive/negative tests in `tests/security_tests.kujo`.
 - `kujo test` and `kujo test --runtime interpreter` pass.
 
 ### [x] A2 — Add explicit path normalization guardrails (P0)
@@ -38,8 +38,8 @@ Work:
 - Normalize candidate paths before `is_path_safe` prefix checks.
 - Add tests for normalization edge cases.
 Files likely affected:
-- src/checks.ruff
-- tests/security_tests.ruff
+- src/checks.kujo
+- tests/security_tests.kujo
 Verification:
 - Traversal and out-of-bound attempts still fail; valid normalized paths pass.
 
@@ -49,8 +49,8 @@ Why:
 Work:
 - Add optional metadata fields for redaction hit count and pattern tags in check details.
 Files likely affected:
-- src/checks.ruff
-- src/report.ruff
+- src/checks.kujo
+- src/report.kujo
 - docs/SECURITY.md
 Verification:
 - Security tests assert metadata is present without leaking original secrets.
@@ -64,8 +64,8 @@ Work:
 - Add optional perf summary JSON output under `eval_results/benchmarks.json`.
 - Include mean/total timings for benchmark and stress suites.
 Files likely affected:
-- tests/benchmark_tests.ruff
-- tests/stress_tests.ruff
+- tests/benchmark_tests.kujo
+- tests/stress_tests.kujo
 - scripts/release_quality_gates.sh
 Verification:
 - Artifact generated and validated in gates.
@@ -76,8 +76,8 @@ Why:
 Work:
 - Pre-normalize filter/tag lists once and avoid repeated `trim` inside hot loops.
 Files likely affected:
-- src/eval_core.ruff
-- tests/benchmark_tests.ruff
+- src/eval_core.kujo
+- tests/benchmark_tests.kujo
 Verification:
 - No behavior changes; benchmark trend shows non-regression or improvement.
 
@@ -88,7 +88,7 @@ Work:
 - Add fixture with mixed check types and dependency graph.
 - Validate stable pass/fail/skipped accounting.
 Files likely affected:
-- tests/stress_tests.ruff
+- tests/stress_tests.kujo
 - examples/
 Verification:
 - New fixture passes in both runtimes.
@@ -114,7 +114,7 @@ Work:
 - Add integration tests for each class.
 Files likely affected:
 - README.md
-- tests/cli_integration_tests.ruff
+- tests/cli_integration_tests.kujo
 Verification:
 - Tests and docs parity checks pass.
 
@@ -124,10 +124,10 @@ Why:
 Work:
 - Add `--summary-only` to print deterministic single-screen status.
 Files likely affected:
-- main.ruff
-- src/report.ruff
-- src/cli.ruff
-- tests/cli_integration_tests.ruff
+- main.kujo
+- src/report.kujo
+- src/cli.kujo
+- tests/cli_integration_tests.kujo
 Verification:
 - New mode tested; existing JSON/report behavior unchanged.
 

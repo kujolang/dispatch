@@ -15,23 +15,23 @@ Core goals:
 
 | Component | Responsibility | Primary Files |
 |---|---|---|
-| CLI entrypoint | Command dispatch and artifact orchestration | `main.ruff`, `src/cli.ruff` |
-| Config loader | Parse, normalize, validate suite contract | `src/config.ruff`, `schema/eval-suite.schema.json` |
-| Evaluation engine | Execute tests, retries/dependencies, result accounting | `src/eval_core.ruff` |
-| Check runtime | Assertion implementations and command/file safety | `src/checks.ruff` |
-| Report renderer | Markdown/HTML/JUnit/TAP/NDJSON generation + caching | `src/report.ruff` |
-| Snapshot manager | Snapshot store, compare, lifecycle helpers | `src/snapshot.ruff` |
+| CLI entrypoint | Command dispatch and artifact orchestration | `main.kujo`, `src/cli.kujo` |
+| Config loader | Parse, normalize, validate suite contract | `src/config.kujo`, `schema/eval-suite.schema.json` |
+| Evaluation engine | Execute tests, retries/dependencies, result accounting | `src/eval_core.kujo` |
+| Check runtime | Assertion implementations and command/file safety | `src/checks.kujo` |
+| Report renderer | Markdown/HTML/JUnit/TAP/NDJSON generation + caching | `src/report.kujo` |
+| Snapshot manager | Snapshot store, compare, lifecycle helpers | `src/snapshot.kujo` |
 
 ## Run Lifecycle
 
 ```mermaid
 sequenceDiagram
     participant User as User/CI
-    participant CLI as main.ruff (run)
-    participant Config as src/config.ruff
-    participant Core as src/eval_core.ruff
-    participant Checks as src/checks.ruff
-    participant Report as src/report.ruff
+    participant CLI as main.kujo (run)
+    participant Config as src/config.kujo
+    participant Core as src/eval_core.kujo
+    participant Checks as src/checks.kujo
+    participant Report as src/report.kujo
     participant FS as Artifact Filesystem
 
     User->>CLI: run [config] [flags]
@@ -97,8 +97,8 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     participant User as User/CI
-    participant Watch as main.ruff (watch)
-    participant Core as src/eval_core.ruff
+    participant Watch as main.kujo (watch)
+    participant Core as src/eval_core.kujo
     participant FS as Filesystem
 
     User->>Watch: watch --config ... --poll-ms ...
@@ -143,7 +143,7 @@ This suite exercises larger file and directory checks, JSON shape checks, and co
 Recommended probe command:
 
 ```bash
-kujo run main.ruff run examples/io_heavy_regression_suite.json --output-dir .eval_perf_probe --json
+kujo run main.kujo run examples/io_heavy_regression_suite.json --output-dir .eval_perf_probe --json
 ```
 
 Release quality gates consume this fixture as part of benchmark budget enforcement to catch unexpected runtime growth early.
@@ -178,15 +178,15 @@ Determinism is preserved by:
 
 To add a new check:
 
-1. implement check handler in `src/checks.ruff`
+1. implement check handler in `src/checks.kujo`
 2. register in dispatcher (`run_check`)
-3. add to `KNOWN_CHECKS` in `src/config.ruff`
+3. add to `KNOWN_CHECKS` in `src/config.kujo`
 4. update schema enum and docs
 5. add contract + integration coverage in `tests/`
 
 To add a new output/report flow:
 
-1. add generator in `src/report.ruff`
+1. add generator in `src/report.kujo`
 2. wire format handling in save/print paths
 3. update CLI help and docs parity script
 4. add coverage tests for output structure and persistence behavior

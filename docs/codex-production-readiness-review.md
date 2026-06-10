@@ -24,8 +24,8 @@ kujo-eval now clears the previously blocking areas from the 2026-05-24 fail revi
 |---|---|---|
 | `kujo test` | PASS | 7/7 suites pass |
 | `kujo test --runtime interpreter` | PASS | 7/7 suites pass |
-| `kujo run main.ruff --interpreter version` | PASS | Exit 0, expected version output |
-| `kujo run main.ruff --interpreter list-checks` | PASS | Exit 0, 27 check types listed |
+| `kujo run main.kujo --interpreter version` | PASS | Exit 0, expected version output |
+| `kujo run main.kujo --interpreter list-checks` | PASS | Exit 0, 27 check types listed |
 | `bash scripts/verify_test_runtime_parity.sh` | PASS | Dual/interpreter parity validated |
 | `bash scripts/verify_docs_command_parity.sh` | PASS | README command matrix validated |
 | `bash scripts/release_quality_gates.sh` | PASS | All 11 gates pass |
@@ -54,7 +54,7 @@ kujo-eval now clears the previously blocking areas from the 2026-05-24 fail revi
 ## Residual Risks / Known Limitations
 
 These are known and documented, not release blockers for this candidate:
-- Interpreter mode emits RUFRUN001 type-check warnings on stderr in current runtime behavior even when commands succeed.
+- Interpreter mode emits KUJORUN001 type-check warnings on stderr in current runtime behavior even when commands succeed.
 - Timeout handling remains detection-oriented; long-running subprocess termination is runtime-constrained.
 - `watch` command is intentionally long-running and should be manually interrupted.
 

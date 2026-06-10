@@ -105,24 +105,24 @@ When running examples in this README, replace `kujo` with `"$KUJO_BIN"` if your 
 Older repository docs and shell snippets may still show interpreter-era commands such as:
 
 ```bash
-kujo run main.ruff --interpreter run <suite>
+kujo run main.kujo --interpreter run <suite>
 ```
 
 Current recommended default is VM-first execution:
 
 ```bash
-kujo run main.ruff run <suite>
+kujo run main.kujo run <suite>
 ```
 
 Use `--interpreter` only for runtime compatibility checks, warning investigations, or parity debugging.
 
 Migration mapping:
 
-- Legacy: `kujo run main.ruff --interpreter <command>`
-- Preferred: `kujo run main.ruff <command>`
-- Optional compatibility check: `kujo run main.ruff --interpreter <command>`
+- Legacy: `kujo run main.kujo --interpreter <command>`
+- Preferred: `kujo run main.kujo <command>`
+- Optional compatibility check: `kujo run main.kujo --interpreter <command>`
 
-Interpreter mode can emit RUFRUN001 warning noise while still succeeding; rely on exit code plus generated artifacts (`summary.json`, `artifact-manifest.json`) for CI pass/fail decisions.
+Interpreter mode can emit KUJORUN001 warning noise while still succeeding; rely on exit code plus generated artifacts (`summary.json`, `artifact-manifest.json`) for CI pass/fail decisions.
 
 ## Operational Watchdog Controls
 
@@ -169,7 +169,7 @@ scripts/release_quality_gates.sh
 
 ## Known Runtime Limitations
 
-- Interpreter mode may print RUFRUN001 type-check warnings even when commands exit successfully.
+- Interpreter mode may print KUJORUN001 type-check warnings even when commands exit successfully.
 - Command checks support native process timeout termination through `timeout_ms` and suite-level `timeout_seconds`.
 - `watch` is intentionally long-running and should be interrupted manually in local shells.
 - Command and file checks run in the host environment and are not a full sandbox boundary.
@@ -245,56 +245,56 @@ See architecture and lifecycle diagrams in [`docs/ARCHITECTURE.md`](docs/ARCHITE
 
 ```bash
 # Initialize an eval suite
-kujo run main.ruff init --name my-suite
+kujo run main.kujo init --name my-suite
 
 # Run the suite (with optional flags)
-kujo run main.ruff run
+kujo run main.kujo run
 
 # Run with filtering and HTML output
-kujo run main.ruff run --filter auth --format html
+kujo run main.kujo run --filter auth --format html
 
 # Run quietly (CI mode — summary only)
-kujo run main.ruff run --quiet --json
+kujo run main.kujo run --quiet --json
 
 # Run with a compact one-line human summary
-kujo run main.ruff run --summary-only
+kujo run main.kujo run --summary-only
 
 # Run explicit suite with isolated output directory (recommended for scripts)
-kujo run main.ruff run examples/release_gate_suite.json --output-dir .eval_quickstart --json
+kujo run main.kujo run examples/release_gate_suite.json --output-dir .eval_quickstart --json
 
 # Enterprise quickstart bundles (policy-first)
-kujo run main.ruff run examples/enterprise_cli_quality_gate.json --output-dir .eval_enterprise_cli --json
-kujo run main.ruff run examples/enterprise_api_contract_gate.json --output-dir .eval_enterprise_api --parallel-workers 8 --json
-kujo run main.ruff run examples/enterprise_agent_output_gate.json --output-dir .eval_enterprise_agent --parallel-workers 8 --json
-kujo run main.ruff run examples/strict_enterprise_policy_gate.json --output-dir .eval_enterprise_strict --json
-kujo run main.ruff run examples/sandbox_adjacent_policy_gate.json --output-dir .eval_sandbox_adjacent --json
+kujo run main.kujo run examples/enterprise_cli_quality_gate.json --output-dir .eval_enterprise_cli --json
+kujo run main.kujo run examples/enterprise_api_contract_gate.json --output-dir .eval_enterprise_api --parallel-workers 8 --json
+kujo run main.kujo run examples/enterprise_agent_output_gate.json --output-dir .eval_enterprise_agent --parallel-workers 8 --json
+kujo run main.kujo run examples/strict_enterprise_policy_gate.json --output-dir .eval_enterprise_strict --json
+kujo run main.kujo run examples/sandbox_adjacent_policy_gate.json --output-dir .eval_sandbox_adjacent --json
 
 # Emit machine summary channel to an explicit path for automation
-kujo run main.ruff run examples/release_gate_suite.json --output-dir .eval_quickstart --summary-channel-path .eval_quickstart/run-channel.json --json
+kujo run main.kujo run examples/release_gate_suite.json --output-dir .eval_quickstart --summary-channel-path .eval_quickstart/run-channel.json --json
 
 # Generate report artifacts (md/html/junit/tap/ndjson)
-kujo run main.ruff report --format html
-kujo run main.ruff report --format junit
-kujo run main.ruff report --format tap
+kujo run main.kujo report --format html
+kujo run main.kujo report --format junit
+kujo run main.kujo report --format tap
 
 # Re-run and report explicit suite using isolated output directory
-kujo run main.ruff report examples/release_gate_suite.json --rerun --output-dir .eval_quickstart --json
+kujo run main.kujo report examples/release_gate_suite.json --rerun --output-dir .eval_quickstart --json
 
 # Emit report machine summary channel to an explicit path
-kujo run main.ruff report examples/release_gate_suite.json --rerun --output-dir .eval_quickstart --summary-channel-path .eval_quickstart/report-channel.json --json
+kujo run main.kujo report examples/release_gate_suite.json --rerun --output-dir .eval_quickstart --summary-channel-path .eval_quickstart/report-channel.json --json
 
 # Enable manifest checksums and verify artifact integrity
-kujo run main.ruff run examples/release_gate_suite.json --output-dir .eval_quickstart --artifact-checksums --json
-kujo run main.ruff verify-manifest --output-dir .eval_quickstart --json
+kujo run main.kujo run examples/release_gate_suite.json --output-dir .eval_quickstart --artifact-checksums --json
+kujo run main.kujo verify-manifest --output-dir .eval_quickstart --json
 
 # List available check types
-kujo run main.ruff list-checks
+kujo run main.kujo list-checks
 
 # Print contract version
-kujo run main.ruff version
+kujo run main.kujo version
 
 # Explain effective policy overlays
-kujo run main.ruff policy-explain examples/release_gate_suite.json --policy-stage release --json
+kujo run main.kujo policy-explain examples/release_gate_suite.json --policy-stage release --json
 ```
 
 `init` scaffolds a starter suite; edit the generated file before you rely on `validate` or `run`.
@@ -303,15 +303,15 @@ kujo run main.ruff policy-explain examples/release_gate_suite.json --policy-stag
 
 | Risk Tier | Best Fit | Command |
 |---|---|---|
-| Tier 1 (Local dev, low risk) | Fast feedback while iterating on checks and fixtures | `kujo run main.ruff run examples/enterprise_cli_quality_gate.json --output-dir .eval_enterprise_cli --json` |
-| Tier 2 (CI gate, medium risk) | Contract + payload validation in pull requests | `kujo run main.ruff run examples/enterprise_api_contract_gate.json --output-dir .eval_enterprise_api --parallel-workers 8 --json` |
-| Tier 3 (Release gate, high risk) | Policy-first release verification with strict controls | `kujo run main.ruff run examples/strict_enterprise_policy_gate.json --output-dir .eval_enterprise_strict --json` |
-| Tier 3 + constrained sandbox-adjacent workflows | Fixture-only policy boundaries for local security testing | `kujo run main.ruff run examples/sandbox_adjacent_policy_gate.json --output-dir .eval_sandbox_adjacent --json` |
+| Tier 1 (Local dev, low risk) | Fast feedback while iterating on checks and fixtures | `kujo run main.kujo run examples/enterprise_cli_quality_gate.json --output-dir .eval_enterprise_cli --json` |
+| Tier 2 (CI gate, medium risk) | Contract + payload validation in pull requests | `kujo run main.kujo run examples/enterprise_api_contract_gate.json --output-dir .eval_enterprise_api --parallel-workers 8 --json` |
+| Tier 3 (Release gate, high risk) | Policy-first release verification with strict controls | `kujo run main.kujo run examples/strict_enterprise_policy_gate.json --output-dir .eval_enterprise_strict --json` |
+| Tier 3 + constrained sandbox-adjacent workflows | Fixture-only policy boundaries for local security testing | `kujo run main.kujo run examples/sandbox_adjacent_policy_gate.json --output-dir .eval_sandbox_adjacent --json` |
 
 Policy visibility and command inventory for onboarding:
 
 ```bash
-kujo run main.ruff policy-explain examples/release_gate_suite.json --policy-stage release --json
+kujo run main.kujo policy-explain examples/release_gate_suite.json --policy-stage release --json
 bash scripts/generate_command_inventory.sh --check
 ```
 
@@ -325,15 +325,15 @@ export KUJO_BIN=./kujo
 
 | Command | Exit | Expected Output Signal |
 |---|---:|---|
-| `$KUJO_BIN run main.ruff version` | 0 | Prints `Kujo Eval v2.0.0` and `Contract version: 2.0.0` |
-| `$KUJO_BIN run main.ruff list-checks` | 0 | Prints available check list and `Total: 27 check types` |
-| `$KUJO_BIN run main.ruff snapshots` | 0 | Prints snapshot listing output (or empty listing message) |
-| `$KUJO_BIN run main.ruff diff README.md README.md` | 0 | Reports no differences for identical files |
-| `$KUJO_BIN run main.ruff run examples/release_gate_suite.json --output-dir .eval_status --json` | 0 | JSON result envelope includes `"ok":true` |
-| `$KUJO_BIN run main.ruff run examples/release_gate_suite.json --output-dir .eval_status --summary-only` | 0 | Prints compact summary and overwrites prior run artifacts safely |
-| `$KUJO_BIN run main.ruff report examples/release_gate_suite.json --rerun --output-dir .eval_status --json` | 0 | JSON result envelope includes `"ok":true` |
-| `$KUJO_BIN run main.ruff report examples/release_gate_suite.json --rerun --output-dir .eval_status --format junit` | 0 | Generates `.eval_status/eval-report.xml` |
-| `$KUJO_BIN run main.ruff report examples/release_gate_suite.json --rerun --output-dir .eval_status --format tap` | 0 | Generates `.eval_status/eval-report.tap` |
+| `$KUJO_BIN run main.kujo version` | 0 | Prints `Kujo Eval v2.0.0` and `Contract version: 2.0.0` |
+| `$KUJO_BIN run main.kujo list-checks` | 0 | Prints available check list and `Total: 27 check types` |
+| `$KUJO_BIN run main.kujo snapshots` | 0 | Prints snapshot listing output (or empty listing message) |
+| `$KUJO_BIN run main.kujo diff README.md README.md` | 0 | Reports no differences for identical files |
+| `$KUJO_BIN run main.kujo run examples/release_gate_suite.json --output-dir .eval_status --json` | 0 | JSON result envelope includes `"ok":true` |
+| `$KUJO_BIN run main.kujo run examples/release_gate_suite.json --output-dir .eval_status --summary-only` | 0 | Prints compact summary and overwrites prior run artifacts safely |
+| `$KUJO_BIN run main.kujo report examples/release_gate_suite.json --rerun --output-dir .eval_status --json` | 0 | JSON result envelope includes `"ok":true` |
+| `$KUJO_BIN run main.kujo report examples/release_gate_suite.json --rerun --output-dir .eval_status --format junit` | 0 | Generates `.eval_status/eval-report.xml` |
+| `$KUJO_BIN run main.kujo report examples/release_gate_suite.json --rerun --output-dir .eval_status --format tap` | 0 | Generates `.eval_status/eval-report.tap` |
 | `$KUJO_BIN test` | 0 | Test suite runner reports all configured test files passing |
 | `$KUJO_BIN test --runtime interpreter` | non-zero | Interpreter mode is informational here and currently emits runtime warnings |
 
@@ -402,7 +402,7 @@ Create an `eval.json` file:
       "description": "The auth CLI should exit cleanly",
       "check": "command_succeeds",
       "params": {
-        "command": "kujo run auth.ruff login --user test"
+        "command": "kujo run auth.kujo login --user test"
       }
     },
     {
@@ -425,7 +425,7 @@ Create an `eval.json` file:
       "name": "output contains success message",
       "check": "output_contains",
       "params": {
-        "command": "kujo run auth.ruff login --user test",
+        "command": "kujo run auth.kujo login --user test",
         "expected": "Login successful"
       }
     }
@@ -454,7 +454,7 @@ Run/report outputs now include:
 When checksum mode is enabled (`artifact_checksums: true` or `--artifact-checksums`), `artifact-manifest.json` also includes a `checksums` block with SHA-256 digests. Validate it with:
 
 ```bash
-kujo run main.ruff verify-manifest --output-dir ./eval_results --json
+kujo run main.kujo verify-manifest --output-dir ./eval_results --json
 ```
 
 ## Snapshot Testing
@@ -476,7 +476,7 @@ Snapshots store expected output so you can detect regressions:
 First run with `--update-snapshots` to create the baseline:
 
 ```bash
-kujo run main.ruff run --update-snapshots
+kujo run main.kujo run --update-snapshots
 ```
 
 Subsequent runs will compare against the stored snapshot and fail if output changes.
@@ -486,7 +486,7 @@ Subsequent runs will compare against the stored snapshot and fail if output chan
 Compare two eval runs to detect regressions or improvements:
 
 ```bash
-kujo run main.ruff compare ./eval_results/run-v1.json ./eval_results/run-v2.json
+kujo run main.kujo compare ./eval_results/run-v1.json ./eval_results/run-v2.json
 ```
 
 ## CI Integration
@@ -495,7 +495,7 @@ Eval exits with code 1 on any test failure, making it CI-ready:
 
 ```yaml
 - name: Run eval suite
-  run: kujo run main.ruff run --json
+  run: kujo run main.kujo run --json
 ```
 
 Use `--json` for machine-readable output in CI pipelines.
@@ -559,7 +559,7 @@ The test will run up to 3 times (1 initial + 2 retries) and pass if any attempt 
 Eval uses a `describe_module()` function for runtime contract discovery. Call it from any Kujo script:
 
 ```bash
-kujo run main.ruff version
+kujo run main.kujo version
 # Kujo Eval v2.0.0
 # Contract version: 2.0.0
 ```
@@ -582,14 +582,14 @@ See [`docs/enhancement-roadmap.md`](docs/enhancement-roadmap.md) for the full pr
 - [x] Progress output (`[PASS]`/`[FAIL]` per test)
 - [x] Cached results (`last_run.json`) for report generation, `--rerun` support
 - [x] Security hardening (command allowlisting, path boundaries, output redaction, config limits)
-- [x] Shared utility module (`src/common.ruff`), CLI extraction (`src/cli.ruff`)
+- [x] Shared utility module (`src/common.kujo`), CLI extraction (`src/cli.kujo`)
 - [x] Architecture, contributing, and security documentation
 - [x] CLI integration tests, security regression tests, edge case tests
 - [x] Release quality gates, supply-chain policy checks, compatibility matrix CI
 - [x] Kujo runtime version pinning (`RUNTIME_VERSION`)
 - [x] Standardized result envelope (`{ok, error, data}`) across all modules (contract v2.0.0)
 - [x] HTML report with collapsible failure details and summary cards
-- [x] Timeout enforcement documented (pending Kujo runtime support — see `src/checks.ruff`)
+- [x] Timeout enforcement documented (pending Kujo runtime support — see `src/checks.kujo`)
 - [x] `--quiet` and `--verbose` flags for CI and debugging workflows
 - [x] Real timing (`duration_ms`) recorded for every suite run
 - [x] Flaky test retry support (`"retry": N` in test definitions)
@@ -608,14 +608,14 @@ See [`docs/enhancement-roadmap.md`](docs/enhancement-roadmap.md) for the full pr
 
 ## Repository Layout
 
-- `main.ruff`: CLI entry point and command dispatcher for the full command surface
-- `src/common.ruff`: Shared utilities (`dict_get_or`, `normalize_*`, `make_check_*`)
-- `src/cli.ruff`: CLI argument parsing and help text
-- `src/config.ruff`: Configuration loading, validation, and KNOWN_CHECKS
-- `src/checks.ruff`: All 27 check implementations + security validators
-- `src/eval_core.ruff`: Core eval engine, suite runner, compare_runs
-- `src/report.ruff`: Markdown, HTML, JUnit XML, TAP, and NDJSON report generation
-- `src/snapshot.ruff`: Snapshot management (save, compare, diff, list, delete)
+- `main.kujo`: CLI entry point and command dispatcher for the full command surface
+- `src/common.kujo`: Shared utilities (`dict_get_or`, `normalize_*`, `make_check_*`)
+- `src/cli.kujo`: CLI argument parsing and help text
+- `src/config.kujo`: Configuration loading, validation, and KNOWN_CHECKS
+- `src/checks.kujo`: All 27 check implementations + security validators
+- `src/eval_core.kujo`: Core eval engine, suite runner, compare_runs
+- `src/report.kujo`: Markdown, HTML, JUnit XML, TAP, and NDJSON report generation
+- `src/snapshot.kujo`: Snapshot management (save, compare, diff, list, delete)
 - `tests/`: 7 test suites — contract, security, CLI integration, coverage, benchmark, quality, stress
 - `examples/`: Example eval suites (basic, release-gate, self-check, snapshot)
 - `schema/eval-suite.schema.json`: JSON Schema for VSCode autocomplete + validation
@@ -628,7 +628,7 @@ See [`docs/enhancement-roadmap.md`](docs/enhancement-roadmap.md) for the full pr
 
 ### Root Layout Notes
 
-- `main.ruff` intentionally stays at the repository root as the CLI entrypoint referenced by docs, scripts, and CI.
+- `main.kujo` intentionally stays at the repository root as the CLI entrypoint referenced by docs, scripts, and CI.
 - `CONTRIBUTING.md` and `SECURITY.md` at root are lightweight pointers for enterprise discoverability; canonical content remains in `docs/`.
 - Functional implementation modules remain under `src/`; root files are only packaging, entrypoint, policy, and governance artifacts.
 - `tests/*.out` files are treated as runtime artifacts and intentionally remain untracked.

@@ -1551,14 +1551,14 @@ test "file_line_count is dispatched by run_check" {
 test "directory_contains rejects empty dir" {
 	from src.checks import check_directory_contains
 
-	result := check_directory_contains({"dir": "", "pattern": ".ruff"})
+	result := check_directory_contains({"dir": "", "pattern": ".kujo"})
 	assert_false(result["ok"])
 }
 
 test "directory_contains finds matching files" {
 	from src.checks import check_directory_contains
 
-	result := check_directory_contains({"dir": "src", "pattern": ".ruff", "min_files": 1})
+	result := check_directory_contains({"dir": "src", "pattern": ".kujo", "min_files": 1})
 	assert_true(result["ok"])
 }
 

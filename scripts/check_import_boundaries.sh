@@ -6,7 +6,7 @@ cd "$ROOT_DIR"
 
 violations=0
 
-# Shared helper symbols are owned by src/common.ruff and must not be imported from src/config.ruff.
+# Shared helper symbols are owned by src/common.kujo and must not be imported from src/config.kujo.
 while IFS= read -r line; do
 	file_path="${line%%:*}"
 	line_text="${line#*:}"
@@ -15,7 +15,7 @@ while IFS= read -r line; do
 		echo "  $line_text"
 		violations=1
 	fi
-done < <(grep -n "from src.config import" src/*.ruff || true)
+done < <(grep -n "from src.config import" src/*.kujo || true)
 
 if [[ "$violations" -ne 0 ]]; then
 	exit 1

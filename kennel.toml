@@ -19,7 +19,7 @@ notes = "27 checks, 5 report formats, 14 CLI commands, 7 test suites, and a 5-la
 
 [kujo]
 minimum_version = "0.1.0"
-entry = "main.ruff"
+entry = "main.kujo"
 sources = ["src", "."]
 includes = ["README.md", "tests", "examples", "schema", "docs"]
 excludes = [".git", "kennel_packages", "dist", "build", "node_modules"]
@@ -35,17 +35,17 @@ artifacts = []
 
 [scripts]
 test = "kujo test"
-smoke = "kujo run main.ruff run examples/basic_suite.json --json"
-init = "kujo run main.ruff init"
+smoke = "kujo run main.kujo run examples/basic_suite.json --json"
+init = "kujo run main.kujo init"
 
 [package.exports]
-common = "src/common.ruff"
-cli = "src/cli.ruff"
-core = "src/eval_core.ruff"
-checks = "src/checks.ruff"
-report = "src/report.ruff"
-snapshot = "src/snapshot.ruff"
-config = "src/config.ruff"
+common = "src/common.kujo"
+cli = "src/cli.kujo"
+core = "src/eval_core.kujo"
+checks = "src/checks.kujo"
+report = "src/report.kujo"
+snapshot = "src/snapshot.kujo"
+config = "src/config.kujo"
 
 [registry]
 index = ""

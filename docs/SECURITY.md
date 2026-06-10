@@ -6,7 +6,7 @@ Kujo Eval executes user-provided shell commands and reads arbitrary files as par
 
 ### Command Allowlisting
 
-`is_command_safe()` in `src/checks.ruff` blocks commands containing dangerous patterns:
+`is_command_safe()` in `src/checks.kujo` blocks commands containing dangerous patterns:
 - `rm -rf`, `sudo`, `chmod`, `curl | sh`, `wget | sh`
 - `/dev/` paths, `mkfs`, `dd if=`, fork bombs
 - `shutdown`, `reboot`
@@ -21,7 +21,7 @@ Additional command policy controls:
 
 ### Path Boundary Enforcement
 
-`is_path_safe()` in `src/checks.ruff` restricts file access:
+`is_path_safe()` in `src/checks.kujo` restricts file access:
 - Blocks `..` path traversal
 - Blocks access to system directories (`/etc/`, `/root/`, `/var/`, `/tmp/`)
 - Normalizes candidate and allowlisted paths before policy checks (handles `./`, repeated `/`, trailing slashes)
@@ -64,7 +64,7 @@ Kujo Eval is intended for controlled execution environments. For enterprise roll
 
 ### Output Redaction
 
-`redact_sensitive()` in `src/checks.ruff` scrubs sensitive patterns from stdout/stderr:
+`redact_sensitive()` in `src/checks.kujo` scrubs sensitive patterns from stdout/stderr:
 - API key patterns (`sk-` prefix)
 - Bearer tokens
 - Password and secret parameters (`password=`, `secret=`)
@@ -87,7 +87,7 @@ Optional audit telemetry:
 - `http_get` may panic in interpreter mode (Kujo runtime quirk)
 - Timeout behavior depends on runtime support for `execute_status` options; validate timeout enforcement in your target Kujo build.
 - Output redaction uses simple pattern matching, not cryptographic guarantees
-- Interpreter RUFRUN001 warnings may appear even when command exit codes are successful
+- Interpreter KUJORUN001 warnings may appear even when command exit codes are successful
 
 ## Reporting a Vulnerability
 

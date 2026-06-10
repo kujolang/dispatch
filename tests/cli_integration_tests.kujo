@@ -43,7 +43,7 @@ test "CLI init supports --from-scout import alias" {
 		write_file(".eval_scout_import.json", "[{\"name\":\"scout-t1\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}}]")
 	} except err {}
 
-	result := run_shell(KUJO_BIN + " run main.ruff init --name scout-import-suite --from-scout .eval_scout_import.json")
+	result := run_shell(KUJO_BIN + " run main.kujo init --name scout-import-suite --from-scout .eval_scout_import.json")
 	assert_true(result["ok"])
 	assert_equal(result["exit_code"], 0)
 	assert_true(path_exists("eval.json") == true)
@@ -285,7 +285,7 @@ test "describe_module report_formats metadata matches report implementation" {
 }
 
 test "CLI version command exits zero" {
-	result := run_shell(KUJO_BIN + " run main.ruff version")
+	result := run_shell(KUJO_BIN + " run main.kujo version")
 	assert_true(result["ok"])
 	assert_equal(result["exit_code"], 0)
 }
@@ -295,7 +295,7 @@ test "CLI exit code contract: success returns 0" {
 		write_file(".eval_exit_contract_success.json", "{\"name\":\"exit-contract-success\",\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	result := run_shell(KUJO_BIN + " run main.ruff run .eval_exit_contract_success.json --json")
+	result := run_shell(KUJO_BIN + " run main.kujo run .eval_exit_contract_success.json --json")
 	assert_true(result["ok"])
 	assert_equal(result["exit_code"], 0)
 
@@ -307,7 +307,7 @@ test "CLI exit code contract: assertion failures return 1" {
 		write_file(".eval_exit_contract_fail.json", "{\"name\":\"exit-contract-fail\",\"tests\":[{\"name\":\"fails\",\"check\":\"exit_code_equals\",\"params\":{\"command\":\"echo ok\",\"expected\":1}}]}")
 	} except err {}
 
-	result := run_shell(KUJO_BIN + " run main.ruff run .eval_exit_contract_fail.json --json")
+	result := run_shell(KUJO_BIN + " run main.kujo run .eval_exit_contract_fail.json --json")
 	assert_true(result["ok"])
 	assert_equal(result["exit_code"], 1)
 
@@ -315,25 +315,25 @@ test "CLI exit code contract: assertion failures return 1" {
 }
 
 test "CLI exit code contract: usage errors return 1" {
-	result := run_shell(KUJO_BIN + " run main.ruff compare")
+	result := run_shell(KUJO_BIN + " run main.kujo compare")
 	assert_true(result["ok"])
 	assert_equal(result["exit_code"], 1)
 }
 
 test "CLI exit code contract: config errors return 1" {
-	result := run_shell(KUJO_BIN + " run main.ruff run ./.missing_exit_contract_config.json --json")
+	result := run_shell(KUJO_BIN + " run main.kujo run ./.missing_exit_contract_config.json --json")
 	assert_true(result["ok"])
 	assert_equal(result["exit_code"], 1)
 }
 
 test "CLI unknown subcommand exits non-zero" {
-	result := run_shell(KUJO_BIN + " run main.ruff definitely-unknown-subcommand")
+	result := run_shell(KUJO_BIN + " run main.kujo definitely-unknown-subcommand")
 	assert_true(result["ok"])
 	assert_true(result["exit_code"] != 0)
 }
 
 test "CLI snapshots exits non-zero for missing snapshot directory" {
-	result := run_shell(KUJO_BIN + " run main.ruff snapshots --snapshot-dir ./.missing_snapshots_for_exit_code_test")
+	result := run_shell(KUJO_BIN + " run main.kujo snapshots --snapshot-dir ./.missing_snapshots_for_exit_code_test")
 	assert_true(result["ok"])
 	assert_true(result["exit_code"] != 0)
 }
@@ -343,7 +343,7 @@ test "CLI run --json returns stable envelope on success" {
 		write_file(".eval_json_shape_suite.json", "{\"name\":\"json-shape-suite\",\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	result := run_shell(KUJO_BIN + " run main.ruff run .eval_json_shape_suite.json --json")
+	result := run_shell(KUJO_BIN + " run main.kujo run .eval_json_shape_suite.json --json")
 	assert_true(result["ok"])
 	assert_equal(result["exit_code"], 0)
 
@@ -365,7 +365,7 @@ test "CLI run --summary-only prints compact output" {
 		write_file(".eval_summary_suite.json", "{\"name\":\"summary-suite\",\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	result := run_shell(KUJO_BIN + " run main.ruff run .eval_summary_suite.json --summary-only")
+	result := run_shell(KUJO_BIN + " run main.kujo run .eval_summary_suite.json --summary-only")
 	assert_true(result["ok"])
 	assert_equal(result["exit_code"], 0)
 	assert_true(contains(result["stdout"], "Summary: PASS") == 1)
@@ -379,11 +379,11 @@ test "CLI run applies --policy-stage overlays" {
 		write_file(".eval_cli_policy_stage_suite.json", "{\"name\":\"cli-policy-stage-suite\",\"policy_profile\":\"local-dev\",\"policy_stage_overlays\":{\"ci\":{\"allowed_commands\":[\"echo\"]}},\"tests\":[{\"name\":\"blocked-in-ci\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"ls\"}}]}")
 	} except err {}
 
-	default_result := run_shell(KUJO_BIN + " run main.ruff run .eval_cli_policy_stage_suite.json --output-dir .eval_cli_policy_default_out --json")
+	default_result := run_shell(KUJO_BIN + " run main.kujo run .eval_cli_policy_stage_suite.json --output-dir .eval_cli_policy_default_out --json")
 	assert_true(default_result["ok"])
 	assert_equal(default_result["exit_code"], 0)
 
-	ci_result := run_shell(KUJO_BIN + " run main.ruff run .eval_cli_policy_stage_suite.json --output-dir .eval_cli_policy_ci_out --policy-stage ci --json")
+	ci_result := run_shell(KUJO_BIN + " run main.kujo run .eval_cli_policy_stage_suite.json --output-dir .eval_cli_policy_ci_out --policy-stage ci --json")
 	assert_true(ci_result["ok"])
 	assert_true(ci_result["exit_code"] != 0)
 
@@ -415,8 +415,8 @@ test "CLI run can overwrite existing run artifacts in same output directory" {
 		write_file(".eval_overwrite_suite.json", "{\"name\":\"overwrite-suite\",\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	first := run_shell(KUJO_BIN + " run main.ruff run .eval_overwrite_suite.json --output-dir .eval_overwrite_out --json")
-	second := run_shell(KUJO_BIN + " run main.ruff run .eval_overwrite_suite.json --output-dir .eval_overwrite_out --json")
+	first := run_shell(KUJO_BIN + " run main.kujo run .eval_overwrite_suite.json --output-dir .eval_overwrite_out --json")
+	second := run_shell(KUJO_BIN + " run main.kujo run .eval_overwrite_suite.json --output-dir .eval_overwrite_out --json")
 	assert_true(first["ok"])
 	assert_true(second["ok"])
 	assert_equal(first["exit_code"], 0)
@@ -442,7 +442,7 @@ test "CLI run writes summary and artifact manifest files" {
 		write_file(".eval_manifest_suite.json", "{\"name\":\"manifest-suite\",\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	result := run_shell(KUJO_BIN + " run main.ruff run .eval_manifest_suite.json --output-dir .eval_manifest_out --artifact-checksums --json")
+	result := run_shell(KUJO_BIN + " run main.kujo run .eval_manifest_suite.json --output-dir .eval_manifest_out --artifact-checksums --json")
 	assert_true(result["ok"])
 	assert_equal(result["exit_code"], 0)
 	assert_true(path_exists(".eval_manifest_out/summary.json"))
@@ -512,7 +512,7 @@ test "CLI run persists redacted nested secret payloads in artifacts" {
 		write_file(".eval_nested_redaction_suite.json", "{\"name\":\"nested-redaction-suite\",\"redaction_audit_mode\":true,\"tests\":[{\"name\":\"nested-secret\",\"check\":\"output_contains\",\"params\":{\"command\":\"echo '{\\\"auth\\\":{\\\"token\\\":\\\"artifactSecretToken\\\",\\\"api_key\\\":\\\"artifactNestedApiKey\\\"}}'\",\"expected\":\"REDACTED\"}}]}")
 	} except err {}
 
-	run_result := run_shell(KUJO_BIN + " run main.ruff run .eval_nested_redaction_suite.json --output-dir .eval_nested_redaction_out --json")
+	run_result := run_shell(KUJO_BIN + " run main.kujo run .eval_nested_redaction_suite.json --output-dir .eval_nested_redaction_out --json")
 	assert_true(run_result["ok"])
 	assert_equal(run_result["exit_code"], 0)
 
@@ -540,11 +540,11 @@ test "CLI verify-manifest fails after artifact tampering" {
 		write_file(".eval_manifest_tamper_suite.json", "{\"name\":\"manifest-tamper-suite\",\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	run_result := run_shell(KUJO_BIN + " run main.ruff run .eval_manifest_tamper_suite.json --output-dir .eval_manifest_tamper_out --artifact-checksums --json")
+	run_result := run_shell(KUJO_BIN + " run main.kujo run .eval_manifest_tamper_suite.json --output-dir .eval_manifest_tamper_out --artifact-checksums --json")
 	assert_true(run_result["ok"])
 	assert_equal(run_result["exit_code"], 0)
 
-	verify_pass := run_shell(KUJO_BIN + " run main.ruff verify-manifest --output-dir .eval_manifest_tamper_out --json")
+	verify_pass := run_shell(KUJO_BIN + " run main.kujo verify-manifest --output-dir .eval_manifest_tamper_out --json")
 	assert_true(verify_pass["ok"])
 	assert_equal(verify_pass["exit_code"], 0)
 
@@ -552,7 +552,7 @@ test "CLI verify-manifest fails after artifact tampering" {
 		write_file(".eval_manifest_tamper_out/summary.json", "{\"tampered\":true}")
 	} except err {}
 
-	verify_fail := run_shell(KUJO_BIN + " run main.ruff verify-manifest --output-dir .eval_manifest_tamper_out --json")
+	verify_fail := run_shell(KUJO_BIN + " run main.kujo verify-manifest --output-dir .eval_manifest_tamper_out --json")
 	assert_true(verify_fail["ok"])
 	assert_true(verify_fail["exit_code"] != 0)
 
@@ -579,9 +579,9 @@ test "CLI run respects history_retention_runs" {
 		write_file(".eval_history_retention_suite.json", "{\"name\":\"history-retention-suite\",\"history_retention_runs\":2,\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	r1 := run_shell(KUJO_BIN + " run main.ruff run .eval_history_retention_suite.json --output-dir .eval_history_retention_out --json")
-	r2 := run_shell(KUJO_BIN + " run main.ruff run .eval_history_retention_suite.json --output-dir .eval_history_retention_out --json")
-	r3 := run_shell(KUJO_BIN + " run main.ruff run .eval_history_retention_suite.json --output-dir .eval_history_retention_out --json")
+	r1 := run_shell(KUJO_BIN + " run main.kujo run .eval_history_retention_suite.json --output-dir .eval_history_retention_out --json")
+	r2 := run_shell(KUJO_BIN + " run main.kujo run .eval_history_retention_suite.json --output-dir .eval_history_retention_out --json")
+	r3 := run_shell(KUJO_BIN + " run main.kujo run .eval_history_retention_suite.json --output-dir .eval_history_retention_out --json")
 	assert_equal(r1["exit_code"], 0)
 	assert_equal(r2["exit_code"], 0)
 	assert_equal(r3["exit_code"], 0)
@@ -618,8 +618,8 @@ test "CLI run respects aux_artifact_retention_files" {
 		write_file(".eval_aux_retention_suite.json", "{\"name\":\"aux-retention-suite\",\"aux_artifact_retention_files\":0,\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	r1 := run_shell(KUJO_BIN + " run main.ruff run .eval_aux_retention_suite.json --output-dir .eval_aux_retention_out --json")
-	r2 := run_shell(KUJO_BIN + " run main.ruff run .eval_aux_retention_suite.json --output-dir .eval_aux_retention_out --json")
+	r1 := run_shell(KUJO_BIN + " run main.kujo run .eval_aux_retention_suite.json --output-dir .eval_aux_retention_out --json")
+	r2 := run_shell(KUJO_BIN + " run main.kujo run .eval_aux_retention_suite.json --output-dir .eval_aux_retention_out --json")
 	assert_equal(r1["exit_code"], 0)
 	assert_equal(r2["exit_code"], 0)
 
@@ -649,7 +649,7 @@ test "CLI report writes machine summary channel" {
 		write_file(".eval_report_channel_suite.json", "{\"name\":\"report-channel-suite\",\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	result := run_shell(KUJO_BIN + " run main.ruff report .eval_report_channel_suite.json --rerun --output-dir .eval_report_channel_out --json")
+	result := run_shell(KUJO_BIN + " run main.kujo report .eval_report_channel_suite.json --rerun --output-dir .eval_report_channel_out --json")
 	assert_true(result["ok"])
 	assert_equal(result["exit_code"], 0)
 	assert_true(path_exists(".eval_report_channel_out/cli-summary.json"))
@@ -681,8 +681,8 @@ test "CLI report --rerun can overwrite existing report artifact" {
 		write_file(".eval_overwrite_report_suite.json", "{\"name\":\"overwrite-report-suite\",\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	first := run_shell(KUJO_BIN + " run main.ruff report .eval_overwrite_report_suite.json --rerun --output-dir .eval_overwrite_report_out --format md")
-	second := run_shell(KUJO_BIN + " run main.ruff report .eval_overwrite_report_suite.json --rerun --output-dir .eval_overwrite_report_out --format md")
+	first := run_shell(KUJO_BIN + " run main.kujo report .eval_overwrite_report_suite.json --rerun --output-dir .eval_overwrite_report_out --format md")
+	second := run_shell(KUJO_BIN + " run main.kujo report .eval_overwrite_report_suite.json --rerun --output-dir .eval_overwrite_report_out --format md")
 	assert_true(first["ok"])
 	assert_true(second["ok"])
 	assert_equal(first["exit_code"], 0)
@@ -701,7 +701,7 @@ test "CLI report --json returns stable envelope" {
 		write_file(".eval_json_shape_suite.json", "{\"name\":\"json-shape-suite\",\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	result := run_shell(KUJO_BIN + " run main.ruff report .eval_json_shape_suite.json --rerun --json")
+	result := run_shell(KUJO_BIN + " run main.kujo report .eval_json_shape_suite.json --rerun --json")
 	assert_true(result["ok"])
 	assert_equal(result["exit_code"], 0)
 
@@ -723,12 +723,12 @@ test "CLI report reuses unchanged artifact content" {
 		write_file(".eval_report_cache_suite.json", "{\"name\":\"report-cache-suite\",\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	seed_run := run_shell(KUJO_BIN + " run main.ruff run .eval_report_cache_suite.json --output-dir .eval_report_cache_out --json")
+	seed_run := run_shell(KUJO_BIN + " run main.kujo run .eval_report_cache_suite.json --output-dir .eval_report_cache_out --json")
 	assert_true(seed_run["ok"])
 	assert_equal(seed_run["exit_code"], 0)
 
-	first := run_shell(KUJO_BIN + " run main.ruff report .eval_report_cache_suite.json --output-dir .eval_report_cache_out --incremental --json")
-	second := run_shell(KUJO_BIN + " run main.ruff report .eval_report_cache_suite.json --output-dir .eval_report_cache_out --incremental --json")
+	first := run_shell(KUJO_BIN + " run main.kujo report .eval_report_cache_suite.json --output-dir .eval_report_cache_out --incremental --json")
+	second := run_shell(KUJO_BIN + " run main.kujo report .eval_report_cache_suite.json --output-dir .eval_report_cache_out --incremental --json")
 	assert_true(first["ok"])
 	assert_true(second["ok"])
 	assert_equal(first["exit_code"], 0)
@@ -767,7 +767,7 @@ test "CLI policy-explain emits deterministic stage overlay payload" {
 		write_file(".eval_policy_explain_suite.json", "{\"name\":\"policy-explain-suite\",\"policy_profile\":\"local-dev\",\"policy_stage_overlays\":{\"ci\":{\"require_command_policy\":true,\"path_policy_mode\":\"allowlist-required\",\"allowed_commands\":[\"echo\"],\"allowed_paths\":[\"./tests\"]}},\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	result := run_shell(KUJO_BIN + " run main.ruff policy-explain .eval_policy_explain_suite.json --policy-stage ci --json")
+	result := run_shell(KUJO_BIN + " run main.kujo policy-explain .eval_policy_explain_suite.json --policy-stage ci --json")
 	assert_true(result["ok"])
 	assert_equal(result["exit_code"], 0)
 
@@ -800,7 +800,7 @@ test "CLI policy-explain warns on open release posture" {
 		write_file(".eval_policy_explain_open_suite.json", "{\"name\":\"policy-explain-open\",\"policy_profile\":\"local-dev\",\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	result := run_shell(KUJO_BIN + " run main.ruff policy-explain .eval_policy_explain_open_suite.json --policy-stage release --json")
+	result := run_shell(KUJO_BIN + " run main.kujo policy-explain .eval_policy_explain_open_suite.json --policy-stage release --json")
 	assert_true(result["ok"])
 	assert_equal(result["exit_code"], 0)
 
@@ -838,7 +838,7 @@ test "CLI lint returns structured diagnostics with actionable hints" {
 		write_file(".eval_lint_bad_suite.json", "{\"name\":\"lint-bad-suite\",\"tests\":[{\"name\":\"bad-check\",\"check\":\"not_a_check\",\"params\":{}}]}")
 	} except err {}
 
-	result := run_shell(KUJO_BIN + " run main.ruff lint .eval_lint_bad_suite.json --json")
+	result := run_shell(KUJO_BIN + " run main.kujo lint .eval_lint_bad_suite.json --json")
 	assert_true(result["ok"])
 	assert_true(result["exit_code"] != 0)
 
@@ -860,7 +860,7 @@ test "CLI lint returns structured diagnostics with actionable hints" {
 }
 
 test "CLI run --json returns stable envelope on failure" {
-	result := run_shell(KUJO_BIN + " run main.ruff run ./.missing_json_shape_suite.json --json")
+	result := run_shell(KUJO_BIN + " run main.kujo run ./.missing_json_shape_suite.json --json")
 	assert_true(result["ok"])
 	assert_true(result["exit_code"] != 0)
 
@@ -872,7 +872,7 @@ test "CLI run --json returns stable envelope on failure" {
 }
 
 test "CLI watch exits non-zero when config file is missing" {
-	result := run_shell(KUJO_BIN + " run main.ruff watch --config ./.missing_watch_config.json --poll-ms 0 --max-loops 1")
+	result := run_shell(KUJO_BIN + " run main.kujo watch --config ./.missing_watch_config.json --poll-ms 0 --max-loops 1")
 	assert_true(result["ok"])
 	assert_true(result["exit_code"] != 0)
 }
@@ -882,7 +882,7 @@ test "CLI watch bounded loop exits successfully with valid config" {
 		write_file(".eval_watch_suite.json", "{\"name\":\"watch-suite\",\"tests\":[{\"name\":\"ok\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
 	} except err {}
 
-	result := run_shell(KUJO_BIN + " run main.ruff watch --config .eval_watch_suite.json --poll-ms 0 --max-loops 1")
+	result := run_shell(KUJO_BIN + " run main.kujo watch --config .eval_watch_suite.json --poll-ms 0 --max-loops 1")
 	assert_true(result["ok"])
 	assert_equal(result["exit_code"], 0)
 
@@ -900,20 +900,20 @@ test "Interpreter entrypoint matrix covers all public subcommands" {
 	} except err {}
 
 	commands := [
-		{"name": "init", "cmd": KUJO_BIN + " run main.ruff init --name entrypoint-suite", "exit": 0},
-		{"name": "run", "cmd": KUJO_BIN + " run main.ruff run .eval_entrypoint_suite.json --output-dir .eval_entrypoint_out --artifact-checksums --json", "exit": 0},
-		{"name": "report", "cmd": KUJO_BIN + " run main.ruff report .eval_entrypoint_suite.json --rerun --json", "exit": 0},
-		{"name": "compare", "cmd": KUJO_BIN + " run main.ruff compare .eval_compare_a.json .eval_compare_b.json", "exit": 0},
-		{"name": "list-checks", "cmd": KUJO_BIN + " run main.ruff list-checks", "exit": 0},
-		{"name": "snapshots", "cmd": KUJO_BIN + " run main.ruff snapshots --snapshot-dir .eval_snapshots_dir", "exit": 0},
-		{"name": "version", "cmd": KUJO_BIN + " run main.ruff version", "exit": 0},
-		{"name": "watch", "cmd": KUJO_BIN + " run main.ruff watch --config .eval_entrypoint_suite.json --poll-ms 0 --max-loops 1", "exit": 0},
-		{"name": "lint", "cmd": KUJO_BIN + " run main.ruff lint .eval_entrypoint_suite.json", "exit": 0},
-		{"name": "policy-explain", "cmd": KUJO_BIN + " run main.ruff policy-explain .eval_entrypoint_suite.json --json", "exit": 0},
-		{"name": "diff", "cmd": KUJO_BIN + " run main.ruff diff .eval_diff_a.txt .eval_diff_b.txt", "exit": 0},
-		{"name": "export", "cmd": KUJO_BIN + " run main.ruff export .eval_entrypoint_suite.json --output .eval_exported_suite.sh", "exit": 0},
-		{"name": "verify-manifest", "cmd": KUJO_BIN + " run main.ruff verify-manifest --output-dir .eval_entrypoint_out", "exit": 0},
-		{"name": "completion", "cmd": KUJO_BIN + " run main.ruff completion --shell bash", "exit": 0}
+		{"name": "init", "cmd": KUJO_BIN + " run main.kujo init --name entrypoint-suite", "exit": 0},
+		{"name": "run", "cmd": KUJO_BIN + " run main.kujo run .eval_entrypoint_suite.json --output-dir .eval_entrypoint_out --artifact-checksums --json", "exit": 0},
+		{"name": "report", "cmd": KUJO_BIN + " run main.kujo report .eval_entrypoint_suite.json --rerun --json", "exit": 0},
+		{"name": "compare", "cmd": KUJO_BIN + " run main.kujo compare .eval_compare_a.json .eval_compare_b.json", "exit": 0},
+		{"name": "list-checks", "cmd": KUJO_BIN + " run main.kujo list-checks", "exit": 0},
+		{"name": "snapshots", "cmd": KUJO_BIN + " run main.kujo snapshots --snapshot-dir .eval_snapshots_dir", "exit": 0},
+		{"name": "version", "cmd": KUJO_BIN + " run main.kujo version", "exit": 0},
+		{"name": "watch", "cmd": KUJO_BIN + " run main.kujo watch --config .eval_entrypoint_suite.json --poll-ms 0 --max-loops 1", "exit": 0},
+		{"name": "lint", "cmd": KUJO_BIN + " run main.kujo lint .eval_entrypoint_suite.json", "exit": 0},
+		{"name": "policy-explain", "cmd": KUJO_BIN + " run main.kujo policy-explain .eval_entrypoint_suite.json --json", "exit": 0},
+		{"name": "diff", "cmd": KUJO_BIN + " run main.kujo diff .eval_diff_a.txt .eval_diff_b.txt", "exit": 0},
+		{"name": "export", "cmd": KUJO_BIN + " run main.kujo export .eval_entrypoint_suite.json --output .eval_exported_suite.sh", "exit": 0},
+		{"name": "verify-manifest", "cmd": KUJO_BIN + " run main.kujo verify-manifest --output-dir .eval_entrypoint_out", "exit": 0},
+		{"name": "completion", "cmd": KUJO_BIN + " run main.kujo completion --shell bash", "exit": 0}
 	]
 
 	i := 0

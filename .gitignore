@@ -2,7 +2,7 @@
 .idea/
 .vscode/
 *.log
-/test_*.ruff
+/test_*.kujo
 /artifacts/
 /eval_results/
 /snapshots/

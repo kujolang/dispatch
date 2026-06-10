@@ -19,7 +19,7 @@ These items ensure the project makes an excellent first impression when someone 
 
 ### [ ] P1.1 — Add a `demo.gif` or terminal recording to README
 
-**Blocker (2026-05-24)**: Requires external recording tool (asciinema, terminalizer, or similar). Cannot be generated programmatically by an AI agent. Manual task: record a 20-30 second terminal session showing `kujo run main.ruff --interpreter init --name demo && kujo run main.ruff --interpreter run && kujo run main.ruff --interpreter report --format html`. Add `demo.gif` to repo root and reference in README as `![Demo](demo.gif)`.
+**Blocker (2026-05-24)**: Requires external recording tool (asciinema, terminalizer, or similar). Cannot be generated programmatically by an AI agent. Manual task: record a 20-30 second terminal session showing `kujo run main.kujo --interpreter init --name demo && kujo run main.kujo --interpreter run && kujo run main.kujo --interpreter report --format html`. Add `demo.gif` to repo root and reference in README as `![Demo](demo.gif)`.
 
 ---
 
@@ -138,7 +138,7 @@ These items ensure the project makes an excellent first impression when someone 
 
 **Description**: Test the config parser against randomly generated JSON inputs to ensure it never crashes.
 
-**Implementation**: Create `tests/fuzz_tests.ruff` with a loop that generates random JSON strings and calls `parse_json` + `validate_config`. Catch exceptions and report failures. Limit to 100 iterations.
+**Implementation**: Create `tests/fuzz_tests.kujo` with a loop that generates random JSON strings and calls `parse_json` + `validate_config`. Catch exceptions and report failures. Limit to 100 iterations.
 
 ---
 
@@ -232,7 +232,7 @@ These items ensure the project makes an excellent first impression when someone 
 
 **Description**: Provide a Docker image so users can run eval without installing Kujo.
 
-**Implementation**: Create `Dockerfile` that installs Kujo runtime and copies the eval source. Entrypoint runs `kujo run main.ruff --interpreter`.
+**Implementation**: Create `Dockerfile` that installs Kujo runtime and copies the eval source. Entrypoint runs `kujo run main.kujo --interpreter`.
 
 ---
 

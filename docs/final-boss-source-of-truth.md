@@ -49,12 +49,12 @@ These items were found unchecked in historical checklists but are already implem
 - Source: `docs/codex-next-session-enterprise-checklist-v5.md`
 - Classification: `RESOLVED_UNCHECKED`
 - Evidence highlights:
-  - A1 envelope normalization present via `make_check_success`/`make_check_error` usage in `src/checks.ruff`.
+  - A1 envelope normalization present via `make_check_success`/`make_check_error` usage in `src/checks.kujo`.
   - A2 deterministic contract fixtures exist under `examples/fixtures/contracts/`.
-  - B1 policy risk hints/risk tier implemented in `src/config.ruff` and surfaced in `main.ruff`.
-  - B2 outbound host allow/deny policy implemented (`allowed_http_hosts`, `blocked_http_hosts`) in `src/config.ruff`, `src/checks.ruff`, schema, and security tests.
-  - C1 fastpath coverage expanded to `file_line_count`, `file_matches_glob`, `file_matches_regex` in `src/eval_core.ruff` and stress tests.
-  - C2 cache metrics emitted (`cache_metric_*`) in `src/eval_core.ruff` and reflected in `src/report.ruff` with benchmark assertions.
+  - B1 policy risk hints/risk tier implemented in `src/config.kujo` and surfaced in `main.kujo`.
+  - B2 outbound host allow/deny policy implemented (`allowed_http_hosts`, `blocked_http_hosts`) in `src/config.kujo`, `src/checks.kujo`, schema, and security tests.
+  - C1 fastpath coverage expanded to `file_line_count`, `file_matches_glob`, `file_matches_regex` in `src/eval_core.kujo` and stress tests.
+  - C2 cache metrics emitted (`cache_metric_*`) in `src/eval_core.kujo` and reflected in `src/report.kujo` with benchmark assertions.
   - D1 root layout rationale present in README (`Repository Layout` section).
   - D2 enterprise quickstart artifact guidance present in README/QUICKREF/COMMAND_INVENTORY.
 

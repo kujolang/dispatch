@@ -8,19 +8,19 @@ These bundles are ready to run as-is in this repository and are also covered by 
 
 ```bash
 # CLI quality gate
-kujo run main.ruff run examples/enterprise_cli_quality_gate.json --output-dir .eval_enterprise_cli --json
+kujo run main.kujo run examples/enterprise_cli_quality_gate.json --output-dir .eval_enterprise_cli --json
 
 # API contract gate (parallel file-check fast path)
-kujo run main.ruff run examples/enterprise_api_contract_gate.json --output-dir .eval_enterprise_api --parallel-workers 8 --json
+kujo run main.kujo run examples/enterprise_api_contract_gate.json --output-dir .eval_enterprise_api --parallel-workers 8 --json
 
 # Agent output gate (parallel file-check fast path)
-kujo run main.ruff run examples/enterprise_agent_output_gate.json --output-dir .eval_enterprise_agent --parallel-workers 8 --json
+kujo run main.kujo run examples/enterprise_agent_output_gate.json --output-dir .eval_enterprise_agent --parallel-workers 8 --json
 
 # Strict-enterprise policy preset with explicit allowlists
-kujo run main.ruff run examples/strict_enterprise_policy_gate.json --output-dir .eval_enterprise_strict --json
+kujo run main.kujo run examples/strict_enterprise_policy_gate.json --output-dir .eval_enterprise_strict --json
 
 # Sandbox-adjacent constrained profile for fixture-only paths
-kujo run main.ruff run examples/sandbox_adjacent_policy_gate.json --output-dir .eval_sandbox_adjacent --json
+kujo run main.kujo run examples/sandbox_adjacent_policy_gate.json --output-dir .eval_sandbox_adjacent --json
 ```
 
 ### Risk-Tier Matrix
@@ -34,7 +34,7 @@ kujo run main.ruff run examples/sandbox_adjacent_policy_gate.json --output-dir .
 
 ```bash
 # Inspect the effective policy for the release stage before rollout
-kujo run main.ruff policy-explain examples/strict_enterprise_policy_gate.json --policy-stage release --json
+kujo run main.kujo policy-explain examples/strict_enterprise_policy_gate.json --policy-stage release --json
 ```
 
 Files:
@@ -92,13 +92,13 @@ Files:
 
 ```bash
 # First run: create baseline snapshots
-kujo run main.ruff run --update-snapshots
+kujo run main.kujo run --update-snapshots
 
 # Subsequent runs: compare against snapshots
-kujo run main.ruff run
+kujo run main.kujo run
 
 # If changes are intentional, update snapshots
-kujo run main.ruff run --update-snapshots
+kujo run main.kujo run --update-snapshots
 ```
 
 ```json
@@ -116,17 +116,17 @@ kujo run main.ruff run --update-snapshots
 ```yaml
 # GitHub Actions
 - name: Run Eval Suite
-  run: kujo run main.ruff run --quiet --json
+  run: kujo run main.kujo run --quiet --json
 
 # GitLab CI
 eval:
   script:
-    - kujo run main.ruff run --quiet --json
+    - kujo run main.kujo run --quiet --json
 
 # Jenkins
 stage('Eval') {
   steps {
-    sh 'kujo run main.ruff run --quiet --json'
+    sh 'kujo run main.kujo run --quiet --json'
   }
 }
 ```
@@ -188,8 +188,8 @@ Run with `--repeat 5` to detect intermittently failing tests over multiple runs.
 
 ```bash
 # Run only fast tests
-kujo run main.ruff run --tags fast
+kujo run main.kujo run --tags fast
 
 # Run all except slow tests
-kujo run main.ruff run --skip-tags slow
+kujo run main.kujo run --skip-tags slow
 ```

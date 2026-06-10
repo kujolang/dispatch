@@ -1,6 +1,6 @@
 # Command Inventory
 
-Generated from `kujo run main.ruff` help output. Do not edit manually; regenerate with `scripts/generate_command_inventory.sh`.
+Generated from `kujo run main.kujo` help output. Do not edit manually; regenerate with `scripts/generate_command_inventory.sh`.
 
 ## Command Surface
 
@@ -24,5 +24,5 @@ Generated from `kujo run main.ruff` help output. Do not edit manually; regenerat
 ## Canonical Invocation
 
 ```bash
-kujo run main.ruff <command> [options]
+kujo run main.kujo <command> [options]
 ```

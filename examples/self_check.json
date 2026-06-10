@@ -14,7 +14,7 @@
     {
       "name": "README.md contains usage instructions",
       "check": "file_contains",
-      "params": { "path": "README.md", "expected": "kujo run main.ruff" }
+      "params": { "path": "README.md", "expected": "kujo run main.kujo" }
     },
     {
       "name": "source modules are present",
@@ -27,14 +27,14 @@
       "params": { "path": "CHANGELOG.md" }
     },
     {
-      "name": "main.ruff entry point exists",
+      "name": "main.kujo entry point exists",
       "check": "file_exists",
-      "params": { "path": "main.ruff" }
+      "params": { "path": "main.kujo" }
     },
     {
       "name": "contract tests exist",
       "check": "file_exists",
-      "params": { "path": "tests/contract_tests.ruff" }
+      "params": { "path": "tests/contract_tests.kujo" }
     },
     {
       "name": "no forbidden tokens in source",

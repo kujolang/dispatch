@@ -263,7 +263,7 @@ These add new assertion capabilities, expanding the eval surface.
 
 **Description**: Show a readable diff between two snapshot files or two run results.
 
-**Implementation**: Mirror `directory_diff` but for single files. Use the same diff algorithm from snapshot.ruff.
+**Implementation**: Mirror `directory_diff` but for single files. Use the same diff algorithm from snapshot.kujo.
 
 ---
 
@@ -289,17 +289,17 @@ These add new assertion capabilities, expanding the eval surface.
 
 ### [x] F.1 — Extract tag matching logic into shared helper
 
-**Description**: The tag filtering code in `eval_core.ruff` is duplicated for include-tags and exclude-tags. Extract into `has_matching_tag(test_tags, filter_tags)`.
+**Description**: The tag filtering code in `eval_core.kujo` is duplicated for include-tags and exclude-tags. Extract into `has_matching_tag(test_tags, filter_tags)`.
 
-**File**: `src/eval_core.ruff`
+**File**: `src/eval_core.kujo`
 
 ---
 
 ### [x] F.2 — Add contract version to all source module describe functions
 
-**Description**: Every `src/*.ruff` module should export a `describe_*_module()` function returning `{module, exports, contract_version}`. Currently only `common.ruff` has one.
+**Description**: Every `src/*.kujo` module should export a `describe_*_module()` function returning `{module, exports, contract_version}`. Currently only `common.kujo` has one.
 
-**Files**: `src/cli.ruff`, `src/config.ruff`, `src/checks.ruff`, `src/report.ruff`, `src/snapshot.ruff`, `src/eval_core.ruff`
+**Files**: `src/cli.kujo`, `src/config.kujo`, `src/checks.kujo`, `src/report.kujo`, `src/snapshot.kujo`, `src/eval_core.kujo`
 
 ---
 
@@ -317,7 +317,7 @@ These add new assertion capabilities, expanding the eval surface.
 
 ### [x] F.5 — Add benchmark tests
 
-**Description**: Create `tests/benchmark_tests.ruff` that measures check execution time for common operations. Useful for catching performance regressions.
+**Description**: Create `tests/benchmark_tests.kujo` that measures check execution time for common operations. Useful for catching performance regressions.
 
 **Implementation**: Run each check type 100 times, record min/mean/max duration, assert under thresholds.
 

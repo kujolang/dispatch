@@ -1,19 +1,19 @@
 # Kujo Eval CLI — main entry point.
 #
 # Usage:
-#   kujo run main.ruff init [--name suite-name] [--template name]
-#   kujo run main.ruff run [config-path] [--update-snapshots] [--format md|html|junit|tap|ndjson]
-#   kujo run main.ruff report [config-path] [--rerun] [--format md|html|junit|tap|ndjson]
-#   kujo run main.ruff compare <results-a.json> <results-b.json>
-#   kujo run main.ruff list-checks
-#   kujo run main.ruff snapshots [--snapshot-dir <dir>]
-#   kujo run main.ruff version
-#   kujo run main.ruff watch [--config <path>]
-#   kujo run main.ruff lint [<config-path>]
-#   kujo run main.ruff policy-explain [<config-path>] [--policy-stage <local|ci|release>]
-#   kujo run main.ruff diff <file-a> <file-b>
-#   kujo run main.ruff export [<config-path>]
-#   kujo run main.ruff verify-manifest [--manifest <path>] [--output-dir <dir>]
+#   kujo run main.kujo init [--name suite-name] [--template name]
+#   kujo run main.kujo run [config-path] [--update-snapshots] [--format md|html|junit|tap|ndjson]
+#   kujo run main.kujo report [config-path] [--rerun] [--format md|html|junit|tap|ndjson]
+#   kujo run main.kujo compare <results-a.json> <results-b.json>
+#   kujo run main.kujo list-checks
+#   kujo run main.kujo snapshots [--snapshot-dir <dir>]
+#   kujo run main.kujo version
+#   kujo run main.kujo watch [--config <path>]
+#   kujo run main.kujo lint [<config-path>]
+#   kujo run main.kujo policy-explain [<config-path>] [--policy-stage <local|ci|release>]
+#   kujo run main.kujo diff <file-a> <file-b>
+#   kujo run main.kujo export [<config-path>]
+#   kujo run main.kujo verify-manifest [--manifest <path>] [--output-dir <dir>]
 #
 # Or standalone (if eval binary is available):
 #   eval init
