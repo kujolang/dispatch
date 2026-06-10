@@ -1,0 +1,10 @@
+.git
+.gitignore
+.github
+.eval_*
+eval_results
+snapshots
+__pycache__
+*.out
+*.log
+/tmp

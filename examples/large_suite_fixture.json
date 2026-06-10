@@ -1,0 +1,78 @@
+{
+  "name": "large-mixed-suite",
+  "description": "Mixed checks fixture with tags, dependencies, retries, and skips.",
+  "history_retention_runs": 50,
+  "tests": [
+    {
+      "name": "baseline file exists",
+      "check": "file_exists",
+      "tags": ["core", "smoke"],
+      "params": {
+        "path": "kennel.toml"
+      }
+    },
+    {
+      "name": "baseline command succeeds",
+      "check": "command_succeeds",
+      "tags": ["core"],
+      "params": {
+        "command": "echo baseline"
+      }
+    },
+    {
+      "name": "negative path expected failure",
+      "check": "command_fails",
+      "tags": ["negative"],
+      "params": {
+        "command": "exit 1"
+      }
+    },
+    {
+      "name": "dependent check on baseline",
+      "check": "file_contains",
+      "depends_on": ["baseline file exists"],
+      "tags": ["dependent"],
+      "params": {
+        "path": "kennel.toml",
+        "expected": "[project]"
+      }
+    },
+    {
+      "name": "intentional failure dependency source",
+      "check": "exit_code_equals",
+      "retry": 1,
+      "tags": ["failure"],
+      "params": {
+        "command": "exit 1",
+        "expected": 0
+      }
+    },
+    {
+      "name": "dependency skip after failure",
+      "check": "file_exists",
+      "depends_on": ["intentional failure dependency source"],
+      "tags": ["dependent", "skip"],
+      "params": {
+        "path": "kennel.toml"
+      }
+    },
+    {
+      "name": "explicitly skipped check",
+      "check": "command_succeeds",
+      "skip": true,
+      "tags": ["skip"],
+      "params": {
+        "command": "echo should-not-run"
+      }
+    },
+    {
+      "name": "retry stable pass",
+      "check": "command_succeeds",
+      "retry": 2,
+      "tags": ["retry"],
+      "params": {
+        "command": "echo retry-pass"
+      }
+    }
+  ]
+}

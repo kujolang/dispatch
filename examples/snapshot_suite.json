@@ -1,0 +1,29 @@
+{
+  "name": "snapshot-eval-suite",
+  "description": "Demonstrates snapshot-based eval checks.",
+  "version": "1.0.0",
+  "output_dir": "./eval_results",
+  "snapshot_dir": "./examples/snapshots",
+  "tests": [
+    {
+      "name": "snapshot: CLI help output",
+      "description": "Snapshot test for the eval --help output.",
+      "check": "snapshot_matches",
+      "params": {
+        "name": "cli-help-output",
+        "command": "echo 'Kujo Eval — AI-native evaluation framework\n\nUsage:\n  eval init\n  eval run'",
+        "update": "true"
+      }
+    },
+    {
+      "name": "snapshot: version output",
+      "description": "Snapshot test for version command.",
+      "check": "snapshot_matches",
+      "params": {
+        "name": "version-output",
+        "command": "echo 'Kujo Eval v1.0.0'",
+        "update": "true"
+      }
+    }
+  ]
+}

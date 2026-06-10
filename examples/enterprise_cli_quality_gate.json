@@ -1,0 +1,48 @@
+{
+  "name": "enterprise-cli-quality-gate",
+  "description": "Policy-first CLI quality gate quickstart bundle for deterministic enterprise checks.",
+  "version": "1.0.0",
+  "policy_profile": "release-gate",
+  "output_dir": "./eval_results",
+  "snapshot_dir": "./snapshots",
+  "stop_on_failure": false,
+  "tests": [
+    {
+      "name": "CLI emits usage output",
+      "check": "command_succeeds",
+      "params": {
+        "command": "echo 'Usage: sample-cli [flags]'"
+      }
+    },
+    {
+      "name": "CLI version output contains semantic marker",
+      "check": "output_contains",
+      "params": {
+        "command": "echo 'sample-cli version 1.0.0'",
+        "expected": "1.0.0"
+      }
+    },
+    {
+      "name": "CLI invalid input exits non-zero",
+      "check": "command_fails",
+      "params": {
+        "command": "cat examples/fixtures/does-not-exist.json"
+      }
+    },
+    {
+      "name": "Repository README exists",
+      "check": "file_exists",
+      "params": {
+        "path": "README.md"
+      }
+    },
+    {
+      "name": "README contains product name",
+      "check": "file_contains",
+      "params": {
+        "path": "README.md",
+        "expected": "Eval"
+      }
+    }
+  ]
+}

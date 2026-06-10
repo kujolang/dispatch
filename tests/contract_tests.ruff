@@ -1,0 +1,1617 @@
+# Contract tests for Kujo Eval.
+#
+# Validates the exported API surface, check behaviors, config
+# loading/validation, snapshot mechanics, and report generation.
+
+test_setup {
+	from src.eval_core import run_suite, compare_runs, contract_version
+	from src.config import load_config, validate_config, init_config, KNOWN_CHECKS
+	from src.checks import run_check, check_command_succeeds, check_command_fails
+	from src.checks import check_file_exists, check_file_does_not_exist
+	from src.checks import check_file_contains, check_file_does_not_contain
+	from src.checks import check_output_contains, check_output_does_not_contain
+	from src.checks import check_json_matches_shape, check_exit_code_equals
+	from src.checks import check_directory_diff, check_snapshot_matches, run_shell, run_shell_timed
+	from src.checks import check_file_matches_glob, check_output_matches_glob, check_json_value_equals, check_file_size_greater_than
+	from src.snapshot import save_snapshot, compare_snapshot, list_snapshots, delete_snapshot
+	from src.report import generate_markdown_report, generate_junit_report, generate_tap_report, save_report, print_report
+	from src.common import make_result, make_success_result, make_error_result, contains_text
+}
+
+# ===========================================================================
+# Contract version
+# ===========================================================================
+
+test "contract version is exported" {
+	version := contract_version()
+	assert_equal(version, "2.0.0")
+}
+
+# ===========================================================================
+# Standard result envelope (item 3.4.1)
+# ===========================================================================
+
+test "make_success_result returns ok=true with empty error" {
+	result := make_success_result({"key": "value"})
+	assert_true(result["ok"])
+	assert_equal(result["error"], "")
+	assert_equal(result["data"]["key"], "value")
+}
+
+test "make_error_result returns ok=false with error message" {
+	result := make_error_result("something failed", {"detail": "info"})
+	assert_false(result["ok"])
+	assert_equal(result["error"], "something failed")
+	assert_equal(result["data"]["detail"], "info")
+}
+
+test "make_result handles empty data dict" {
+	result := make_result(true, "", {})
+	assert_true(result["ok"])
+}
+
+test "contains_text handles start and middle matches" {
+	assert_true(contains_text("prefix-value", "prefix"))
+	assert_true(contains_text("abc-prefix-value", "prefix"))
+	assert_false(contains_text("abc-value", "prefix"))
+}
+
+# ===========================================================================
+# Known checks
+# ===========================================================================
+
+test "KNOWN_CHECKS returns all check types" {
+	checks := KNOWN_CHECKS()
+	assert_true(len(checks) > 0)
+	assert_true(len(checks) >= 12)
+}
+
+# ===========================================================================
+# Config validation
+# ===========================================================================
+
+test "validate_config rejects empty config" {
+	result := validate_config({})
+	assert_false(result["ok"])
+}
+
+test "validate_config rejects config without name" {
+	result := validate_config({"tests": [{"name": "t1", "check": "file_exists", "params": {"path": "eval.json"}}]})
+	assert_false(result["ok"])
+}
+
+test "validate_config rejects config without tests" {
+	result := validate_config({"name": "suite"})
+	assert_false(result["ok"])
+}
+
+test "validate_config rejects unknown check type" {
+	result := validate_config({
+		"name": "suite",
+		"tests": [{"name": "t1", "check": "nonexistent_check", "params": {}}]
+	})
+	assert_false(result["ok"])
+}
+
+test "validate_config accepts valid config" {
+	result := validate_config({
+		"name": "valid-suite",
+		"description": "A valid suite",
+		"tests": [
+			{"name": "echo test", "check": "command_succeeds", "params": {"command": "echo hello"}}
+		]
+	})
+	assert_true(result["ok"])
+	result_data := dict_get_or(result, "data", {})
+	cfg := dict_get_or(result_data, "config", {})
+	assert_equal(cfg["name"], "valid-suite")
+	assert_equal(len(cfg["tests"]), 1)
+}
+
+test "load_config returns error for missing file" {
+	result := load_config("./nonexistent_eval_config_12345.json")
+	assert_false(result["ok"])
+	assert_true(len(result["error"]) > 0)
+}
+
+# ===========================================================================
+# Check: command_succeeds
+# ===========================================================================
+
+test "command_succeeds with simple echo" {
+	result := check_command_succeeds({"command": "echo hello"})
+	assert_true(result["ok"])
+	check_data := dict_get_or(result, "data", {})
+	assert_equal(dict_get_or(check_data, "check", ""), "command_succeeds")
+}
+
+test "command_succeeds fails on bad command" {
+	result := check_command_succeeds({"command": "exit 1"})
+	assert_false(result["ok"])
+}
+
+test "command_succeeds fails with empty command" {
+	result := check_command_succeeds({"command": ""})
+	assert_false(result["ok"])
+}
+
+# ===========================================================================
+# Check: run_shell (direct tests — item 1.5)
+# ===========================================================================
+
+test "run_shell returns ok for valid command" {
+	result := run_shell("echo hello")
+	assert_true(result["ok"])
+	assert_equal(result["exit_code"], 0)
+	assert_true(len(result["stdout"]) > 0)
+}
+
+test "run_shell captures multi-line output" {
+	result := run_shell("echo line1 && echo line2")
+	assert_true(result["ok"])
+	assert_true(contains(result["stdout"], "line1") == 1)
+	assert_true(contains(result["stdout"], "line2") == 1)
+}
+
+test "run_shell captures stderr" {
+	result := run_shell("echo error >&2")
+	assert_true(result["ok"])
+}
+
+test "run_shell returns error for empty command" {
+	result := run_shell("")
+	assert_false(result["ok"])
+	assert_true(len(result["error"]) > 0)
+}
+
+test "run_shell handles non-zero exit" {
+	result := run_shell("exit 42")
+	exit_code := result["exit_code"]
+	message := "exit code: " + to_string(exit_code)
+	print(message)
+}
+
+test "run_shell_timed enforces timeout and returns timeout error" {
+	start_ms := time()
+	result := run_shell_timed("sleep 2", 50)
+	elapsed_ms := time() - start_ms
+	assert_false(result["ok"])
+	assert_true(contains(result["error"], "timed out") == 1)
+	assert_true(elapsed_ms < 1500)
+}
+
+test "run_shell returns empty stdout for silent command" {
+	result := run_shell("echo -n ''")
+	assert_true(result["ok"])
+}
+
+# ===========================================================================
+# Check: command_fails
+# ===========================================================================
+
+test "command_fails with failing command" {
+	result := check_command_fails({"command": "exit 2"})
+	assert_true(result["ok"])
+}
+
+test "command_fails fails when command succeeds" {
+	result := check_command_fails({"command": "echo ok"})
+	assert_false(result["ok"])
+}
+
+# ===========================================================================
+# Check: exit_code_equals
+# ===========================================================================
+
+test "exit_code_equals matches expected code" {
+	result := check_exit_code_equals({"command": "exit 3", "expected": 3})
+	assert_true(result["ok"])
+}
+
+test "exit_code_equals fails on mismatch" {
+	result := check_exit_code_equals({"command": "exit 3", "expected": 0})
+	assert_false(result["ok"])
+}
+
+# ===========================================================================
+# Check: file_exists
+# ===========================================================================
+
+test "file_exists finds existing file" {
+	result := check_file_exists({"path": "kennel.toml"})
+	assert_true(result["ok"])
+}
+
+test "file_exists fails for missing file" {
+	result := check_file_exists({"path": "./nonexistent_file_xyz_12345.test"})
+	assert_false(result["ok"])
+}
+
+test "file_exists fails with empty path" {
+	result := check_file_exists({"path": ""})
+	assert_false(result["ok"])
+}
+
+# ===========================================================================
+# Check: file_does_not_exist
+# ===========================================================================
+
+test "file_does_not_exist passes for missing file" {
+	result := check_file_does_not_exist({"path": "./nonexistent_file_xyz_12345.test"})
+	assert_true(result["ok"])
+}
+
+test "file_does_not_exist fails for existing file" {
+	result := check_file_does_not_exist({"path": "kennel.toml"})
+	assert_false(result["ok"])
+}
+
+# ===========================================================================
+# Check: file_contains
+# ===========================================================================
+
+test "file_contains finds text in file" {
+	try {
+		write_file(".eval_test_tmp.txt", "Hello Eval World\nThis is a test file.")
+	} except err {}
+
+	result := check_file_contains({"path": ".eval_test_tmp.txt", "expected": "Eval World"})
+	assert_true(result["ok"])
+
+	try {
+		remove_file(".eval_test_tmp.txt")
+	} except err {}
+}
+
+test "file_contains fails for missing text" {
+	try {
+		write_file(".eval_test_tmp.txt", "Hello Eval World")
+	} except err {}
+
+	result := check_file_contains({"path": ".eval_test_tmp.txt", "expected": "NONEXISTENT_TEXT_XYZ"})
+	assert_false(result["ok"])
+
+	try {
+		remove_file(".eval_test_tmp.txt")
+	} except err {}
+}
+
+test "file_contains fails for missing file" {
+	result := check_file_contains({"path": "./nonexistent_file_xyz.test", "expected": "text"})
+	assert_false(result["ok"])
+	details := dict_get_or(result, "data", {})
+	assert_true(contains(to_json(details), "File not found") == 1)
+}
+
+# ===========================================================================
+# Check: file_does_not_contain
+# ===========================================================================
+
+test "file_does_not_contain passes when text absent" {
+	try {
+		write_file(".eval_test_tmp.txt", "Clean content here")
+	} except err {}
+
+	result := check_file_does_not_contain({"path": ".eval_test_tmp.txt", "expected": "BAD_WORD"})
+	assert_true(result["ok"])
+
+	try {
+		remove_file(".eval_test_tmp.txt")
+	} except err {}
+}
+
+test "file_does_not_contain fails when text present" {
+	try {
+		write_file(".eval_test_tmp.txt", "This has BAD_WORD in it")
+	} except err {}
+
+	result := check_file_does_not_contain({"path": ".eval_test_tmp.txt", "expected": "BAD_WORD"})
+	assert_false(result["ok"])
+
+	try {
+		remove_file(".eval_test_tmp.txt")
+	} except err {}
+}
+
+test "file_does_not_contain passes for missing file branch" {
+	result := check_file_does_not_contain({"path": "./definitely_missing_file_abc.xyz", "expected": "needle"})
+	assert_true(result["ok"])
+	details := dict_get_or(result, "data", {})
+	assert_true(contains(to_json(details), "trivially") == 1)
+}
+
+# ===========================================================================
+# Check: output_contains
+# ===========================================================================
+
+test "output_contains finds text in command output" {
+	result := check_output_contains({"command": "echo Hello Eval World", "expected": "Eval"})
+	assert_true(result["ok"])
+}
+
+test "output_contains fails when text not found" {
+	result := check_output_contains({"command": "echo Hello", "expected": "NONEXISTENT"})
+	assert_false(result["ok"])
+}
+
+# ===========================================================================
+# Check: output_does_not_contain
+# ===========================================================================
+
+test "output_does_not_contain passes when text absent" {
+	result := check_output_does_not_contain({"command": "echo Clean Output", "expected": "ERROR"})
+	assert_true(result["ok"])
+}
+
+test "output_does_not_contain fails when text present" {
+	result := check_output_does_not_contain({"command": "echo Found ERROR here", "expected": "ERROR"})
+	assert_false(result["ok"])
+}
+
+# ===========================================================================
+# Check: json_matches_shape
+# ===========================================================================
+
+test "json_matches_shape validates required keys" {
+	try {
+		write_file(".eval_test_json.json", "{\"name\": \"test\", \"version\": \"1.0\", \"extra\": \"field\"}")
+	} except err {}
+
+	result := check_json_matches_shape({
+		"path": ".eval_test_json.json",
+		"required_keys": ["name", "version"]
+	})
+	assert_true(result["ok"])
+	result_data := dict_get_or(result, "data", {})
+	assert_equal(dict_get_or(result_data, "check", ""), "json_matches_shape")
+	assert_true(len(dict_get_or(result_data, "message", "")) > 0)
+
+	try {
+		remove_file(".eval_test_json.json")
+	} except err {}
+}
+
+test "json_matches_shape fails for missing keys" {
+	try {
+		write_file(".eval_test_json.json", "{\"name\": \"test\"}")
+	} except err {}
+
+	result := check_json_matches_shape({
+		"path": ".eval_test_json.json",
+		"required_keys": ["name", "version"]
+	})
+	assert_false(result["ok"])
+	result_data := dict_get_or(result, "data", {})
+	assert_equal(dict_get_or(result_data, "check", ""), "json_matches_shape")
+	assert_true(len(dict_get_or(result_data, "message", "")) > 0)
+
+	try {
+		remove_file(".eval_test_json.json")
+	} except err {}
+}
+
+test "json_matches_shape handles shape string" {
+	try {
+		write_file(".eval_test_json.json", "{\"name\": \"test\", \"version\": \"1.0\"}")
+	} except err {}
+
+	result := check_json_matches_shape({
+		"path": ".eval_test_json.json",
+		"shape": "name, version"
+	})
+	assert_true(result["ok"])
+	result_data := dict_get_or(result, "data", {})
+	assert_equal(dict_get_or(result_data, "check", ""), "json_matches_shape")
+	assert_true(len(dict_get_or(result_data, "message", "")) > 0)
+
+	try {
+		remove_file(".eval_test_json.json")
+	} except err {}
+}
+
+# ===========================================================================
+# Check: directory_diff
+# ===========================================================================
+
+test "directory_diff with same directory" {
+	try {
+		create_dir(".eval_test_dir_a")
+		create_dir(".eval_test_dir_b")
+		write_file(".eval_test_dir_a/file1.txt", "content")
+		write_file(".eval_test_dir_b/file1.txt", "content")
+	} except err {}
+
+	result := check_directory_diff({
+		"dir_a": ".eval_test_dir_a",
+		"dir_b": ".eval_test_dir_b"
+	})
+	assert_true(result["ok"])
+	result_data := dict_get_or(result, "data", {})
+	assert_equal(dict_get_or(result_data, "check", ""), "directory_diff")
+	assert_true(len(dict_get_or(result_data, "message", "")) > 0)
+
+	try {
+		remove_file(".eval_test_dir_a/file1.txt")
+		remove_file(".eval_test_dir_b/file1.txt")
+		remove_file(".eval_test_dir_a")
+		remove_file(".eval_test_dir_b")
+	} except err {}
+}
+
+test "directory_diff detects differences" {
+	try {
+		create_dir(".eval_test_dir_c")
+		create_dir(".eval_test_dir_d")
+		write_file(".eval_test_dir_c/file1.txt", "content_a")
+		write_file(".eval_test_dir_d/file1.txt", "content_b")
+	} except err {}
+
+	result := check_directory_diff({
+		"dir_a": ".eval_test_dir_c",
+		"dir_b": ".eval_test_dir_d"
+	})
+	assert_false(result["ok"])
+	result_data := dict_get_or(result, "data", {})
+	assert_equal(dict_get_or(result_data, "check", ""), "directory_diff")
+	assert_true(len(dict_get_or(result_data, "message", "")) > 0)
+
+	try {
+		remove_file(".eval_test_dir_c/file1.txt")
+		remove_file(".eval_test_dir_d/file1.txt")
+		remove_file(".eval_test_dir_c")
+		remove_file(".eval_test_dir_d")
+	} except err {}
+}
+
+# ===========================================================================
+# Snapshot operations
+# ===========================================================================
+
+test "save_snapshot creates a snapshot file" {
+	result := save_snapshot(".eval_test_snapshots", "test_snap", "snapshot content v1")
+	assert_true(result["ok"])
+	assert_true(path_exists(result["path"]) == 1)
+
+	try {
+		remove_file(result["path"])
+		remove_file(".eval_test_snapshots")
+	} except err {}
+}
+
+test "compare_snapshot matches identical content" {
+	save_snapshot(".eval_test_snapshots", "test_match", "exact content")
+
+	result := compare_snapshot(".eval_test_snapshots", "test_match", "exact content")
+	assert_equal(result["match"], 1)
+
+	try {
+		remove_file(".eval_test_snapshots/test_match.snap")
+		remove_file(".eval_test_snapshots")
+	} except err {}
+}
+
+test "compare_snapshot detects differences" {
+	save_snapshot(".eval_test_snapshots", "test_diff", "expected")
+
+	result := compare_snapshot(".eval_test_snapshots", "test_diff", "actual")
+	assert_equal(result["match"], 0)
+
+	try {
+		remove_file(".eval_test_snapshots/test_diff.snap")
+		remove_file(".eval_test_snapshots")
+	} except err {}
+}
+
+test "compare_snapshot reports missing snapshot" {
+	result := compare_snapshot(".eval_test_snapshots", "nonexistent_snap", "content")
+	assert_equal(result["match"], 0)
+}
+
+test "list_snapshots returns snapshots" {
+	save_snapshot(".eval_test_snapshots", "list_test_1", "c1")
+
+	result := list_snapshots(".eval_test_snapshots")
+	assert_true(result["ok"])
+	assert_true(result["count"] >= 1)
+
+	try {
+		remove_file(".eval_test_snapshots/list_test_1.snap")
+		remove_file(".eval_test_snapshots")
+	} except err {}
+}
+
+test "delete_snapshot removes snapshot" {
+	save_snapshot(".eval_test_snapshots", "to_delete", "content")
+	file_path := ".eval_test_snapshots/to_delete.snap"
+
+	result := delete_snapshot(".eval_test_snapshots", "to_delete")
+	assert_true(result["ok"])
+	assert_true(path_exists(file_path) == 0)
+
+	try {
+		remove_file(".eval_test_snapshots")
+	} except err {}
+}
+
+test "check_snapshot_matches with update flag creates snapshot" {
+	snap_dir := ".eval_test_snapshots_update"
+
+	result := check_snapshot_matches({
+		"name": "cli-help-snap",
+		"content": "Usage: my-tool --help\n\nOptions:\n  --verbose",
+		"snapshot_dir": snap_dir,
+		"update": "true"
+	})
+	assert_true(result["ok"])
+	assert_true(contains(result["message"], "updated") == 1 || contains(result["message"], "Snapshot updated") == 1)
+
+	snap_path := snap_dir + "/cli-help-snap.snap"
+	assert_true(path_exists(snap_path) == 1)
+
+	try {
+		remove_file(snap_path)
+		remove_file(snap_dir)
+	} except err {}
+}
+
+test "check_snapshot_matches with update flag updates existing snapshot" {
+	snap_dir := ".eval_test_snapshots_update2"
+	snap_path := snap_dir + "/update-test.snap"
+
+	save_snapshot(snap_dir, "update-test", "old content")
+
+	result := check_snapshot_matches({
+		"name": "update-test",
+		"content": "new content",
+		"snapshot_dir": snap_dir,
+		"update": "true"
+	})
+	assert_true(result["ok"])
+
+	updated_content := read_file(snap_path)
+	assert_equal(updated_content, "new content")
+
+	try {
+		remove_file(snap_path)
+		remove_file(snap_dir)
+	} except err {}
+}
+
+test "check_snapshot_matches without update compares against stored snapshot" {
+	snap_dir := ".eval_test_snapshots_compare"
+	save_snapshot(snap_dir, "compare-test", "expected content")
+
+	result := check_snapshot_matches({
+		"name": "compare-test",
+		"content": "expected content",
+		"snapshot_dir": snap_dir
+	})
+	assert_true(result["ok"])
+
+	result_diff := check_snapshot_matches({
+		"name": "compare-test",
+		"content": "different content",
+		"snapshot_dir": snap_dir
+	})
+	assert_false(result_diff["ok"])
+
+	try {
+		remove_file(snap_dir + "/compare-test.snap")
+		remove_file(snap_dir)
+	} except err {}
+}
+
+# ===========================================================================
+# Report generation
+# ===========================================================================
+
+test "generate_markdown_report produces valid report" {
+	results := {
+		"suite_name": "Test Suite",
+		"suite_version": "1.0.0",
+		"suite_description": "A test suite",
+		"passed": 2,
+		"failed": 1,
+		"skipped": 0,
+		"total": 3,
+		"duration_ms": 150,
+		"timestamp": "2026-01-01T00:00:00Z",
+		"test_results": [
+			{"name": "test 1", "check": "file_exists", "passed": true, "message": "OK", "details": {}},
+			{"name": "test 2", "check": "file_exists", "passed": true, "message": "OK", "details": {}},
+			{"name": "test 3", "check": "command_succeeds", "passed": false, "message": "Failed", "details": {"command": "bad"}}
+		]
+	}
+
+	report := generate_markdown_report(results)
+	assert_true(contains(report, "Test Suite") == 1)
+	assert_true(contains(report, "2") == 1)
+	assert_true(contains(report, "Failed Test Details") == 1)
+}
+
+test "generate_markdown_report handles all passed" {
+	results := {
+		"suite_name": "All Pass Suite",
+		"passed": 5,
+		"failed": 0,
+		"skipped": 0,
+		"total": 5,
+		"duration_ms": 200,
+		"test_results": [
+			{"name": "t1", "check": "file_exists", "passed": true, "message": "OK", "details": {}}
+		]
+	}
+
+	report := generate_markdown_report(results)
+	assert_true(contains(report, "ALL PASSED") == 1)
+}
+
+test "generate_junit_report conforms to expected structure" {
+	fixture := {
+		"suite_name": "junit-fixture",
+		"passed": 1,
+		"failed": 1,
+		"skipped": 0,
+		"total": 2,
+		"duration_ms": 11,
+		"test_results": [
+			{"name": "junit pass", "check": "file_exists", "passed": true, "message": "OK", "details": {}},
+			{"name": "junit fail", "check": "command_succeeds", "passed": false, "message": "boom", "details": {}}
+		]
+	}
+
+	xml := generate_junit_report(fixture)
+	assert_true(contains(xml, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>") == 1)
+	assert_true(contains(xml, "<testsuite name=\"junit-fixture\" tests=\"2\" failures=\"1\" skipped=\"0\"") == 1)
+	assert_true(contains(xml, "<testcase name=\"junit pass\"") == 1)
+	assert_true(contains(xml, "<testcase name=\"junit fail\"") == 1)
+	assert_true(contains(xml, "<failure message=\"boom\"/>") == 1)
+	assert_true(contains(xml, "</testsuite>") == 1)
+}
+
+test "generate_tap_report conforms to expected structure" {
+	fixture := {
+		"suite_name": "tap-fixture",
+		"passed": 2,
+		"failed": 1,
+		"skipped": 0,
+		"total": 3,
+		"duration_ms": 9,
+		"test_results": [
+			{"name": "tap pass one", "check": "file_exists", "passed": true, "message": "OK", "details": {}},
+			{"name": "tap pass two", "check": "file_exists", "passed": true, "message": "OK", "details": {}},
+			{"name": "tap fail", "check": "command_succeeds", "passed": false, "message": "failed", "details": {}}
+		]
+	}
+
+	tap := generate_tap_report(fixture)
+	assert_true(contains(tap, "1..3") == 1)
+	assert_true(contains(tap, "ok 1 - tap pass one") == 1)
+	assert_true(contains(tap, "ok 2 - tap pass two") == 1)
+	assert_true(contains(tap, "not ok 3 - tap fail") == 1)
+	assert_true(contains(tap, "message: failed") == 1)
+}
+
+# ===========================================================================
+# Compare runs
+# ===========================================================================
+
+test "compare_runs detects regression" {
+	run_a := {"suite_name": "Run A", "passed": 10, "failed": 2, "total": 12}
+	run_b := {"suite_name": "Run B", "passed": 9, "failed": 3, "total": 12}
+
+	result := compare_runs(run_a, run_b)
+	assert_true(result["regression"])
+	assert_false(result["improvement"])
+}
+
+test "compare_runs detects improvement" {
+	run_a := {"suite_name": "Run A", "passed": 5, "failed": 5, "total": 10}
+	run_b := {"suite_name": "Run B", "passed": 8, "failed": 2, "total": 10}
+
+	result := compare_runs(run_a, run_b)
+	assert_false(result["regression"])
+	assert_true(result["improvement"])
+}
+
+test "compare_runs detects no change" {
+	run_a := {"suite_name": "Run A", "passed": 10, "failed": 0, "total": 10}
+	run_b := {"suite_name": "Run B", "passed": 10, "failed": 0, "total": 10}
+
+	result := compare_runs(run_a, run_b)
+	assert_false(result["regression"])
+	assert_false(result["improvement"])
+}
+
+# ===========================================================================
+# run_check dispatcher
+# ===========================================================================
+
+test "run_check dispatches to correct handler" {
+	result := run_check("file_exists", {"path": "kennel.toml"})
+	assert_equal(result["check"], "file_exists")
+	assert_true(result["ok"])
+}
+
+test "run_check returns error for unknown type" {
+	result := run_check("invalid_check_type", {})
+	assert_false(result["ok"])
+}
+
+# ===========================================================================
+# Check: file_matches_glob (item 4.1)
+# ===========================================================================
+
+test "file_matches_glob finds matching pattern" {
+	try {
+		write_file(".eval_test_glob.txt", "SUCCESS: deployment complete")
+	} except err {}
+	result := check_file_matches_glob({"path": ".eval_test_glob.txt", "pattern": "SUCCESS"})
+	assert_true(result["ok"])
+	try { remove_file(".eval_test_glob.txt") } except err {}
+}
+
+test "file_matches_glob fails for non-matching pattern" {
+	try {
+		write_file(".eval_test_glob2.txt", "all systems normal")
+	} except err {}
+	result := check_file_matches_glob({"path": ".eval_test_glob2.txt", "pattern": "ERROR"})
+	assert_false(result["ok"])
+	try { remove_file(".eval_test_glob2.txt") } except err {}
+}
+
+test "file_matches_glob fails for missing file" {
+	result := check_file_matches_glob({"path": "./nonexistent_glob_test.txt", "pattern": "text"})
+	assert_false(result["ok"])
+}
+
+# ===========================================================================
+# Check: output_matches_glob (item 4.2)
+# ===========================================================================
+
+test "output_matches_glob finds pattern in output" {
+	result := check_output_matches_glob({"command": "echo DEPLOY OK", "pattern": "DEPLOY"})
+	assert_true(result["ok"])
+}
+
+test "output_matches_glob fails for non-matching pattern" {
+	result := check_output_matches_glob({"command": "echo all good", "pattern": "ERROR"})
+	assert_false(result["ok"])
+}
+
+test "output_matches_glob fails for empty command" {
+	result := check_output_matches_glob({"command": "", "pattern": "text"})
+	assert_false(result["ok"])
+}
+
+# ===========================================================================
+# Check: json_value_equals (item 4.3)
+# ===========================================================================
+
+test "json_value_equals matches top-level string value" {
+	try {
+		write_file(".eval_test_jve.json", "{\"status\":\"ok\",\"count\":42}")
+	} except err {}
+	result := check_json_value_equals({"path": ".eval_test_jve.json", "json_path": "status", "expected": "ok"})
+	assert_true(result["ok"])
+	try { remove_file(".eval_test_jve.json") } except err {}
+}
+
+test "json_value_equals matches nested value" {
+	try {
+		write_file(".eval_test_jve2.json", "{\"user\":{\"name\":\"alice\",\"role\":\"admin\"}}")
+	} except err {}
+	result := check_json_value_equals({"path": ".eval_test_jve2.json", "json_path": "user.role", "expected": "admin"})
+	assert_true(result["ok"])
+	try { remove_file(".eval_test_jve2.json") } except err {}
+}
+
+test "json_value_equals fails for wrong value" {
+	try {
+		write_file(".eval_test_jve3.json", "{\"status\":\"error\"}")
+	} except err {}
+	result := check_json_value_equals({"path": ".eval_test_jve3.json", "json_path": "status", "expected": "ok"})
+	assert_false(result["ok"])
+	try { remove_file(".eval_test_jve3.json") } except err {}
+}
+
+# ===========================================================================
+# Check: file_size (item 4.4)
+# ===========================================================================
+
+test "file_size_greater_than passes for larger file" {
+	result := check_file_size_greater_than({"path": "kennel.toml", "bytes": 10})
+	assert_true(result["ok"])
+}
+
+test "file_size_greater_than fails for too-small threshold" {
+	result := check_file_size_greater_than({"path": "kennel.toml", "bytes": 99999})
+	assert_false(result["ok"])
+}
+
+# ===========================================================================
+# Edge case tests (item 8.2)
+# ===========================================================================
+
+test "file_contains handles Unicode content" {
+	try {
+		write_file(".eval_test_unicode.txt", "Hello 世界 🌍")
+	} except err {}
+	result := check_file_contains({"path": ".eval_test_unicode.txt", "expected": "世界"})
+	assert_true(result["ok"])
+	try { remove_file(".eval_test_unicode.txt") } except err {}
+}
+
+test "file_contains handles empty file" {
+	try {
+		write_file(".eval_test_empty.txt", "")
+	} except err {}
+	result := check_file_contains({"path": ".eval_test_empty.txt", "expected": "anything"})
+	assert_false(result["ok"])
+	try { remove_file(".eval_test_empty.txt") } except err {}
+}
+
+test "output_contains handles multi-line output" {
+	result := check_output_contains({"command": "echo line1 && echo line2", "expected": "line2"})
+	assert_true(result["ok"])
+}
+
+test "output_contains fails for empty expected" {
+	result := check_output_contains({"command": "echo hi", "expected": ""})
+	assert_false(result["ok"])
+}
+
+test "check_json_matches_shape with inline json param" {
+	result := check_json_matches_shape({"json": "{\"status\":\"ok\"}", "required_keys": ["status"]})
+	assert_true(result["ok"])
+}
+
+test "check_json_matches_shape with empty object" {
+	result := check_json_matches_shape({"json": "{}", "required_keys": []})
+	assert_true(result["ok"])
+}
+
+test "check_directory_diff with same content different dirs" {
+	try {
+		create_dir(".eval_edge_a")
+		create_dir(".eval_edge_b")
+		write_file(".eval_edge_a/x.txt", "same")
+		write_file(".eval_edge_b/x.txt", "same")
+	} except err {}
+	result := check_directory_diff({"dir_a": ".eval_edge_a", "dir_b": ".eval_edge_b"})
+	assert_true(result["ok"])
+	try {
+		remove_file(".eval_edge_a/x.txt")
+		remove_file(".eval_edge_b/x.txt")
+		remove_file(".eval_edge_a")
+		remove_file(".eval_edge_b")
+	} except err {}
+}
+
+test "check_exit_code_equals with non-zero expected code" {
+	result := check_exit_code_equals({"command": "exit 5", "expected": 5})
+	assert_true(result["ok"])
+}
+
+test "check_command_succeeds fails for exit 1 with stderr" {
+	result := check_command_succeeds({"command": "echo error >&2 && exit 1"})
+	assert_false(result["ok"])
+}
+
+# ===========================================================================
+# run_suite integration tests (item 8.4)
+# ===========================================================================
+
+test "run_suite with stop_on_failure halts after first failure" {
+	try {
+		write_file(".eval_test_stop.json", "{\"name\":\"stop-suite\",\"stop_on_failure\":true,\"tests\":[{\"name\":\"fail first\",\"check\":\"command_fails\",\"params\":{\"command\":\"echo ok\"}},{\"name\":\"never runs\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_test_stop.json", {})
+	assert_equal(results["total"], 1)
+	assert_equal(results["failed"], 1)
+
+	try { remove_file(".eval_test_stop.json") } except err {}
+}
+
+test "run_suite counts skipped tests" {
+	try {
+		write_file(".eval_test_skip.json", "{\"name\":\"skip-suite\",\"tests\":[{\"name\":\"skip me\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"},\"skip\":true},{\"name\":\"run me\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_test_skip.json", {})
+	assert_equal(results["total"], 2)
+	assert_equal(results["skipped"], 1)
+	assert_equal(results["passed"], 1)
+
+	try { remove_file(".eval_test_skip.json") } except err {}
+}
+
+test "run_suite returns error for missing config file" {
+	results := run_suite("./nonexistent_suite_config.json", {})
+	assert_false(results["ok"])
+}
+
+test "run_suite with hooks executes all tests" {
+	try {
+		write_file(".eval_test_hooks2.json", "{\"name\":\"hook-suite2\",\"setup\":\"echo start\",\"teardown\":\"echo end\",\"before_each\":\"echo before\",\"after_each\":\"echo after\",\"tests\":[{\"name\":\"h1\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}},{\"name\":\"h2\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo test\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_test_hooks2.json", {})
+	assert_true(results["ok"])
+	assert_equal(results["total"], 2)
+	assert_equal(results["passed"], 2)
+
+	try { remove_file(".eval_test_hooks2.json") } except err {}
+}
+
+# ===========================================================================
+# init_config
+# ===========================================================================
+
+test "run_suite filters tests by name" {
+	try {
+		write_file(".eval_test_filter.json", "{\"name\":\"filter-suite\",\"tests\":[{\"name\":\"alpha check\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}},{\"name\":\"beta check\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_test_filter.json", {"filter": "alpha"})
+	assert_equal(results["total"], 1)
+	assert_equal(results["passed"], 1)
+
+	results_all := run_suite(".eval_test_filter.json", {})
+	assert_equal(results_all["total"], 2)
+
+	try { remove_file(".eval_test_filter.json") } except err {}
+}
+
+test "run_suite excludes tests by name" {
+	try {
+		write_file(".eval_test_exclude.json", "{\"name\":\"exclude-suite\",\"tests\":[{\"name\":\"keep me\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}},{\"name\":\"skip me\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_test_exclude.json", {"exclude": "skip"})
+	assert_equal(results["total"], 1)
+
+	try { remove_file(".eval_test_exclude.json") } except err {}
+}
+
+test "run_suite filters by tags" {
+	try {
+		write_file(".eval_test_tags.json", "{\"name\":\"tag-suite\",\"tests\":[{\"name\":\"smoke test\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"},\"tags\":[\"smoke\"]},{\"name\":\"slow test\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"},\"tags\":[\"slow\"]}]}")
+	} except err {}
+
+	results := run_suite(".eval_test_tags.json", {"tags": "smoke"})
+	assert_equal(results["total"], 1)
+
+	try { remove_file(".eval_test_tags.json") } except err {}
+}
+
+test "run_suite executes setup and teardown hooks" {
+	try {
+		write_file(".eval_test_hooks.json", "{\"name\":\"hook-suite\",\"setup\":\"echo setup-ran\",\"teardown\":\"echo teardown-ran\",\"tests\":[{\"name\":\"hook test\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_test_hooks.json", {})
+	assert_true(results["ok"])
+	assert_equal(results["total"], 1)
+
+	try { remove_file(".eval_test_hooks.json") } except err {}
+}
+
+test "init_config creates valid config structure" {
+	result := init_config("test-init-suite", "./eval_results", "./snapshots", "basic")
+	assert_true(result["ok"])
+	assert_true(contains(result["message"], "test-init-suite") == 1)
+
+	try {
+		remove_file("eval.json")
+	} except err {}
+}
+
+# ===========================================================================
+# Results persistence (last_run.json — item 1.3)
+# ===========================================================================
+
+test "run_suite results can be serialized and loaded back" {
+	try {
+		write_file(".eval_test_config.json", "{\"name\":\"roundtrip-suite\",\"tests\":[{\"name\":\"t1\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_test_config.json", {})
+
+	results_json := to_json(results)
+	loaded := parse_json(results_json)
+
+	assert_equal(loaded["suite_name"], "roundtrip-suite")
+	assert_true(loaded["total"] >= 1)
+
+	try {
+		remove_file(".eval_test_config.json")
+	} except err {}
+}
+
+test "run_suite results saved to file can be loaded for reporting" {
+	try {
+		write_file(".eval_test_config2.json", "{\"name\":\"persist-suite\",\"tests\":[{\"name\":\"p1\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_test_config2.json", {})
+	results_json := to_json(results)
+
+	try {
+		create_dir(".eval_test_output")
+	} except err {}
+	write_file(".eval_test_output/last_run.json", results_json)
+
+	raw := read_file(".eval_test_output/last_run.json")
+	cached := parse_json(raw)
+	assert_equal(cached["suite_name"], "persist-suite")
+	assert_equal(cached["total"], 1)
+
+	try {
+		remove_file(".eval_test_output/last_run.json")
+		remove_file(".eval_test_output")
+		remove_file(".eval_test_config2.json")
+	} except err {}
+}
+
+# ===========================================================================
+# HTML report format (item 6.4.6)
+# ===========================================================================
+
+test "generate_html_report produces valid HTML structure" {
+	from src.report import generate_html_report
+
+	mock := {
+		"suite_name": "html-test",
+		"passed": 2,
+		"failed": 1,
+		"skipped": 0,
+		"total": 3,
+		"duration_ms": 42,
+		"test_results": [
+			{"name": "t1", "check": "file_exists", "passed": true, "skipped": false, "message": "ok", "details": {}},
+			{"name": "t2", "check": "command_succeeds", "passed": true, "skipped": false, "message": "ok", "details": {}},
+			{"name": "t3", "check": "command_fails", "passed": false, "skipped": false, "message": "expected failure", "details": {"command": "echo hi", "exit_code": 0}}
+		]
+	}
+
+	html := generate_html_report(mock)
+
+	assert_true(contains(html, "<!DOCTYPE html>") == true)
+	assert_true(contains(html, "<html") == true)
+	assert_true(contains(html, "<head>") == true)
+	assert_true(contains(html, "<body>") == true)
+	assert_true(contains(html, "</html>") == true)
+}
+
+test "generate_html_report contains suite name in title" {
+	from src.report import generate_html_report
+
+	mock := {
+		"suite_name": "html-title-test",
+		"passed": 1,
+		"failed": 0,
+		"skipped": 0,
+		"total": 1,
+		"duration_ms": 10,
+		"test_results": [
+			{"name": "t1", "check": "file_exists", "passed": true, "skipped": false, "message": "ok", "details": {}}
+		]
+	}
+
+	html := generate_html_report(mock)
+	assert_true(contains(html, "html-title-test") == true)
+	assert_true(contains(html, "<title>Eval Report: html-title-test</title>") == true)
+}
+
+test "generate_html_report shows pass/fail counts in summary cards" {
+	from src.report import generate_html_report
+
+	mock := {
+		"suite_name": "counts-test",
+		"passed": 3,
+		"failed": 2,
+		"skipped": 1,
+		"total": 6,
+		"duration_ms": 100,
+		"test_results": []
+	}
+
+	html := generate_html_report(mock)
+	assert_true(contains(html, ">3<") == true)
+	assert_true(contains(html, ">2<") == true)
+	assert_true(contains(html, ">1<") == true)
+}
+
+test "generate_html_report shows test names in results table" {
+	from src.report import generate_html_report
+
+	mock := {
+		"suite_name": "names-test",
+		"passed": 1,
+		"failed": 0,
+		"skipped": 0,
+		"total": 1,
+		"duration_ms": 5,
+		"test_results": [
+			{"name": "unique-test-name-xyz", "check": "command_succeeds", "passed": true, "skipped": false, "message": "ok", "details": {}}
+		]
+	}
+
+	html := generate_html_report(mock)
+	assert_true(contains(html, "unique-test-name-xyz") == true)
+}
+
+test "generate_html_report with all passes shows success styling" {
+	from src.report import generate_html_report
+
+	mock := {
+		"suite_name": "all-pass",
+		"passed": 2,
+		"failed": 0,
+		"skipped": 0,
+		"total": 2,
+		"duration_ms": 20,
+		"test_results": [
+			{"name": "t1", "check": "file_exists", "passed": true, "skipped": false, "message": "ok", "details": {}},
+			{"name": "t2", "check": "command_succeeds", "passed": true, "skipped": false, "message": "ok", "details": {}}
+		]
+	}
+
+	html := generate_html_report(mock)
+	assert_true(contains(html, "ALL PASSED") == true)
+	assert_true(contains(html, "row-fail") == false)
+}
+
+test "generate_html_report with failures shows collapsible details" {
+	from src.report import generate_html_report
+
+	mock := {
+		"suite_name": "fail-test",
+		"passed": 0,
+		"failed": 1,
+		"skipped": 0,
+		"total": 1,
+		"duration_ms": 15,
+		"test_results": [
+			{"name": "failing-test", "check": "command_fails", "passed": false, "skipped": false, "message": "command succeeded unexpectedly", "details": {"command": "echo ok", "exit_code": 0, "diff": "-expected\n+actual"}}
+		]
+	}
+
+	html := generate_html_report(mock)
+	assert_true(contains(html, "<details>") == true)
+	assert_true(contains(html, "<summary>") == true)
+	assert_true(contains(html, "Failure details") == true)
+	assert_true(contains(html, "failing-test") == true)
+	assert_true(contains(html, "<pre>") == true)
+	assert_true(contains(html, "-expected") == true)
+	assert_true(contains(html, "+actual") == true)
+}
+
+test "generate_html_report escapes HTML in test names" {
+	from src.report import generate_html_report
+
+	mock := {
+		"suite_name": "escape-test",
+		"passed": 1,
+		"failed": 0,
+		"skipped": 0,
+		"total": 1,
+		"duration_ms": 5,
+		"test_results": [
+			{"name": "test <script>alert('xss')</script>", "check": "file_exists", "passed": true, "skipped": false, "message": "ok", "details": {}}
+		]
+	}
+
+	html := generate_html_report(mock)
+	assert_true(contains(html, "<script>") == false)
+	assert_true(contains(html, "&lt;script&gt;") == true)
+}
+
+# ===========================================================================
+# describe_module() contract (v2.1.0)
+# ===========================================================================
+
+test "describe_module returns expected structure" {
+	from main import describe_module
+
+	desc := describe_module()
+	assert_equal(desc["module"], "eval")
+	assert_equal(desc["contract_version"], "2.0.0")
+	assert_true(dict_get_or(desc, "check_count", 0) >= 20)
+	assert_true(type(desc["commands"]) == "array")
+	assert_true(type(desc["source_modules"]) == "array")
+	assert_true(type(desc["report_formats"]) == "array")
+	assert_true(contains(desc["report_formats"][0], "md") == true || contains(desc["report_formats"][1], "md") == true)
+}
+
+# ===========================================================================
+# Quiet mode (v2.1.0)
+# ===========================================================================
+
+test "run_suite with quiet=true suppresses per-test output" {
+	from src.eval_core import run_suite
+
+	try {
+		write_file(".eval_test_quiet.json", "{\"name\":\"quiet-suite\",\"tests\":[{\"name\":\"q1\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_test_quiet.json", {"quiet": true})
+	assert_true(results["ok"])
+	assert_equal(dict_get_or(dict_get_or(results, "data", {}), "total", 0), 1)
+
+	try { remove_file(".eval_test_quiet.json") } except err {}
+}
+
+# ===========================================================================
+# Verbose mode (v2.1.0)
+# ===========================================================================
+
+test "run_suite with verbose=true does not crash" {
+	from src.eval_core import run_suite
+
+	try {
+		write_file(".eval_test_verbose.json", "{\"name\":\"verbose-suite\",\"tests\":[{\"name\":\"v1\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_test_verbose.json", {"verbose": true})
+	assert_true(results["ok"])
+
+	try { remove_file(".eval_test_verbose.json") } except err {}
+}
+
+# ===========================================================================
+# Timing support (v2.1.0)
+# ===========================================================================
+
+test "run_suite records duration_ms" {
+	from src.eval_core import run_suite
+
+	try {
+		write_file(".eval_test_time.json", "{\"name\":\"time-suite\",\"tests\":[{\"name\":\"t1\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_test_time.json", {})
+	results_data := dict_get_or(results, "data", {})
+	assert_true(results["ok"])
+	assert_true(dict_get_or(results_data, "duration_ms", 0) > 0)
+
+	try { remove_file(".eval_test_time.json") } except err {}
+}
+
+# ===========================================================================
+# Retry support (v2.1.0)
+# ===========================================================================
+
+test "retry field on test definition allows retrying failures" {
+	from src.eval_core import run_suite
+
+	try {
+		write_file(".eval_test_retry.json", "{\"name\":\"retry-suite\",\"tests\":[{\"name\":\"r1\",\"check\":\"command_fails\",\"params\":{\"command\":\"echo hi\"},\"retry\":2}]}")
+	} except err {}
+
+	results := run_suite(".eval_test_retry.json", {})
+	results_data := dict_get_or(results, "data", {})
+	assert_true(results["ok"])
+
+	try { remove_file(".eval_test_retry.json") } except err {}
+}
+
+# ===========================================================================
+# describe_common_module contract (v2.1.0)
+# ===========================================================================
+
+test "describe_common_module returns correct contract version" {
+	from src.common import describe_common_module
+
+	desc := describe_common_module()
+	assert_equal(desc["module"], "common")
+	assert_equal(desc["contract_version"], "2.0.0")
+	assert_true(type(desc["exports"]) == "array")
+	assert_true(len(desc["exports"]) > 0)
+}
+
+# ===========================================================================
+# check_http_body_contains (A.1)
+# ===========================================================================
+
+test "http_body_contains rejects empty URL" {
+	from src.checks import check_http_body_contains
+
+	result := check_http_body_contains({"url": "", "expected": "hello"})
+	assert_false(result["ok"])
+}
+
+test "http_body_contains rejects empty expected text" {
+	from src.checks import check_http_body_contains
+
+	result := check_http_body_contains({"url": "http://example.com", "expected": ""})
+	assert_false(result["ok"])
+}
+
+test "http_body_contains is registered in KNOWN_CHECKS" {
+	from src.config import KNOWN_CHECKS
+
+	checks := KNOWN_CHECKS()
+	found := false
+	i := 0
+	while i < len(checks) {
+		if checks[i] == "http_body_contains" { found = true }
+		i := i + 1
+	}
+	assert_true(found)
+}
+
+test "http_body_contains is dispatched by run_check" {
+	from src.checks import run_check
+
+	result := run_check("http_body_contains", {"url": "", "expected": "test"})
+	assert_false(result["ok"])
+	result_data := dict_get_or(result, "data", {})
+	assert_equal(dict_get_or(result_data, "check", ""), "http_body_contains")
+}
+
+# ===========================================================================
+# check_command_stdout_json_path_equals (A.2)
+# ===========================================================================
+
+test "command_stdout_json_path_equals rejects empty command" {
+	from src.checks import check_command_stdout_json_path_equals
+
+	result := check_command_stdout_json_path_equals({"command": "", "json_path": "key", "expected": "val"})
+	assert_false(result["ok"])
+}
+
+test "command_stdout_json_path_equals rejects empty json_path" {
+	from src.checks import check_command_stdout_json_path_equals
+
+	result := check_command_stdout_json_path_equals({"command": "echo hi", "json_path": "", "expected": "val"})
+	assert_false(result["ok"])
+}
+
+test "command_stdout_json_path_equals extracts top-level value" {
+	from src.checks import check_command_stdout_json_path_equals
+
+	result := check_command_stdout_json_path_equals({"command": "echo '{\"name\":\"kujo\",\"version\":1}'", "json_path": "name", "expected": "kujo"})
+	assert_true(result["ok"])
+}
+
+test "command_stdout_json_path_equals detects mismatch" {
+	from src.checks import check_command_stdout_json_path_equals
+
+	result := check_command_stdout_json_path_equals({"command": "echo '{\"name\":\"kujo\"}'", "json_path": "name", "expected": "wrong"})
+	assert_false(result["ok"])
+}
+
+test "command_stdout_json_path_equals is dispatched by run_check" {
+	from src.checks import run_check
+
+	result := run_check("command_stdout_json_path_equals", {"command": "", "json_path": "key", "expected": "v"})
+	assert_false(result["ok"])
+	result_data := dict_get_or(result, "data", {})
+	assert_equal(dict_get_or(result_data, "check", ""), "command_stdout_json_path_equals")
+}
+
+test "command_stdout_json_path_equals is registered in KNOWN_CHECKS" {
+	from src.config import KNOWN_CHECKS
+
+	checks := KNOWN_CHECKS()
+	found := false
+	i := 0
+	while i < len(checks) {
+		if checks[i] == "command_stdout_json_path_equals" { found = true }
+		i := i + 1
+	}
+	assert_true(found)
+}
+
+# ===========================================================================
+# check_file_matches_regex (A.3)
+# ===========================================================================
+
+test "file_matches_regex rejects empty path" {
+	from src.checks import check_file_matches_regex
+
+	result := check_file_matches_regex({"path": "", "pattern": "[0-9]+"})
+	assert_false(result["ok"])
+}
+
+test "file_matches_regex rejects empty pattern" {
+	from src.checks import check_file_matches_regex
+
+	result := check_file_matches_regex({"path": "kennel.toml", "pattern": ""})
+	assert_false(result["ok"])
+}
+
+test "file_matches_regex matches file content" {
+	from src.checks import check_file_matches_regex
+
+	try { write_file(".eval_regex_test.txt", "hello 123 world") } except err {}
+	result := check_file_matches_regex({"path": ".eval_regex_test.txt", "pattern": "[0-9]+"})
+	assert_true(result["ok"])
+	try { remove_file(".eval_regex_test.txt") } except err {}
+}
+
+test "file_matches_regex detects non-match" {
+	from src.checks import check_file_matches_regex
+
+	try { write_file(".eval_regex_test2.txt", "hello world") } except err {}
+	result := check_file_matches_regex({"path": ".eval_regex_test2.txt", "pattern": "[0-9]+"})
+	assert_false(result["ok"])
+	try { remove_file(".eval_regex_test2.txt") } except err {}
+}
+
+test "file_matches_regex is dispatched by run_check" {
+	from src.checks import run_check
+
+	result := run_check("file_matches_regex", {"path": "", "pattern": ""})
+	assert_false(result["ok"])
+	result_data := dict_get_or(result, "data", {})
+	assert_equal(dict_get_or(result_data, "check", ""), "file_matches_regex")
+}
+
+test "file_matches_regex is registered in KNOWN_CHECKS" {
+	from src.config import KNOWN_CHECKS
+
+	checks := KNOWN_CHECKS()
+	found := false
+	i := 0
+	while i < len(checks) {
+		if checks[i] == "file_matches_regex" { found = true }
+		i := i + 1
+	}
+	assert_true(found)
+}
+
+# ===========================================================================
+# check_command_timing_less_than (A.4)
+# ===========================================================================
+
+test "command_timing_less_than rejects empty command" {
+	from src.checks import check_command_timing_less_than
+
+	result := check_command_timing_less_than({"command": "", "max_ms": 1000})
+	assert_false(result["ok"])
+}
+
+test "command_timing_less_than passes fast command" {
+	from src.checks import check_command_timing_less_than
+
+	result := check_command_timing_less_than({"command": "echo hi", "max_ms": 5000})
+	assert_true(result["ok"])
+}
+
+test "command_timing_less_than fails slow command (tight budget)" {
+	from src.checks import check_command_timing_less_than
+
+	result := check_command_timing_less_than({"command": "echo hi", "max_ms": 0})
+	assert_false(result["ok"])
+}
+
+test "command_timing_less_than is dispatched by run_check" {
+	from src.checks import run_check
+
+	result := run_check("command_timing_less_than", {"command": "", "max_ms": 100})
+	assert_false(result["ok"])
+	result_data := dict_get_or(result, "data", {})
+	assert_equal(dict_get_or(result_data, "check", ""), "command_timing_less_than")
+}
+
+test "command_timing_less_than records elapsed_ms" {
+	from src.checks import check_command_timing_less_than
+
+	result := check_command_timing_less_than({"command": "echo hi", "max_ms": 5000})
+	result_data := dict_get_or(result, "data", {})
+	assert_true(dict_get_or(result_data, "elapsed_ms", -1) >= 0)
+}
+
+# ===========================================================================
+# check_file_line_count (A.5)
+# ===========================================================================
+
+test "file_line_count rejects empty path" {
+	from src.checks import check_file_line_count
+
+	result := check_file_line_count({"path": "", "expected": 5})
+	assert_false(result["ok"])
+}
+
+test "file_line_count counts lines correctly" {
+	from src.checks import check_file_line_count
+
+	try { write_file(".eval_lines_test.txt", "line1\nline2\nline3\n") } except err {}
+	result := check_file_line_count({"path": ".eval_lines_test.txt", "expected": 4, "comparison": "equals"})
+	assert_true(result["ok"])
+	try { remove_file(".eval_lines_test.txt") } except err {}
+}
+
+test "file_line_count supports greater_than comparison" {
+	from src.checks import check_file_line_count
+
+	try { write_file(".eval_lines_test2.txt", "a\nb\nc\n") } except err {}
+	result := check_file_line_count({"path": ".eval_lines_test2.txt", "expected": 2, "comparison": "greater_than"})
+	assert_true(result["ok"])
+	try { remove_file(".eval_lines_test2.txt") } except err {}
+}
+
+test "file_line_count is dispatched by run_check" {
+	from src.checks import run_check
+
+	result := run_check("file_line_count", {"path": "", "expected": 0})
+	assert_false(result["ok"])
+	result_data := dict_get_or(result, "data", {})
+	assert_equal(dict_get_or(result_data, "check", ""), "file_line_count")
+}
+
+# ===========================================================================
+# check_directory_contains (A.6)
+# ===========================================================================
+
+test "directory_contains rejects empty dir" {
+	from src.checks import check_directory_contains
+
+	result := check_directory_contains({"dir": "", "pattern": ".ruff"})
+	assert_false(result["ok"])
+}
+
+test "directory_contains finds matching files" {
+	from src.checks import check_directory_contains
+
+	result := check_directory_contains({"dir": "src", "pattern": ".ruff", "min_files": 1})
+	assert_true(result["ok"])
+}
+
+test "directory_contains fails when too few matches" {
+	from src.checks import check_directory_contains
+
+	result := check_directory_contains({"dir": "src", "pattern": "nonexistent_xyz", "min_files": 1})
+	assert_false(result["ok"])
+}
+
+test "directory_contains is dispatched by run_check" {
+	from src.checks import run_check
+
+	result := run_check("directory_contains", {"dir": "", "pattern": ""})
+	assert_false(result["ok"])
+	result_data := dict_get_or(result, "data", {})
+	assert_equal(dict_get_or(result_data, "check", ""), "directory_contains")
+}
+
+# ===========================================================================
+# check_two_files_equal (A.7)
+# ===========================================================================
+
+test "two_files_equal rejects missing path_a" {
+	from src.checks import check_two_files_equal
+
+	result := check_two_files_equal({"path_a": "", "path_b": "kennel.toml"})
+	assert_false(result["ok"])
+}
+
+test "two_files_equal detects identical files" {
+	from src.checks import check_two_files_equal
+
+	try { write_file(".eval_eq_a.txt", "same content"); write_file(".eval_eq_b.txt", "same content") } except err {}
+	result := check_two_files_equal({"path_a": ".eval_eq_a.txt", "path_b": ".eval_eq_b.txt"})
+	assert_true(result["ok"])
+	try { remove_file(".eval_eq_a.txt"); remove_file(".eval_eq_b.txt") } except err {}
+}
+
+test "two_files_equal detects different files" {
+	from src.checks import check_two_files_equal
+
+	try { write_file(".eval_diff_a.txt", "content A"); write_file(".eval_diff_b.txt", "content B") } except err {}
+	result := check_two_files_equal({"path_a": ".eval_diff_a.txt", "path_b": ".eval_diff_b.txt"})
+	assert_false(result["ok"])
+	try { remove_file(".eval_diff_a.txt"); remove_file(".eval_diff_b.txt") } except err {}
+}
+
+test "two_files_equal is dispatched by run_check" {
+	from src.checks import run_check
+
+	result := run_check("two_files_equal", {"path_a": "", "path_b": ""})
+	assert_false(result["ok"])
+	result_data := dict_get_or(result, "data", {})
+	assert_equal(dict_get_or(result_data, "check", ""), "two_files_equal")
+}

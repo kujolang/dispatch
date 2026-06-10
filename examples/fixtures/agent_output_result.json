@@ -1,0 +1,13 @@
+{
+  "answer": "Kujo Eval completed the enterprise gate successfully.",
+  "confidence": "high",
+  "sources": [
+    "docs/SECURITY.md",
+    "docs/ARCHITECTURE.md",
+    "README.md"
+  ],
+  "metadata": {
+    "latency_ms": 182,
+    "model": "kujo-agent-v2"
+  }
+}

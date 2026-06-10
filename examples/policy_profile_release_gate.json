@@ -1,0 +1,23 @@
+{
+  "name": "policy-profile-release-gate",
+  "description": "Example suite using the release-gate enterprise policy preset.",
+  "policy_profile": "release-gate",
+  "output_dir": "./eval_results",
+  "snapshot_dir": "./snapshots",
+  "tests": [
+    {
+      "name": "allowed command",
+      "check": "command_succeeds",
+      "params": {
+        "command": "echo gate-ok"
+      }
+    },
+    {
+      "name": "blocked dangerous pattern",
+      "check": "command_fails",
+      "params": {
+        "command": "echo --privileged"
+      }
+    }
+  ]
+}

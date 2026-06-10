@@ -1,0 +1,9 @@
+{
+  "status": "ok",
+  "version": "1.0.0",
+  "data": {
+    "build": "2026.05",
+    "region": "us-east-1",
+    "dependencies": ["kujo-runtime", "eval-core"]
+  }
+}

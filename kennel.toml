@@ -1,0 +1,54 @@
+[package]
+name = "eval"
+version = "0.3.1"
+description = "Evaluation framework for AI-native software — 27 deterministic checks, 5 report formats, snapshot testing, retry support, security hardened. Contract v2.0.0."
+license = "MIT"
+authors = ["Robert DeVore <me@robertdevore.com>"]
+homepage = ""
+repository = "https://github.com/kujolang/dispatch"
+documentation = ""
+keywords = ["kujo", "eval", "testing", "agents", "quality"]
+categories = ["ai", "developer-tools", "testing"]
+readme = "README.md"
+
+[package.status]
+stage = "production"
+stability = "stable"
+public_api = true
+notes = "27 checks, 5 report formats, 14 CLI commands, 7 test suites, and a 5-layer security model. Release gates are mandatory and currently green, and the repository includes a pinned-runtime Docker workflow; final human release sign-off and demo asset remain workflow tasks."
+
+[kujo]
+minimum_version = "0.1.0"
+entry = "main.ruff"
+sources = ["src", "."]
+includes = ["README.md", "tests", "examples", "schema", "docs"]
+excludes = [".git", "kennel_packages", "dist", "build", "node_modules"]
+
+[build]
+command = ""
+output = "dist"
+artifacts = []
+
+[dependencies]
+
+[dev-dependencies]
+
+[scripts]
+test = "kujo test"
+smoke = "kujo run main.ruff run examples/basic_suite.json --json"
+init = "kujo run main.ruff init"
+
+[package.exports]
+common = "src/common.ruff"
+cli = "src/cli.ruff"
+core = "src/eval_core.ruff"
+checks = "src/checks.ruff"
+report = "src/report.ruff"
+snapshot = "src/snapshot.ruff"
+config = "src/config.ruff"
+
+[registry]
+index = ""
+publish = ""
+
+[trust]

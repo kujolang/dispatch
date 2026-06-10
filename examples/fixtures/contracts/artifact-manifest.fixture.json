@@ -1,0 +1,1 @@
+{"command":"run","suite_name":"release-gate-suite","checksums_algorithm":"sha256","required_artifact_types":["report","last_run","history","badge","last_failures","summary","cli_summary_channel"]}

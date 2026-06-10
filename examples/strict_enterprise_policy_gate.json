@@ -1,0 +1,60 @@
+{
+  "name": "strict-enterprise-policy-gate",
+  "description": "Minimum-privilege enterprise profile with explicit command/path/env guardrails.",
+  "version": "1.0.0",
+  "policy_profile": "strict-ci",
+  "command_pattern_match_mode": "token",
+  "allowed_commands": ["echo", "cat"],
+  "allowed_command_patterns": ["echo", "cat"],
+  "blocked_arg_patterns": ["--privileged", "rm -rf", "curl |", "wget |", "sudo", "mkfs", "dd if="],
+  "allowed_paths": ["./README.md", "./examples/fixtures", "./examples/strict_enterprise_policy_gate.json", "./schema/eval-suite.schema.json"],
+  "allowed_env_vars": ["CI", "GITHUB_SHA", "GITHUB_REF"],
+  "redact_output_patterns": ["(?i)token", "(?i)api[_-]?key", "(?i)password", "(?i)secret"],
+  "redaction_audit_mode": true,
+  "tests": [
+    {
+      "name": "allowed echo command succeeds",
+      "check": "command_succeeds",
+      "params": {
+        "command": "echo strict-enterprise-ok"
+      }
+    },
+    {
+      "name": "allowed cat command succeeds",
+      "check": "command_succeeds",
+      "params": {
+        "command": "cat README.md"
+      }
+    },
+    {
+      "name": "readme exists under allowed paths",
+      "check": "file_exists",
+      "params": {
+        "path": "README.md"
+      }
+    },
+    {
+      "name": "readme contains product name",
+      "check": "file_contains",
+      "params": {
+        "path": "README.md",
+        "expected": "Kujo Eval"
+      }
+    },
+    {
+      "name": "api fixture has required keys",
+      "check": "json_matches_shape",
+      "params": {
+        "path": "examples/fixtures/api_contract_response.json",
+        "required_keys": ["status", "version", "data"]
+      }
+    },
+    {
+      "name": "missing fixture command fails",
+      "check": "command_fails",
+      "params": {
+        "command": "cat examples/fixtures/does-not-exist.json"
+      }
+    }
+  ]
+}

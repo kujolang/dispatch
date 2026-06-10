@@ -1,0 +1,47 @@
+{
+  "name": "agent-output-validation",
+  "description": "Quick win: validate an AI agent's output file for correctness. Replace paths with your agent's output location.",
+  "version": "1.0.0",
+  "output_dir": "./eval_results",
+  "snapshot_dir": "./snapshots",
+  "stop_on_failure": false,
+  "tests": [
+    {
+      "name": "Agent: output file was generated",
+      "description": "Verify the agent produced an output file",
+      "check": "file_exists",
+      "params": { "path": "./output/result.json" }
+    },
+    {
+      "name": "Agent: output is valid JSON",
+      "description": "Verify the output is parseable JSON",
+      "check": "json_matches_shape",
+      "params": { "path": "./output/result.json", "required_keys": ["result", "confidence", "sources"] }
+    },
+    {
+      "name": "Agent: confidence is acceptable",
+      "description": "Verify confidence meets threshold",
+      "check": "json_value_equals",
+      "params": { "path": "./output/result.json", "json_path": "confidence", "expected": "high" }
+    },
+    {
+      "name": "Agent: output file is not empty",
+      "description": "Verify the agent didn't produce an empty file",
+      "check": "file_size_greater_than",
+      "params": { "path": "./output/result.json", "bytes": 10 }
+    },
+    {
+      "name": "Agent: output matches snapshot",
+      "description": "Compare against a known-good baseline after first run with --update-snapshots",
+      "check": "snapshot_matches",
+      "params": { "name": "agent-baseline", "path": "./output/result.json" }
+    },
+    {
+      "name": "Agent: completed within time budget",
+      "description": "Verify agent didn't exceed time budget",
+      "check": "command_timing_less_than",
+      "params": { "command": "echo done", "max_ms": 60000 },
+      "retry": 1
+    }
+  ]
+}

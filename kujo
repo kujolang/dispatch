@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BIN_CANDIDATES=()
+
+if [ -n "${KUJO_RUNTIME_BIN:-}" ]; then
+	BIN_CANDIDATES+=("$KUJO_RUNTIME_BIN")
+fi
+
+BIN_CANDIDATES+=(
+	"$HOME/2026/ruff/target/release/ruff"
+	"/Users/robertdevore/2026/ruff/target/release/ruff"
+)
+
+if command -v ruff >/dev/null 2>&1; then
+	BIN_CANDIDATES+=("$(command -v ruff)")
+fi
+
+for candidate in "${BIN_CANDIDATES[@]}"; do
+	if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+		exec "$candidate" "$@"
+	fi
+done
+
+echo "FAIL: unable to locate the Kujo runtime binary" >&2
+exit 1

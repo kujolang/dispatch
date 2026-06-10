@@ -1,0 +1,40 @@
+{
+  "name": "cli-tool-quality",
+  "description": "Quick win: test a CLI tool for basic correctness. Replace 'mytool' with your binary.",
+  "version": "1.0.0",
+  "output_dir": "./eval_results",
+  "snapshot_dir": "./snapshots",
+  "stop_on_failure": false,
+  "tests": [
+    {
+      "name": "CLI: help flag works",
+      "description": "Verify --help exits cleanly and shows usage",
+      "check": "command_succeeds",
+      "params": { "command": "mytool --help" }
+    },
+    {
+      "name": "CLI: help output mentions usage",
+      "description": "Verify --help output contains expected text",
+      "check": "output_contains",
+      "params": { "command": "mytool --help", "expected": "Usage" }
+    },
+    {
+      "name": "CLI: version flag works",
+      "description": "Verify --version outputs version string",
+      "check": "output_contains",
+      "params": { "command": "mytool --version", "expected": "0." }
+    },
+    {
+      "name": "CLI: invalid flag fails with non-zero exit",
+      "description": "Verify invalid flag causes error exit",
+      "check": "command_fails",
+      "params": { "command": "mytool --nonexistent-flag-xyz" }
+    },
+    {
+      "name": "CLI: config file exists after init",
+      "description": "Verify the tool creates expected files",
+      "check": "file_exists",
+      "params": { "path": "./config.json" }
+    }
+  ]
+}

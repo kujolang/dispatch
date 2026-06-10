@@ -1,0 +1,40 @@
+{
+  "name": "api-health-check",
+  "description": "Quick win: validate an API endpoint is healthy and returns correct data. Replace URL with your endpoint.",
+  "version": "1.0.0",
+  "output_dir": "./eval_results",
+  "snapshot_dir": "./snapshots",
+  "stop_on_failure": false,
+  "tests": [
+    {
+      "name": "API: health endpoint returns 200",
+      "description": "Verify the health check endpoint responds OK",
+      "check": "http_status",
+      "params": { "url": "https://api.example.com/health", "expected_status": 200 }
+    },
+    {
+      "name": "API: health response contains status ok",
+      "description": "Verify health response body",
+      "check": "http_body_contains",
+      "params": { "url": "https://api.example.com/health", "expected": "ok" }
+    },
+    {
+      "name": "API: response is valid JSON",
+      "description": "Verify the response is parseable JSON with required keys",
+      "check": "stdout_json_matches_shape",
+      "params": { "command": "curl -s https://api.example.com/health", "required_keys": ["status", "version"] }
+    },
+    {
+      "name": "API: response time under 2 seconds",
+      "description": "Verify endpoint responds quickly",
+      "check": "command_timing_less_than",
+      "params": { "command": "curl -s https://api.example.com/health", "max_ms": 2000 }
+    },
+    {
+      "name": "API: version matches expected",
+      "description": "Verify API version is as expected",
+      "check": "command_stdout_json_path_equals",
+      "params": { "command": "curl -s https://api.example.com/health", "json_path": "version", "expected": "1.0.0" }
+    }
+  ]
+}

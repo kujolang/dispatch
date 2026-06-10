@@ -1,0 +1,138 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  eval-contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Resolve runtime ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          KUJO_RUNTIME_REF="$(cat RUNTIME_VERSION)"
+          echo "KUJO_RUNTIME_REF=$KUJO_RUNTIME_REF" >> "$GITHUB_ENV"
+
+      - name: Build Kujo runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init /tmp/kujo-runtime
+          git -C /tmp/kujo-runtime remote add origin https://github.com/kujolang/dispatch.git
+          git -C /tmp/kujo-runtime fetch --depth 1 origin "$KUJO_RUNTIME_REF"
+          git -C /tmp/kujo-runtime checkout --detach "$KUJO_RUNTIME_REF"
+          cargo build --release --locked --manifest-path /tmp/kujo-runtime/Cargo.toml
+          echo "/tmp/kujo-runtime/target/release" >> "$GITHUB_PATH"
+
+      - name: Verify Kujo runtime
+        run: kujo --version
+
+      - name: Verify docs and command freshness
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f docs/eval-suite-reference.md
+          grep -q "kujo run main.ruff init" README.md
+          grep -q "kujo run main.ruff run" README.md
+          grep -q "kujo run main.ruff report" README.md
+          grep -q "src/eval_core.ruff" README.md
+          grep -q "src/checks.ruff" README.md
+
+      - name: Verify legal metadata parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f LICENSE
+          grep -q '^license = "MIT"' kennel.toml
+
+      - name: Verify README count parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/verify_readme_counts.sh
+          bash scripts/verify_readme_counts.sh
+
+      - name: Verify import boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/check_import_boundaries.sh
+          bash scripts/check_import_boundaries.sh
+
+      - name: Run supply-chain policy check
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/supply_chain_policy_check.sh
+          bash scripts/supply_chain_policy_check.sh
+
+      - name: Reject root scratch Kujo files
+        shell: bash
+        run: |
+          set -euo pipefail
+          scratch_files="$(find . -maxdepth 1 -type f -name 'test_*.ruff' -print)"
+          if [ -n "$scratch_files" ]; then
+            echo "Found disallowed root scratch Kujo files:"
+            echo "$scratch_files"
+            exit 1
+          fi
+
+      - name: Reject tracked test output artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          tracked_out="$(git ls-files 'tests/*.out' || true)"
+          if [ -n "$tracked_out" ]; then
+            echo "Found tracked tests/*.out artifacts (must be untracked runtime output only):"
+            echo "$tracked_out"
+            exit 1
+          fi
+
+      - name: Run contract tests
+        run: kujo test-run tests/contract_tests.ruff -v
+
+      - name: Verify artifact contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE"
+          chmod +x scripts/verify_artifact_contract.sh
+          bash scripts/verify_artifact_contract.sh
+
+      - name: Run canonical CLI smoke matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE"
+          chmod +x scripts/cli_smoke_matrix.sh
+          bash scripts/cli_smoke_matrix.sh
+
+      - name: Build Docker image (pinned runtime)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE"
+          docker build -t kujo-eval:ci .
+
+      - name: Run release quality gates (mandatory)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE"
+          chmod +x scripts/release_quality_gates.sh
+          bash scripts/release_quality_gates.sh
