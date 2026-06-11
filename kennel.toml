@@ -1,6 +1,6 @@
 [package]
 name = "dispatch"
-version = "0.1.0"
+version = "1.0.0"
 description = "Reliable workflow orchestration for multi-step AI agent systems in Kujo."
 license = "MIT"
 authors = ["Robert DeVore <me@robertdevore.com>"]

@@ -28,6 +28,8 @@ Each release section should include only shipped changes and use these headings 
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-06-10
+
 ### Added
 - Added repository CI gate workflow with deterministic Kujo runtime build and timed regression test steps.
 - Added machine-readable JSON envelopes for `show`, `inspect`, and `doctor` command surfaces.
@@ -38,6 +40,9 @@ Each release section should include only shipped changes and use these headings 
 - Added incremental doctor scope controls and run index diagnostics metadata for operational scale.
 
 ### Changed
+- Renamed the remaining legacy repository config filename to `kujo.toml`.
+- Standardized local path examples to generic `/path/to/` placeholders in release-facing docs.
+- Bumped the package release version to `1.0.0`.
 - Updated release and pre-release documentation to align with completed enterprise hardening backlog.
 
 ## [0.1.0] - 2026-05-27
