@@ -1,0 +1,195 @@
+test_setup {
+	from src.core.state import load_run_state
+	from src.core.tool_policy import parse_tool_name_list
+}
+
+test "policy precedence uses environment profile when config and cli are absent" {
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+	suffix := to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	output_root := "tests/tmp/policy-precedence-env-outputs-" + suffix
+
+	result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"demo",
+		"Policy precedence env",
+		"--yes",
+		"--non-interactive",
+		"--decision",
+		"approve",
+		"--output-root",
+		output_root
+	], {
+		"inherit_env": true,
+		"env": {
+			"DISPATCH_POLICY_PROFILE": "production",
+			"DISPATCH_OFFLINE_FIXTURE": "true"
+		},
+		"timeout_ms": 300000,
+		"max_output_bytes": 1024 * 1024
+	})
+
+	run_id := ""
+	combined := to_string(result.stdout) + "\n" + to_string(result.stderr)
+	for line in split(combined, "\n") {
+		trimmed := trim(line)
+		if starts_with(trimmed, "Run ID: ") {
+			run_id = trim(substring(trimmed, len("Run ID: "), len(trimmed)))
+		}
+	}
+	assert_true(run_id != "")
+	loaded := load_run_state(output_root, run_id)
+	assert_true(loaded["ok"])
+	options := loaded["run_state"]["options"]
+	allowed := parse_tool_name_list(options["allowed_tools"])
+	denied := parse_tool_name_list(options["denied_tools"])
+	allowed_has_timestamp := false
+	for item in allowed {
+		if to_string(item) == "timestamp_tool" {
+			allowed_has_timestamp = true
+		}
+	}
+	denied_has_flaky := false
+	for item in denied {
+		if to_string(item) == "flaky_reliability_tool" {
+			denied_has_flaky = true
+		}
+	}
+	assert_true(allowed_has_timestamp)
+	assert_true(denied_has_flaky)
+}
+
+test "policy precedence uses config profile when cli is absent" {
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+	suffix := to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	output_root := "tests/tmp/policy-precedence-config-outputs-" + suffix
+	config_path := "tests/tmp/policy-precedence-config-" + suffix + ".json"
+
+	write_file(config_path, to_json({
+		"topic": "Policy precedence config",
+		"workflow": "research-report",
+		"yes": true,
+		"non_interactive": true,
+		"decision": "approve",
+		"policy_profile": "development",
+		"output_root": output_root,
+		"sources_dir": "examples/research-report/sources"
+	}), true)
+
+	result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"demo",
+		"--config",
+		config_path
+	], {
+		"inherit_env": true,
+		"env": {
+			"DISPATCH_POLICY_PROFILE": "production",
+			"DISPATCH_OFFLINE_FIXTURE": "true"
+		},
+		"timeout_ms": 300000,
+		"max_output_bytes": 1024 * 1024
+	})
+
+	run_id := ""
+	combined := to_string(result.stdout) + "\n" + to_string(result.stderr)
+	for line in split(combined, "\n") {
+		trimmed := trim(line)
+		if starts_with(trimmed, "Run ID: ") {
+			run_id = trim(substring(trimmed, len("Run ID: "), len(trimmed)))
+		}
+	}
+	assert_true(run_id != "")
+	loaded := load_run_state(output_root, run_id)
+	assert_true(loaded["ok"])
+	options := loaded["run_state"]["options"]
+	allowed := parse_tool_name_list(options["allowed_tools"])
+	denied := parse_tool_name_list(options["denied_tools"])
+	assert_equal(len(allowed), 0)
+	assert_equal(len(denied), 0)
+}
+
+test "policy and config controls honor cli over config over env" {
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+	suffix := to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	output_root := "tests/tmp/policy-precedence-cli-outputs-" + suffix
+	config_path := "tests/tmp/policy-precedence-cli-" + suffix + ".json"
+
+	write_file(config_path, to_json({
+		"topic": "Policy precedence cli",
+		"workflow": "research-report",
+		"yes": true,
+		"non_interactive": true,
+		"decision": "approve",
+		"policy_profile": "development",
+		"allow_tools": ["mock_web_search"],
+		"deny_tools": ["flaky_reliability_tool"],
+		"trace_max_events": 17,
+		"trace_max_payload_chars": 77,
+		"output_root": output_root,
+		"sources_dir": "examples/research-report/sources"
+	}), true)
+
+	result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"demo",
+		"--config",
+		config_path,
+		"--policy-profile",
+		"production",
+		"--allow-tools",
+		"timestamp_tool",
+		"--deny-tools",
+		"citation_formatter",
+		"--trace-max-events",
+		"5"
+	], {
+		"inherit_env": true,
+		"env": {
+			"DISPATCH_POLICY_PROFILE": "staging",
+			"DISPATCH_ALLOWED_TOOLS": "markdown_report_writer",
+			"DISPATCH_DENIED_TOOLS": "mock_web_search",
+			"DISPATCH_OFFLINE_FIXTURE": "true"
+		},
+		"timeout_ms": 300000,
+		"max_output_bytes": 1024 * 1024
+	})
+
+	run_id := ""
+	combined := to_string(result.stdout) + "\n" + to_string(result.stderr)
+	for line in split(combined, "\n") {
+		trimmed := trim(line)
+		if starts_with(trimmed, "Run ID: ") {
+			run_id = trim(substring(trimmed, len("Run ID: "), len(trimmed)))
+		}
+	}
+	assert_true(run_id != "")
+	loaded := load_run_state(output_root, run_id)
+	assert_true(loaded["ok"])
+	options := loaded["run_state"]["options"]
+	allowed := parse_tool_name_list(options["allowed_tools"])
+	denied := parse_tool_name_list(options["denied_tools"])
+	assert_equal(len(allowed), 1)
+	assert_equal(to_string(allowed[0]), "timestamp_tool")
+	assert_equal(len(denied), 1)
+	assert_equal(to_string(denied[0]), "citation_formatter")
+	assert_equal(options["trace_max_events"], 5)
+	assert_equal(options["trace_max_payload_chars"], 77)
+}

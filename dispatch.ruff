@@ -1,0 +1,1460 @@
+from src.core.utils import dict_get_or
+from src.core.decision import normalize_decision
+from src.cli.cli_args import parse_cli_args, parsed_has_flag, parsed_flag_value
+from src.workflows.workflow import create_workflow_by_template, list_workflow_templates
+from src.tools.tool import register_default_tools, normalize_sources_dir
+from src.core.state import create_run_state, load_run_state, list_runs, list_runs_with_diagnostics, summarize_run, filter_runs, paginate_runs, build_run_catalog, prune_runs, doctor_runs, normalize_output_root, mutation_audit_path, export_run_bundle, import_run_bundle
+from src.core.runner import run_workflow
+from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_policy_with_profile
+
+func print_help() {
+	print("Dispatch")
+	print("Kujo agent workflow engine for reliable AI workflows.")
+	print("")
+	print("Usage:")
+	print("  kujo run --interpreter dispatch.kujo demo \"Research topic\" [--workflow research-report] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs]")
+	print("  kujo run --interpreter dispatch.kujo show <run-id> [--output-root outputs] [--json]")
+	print("  kujo run --interpreter dispatch.kujo inspect <run-id> [--output-root outputs] [--json]")
+	print("  kujo run --interpreter dispatch.kujo resume <run-id> [--workflow research-report] [--policy-profile staging] [--yes] [--non-interactive] [--output-root outputs]")
+	print("  kujo run --interpreter dispatch.kujo templates [--json]")
+	print("  kujo run --interpreter dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]")
+	print("  kujo run --interpreter dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]")
+	print("  kujo run --interpreter dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]")
+	print("  kujo run --interpreter dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]")
+	print("  kujo run --interpreter dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]")
+}
+
+	func key_exists(map_obj, key_name) {
+		if type(map_obj) != "dict" {
+			return false
+		}
+		exists := has_key(map_obj, key_name)
+		return exists == true || exists == 1
+	}
+
+	func parsed_flag_present(parsed_args, flag_name) {
+		return key_exists(dict_get_or(parsed_args, "present", {}), flag_name)
+	}
+
+	func parsed_positionals_or_empty(parsed_args) {
+		positionals := dict_get_or(parsed_args, "positionals", [])
+		if type(positionals) != "array" {
+			return []
+		}
+		return positionals
+	}
+
+	func command_has_flag(command_args, flag_name) {
+		if type(command_args) != "array" {
+			return false
+		}
+		for token in command_args {
+			if to_string(token) == flag_name {
+				return true
+			}
+		}
+		return false
+	}
+
+	func config_get_any(config, keys_list, default_value) {
+		if type(config) != "dict" {
+			return default_value
+		}
+		for key in keys_list {
+			if key_exists(config, key) {
+				return config[key]
+			}
+		}
+		return default_value
+	}
+
+	func normalize_config_path(raw_config_path) {
+		path := trim(to_string(raw_config_path))
+		if path == "" {
+			return {
+				"ok": true,
+				"config_path": ""
+			}
+		}
+		path = replace(path, "\\", "/")
+
+		allow_any := to_lower(trim(to_string(env("DISPATCH_ALLOW_ANY_CONFIG_PATH"))))
+		allow_any_config_path := allow_any == "true" || allow_any == "1" || allow_any == "yes" || allow_any == "on"
+		if allow_any_config_path {
+			return {
+				"ok": true,
+				"config_path": path
+			}
+		}
+
+		if starts_with(path, "/") || starts_with(path, "~/") {
+			return {
+				"ok": false,
+				"message": "Absolute config paths are blocked by default. Set DISPATCH_ALLOW_ANY_CONFIG_PATH=true for explicit opt-in."
+			}
+		}
+		lower := to_lower(path)
+		if contains(lower, "..") || contains(lower, "%2f") || contains(lower, "%5c") {
+			return {
+				"ok": false,
+				"message": "Path traversal patterns are not allowed in --config path."
+			}
+		}
+
+		segments := split(path, "/")
+		for segment in segments {
+			clean_segment := trim(segment)
+			if clean_segment == "" || clean_segment == "." || clean_segment == ".." {
+				return {
+					"ok": false,
+					"message": "Config path contains invalid path segments."
+				}
+			}
+		}
+
+		return {
+			"ok": true,
+			"config_path": path
+		}
+	}
+
+	func strip_wrapping_quotes(raw_value) {
+		value := trim(to_string(raw_value))
+		if len(value) >= 2 {
+			if (starts_with(value, "\"") && ends_with(value, "\"")) || (starts_with(value, "'") && ends_with(value, "'")) {
+				return substring(value, 1, len(value) - 1)
+			}
+		}
+		return value
+	}
+
+	func parse_yaml_scalar(raw_value) {
+		value := strip_wrapping_quotes(raw_value)
+		lower := to_lower(value)
+		if lower == "true" || lower == "yes" || lower == "on" {
+			return true
+		}
+		if lower == "false" || lower == "no" || lower == "off" {
+			return false
+		}
+		parsed_number := 0
+		try {
+			parsed_number = to_float(value)
+			return parsed_number
+		} except err {
+			return value
+		}
+	}
+
+	func parse_simple_yaml(raw_text) {
+		config := {}
+		lines := split(raw_text, "\n")
+		for line in lines {
+			trimmed := trim(line)
+			if trimmed == "" || starts_with(trimmed, "#") {
+				continue
+			}
+			if contains(trimmed, ":") == 0 {
+				continue
+			}
+			parts := split(trimmed, ":")
+			if len(parts) < 2 {
+				continue
+			}
+			key := trim(parts[0])
+			if key == "" {
+				continue
+			}
+			value_parts := []
+			i := 1
+			while i < len(parts) {
+				value_parts := push(value_parts, parts[i])
+				i := i + 1
+			}
+			raw_value := trim(join(value_parts, ":"))
+			config[key] := parse_yaml_scalar(raw_value)
+		}
+		return {
+			"ok": true,
+			"config": config
+		}
+	}
+
+	func load_command_config(config_path) {
+		path_result := normalize_config_path(config_path)
+		if path_result["ok"] == false {
+			return {
+				"ok": false,
+				"message": path_result["message"]
+			}
+		}
+		path := trim(to_string(path_result["config_path"]))
+		if path == "" {
+			return {
+				"ok": true,
+				"config": {}
+			}
+		}
+		if !file_exists(path) {
+			return {
+				"ok": false,
+				"message": "Config file not found: " + path
+			}
+		}
+		content := ""
+		try {
+			content = read_file(path)
+		} except err {
+			return {
+				"ok": false,
+				"message": "Unable to read config file: " + path
+			}
+		}
+		if trim(content) == "" {
+			return {
+				"ok": false,
+				"message": "Config file is empty: " + path
+			}
+		}
+		max_config_bytes := 262144
+		raw_max_config_bytes := trim(to_string(env("DISPATCH_CONFIG_MAX_BYTES")))
+		if raw_max_config_bytes != "" {
+			parsed_max_bytes := 0
+			try {
+				parsed_max_bytes = to_float(raw_max_config_bytes)
+			} except err {
+				parsed_max_bytes = max_config_bytes
+			}
+			if parsed_max_bytes > 0 {
+				max_config_bytes = parsed_max_bytes
+			}
+		}
+		if len(content) > max_config_bytes {
+			return {
+				"ok": false,
+				"message": "Config file exceeds maximum size of " + to_string(max_config_bytes) + " bytes."
+			}
+		}
+		lower := to_lower(path)
+		if ends_with(lower, ".json") {
+			parsed_config := null
+			try {
+				parsed_config = parse_json(content)
+			} except err {
+				return {
+					"ok": false,
+					"message": "Config file is not valid JSON: " + path
+				}
+			}
+			if type(parsed_config) != "dict" {
+				return {
+					"ok": false,
+					"message": "Config JSON must be an object."
+				}
+			}
+			return {
+				"ok": true,
+				"config": parsed_config
+			}
+		}
+		if ends_with(lower, ".yml") || ends_with(lower, ".yaml") {
+			return parse_simple_yaml(content)
+		}
+		return {
+			"ok": false,
+			"message": "Unsupported config format. Use .json, .yml, or .yaml"
+		}
+	}
+
+	func resolve_string_flag(parsed_args, command_args, flag_name, config, config_keys, default_value) {
+		parsed_present := parsed_flag_present(parsed_args, flag_name)
+		command_present := command_has_flag(command_args, flag_name)
+		if parsed_present || command_present {
+			return parsed_flag_value(parsed_args, flag_name, default_value)
+		}
+		value := config_get_any(config, config_keys, default_value)
+		return to_string(value)
+	}
+
+	func resolve_bool_flag(parsed_args, command_args, flag_name, config, config_keys, default_value) {
+		if parsed_flag_present(parsed_args, flag_name) || command_has_flag(command_args, flag_name) {
+			if parsed_has_flag(parsed_args, flag_name) {
+				return true
+			}
+			return command_has_flag(command_args, flag_name)
+		}
+		value := config_get_any(config, config_keys, default_value)
+		if type(value) == "bool" {
+			return value
+		}
+		if type(value) == "string" {
+			normalized := to_lower(trim(value))
+			if normalized == "true" || normalized == "1" || normalized == "yes" || normalized == "y" || normalized == "on" {
+				return true
+			}
+			if normalized == "false" || normalized == "0" || normalized == "no" || normalized == "n" || normalized == "off" {
+				return false
+			}
+		}
+		return default_value
+	}
+
+	func resolve_tool_name_list(parsed_args, command_args, flag_name, config, config_keys, env_var_name) {
+		parsed_present := parsed_flag_present(parsed_args, flag_name)
+		command_present := command_has_flag(command_args, flag_name)
+		if parsed_present || command_present {
+			return parse_tool_name_list(parsed_flag_value(parsed_args, flag_name, ""))
+		}
+		config_value := config_get_any(config, config_keys, null)
+		if type(config_value) != "null" {
+			return parse_tool_name_list(config_value)
+		}
+		return parse_tool_name_list(to_string(env(env_var_name)))
+	}
+
+	func resolve_tool_policy_settings(parsed_args, command_args, config) {
+		policy_profile := resolve_string_flag(parsed_args, command_args, "--policy-profile", config, ["policy_profile", "policy-profile"], to_string(env("DISPATCH_POLICY_PROFILE")))
+		allowed_tools := resolve_tool_name_list(parsed_args, command_args, "--allow-tools", config, ["allow_tools", "allow-tools"], "DISPATCH_ALLOWED_TOOLS")
+		denied_tools := resolve_tool_name_list(parsed_args, command_args, "--deny-tools", config, ["deny_tools", "deny-tools"], "DISPATCH_DENIED_TOOLS")
+		return build_tool_authorization_policy_with_profile(policy_profile, allowed_tools, denied_tools)
+	}
+
+	func filter_runs_by_workflow(run_items, workflow_query) {
+		query := to_lower(trim(to_string(workflow_query)))
+		if query == "" {
+			return run_items
+		}
+		filtered := []
+		for run_item in run_items {
+			workflow_name := to_lower(to_string(dict_get_or(run_item, "workflow_name", "")))
+			workflow_id := to_lower(to_string(dict_get_or(run_item, "workflow_id", "")))
+			if contains(workflow_name, query) == 1 || contains(workflow_id, query) == 1 {
+				filtered := push(filtered, run_item)
+			}
+		}
+		return filtered
+	}
+
+func filter_runs_by_tags(run_items, tags_query) {
+	required_tags := parse_tool_name_list(tags_query)
+	if len(required_tags) == 0 {
+		return run_items
+	}
+	filtered := []
+	run_index := 0
+	while run_index < len(run_items) {
+		run_item := run_items[run_index]
+		run_tags := parse_tool_name_list(dict_get_or(run_item, "tags", []))
+		tag_map := {}
+		tag_index := 0
+		while tag_index < len(run_tags) {
+			run_tag := run_tags[tag_index]
+			tag_map[run_tag] := true
+			tag_index := tag_index + 1
+		}
+		includes_all := true
+		required_index := 0
+		while required_index < len(required_tags) {
+			required_tag := required_tags[required_index]
+			if has_key(tag_map, required_tag) == 0 {
+				includes_all = false
+				break
+			}
+			required_index := required_index + 1
+		}
+		if includes_all {
+			filtered := push(filtered, run_item)
+		}
+		run_index := run_index + 1
+	}
+	return filtered
+}
+
+	func resolve_output_root_or_exit(raw_output_root) {
+		validation := normalize_output_root(raw_output_root)
+		if validation["ok"] == false {
+			print("Error: " + validation["error"]["message"])
+			exit(1)
+		}
+		return validation["output_root"]
+	}
+
+	func validate_status_filter_or_exit(status_filter, flag_name) {
+		value := to_lower(trim(to_string(status_filter)))
+		if value == "" {
+			return ""
+		}
+		allowed_statuses := {
+			"running": true,
+			"paused": true,
+			"needs_changes": true,
+			"interrupted": true,
+			"completed": true,
+			"failed": true,
+			"rejected": true,
+			"cancelled": true
+		}
+		if has_key(allowed_statuses, value) == 0 {
+			print("Error: Invalid value for " + flag_name + ": " + value + ". Allowed values: running, paused, needs_changes, interrupted, completed, failed, rejected, cancelled")
+			exit(1)
+		}
+		return value
+	}
+
+func has_markdown_sources(sources_dir) {
+	entries := []
+	try {
+		entries := list_dir(sources_dir)
+	} except err {
+		return false
+	}
+	for entry in entries {
+		name := replace(entry, "/", "")
+		if ends_with(name, ".md") {
+			return true
+		}
+	}
+	return false
+}
+
+func validate_demo_inputs(topic, sources_dir, simulated_decision) {
+	if trim(topic) == "" {
+		return {
+			"ok": false,
+			"message": "Topic is required and cannot be empty."
+		}
+	}
+	sources_dir_result := normalize_sources_dir(sources_dir)
+	if sources_dir_result["ok"] == false {
+		return {
+			"ok": false,
+			"message": sources_dir_result["error"]["message"]
+		}
+	}
+	sources_dir := sources_dir_result["sources_dir"]
+	if has_markdown_sources(sources_dir) == false {
+		return {
+			"ok": false,
+			"message": "Sources directory must exist and contain .md fixtures: " + sources_dir
+		}
+	}
+	normalized := normalize_decision(simulated_decision, "")
+	if normalized == "invalid" {
+		return {
+			"ok": false,
+			"message": "Invalid --decision value. Use approve|reject|changes."
+		}
+	}
+	return {
+		"ok": true,
+		"normalized_decision": normalized
+	}
+}
+
+func parse_non_negative_number(raw_value, flag_name, default_value) {
+	raw_text := trim(to_string(raw_value))
+	if raw_text == "" {
+		return {
+			"ok": true,
+			"value": default_value
+		}
+	}
+	parsed_value := default_value
+	try {
+		parsed_value = to_float(raw_text)
+	} except err {
+		return {
+			"ok": false,
+			"message": "Invalid value for " + flag_name + ": " + raw_text
+		}
+	}
+	if parsed_value < 0 {
+		return {
+			"ok": false,
+			"message": flag_name + " must be non-negative."
+		}
+	}
+	return {
+		"ok": true,
+		"value": parsed_value
+	}
+}
+
+func dispatch_key_exists(map_obj, key_name) {
+	if type(map_obj) != "dict" {
+		return false
+	}
+	exists := has_key(map_obj, key_name)
+	return exists == true || exists == 1
+}
+
+func dispatch_parsed_flag_present(parsed_args, flag_name) {
+	return dispatch_key_exists(dict_get_or(parsed_args, "present", {}), flag_name)
+}
+
+func dispatch_command_has_flag(command_args, flag_name) {
+	if type(command_args) != "array" {
+		return false
+	}
+	for token in command_args {
+		if to_string(token) == flag_name {
+			return true
+		}
+	}
+	return false
+}
+
+func dispatch_config_get_any(config, keys_list, default_value) {
+	if type(config) != "dict" {
+		return default_value
+	}
+	for key in keys_list {
+		if dispatch_key_exists(config, key) {
+			return config[key]
+		}
+	}
+	return default_value
+}
+
+func dispatch_resolve_string_flag(parsed_args, command_args, flag_name, config, config_keys, default_value) {
+	if dispatch_parsed_flag_present(parsed_args, flag_name) || dispatch_command_has_flag(command_args, flag_name) {
+		return parsed_flag_value(parsed_args, flag_name, default_value)
+	}
+	value := dispatch_config_get_any(config, config_keys, default_value)
+	return to_string(value)
+}
+
+func dispatch_resolve_bool_flag(parsed_args, command_args, flag_name, config, config_keys, default_value) {
+	if dispatch_parsed_flag_present(parsed_args, flag_name) || dispatch_command_has_flag(command_args, flag_name) {
+		if parsed_has_flag(parsed_args, flag_name) {
+			return true
+		}
+		return dispatch_command_has_flag(command_args, flag_name)
+	}
+	value := dispatch_config_get_any(config, config_keys, default_value)
+	if type(value) == "bool" {
+		return value
+	}
+	if type(value) == "string" {
+		normalized := to_lower(trim(value))
+		if normalized == "true" || normalized == "1" || normalized == "yes" || normalized == "y" || normalized == "on" {
+			return true
+		}
+		if normalized == "false" || normalized == "0" || normalized == "no" || normalized == "n" || normalized == "off" {
+			return false
+		}
+	}
+	return default_value
+}
+
+func dispatch_resolve_tool_name_list(parsed_args, command_args, flag_name, config, config_keys, env_var_name) {
+	if dispatch_parsed_flag_present(parsed_args, flag_name) || dispatch_command_has_flag(command_args, flag_name) {
+		return parse_tool_name_list(parsed_flag_value(parsed_args, flag_name, ""))
+	}
+	config_value := dispatch_config_get_any(config, config_keys, null)
+	if type(config_value) != "null" {
+		return parse_tool_name_list(config_value)
+	}
+	return parse_tool_name_list(to_string(env(env_var_name)))
+}
+
+func dispatch_resolve_tool_policy_settings(parsed_args, command_args, config) {
+	policy_profile := dispatch_resolve_string_flag(parsed_args, command_args, "--policy-profile", config, ["policy_profile", "policy-profile"], to_string(env("DISPATCH_POLICY_PROFILE")))
+	allowed_tools := dispatch_resolve_tool_name_list(parsed_args, command_args, "--allow-tools", config, ["allow_tools", "allow-tools"], "DISPATCH_ALLOWED_TOOLS")
+	denied_tools := dispatch_resolve_tool_name_list(parsed_args, command_args, "--deny-tools", config, ["deny_tools", "deny-tools"], "DISPATCH_DENIED_TOOLS")
+	return build_tool_authorization_policy_with_profile(policy_profile, allowed_tools, denied_tools)
+}
+
+func resolve_signing_key(parsed, flag_name) {
+	key := trim(to_string(parsed_flag_value(parsed, flag_name, "")))
+	if key != "" {
+		return key
+	}
+	return trim(to_string(env("DISPATCH_BUNDLE_SIGNING_KEY")))
+}
+
+func env_guard_enabled(env_key) {
+	value := to_lower(trim(to_string(env(env_key))))
+	return value == "true" || value == "1" || value == "yes" || value == "on"
+}
+
+func strict_mutation_mode_enabled(parsed) {
+	if parsed_has_flag(parsed, "--strict-mutations") {
+		return true
+	}
+	return env_guard_enabled("DISPATCH_STRICT_MUTATION_MODE")
+}
+
+func mutation_confirmation_enabled(parsed) {
+	if parsed_has_flag(parsed, "--confirm-mutation") {
+		return true
+	}
+	return env_guard_enabled("DISPATCH_MUTATION_CONFIRM")
+}
+
+func enforce_mutation_guard_or_exit(parsed, command_name, mutation_flag) {
+	if strict_mutation_mode_enabled(parsed) == false {
+		return
+	}
+	if mutation_confirmation_enabled(parsed) {
+		return
+	}
+	print("Error: Strict mutation mode blocked " + command_name + " " + mutation_flag + ". Re-run with --confirm-mutation or set DISPATCH_MUTATION_CONFIRM=true.")
+	exit(1)
+}
+
+func run_demo(command_args) {
+	parsed := parse_cli_args(command_args, {
+		"flags": {
+			"--config": {"takes_value": true, "default": ""},
+			"--workflow": {"takes_value": true, "default": "research-report"},
+			"--policy-profile": {"takes_value": true, "default": ""},
+			"--tags": {"takes_value": true, "default": ""},
+			"--yes": {"takes_value": false, "default": false},
+			"--non-interactive": {"takes_value": false, "default": false},
+			"--output-root": {"takes_value": true, "default": "outputs"},
+			"--sources-dir": {"takes_value": true, "default": "examples/research-report/sources"},
+			"--allow-tools": {"takes_value": true, "default": ""},
+			"--deny-tools": {"takes_value": true, "default": ""},
+			"--decision": {"takes_value": true, "default": ""},
+			"--note": {"takes_value": true, "default": ""},
+			"--trace-max-events": {"takes_value": true, "default": "400"},
+			"--trace-max-payload-chars": {"takes_value": true, "default": "2400"}
+		}
+	})
+	if parsed["ok"] == false {
+		print("Error: " + parsed["error"]["message"])
+		exit(1)
+	}
+	config_result := load_command_config(parsed_flag_value(parsed, "--config", ""))
+	if config_result["ok"] == false {
+		print("Error: " + config_result["message"])
+		exit(1)
+	}
+	config := config_result["config"]
+
+	positionals := parsed_positionals_or_empty(parsed)
+	topic := ""
+	if len(positionals) > 0 {
+		topic = join(positionals, " ")
+	} else {
+		topic = to_string(config_get_any(config, ["topic"], ""))
+	}
+	if trim(topic) == "" {
+		print("Error: topic is required for demo command.")
+		exit(1)
+	}
+	auto_approve := dispatch_resolve_bool_flag(parsed, command_args, "--yes", config, ["yes", "auto_approve"], false)
+	non_interactive := dispatch_resolve_bool_flag(parsed, command_args, "--non-interactive", config, ["non_interactive", "non-interactive"], false)
+	interactive := non_interactive == false
+	workflow_template_id := dispatch_resolve_string_flag(parsed, command_args, "--workflow", config, ["workflow", "workflow_template_id"], "research-report")
+	tags := parse_tool_name_list(dispatch_resolve_string_flag(parsed, command_args, "--tags", config, ["tags"], ""))
+	output_root := resolve_output_root_or_exit(dispatch_resolve_string_flag(parsed, command_args, "--output-root", config, ["output_root", "output-root"], "outputs"))
+	sources_dir := dispatch_resolve_string_flag(parsed, command_args, "--sources-dir", config, ["sources_dir", "sources-dir"], "examples/research-report/sources")
+	simulated_decision := dispatch_resolve_string_flag(parsed, command_args, "--decision", config, ["decision"], "")
+	simulated_note := dispatch_resolve_string_flag(parsed, command_args, "--note", config, ["note"], "")
+	trace_max_events_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-events", config, ["trace_max_events", "trace-max-events"], "400"), "--trace-max-events", 400)
+	trace_max_payload_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-payload-chars", config, ["trace_max_payload_chars", "trace-max-payload-chars"], "2400"), "--trace-max-payload-chars", 2400)
+	if trace_max_events_result["ok"] == false {
+		print("Error: " + trace_max_events_result["message"])
+		exit(1)
+	}
+	if trace_max_payload_result["ok"] == false {
+		print("Error: " + trace_max_payload_result["message"])
+		exit(1)
+	}
+	trace_max_events := trace_max_events_result["value"]
+	trace_max_payload_chars := trace_max_payload_result["value"]
+	tool_policy_settings := dispatch_resolve_tool_policy_settings(parsed, command_args, config)
+	if dict_get_or(tool_policy_settings, "ok", true) == false {
+		print("Error: " + dict_get_or(tool_policy_settings, "message", "Invalid tool policy profile configuration."))
+		exit(1)
+	}
+	if trace_max_events <= 0 {
+		trace_max_events = 400
+	}
+	if trace_max_payload_chars <= 0 {
+		trace_max_payload_chars = 2400
+	}
+
+	validation := validate_demo_inputs(topic, sources_dir, simulated_decision)
+	if validation["ok"] == false {
+		print("Error: " + validation["message"])
+		exit(1)
+	}
+	simulated_decision := validation["normalized_decision"]
+
+	workflow_result := create_workflow_by_template(workflow_template_id, topic, auto_approve)
+	if workflow_result["ok"] == false {
+		print("Error: " + workflow_result["error"]["message"])
+		exit(1)
+	}
+	workflow := workflow_result["workflow"]
+	run_state := create_run_state(workflow, {"topic": topic}, output_root, {
+		"auto_approve": auto_approve,
+		"interactive": interactive,
+		"sources_dir": sources_dir,
+		"workflow_template_id": workflow_template_id,
+		"tags": tags,
+		"allowed_tools": dict_get_or(tool_policy_settings, "allowed_tools", []),
+		"denied_tools": dict_get_or(tool_policy_settings, "denied_tools", []),
+		"trace_max_events": trace_max_events,
+		"trace_max_payload_chars": trace_max_payload_chars
+	})
+	tool_registry := register_default_tools(sources_dir)
+
+	result := run_workflow(workflow, run_state, tool_registry, {
+		"auto_approve": auto_approve,
+		"interactive": interactive,
+		"command_name": "demo",
+		"tool_authorization_policy": dict_get_or(tool_policy_settings, "policy", null),
+		"simulated_decision": simulated_decision,
+		"simulated_note": simulated_note
+	})
+
+	final_state := result["run_state"]
+	print("Run ID: " + final_state["run_id"])
+	print("Status: " + final_state["status"])
+	print("Run Directory: " + final_state["run_dir"])
+	if file_exists(final_state["run_dir"] + "/report.md") {
+		print("Report: " + final_state["run_dir"] + "/report.md")
+	}
+	print("State: " + final_state["run_dir"] + "/state.json")
+	print("Trace: " + final_state["run_dir"] + "/trace.json")
+
+	if result["ok"] == false {
+		print("Error: " + to_json(result["error"]))
+		exit(1)
+	}
+	if result["paused"] {
+		print("Workflow paused. Resume with: kujo run --interpreter dispatch.kujo resume " + final_state["run_id"])
+	}
+}
+
+func run_show(command_args) {
+	parsed := parse_cli_args(command_args, {
+		"flags": {
+			"--output-root": {"takes_value": true, "default": "outputs"},
+			"--json": {"takes_value": false, "default": false}
+		}
+	})
+	if parsed["ok"] == false {
+		print("Error: " + parsed["error"]["message"])
+		exit(1)
+	}
+	positionals := parsed_positionals_or_empty(parsed)
+	if len(positionals) < 1 {
+		print("Error: run-id is required for show command.")
+		exit(1)
+	}
+	run_id := positionals[0]
+	json_output := parsed_has_flag(parsed, "--json")
+	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
+	loaded := load_run_state(output_root, run_id)
+	if loaded["ok"] == false {
+		print("Error: " + loaded["error"]["message"])
+		exit(1)
+	}
+	run_state := loaded["run_state"]
+	summary := summarize_run(run_state)
+	contract := {
+		"artifact_contract_version": dict_get_or(run_state, "artifact_contract_version", 0),
+		"state": {
+			"schema_name": dict_get_or(run_state, "schema_name", ""),
+			"schema_version": dict_get_or(run_state, "schema_version", 0)
+		},
+		"trace": {
+			"schema_name": dict_get_or(dict_get_or(run_state, "trace", {}), "schema_name", ""),
+			"schema_version": dict_get_or(dict_get_or(run_state, "trace", {}), "schema_version", 0)
+		}
+	}
+	artifacts := {
+		"state": run_state["run_dir"] + "/state.json",
+		"trace_json": run_state["run_dir"] + "/trace.json",
+		"trace_markdown": run_state["run_dir"] + "/trace.md"
+	}
+	if file_exists(run_state["run_dir"] + "/report.md") {
+		artifacts["report_md"] := run_state["run_dir"] + "/report.md"
+	}
+	if file_exists(run_state["run_dir"] + "/report.json") {
+		artifacts["report_json"] := run_state["run_dir"] + "/report.json"
+	}
+	if json_output {
+		print(to_json({
+			"command": "show",
+			"ok": true,
+			"run_id": run_state["run_id"],
+			"output_root": output_root,
+			"contract": contract,
+			"summary": summary,
+			"artifacts": artifacts
+		}))
+		return
+	}
+	print(to_json(summary))
+	if file_exists(run_state["run_dir"] + "/report.md") {
+		print("Report: " + run_state["run_dir"] + "/report.md")
+	}
+}
+
+func run_inspect(command_args) {
+	parsed := parse_cli_args(command_args, {
+		"flags": {
+			"--output-root": {"takes_value": true, "default": "outputs"},
+			"--json": {"takes_value": false, "default": false}
+		}
+	})
+	if parsed["ok"] == false {
+		print("Error: " + parsed["error"]["message"])
+		exit(1)
+	}
+	positionals := parsed_positionals_or_empty(parsed)
+	if len(positionals) < 1 {
+		print("Error: run-id is required for inspect command.")
+		exit(1)
+	}
+	run_id := positionals[0]
+	json_output := parsed_has_flag(parsed, "--json")
+	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
+	loaded := load_run_state(output_root, run_id)
+	if loaded["ok"] == false {
+		print("Error: " + loaded["error"]["message"])
+		exit(1)
+	}
+	run_state := loaded["run_state"]
+	topic := dict_get_or(dict_get_or(run_state, "input", {}), "topic", "")
+	summary := summarize_run(run_state)
+	contract := {
+		"artifact_contract_version": dict_get_or(run_state, "artifact_contract_version", 0),
+		"state": {
+			"schema_name": dict_get_or(run_state, "schema_name", ""),
+			"schema_version": dict_get_or(run_state, "schema_version", 0)
+		},
+		"trace": {
+			"schema_name": dict_get_or(dict_get_or(run_state, "trace", {}), "schema_name", ""),
+			"schema_version": dict_get_or(dict_get_or(run_state, "trace", {}), "schema_version", 0)
+		}
+	}
+	artifacts := {
+		"state": run_state["run_dir"] + "/state.json",
+		"trace_json": run_state["run_dir"] + "/trace.json",
+		"trace_markdown": run_state["run_dir"] + "/trace.md"
+	}
+	if file_exists(run_state["run_dir"] + "/report.md") {
+		artifacts["report_md"] := run_state["run_dir"] + "/report.md"
+	}
+	if file_exists(run_state["run_dir"] + "/report.json") {
+		artifacts["report_json"] := run_state["run_dir"] + "/report.json"
+	}
+	if json_output {
+		print(to_json({
+			"command": "inspect",
+			"ok": true,
+			"run_id": run_state["run_id"],
+			"output_root": output_root,
+			"contract": contract,
+			"summary": summary,
+			"topic": topic,
+			"health": dict_get_or(run_state, "health", {}),
+			"steps": dict_get_or(run_state, "steps", []),
+			"approvals": dict_get_or(run_state, "approvals", []),
+			"handoffs": dict_get_or(run_state, "handoffs", []),
+			"errors": dict_get_or(run_state, "errors", []),
+			"artifacts": artifacts
+		}))
+		return
+	}
+	print("Run: " + run_state["run_id"])
+	print("Status: " + run_state["status"])
+	print("Workflow: " + run_state["workflow_name"])
+	print("Topic: " + to_string(topic))
+	print("Step Index: " + to_string(run_state["current_step_index"]) + "/" + to_string(len(run_state["steps"])))
+	print("Health Issues: " + to_string(len(run_state["health"]["issues"])))
+	issue_index := 0
+	while issue_index < len(run_state["health"]["issues"]) {
+		print("- issue: " + run_state["health"]["issues"][issue_index])
+		issue_index := issue_index + 1
+	}
+	print("Step Status Counts: " + to_json(run_state["health"]["step_status_counts"]))
+	print("Approvals: " + to_string(len(run_state["approvals"])) + " | Handoffs: " + to_string(len(run_state["handoffs"])) + " | Errors: " + to_string(len(run_state["errors"])))
+	print("Artifacts:")
+	print("- state: " + run_state["run_dir"] + "/state.json")
+	print("- trace json: " + run_state["run_dir"] + "/trace.json")
+	print("- trace md: " + run_state["run_dir"] + "/trace.md")
+	if file_exists(run_state["run_dir"] + "/report.md") {
+		print("- report md: " + run_state["run_dir"] + "/report.md")
+	}
+	if file_exists(run_state["run_dir"] + "/report.json") {
+		print("- report json: " + run_state["run_dir"] + "/report.json")
+	}
+	print("")
+	print("Steps:")
+	step_index := 0
+	while step_index < len(run_state["steps"]) {
+		step := run_state["steps"][step_index]
+		print("- " + step["id"] + " | " + step["type"] + " | status=" + step["status"] + " | attempts=" + to_string(dict_get_or(step, "attempts", 0)))
+		step_index := step_index + 1
+	}
+}
+
+func run_resume(command_args) {
+	parsed := parse_cli_args(command_args, {
+		"flags": {
+			"--config": {"takes_value": true, "default": ""},
+			"--workflow": {"takes_value": true, "default": ""},
+			"--policy-profile": {"takes_value": true, "default": ""},
+			"--yes": {"takes_value": false, "default": false},
+			"--non-interactive": {"takes_value": false, "default": false},
+			"--output-root": {"takes_value": true, "default": "outputs"},
+			"--sources-dir": {"takes_value": true, "default": "examples/research-report/sources"},
+			"--allow-tools": {"takes_value": true, "default": ""},
+			"--deny-tools": {"takes_value": true, "default": ""},
+			"--decision": {"takes_value": true, "default": ""},
+			"--note": {"takes_value": true, "default": ""},
+			"--trace-max-events": {"takes_value": true, "default": "400"},
+			"--trace-max-payload-chars": {"takes_value": true, "default": "2400"}
+		}
+	})
+	if parsed["ok"] == false {
+		print("Error: " + parsed["error"]["message"])
+		exit(1)
+	}
+	config_result := load_command_config(parsed_flag_value(parsed, "--config", ""))
+	if config_result["ok"] == false {
+		print("Error: " + config_result["message"])
+		exit(1)
+	}
+	config := config_result["config"]
+
+	positionals := parsed_positionals_or_empty(parsed)
+	if len(positionals) < 1 {
+		print("Error: run-id is required for resume command.")
+		exit(1)
+	}
+	run_id := positionals[0]
+	auto_approve := dispatch_resolve_bool_flag(parsed, command_args, "--yes", config, ["yes", "auto_approve"], false)
+	non_interactive := dispatch_resolve_bool_flag(parsed, command_args, "--non-interactive", config, ["non_interactive", "non-interactive"], false)
+	interactive := non_interactive == false
+	workflow_template_flag := dispatch_resolve_string_flag(parsed, command_args, "--workflow", config, ["workflow", "workflow_template_id"], "")
+	output_root := resolve_output_root_or_exit(dispatch_resolve_string_flag(parsed, command_args, "--output-root", config, ["output_root", "output-root"], "outputs"))
+	sources_dir := dispatch_resolve_string_flag(parsed, command_args, "--sources-dir", config, ["sources_dir", "sources-dir"], "examples/research-report/sources")
+	simulated_decision := dispatch_resolve_string_flag(parsed, command_args, "--decision", config, ["decision"], "")
+	simulated_note := dispatch_resolve_string_flag(parsed, command_args, "--note", config, ["note"], "")
+	trace_max_events_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-events", config, ["trace_max_events", "trace-max-events"], "400"), "--trace-max-events", 400)
+	trace_max_payload_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-payload-chars", config, ["trace_max_payload_chars", "trace-max-payload-chars"], "2400"), "--trace-max-payload-chars", 2400)
+	if trace_max_events_result["ok"] == false {
+		print("Error: " + trace_max_events_result["message"])
+		exit(1)
+	}
+	if trace_max_payload_result["ok"] == false {
+		print("Error: " + trace_max_payload_result["message"])
+		exit(1)
+	}
+	trace_max_events := trace_max_events_result["value"]
+	trace_max_payload_chars := trace_max_payload_result["value"]
+	tool_policy_settings := dispatch_resolve_tool_policy_settings(parsed, command_args, config)
+	if dict_get_or(tool_policy_settings, "ok", true) == false {
+		print("Error: " + dict_get_or(tool_policy_settings, "message", "Invalid tool policy profile configuration."))
+		exit(1)
+	}
+	if trace_max_events <= 0 {
+		trace_max_events = 400
+	}
+	if trace_max_payload_chars <= 0 {
+		trace_max_payload_chars = 2400
+	}
+	validation := validate_demo_inputs("resume", sources_dir, simulated_decision)
+	if validation["ok"] == false {
+		print("Error: " + validation["message"])
+		exit(1)
+	}
+	simulated_decision := validation["normalized_decision"]
+
+	loaded := load_run_state(output_root, run_id)
+	if loaded["ok"] == false {
+		print("Error: " + loaded["error"]["message"])
+		exit(1)
+	}
+	run_state := loaded["run_state"]
+	if run_state["status"] == "completed" {
+		print("Run is already completed: " + run_id)
+		return
+	}
+	if run_state["status"] == "failed" {
+		print("Run is failed and cannot resume automatically: " + run_id)
+		exit(1)
+	}
+	if run_state["status"] == "rejected" {
+		print("Run was rejected and cannot resume automatically: " + run_id)
+		exit(1)
+	}
+	if run_state["status"] == "cancelled" {
+		print("Run was cancelled and cannot resume automatically: " + run_id)
+		exit(1)
+	}
+
+	topic := ""
+	if has_key(run_state["input"], "topic") {
+		topic := run_state["input"]["topic"]
+	}
+	workflow_template_id := workflow_template_flag
+	if workflow_template_id == "" {
+		workflow_template_id = dict_get_or(dict_get_or(run_state, "options", {}), "workflow_template_id", "research-report")
+	}
+	workflow_result := create_workflow_by_template(workflow_template_id, topic, auto_approve)
+	if workflow_result["ok"] == false {
+		print("Error: " + workflow_result["error"]["message"])
+		exit(1)
+	}
+	workflow := workflow_result["workflow"]
+	tool_registry := register_default_tools(sources_dir)
+	result := run_workflow(workflow, run_state, tool_registry, {
+		"auto_approve": auto_approve,
+		"interactive": interactive,
+		"command_name": "resume",
+		"tool_authorization_policy": dict_get_or(tool_policy_settings, "policy", null),
+		"simulated_decision": simulated_decision,
+		"simulated_note": simulated_note,
+		"trace_max_events": trace_max_events,
+		"trace_max_payload_chars": trace_max_payload_chars
+	})
+	final_state := result["run_state"]
+	print("Run ID: " + final_state["run_id"])
+	print("Status: " + final_state["status"])
+	print("Run Directory: " + final_state["run_dir"])
+	if result["paused"] {
+		print("Workflow still paused.")
+	}
+	if result["ok"] == false {
+		print("Error: " + to_json(result["error"]))
+		exit(1)
+	}
+}
+
+func run_runs(command_args) {
+	parsed := parse_cli_args(command_args, {
+		"flags": {
+			"--output-root": {"takes_value": true, "default": "outputs"},
+			"--status": {"takes_value": true, "default": ""},
+			"--workflow": {"takes_value": true, "default": ""},
+			"--topic": {"takes_value": true, "default": ""},
+			"--tags": {"takes_value": true, "default": ""},
+			"--issues-only": {"takes_value": false, "default": false},
+			"--limit": {"takes_value": true, "default": "50"},
+			"--offset": {"takes_value": true, "default": "0"},
+			"--json": {"takes_value": false, "default": false},
+			"--diagnostics": {"takes_value": false, "default": false}
+		}
+	})
+	if parsed["ok"] == false {
+		print("Error: " + parsed["error"]["message"])
+		exit(1)
+	}
+	output_root_raw := parsed_flag_value(parsed, "--output-root", "outputs")
+	output_root := resolve_output_root_or_exit(output_root_raw)
+	status_filter := validate_status_filter_or_exit(parsed_flag_value(parsed, "--status", ""), "--status")
+	workflow_filter := parsed_flag_value(parsed, "--workflow", "")
+	topic_filter := parsed_flag_value(parsed, "--topic", "")
+	tags_filter := parsed_flag_value(parsed, "--tags", "")
+	issues_only := parsed_has_flag(parsed, "--issues-only")
+	limit_result := parse_non_negative_number(parsed_flag_value(parsed, "--limit", "50"), "--limit", 50)
+	if limit_result["ok"] == false {
+		print("Error: " + limit_result["message"])
+		exit(1)
+	}
+	offset_result := parse_non_negative_number(parsed_flag_value(parsed, "--offset", "0"), "--offset", 0)
+	if offset_result["ok"] == false {
+		print("Error: " + offset_result["message"])
+		exit(1)
+	}
+	limit := limit_result["value"]
+	offset := offset_result["value"]
+	json_output := parsed_has_flag(parsed, "--json")
+	diagnostics_mode := parsed_has_flag(parsed, "--diagnostics")
+	runs_payload := list_runs_with_diagnostics(output_root)
+	runs := dict_get_or(runs_payload, "runs", [])
+	diagnostics := dict_get_or(runs_payload, "diagnostics", {})
+	filtered := filter_runs(runs, status_filter, topic_filter, issues_only)
+	filtered = filter_runs_by_workflow(filtered, workflow_filter)
+	filtered = filter_runs_by_tags(filtered, tags_filter)
+	filtered_total := len(filtered)
+	paged := paginate_runs(filtered, offset, limit)
+	page_catalog := build_run_catalog(paged)
+	filtered_catalog := build_run_catalog(filtered)
+
+	if json_output {
+		payload := {
+			"filtered_total": filtered_total,
+			"filters": {
+				"status": status_filter,
+				"workflow": workflow_filter,
+				"topic": topic_filter,
+				"tags": parse_tool_name_list(tags_filter),
+				"issues_only": issues_only
+			},
+			"offset": offset,
+			"limit": limit,
+			"catalog": page_catalog,
+			"page_catalog": page_catalog,
+			"filtered_catalog": filtered_catalog,
+			"runs": paged
+		}
+		if diagnostics_mode {
+			payload["diagnostics"] := diagnostics
+		}
+		print(to_json(payload))
+		return
+	}
+
+	if len(paged) == 0 {
+		print("No runs found in " + output_root)
+		if status_filter != "" || workflow_filter != "" || topic_filter != "" || trim(to_string(tags_filter)) != "" || issues_only {
+			print("Filters: status=" + status_filter + " workflow=" + workflow_filter + " topic=" + topic_filter + " tags=" + to_json(parse_tool_name_list(tags_filter)) + " issues_only=" + to_string(issues_only))
+		}
+		return
+	}
+
+	print("Runs: " + to_string(page_catalog["total_runs"]) + " (showing " + to_string(len(paged)) + " of " + to_string(filtered_total) + ") | resumable=" + to_string(page_catalog["resumable_runs"]) + " | issues_total=" + to_string(page_catalog["issues_total"]))
+	if diagnostics_mode {
+		print("Diagnostics: " + to_json(diagnostics))
+	}
+	print("Status counts (page): " + to_json(page_catalog["status_counts"]))
+	print("Status counts (filtered): " + to_json(filtered_catalog["status_counts"]))
+	print("")
+
+	run_index := 0
+	while run_index < len(paged) {
+		run_item := paged[run_index]
+		artifacts := dict_get_or(run_item, "artifacts", {})
+		report_ready := dict_get_or(artifacts, "report_md", false) && dict_get_or(artifacts, "report_json", false)
+		print(run_item["run_id"] + " | " + run_item["status"] + " | " + run_item["updated_at"] + " | topic=" + run_item["topic"] + " | issues=" + to_string(run_item["issues_count"]) + " | step=" + to_string(run_item["current_step_index"]) + "/" + to_string(run_item["total_steps"]) + " | report_ready=" + to_string(report_ready))
+		run_index := run_index + 1
+	}
+}
+
+func run_templates(command_args) {
+	parsed := parse_cli_args(command_args, {
+		"flags": {
+			"--json": {"takes_value": false, "default": false}
+		}
+	})
+	if parsed["ok"] == false {
+		print("Error: " + parsed["error"]["message"])
+		exit(1)
+	}
+	json_output := parsed_has_flag(parsed, "--json")
+	templates := list_workflow_templates()
+	if json_output {
+		print(to_json({
+			"templates": templates
+		}))
+		return
+	}
+	print("Workflow Templates")
+	for template in templates {
+		print("- " + dict_get_or(template, "template_id", "") + " | " + dict_get_or(template, "name", "") + " | steps=" + to_string(dict_get_or(template, "step_count", 0)) + " | approvals=" + to_string(dict_get_or(template, "approval_step_count", 0)) + " | tools=" + to_string(dict_get_or(template, "tool_count", 0)))
+	}
+}
+
+func build_doctor_summary(run_diagnostics) {
+	summary := {
+		"total_runs": len(run_diagnostics),
+		"load_failures": 0,
+		"issues_before_total": 0,
+		"issues_after_total": 0,
+		"repaired_runs": 0
+	}
+	index := 0
+	while index < len(run_diagnostics) {
+		item := run_diagnostics[index]
+		if dict_get_or(item, "load_ok", false) == false {
+			summary["load_failures"] := summary["load_failures"] + 1
+			index := index + 1
+			continue
+		}
+		summary["issues_before_total"] := summary["issues_before_total"] + dict_get_or(item, "issues_before", 0)
+		summary["issues_after_total"] := summary["issues_after_total"] + dict_get_or(item, "issues_after", 0)
+		if dict_get_or(item, "repaired", false) {
+			summary["repaired_runs"] := summary["repaired_runs"] + 1
+		}
+		index := index + 1
+	}
+	return summary
+}
+
+func run_doctor(command_args) {
+	parsed := parse_cli_args(command_args, {
+		"flags": {
+			"--output-root": {"takes_value": true, "default": "outputs"},
+			"--write": {"takes_value": false, "default": false},
+			"--run-ids": {"takes_value": true, "default": ""},
+			"--recent-count": {"takes_value": true, "default": "0"},
+			"--json": {"takes_value": false, "default": false},
+			"--strict-mutations": {"takes_value": false, "default": false},
+			"--confirm-mutation": {"takes_value": false, "default": false}
+		}
+	})
+	if parsed["ok"] == false {
+		print("Error: " + parsed["error"]["message"])
+		exit(1)
+	}
+	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
+	write_changes := parsed_has_flag(parsed, "--write")
+	run_ids := parsed_flag_value(parsed, "--run-ids", "")
+	json_output := parsed_has_flag(parsed, "--json")
+	recent_count_result := parse_non_negative_number(parsed_flag_value(parsed, "--recent-count", "0"), "--recent-count", 0)
+	if recent_count_result["ok"] == false {
+		print("Error: " + recent_count_result["message"])
+		exit(1)
+	}
+	recent_count := recent_count_result["value"]
+	if write_changes {
+		enforce_mutation_guard_or_exit(parsed, "doctor", "--write")
+	}
+	run_diagnostics := doctor_runs(output_root, write_changes, {
+		"run_ids": run_ids,
+		"recent_count": recent_count
+	})
+	json_payload := {
+		"command": "doctor",
+		"ok": true,
+		"output_root": output_root,
+		"write_mode": write_changes,
+		"scope": {
+			"run_ids": run_ids,
+			"recent_count": recent_count
+		},
+		"summary": build_doctor_summary(run_diagnostics),
+		"runs": run_diagnostics
+	}
+	if json_output {
+		print(to_json(json_payload))
+		return
+	}
+	if len(run_diagnostics) == 0 {
+		print("No runs found in " + output_root)
+		return
+	}
+
+	print("Dispatch Doctor")
+	print("Write mode: " + to_string(write_changes))
+	if trim(to_string(run_ids)) != "" {
+		print("Scoped run_ids: " + to_string(run_ids))
+	}
+	if recent_count > 0 {
+		print("Recent count: " + to_string(recent_count))
+	}
+	print("")
+
+	run_index := 0
+	while run_index < len(run_diagnostics) {
+		item := run_diagnostics[run_index]
+		if dict_get_or(item, "load_ok", false) == false {
+			print("- " + item["run_id"] + " | load failed")
+			run_index := run_index + 1
+			continue
+		}
+		print("- " + item["run_id"] + " | status=" + item["status"] + " | issues(before)=" + to_string(item["issues_before"]) + " | repaired=" + to_string(item["repaired"]) + " | notes=" + to_string(len(item["notes"])) + " | issues(after)=" + to_string(item["issues_after"]))
+		note_index := 0
+		while note_index < len(item["notes"]) {
+			print("  - " + item["notes"][note_index])
+			note_index := note_index + 1
+		}
+		run_index := run_index + 1
+	}
+
+	if write_changes {
+		audit_path := mutation_audit_path(output_root)
+		if file_exists(audit_path) {
+			print("")
+			print("Audit: " + audit_path)
+		}
+	}
+}
+
+func run_cleanup(command_args) {
+	parsed := parse_cli_args(command_args, {
+		"flags": {
+			"--output-root": {"takes_value": true, "default": "outputs"},
+			"--status": {"takes_value": true, "default": ""},
+			"--older-than-hours": {"takes_value": true, "default": "0"},
+			"--max-count": {"takes_value": true, "default": "0"},
+			"--apply": {"takes_value": false, "default": false},
+			"--json": {"takes_value": false, "default": false},
+			"--strict-mutations": {"takes_value": false, "default": false},
+			"--confirm-mutation": {"takes_value": false, "default": false}
+		}
+	})
+	if parsed["ok"] == false {
+		print("Error: " + parsed["error"]["message"])
+		exit(1)
+	}
+	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
+	status_filter := validate_status_filter_or_exit(parsed_flag_value(parsed, "--status", ""), "--status")
+	older_result := parse_non_negative_number(parsed_flag_value(parsed, "--older-than-hours", "0"), "--older-than-hours", 0)
+	if older_result["ok"] == false {
+		print("Error: " + older_result["message"])
+		exit(1)
+	}
+	count_result := parse_non_negative_number(parsed_flag_value(parsed, "--max-count", "0"), "--max-count", 0)
+	if count_result["ok"] == false {
+		print("Error: " + count_result["message"])
+		exit(1)
+	}
+	older_than_hours := older_result["value"]
+	max_count := count_result["value"]
+	apply_mode := parsed_has_flag(parsed, "--apply")
+	json_output := parsed_has_flag(parsed, "--json")
+	if apply_mode {
+		enforce_mutation_guard_or_exit(parsed, "cleanup", "--apply")
+	}
+	dry_run := apply_mode == false
+
+	cleanup := prune_runs(output_root, status_filter, max_count, older_than_hours, dry_run)
+	if json_output {
+		print(to_json(cleanup))
+		return
+	}
+	mode_label := "dry-run"
+	if dry_run == false {
+		mode_label = "apply"
+	}
+	print("Dispatch Cleanup (" + mode_label + ")")
+	print("Candidates: " + to_string(cleanup["candidate_count"]))
+	print("Pruned: " + to_string(cleanup["pruned_count"]))
+	if dry_run {
+		print("Use --apply to persist prune markers.")
+	} else {
+		audit_path := dict_get_or(cleanup, "audit_path", "")
+		if audit_path != "" {
+			print("Audit: " + audit_path)
+		}
+	}
+}
+
+func run_export_run(command_args) {
+	parsed := parse_cli_args(command_args, {
+		"flags": {
+			"--output-root": {"takes_value": true, "default": "outputs"},
+			"--bundle-path": {"takes_value": true, "required": true},
+			"--sign-bundle": {"takes_value": false, "default": false},
+			"--signing-key": {"takes_value": true, "default": ""}
+		}
+	})
+	if parsed["ok"] == false {
+		print("Error: " + parsed["error"]["message"])
+		exit(1)
+	}
+	positionals := parsed_positionals_or_empty(parsed)
+	if len(positionals) < 1 {
+		print("Error: run-id is required for export-run command.")
+		exit(1)
+	}
+	run_id := positionals[0]
+	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
+	bundle_path := parsed_flag_value(parsed, "--bundle-path", "")
+	sign_bundle := parsed_has_flag(parsed, "--sign-bundle")
+	result := export_run_bundle(output_root, run_id, bundle_path, {
+		"include_signature": sign_bundle,
+		"signing_key": resolve_signing_key(parsed, "--signing-key")
+	})
+	if result["ok"] == false {
+		print("Error: " + result["error"]["message"])
+		exit(1)
+	}
+	print("Exported run bundle: " + result["bundle_path"])
+}
+
+func run_import_run(command_args) {
+	parsed := parse_cli_args(command_args, {
+		"flags": {
+			"--output-root": {"takes_value": true, "default": "outputs"},
+			"--bundle-path": {"takes_value": true, "required": true},
+			"--verify-bundle-signature": {"takes_value": false, "default": false},
+			"--signing-key": {"takes_value": true, "default": ""},
+			"--strict-mutations": {"takes_value": false, "default": false},
+			"--confirm-mutation": {"takes_value": false, "default": false}
+		}
+	})
+	if parsed["ok"] == false {
+		print("Error: " + parsed["error"]["message"])
+		exit(1)
+	}
+	enforce_mutation_guard_or_exit(parsed, "import-run", "--bundle-path")
+	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
+	bundle_path := parsed_flag_value(parsed, "--bundle-path", "")
+	verify_signature := parsed_has_flag(parsed, "--verify-bundle-signature")
+	result := import_run_bundle(output_root, bundle_path, {
+		"verify_signature": verify_signature,
+		"signing_key": resolve_signing_key(parsed, "--signing-key")
+	})
+	if result["ok"] == false {
+		print("Error: " + result["error"]["message"])
+		exit(1)
+	}
+	print("Imported run: " + result["run_id"])
+	print("Run Directory: " + result["run_dir"])
+}
+
+raw_args := args()
+if len(raw_args) == 0 {
+	print_help()
+	return
+}
+
+command := raw_args[0]
+command_args := []
+i := 1
+while i < len(raw_args) {
+	command_args := push(command_args, raw_args[i])
+	i := i + 1
+}
+
+if command == "demo" {
+	run_demo(command_args)
+	return
+}
+if command == "show" {
+	run_show(command_args)
+	return
+}
+if command == "inspect" {
+	run_inspect(command_args)
+	return
+}
+if command == "resume" {
+	run_resume(command_args)
+	return
+}
+if command == "runs" {
+	run_runs(command_args)
+	return
+}
+if command == "templates" {
+	run_templates(command_args)
+	return
+}
+if command == "doctor" {
+	run_doctor(command_args)
+	return
+}
+if command == "cleanup" {
+	run_cleanup(command_args)
+	return
+}
+if command == "export-run" {
+	run_export_run(command_args)
+	return
+}
+if command == "import-run" {
+	run_import_run(command_args)
+	return
+}
+if command == "help" || command == "--help" || command == "-h" {
+	print_help()
+	return
+}
+
+print("Unknown command: " + command)
+print_help()
+exit(1)

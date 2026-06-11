@@ -1,0 +1,1411 @@
+from src.core.utils import dict_get_or, ensure_dir, read_json_or, redact_sensitive_data, to_bool, safe_read_file
+from src.core.memory import create_memory
+from src.core.trace import create_trace, render_trace_markdown, apply_trace_limits
+
+func output_root_error(message) {
+	return {
+		"ok": false,
+		"error": {
+			"code": "invalid_output_root",
+			"message": message,
+			"retryable": false
+		}
+	}
+}
+
+func normalize_output_root(raw_output_root) {
+	value := trim(to_string(raw_output_root))
+	value := replace(value, "\\", "/")
+	if value == "" {
+		return output_root_error("Output root is required and cannot be empty.")
+	}
+	while ends_with(value, "/") && len(value) > 1 {
+		value = substring(value, 0, len(value) - 1)
+	}
+
+	allow_any := to_bool(env("DISPATCH_ALLOW_ANY_OUTPUT_ROOT"), false)
+	if allow_any {
+		return {
+			"ok": true,
+			"output_root": value
+		}
+	}
+
+	lower := to_lower(value)
+	if value == "/" || value == "." || value == ".." || value == "~" {
+		return output_root_error("Unsafe output root: " + value + ". Use a dedicated relative directory or set DISPATCH_ALLOW_ANY_OUTPUT_ROOT=true for explicit opt-in.")
+	}
+	if starts_with(value, "/") || starts_with(value, "~/") {
+		return output_root_error("Absolute output-root paths are blocked by default. Set DISPATCH_ALLOW_ANY_OUTPUT_ROOT=true for explicit opt-in.")
+	}
+	if contains(lower, "..") || contains(lower, "%2f") || contains(lower, "%5c") {
+		return output_root_error("Path traversal patterns are not allowed in output root.")
+	}
+
+	segments := split(value, "/")
+	for segment in segments {
+		clean_segment := trim(segment)
+		if clean_segment == "" || clean_segment == "." || clean_segment == ".." {
+			return output_root_error("Output root contains invalid path segments.")
+		}
+	}
+
+	return {
+		"ok": true,
+		"output_root": value
+	}
+}
+
+func run_index_path(output_root) {
+	return output_root + "/.dispatch-run-index.json"
+}
+
+func mutation_audit_path(output_root) {
+	return output_root + "/dispatch-mutations.jsonl"
+}
+
+func mutation_audit_backup_path(output_root, max_backups) {
+	slot := (current_timestamp() % max_backups) + 1
+	return output_root + "/dispatch-mutations." + to_string(slot) + ".jsonl"
+}
+
+func parse_positive_number(raw_value, default_value) {
+	parsed := default_value
+	try {
+		parsed = to_float(trim(to_string(raw_value)))
+	} except err {
+		parsed = default_value
+	}
+	if parsed <= 0 {
+		return default_value
+	}
+	return parsed
+}
+
+func resolve_mutation_audit_max_bytes(rotation_settings) {
+	if type(rotation_settings) == "dict" && has_key(rotation_settings, "max_bytes") == 1 {
+		return parse_positive_number(rotation_settings["max_bytes"], 1048576)
+	}
+	return parse_positive_number(env("DISPATCH_MUTATION_AUDIT_MAX_BYTES"), 1048576)
+}
+
+func resolve_mutation_audit_max_backups(rotation_settings) {
+	if type(rotation_settings) == "dict" && has_key(rotation_settings, "max_backups") == 1 {
+		return parse_positive_number(rotation_settings["max_backups"], 5)
+	}
+	return parse_positive_number(env("DISPATCH_MUTATION_AUDIT_MAX_BACKUPS"), 5)
+}
+
+func resolve_mutation_audit_rotate_daily(rotation_settings) {
+	if type(rotation_settings) == "dict" && has_key(rotation_settings, "rotate_daily") == 1 {
+		return to_bool(rotation_settings["rotate_daily"], false)
+	}
+	return to_bool(env("DISPATCH_MUTATION_AUDIT_ROTATE_DAILY"), false)
+}
+
+func last_non_empty_line(text_value) {
+	lines := split(to_string(text_value), "\n")
+	index := len(lines) - 1
+	while index >= 0 {
+		line := trim(to_string(lines[index]))
+		if line != "" {
+			return to_string(lines[index])
+		}
+		index = index - 1
+	}
+	return ""
+}
+
+func mutation_audit_rotate_daily_due(existing_audit) {
+	last_line := last_non_empty_line(existing_audit)
+	if last_line == "" {
+		return false
+	}
+	today_prefix := "\"timestamp\":\"" + format_date(now(), "YYYY-MM-DD")
+	return contains(last_line, today_prefix) == 0
+}
+
+func mutation_audit_rotate_size_due(existing_audit, next_line, max_bytes) {
+	if max_bytes <= 0 {
+		return false
+	}
+	projected_size := len(existing_audit)
+	if trim(existing_audit) != "" {
+		projected_size = projected_size + 1
+	}
+	projected_size = projected_size + len(next_line)
+	return projected_size > max_bytes
+}
+
+func load_run_index(output_root) {
+	loaded := read_json_or(run_index_path(output_root), null)
+	if type(loaded) != "dict" {
+		return {
+			"version": 1,
+			"updated_at": "",
+			"runs": {}
+		}
+	}
+	runs_map := dict_get_or(loaded, "runs", {})
+	if type(runs_map) != "dict" {
+		runs_map = {}
+	}
+	loaded["runs"] := runs_map
+	if has_key(loaded, "version") == 0 {
+		loaded["version"] := 1
+	}
+	return loaded
+}
+
+func persist_run_index(output_root, index_payload) {
+	ensure_dir(output_root)
+	index_payload["updated_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
+	write_file(run_index_path(output_root), to_json(index_payload), true)
+}
+func normalize_run_tags(raw_tags) {
+	normalized := []
+	seen := {}
+	if type(raw_tags) == "array" {
+		for raw_tag in raw_tags {
+			tag := to_lower(trim(to_string(raw_tag)))
+			if tag == "" {
+				continue
+			}
+			if has_key(seen, tag) == 0 {
+				seen[tag] := true
+				normalized := push(normalized, tag)
+			}
+		}
+		return normalized
+	}
+	raw_text := replace(to_string(raw_tags), "\n", ",")
+	for part in split(raw_text, ",") {
+		tag := to_lower(trim(to_string(part)))
+		if tag == "" {
+			continue
+		}
+		if has_key(seen, tag) == 0 {
+			seen[tag] := true
+			normalized := push(normalized, tag)
+		}
+	}
+	return normalized
+}
+
+func build_run_index_entry(run_state) {
+	run_dir := dict_get_or(run_state, "run_dir", "")
+	issues := detect_run_issues(run_state)
+	steps := array_or_empty(dict_get_or(run_state, "steps", []))
+	tags := normalize_run_tags(dict_get_or(run_state, "tags", []))
+	return {
+		"status": dict_get_or(run_state, "status", "unknown"),
+		"workflow_id": dict_get_or(run_state, "workflow_id", "unknown"),
+		"workflow_name": dict_get_or(run_state, "workflow_name", "unknown"),
+		"topic": dict_get_or(dict_get_or(run_state, "input", {}), "topic", ""),
+		"tags": tags,
+		"updated_at": dict_get_or(run_state, "updated_at", ""),
+		"issues_count": len(issues),
+		"resumable": can_resume_status(dict_get_or(run_state, "status", "unknown")),
+		"current_step_index": int_or_zero(dict_get_or(run_state, "current_step_index", 0)),
+		"total_steps": len(steps),
+		"artifacts": build_artifact_flags(run_dir)
+	}
+}
+
+func upsert_run_index_entry(run_state) {
+	output_root := dict_get_or(run_state, "output_root", "")
+	run_id := dict_get_or(run_state, "run_id", "")
+	if output_root == "" || run_id == "" {
+		return false
+	}
+	index_payload := load_run_index(output_root)
+	runs_map := dict_get_or(index_payload, "runs", {})
+	runs_map[run_id] := build_run_index_entry(run_state)
+	index_payload["runs"] := runs_map
+	persist_run_index(output_root, index_payload)
+	return true
+}
+
+func remove_run_index_entry(output_root, run_id) {
+	index_payload := load_run_index(output_root)
+	runs_map := dict_get_or(index_payload, "runs", {})
+	if has_key(runs_map, run_id) {
+		updated_runs := {}
+		for existing_run_id in keys(runs_map) {
+			if existing_run_id == run_id {
+				continue
+			}
+			updated_runs[existing_run_id] := runs_map[existing_run_id]
+		}
+		index_payload["runs"] := updated_runs
+		persist_run_index(output_root, index_payload)
+	}
+}
+
+func append_mutation_audit_record(output_root, operation_name, mutations, metadata, rotation_settings) {
+	if len(mutations) == 0 {
+		return ""
+	}
+	ensure_dir(output_root)
+	audit_path := mutation_audit_path(output_root)
+	record := {
+		"timestamp": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
+		"operation": operation_name,
+		"output_root": output_root,
+		"mutations": mutations,
+		"metadata": metadata
+	}
+	existing := safe_read_file(audit_path, "")
+	line := to_json(record)
+	max_bytes := resolve_mutation_audit_max_bytes(rotation_settings)
+	max_backups := resolve_mutation_audit_max_backups(rotation_settings)
+	rotate_daily := resolve_mutation_audit_rotate_daily(rotation_settings)
+	should_rotate := mutation_audit_rotate_size_due(existing, line, max_bytes)
+	if rotate_daily && mutation_audit_rotate_daily_due(existing) {
+		should_rotate = true
+	}
+	if should_rotate && trim(existing) != "" {
+		backup_path := mutation_audit_backup_path(output_root, max_backups)
+		write_file(backup_path, existing, true)
+		existing = ""
+	}
+	if trim(existing) == "" {
+		write_file(audit_path, line, true)
+	} else {
+		write_file(audit_path, existing + "\n" + line, true)
+	}
+	return audit_path
+}
+
+func append_policy_deny_audit_record(output_root, run_state, step, authorization_error, options, step_input) {
+	run_id := dict_get_or(run_state, "run_id", "")
+	tool_name := dict_get_or(step, "tool_name", "")
+	step_id := dict_get_or(step, "id", "")
+	if run_id == "" || tool_name == "" || step_id == "" {
+		return ""
+	}
+	return append_mutation_audit_record(output_root, "policy_deny", [{
+		"run_id": run_id,
+		"step_id": step_id,
+		"tool_name": tool_name,
+		"action": "denied",
+		"error_code": dict_get_or(authorization_error, "code", "tool_execution_denied"),
+		"error_message": dict_get_or(authorization_error, "message", "Tool execution denied by authorization policy.")
+	}], {
+		"command_name": dict_get_or(options, "command_name", "workflow"),
+		"workflow_id": dict_get_or(run_state, "workflow_id", ""),
+		"workflow_name": dict_get_or(run_state, "workflow_name", ""),
+		"run_status": dict_get_or(run_state, "status", "unknown"),
+		"step_input_summary": to_json(redact_sensitive_data(step_input))
+	}, {})
+}
+
+func list_runs_from_index(output_root) {
+	index_payload := load_run_index(output_root)
+	runs_map := dict_get_or(index_payload, "runs", {})
+	if type(runs_map) != "dict" || len(keys(runs_map)) == 0 {
+		return []
+	}
+	runs := []
+	for run_id in keys(runs_map) {
+		run_dir := output_root + "/" + run_id
+		if file_exists(run_dir + "/.dispatch-pruned") {
+			continue
+		}
+		if !file_exists(run_dir + "/state.json") {
+			continue
+		}
+		entry := runs_map[run_id]
+		entry["run_id"] := run_id
+		entry["artifacts"] := build_artifact_flags(run_dir)
+		entry["tags"] := normalize_run_tags(dict_get_or(entry, "tags", []))
+		runs := push(runs, entry)
+	}
+	return sort_runs_by_updated_desc(runs)
+}
+
+func list_runs_by_scanning_state(output_root) {
+	entries := []
+	try {
+		entries := list_dir(output_root)
+	} except err {
+		return []
+	}
+
+	runs := []
+	for entry in entries {
+		entry_name := replace(entry, "/", "")
+		if !starts_with(entry_name, "run-") {
+			continue
+		}
+		run_dir := output_root + "/" + entry_name
+		if file_exists(run_dir + "/.dispatch-pruned") {
+			continue
+		}
+		state_path := output_root + "/" + entry_name + "/state.json"
+		state_obj := read_json_or(state_path, null)
+		if type(state_obj) == "dict" {
+			state_obj["run_id"] := entry_name
+			state_obj["run_dir"] := run_dir
+			state_obj["output_root"] := output_root
+			state_obj["tags"] := normalize_run_tags(dict_get_or(state_obj, "tags", []))
+			runs := push(runs, {
+				"run_id": entry_name,
+				"status": dict_get_or(state_obj, "status", "unknown"),
+				"workflow_id": dict_get_or(state_obj, "workflow_id", "unknown"),
+				"workflow_name": dict_get_or(state_obj, "workflow_name", "unknown"),
+				"topic": dict_get_or(dict_get_or(state_obj, "input", {}), "topic", ""),
+				"tags": dict_get_or(state_obj, "tags", []),
+				"updated_at": dict_get_or(state_obj, "updated_at", ""),
+				"issues_count": len(detect_run_issues(state_obj)),
+				"resumable": can_resume_status(dict_get_or(state_obj, "status", "unknown")),
+				"current_step_index": dict_get_or(state_obj, "current_step_index", 0),
+				"total_steps": len(array_or_empty(dict_get_or(state_obj, "steps", []))),
+				"artifacts": build_artifact_flags(run_dir)
+			})
+		}
+	}
+
+	if len(runs) > 0 {
+		index_payload := load_run_index(output_root)
+		runs_map := {}
+		for run_item in runs {
+			runs_map[dict_get_or(run_item, "run_id", "")] := {
+				"status": dict_get_or(run_item, "status", "unknown"),
+				"workflow_id": dict_get_or(run_item, "workflow_id", "unknown"),
+				"workflow_name": dict_get_or(run_item, "workflow_name", "unknown"),
+				"topic": dict_get_or(run_item, "topic", ""),
+				"updated_at": dict_get_or(run_item, "updated_at", ""),
+				"issues_count": int_or_zero(dict_get_or(run_item, "issues_count", 0)),
+				"resumable": dict_get_or(run_item, "resumable", false),
+				"current_step_index": int_or_zero(dict_get_or(run_item, "current_step_index", 0)),
+				"total_steps": int_or_zero(dict_get_or(run_item, "total_steps", 0)),
+					"artifacts": dict_get_or(run_item, "artifacts", {}),
+					"tags": normalize_run_tags(dict_get_or(run_item, "tags", []))
+			}
+		}
+		index_payload["runs"] := runs_map
+		persist_run_index(output_root, index_payload)
+	}
+
+	return sort_runs_by_updated_desc(runs)
+}
+
+func status_is_terminal(status) {
+	return status == "completed" || status == "failed" || status == "rejected" || status == "cancelled"
+}
+
+func can_resume_status(status) {
+	return status == "running" || status == "paused" || status == "interrupted" || status == "needs_changes"
+}
+
+func array_or_empty(value) {
+	if type(value) == "array" {
+		return value
+	}
+	return []
+}
+
+func int_or_zero(value) {
+	if type(value) == "int" {
+		return value
+	}
+	return 0
+}
+
+func collect_step_status_counts(run_state) {
+	counts := {
+		"pending": 0,
+		"running": 0,
+		"completed": 0,
+		"failed": 0,
+		"paused": 0,
+		"other": 0
+	}
+	steps := array_or_empty(dict_get_or(run_state, "steps", []))
+	for step in steps {
+		status := dict_get_or(step, "status", "pending")
+		if has_key(counts, status) {
+			counts[status] := counts[status] + 1
+		} else {
+			counts["other"] := counts["other"] + 1
+		}
+	}
+	return counts
+}
+
+func detect_run_issues(run_state) {
+	issues := []
+	steps := array_or_empty(dict_get_or(run_state, "steps", []))
+	total_steps := len(steps)
+	current_step_index := int_or_zero(dict_get_or(run_state, "current_step_index", 0))
+	status := dict_get_or(run_state, "status", "unknown")
+	trace_state := dict_get_or(run_state, "trace", {})
+	trace_finished_at := dict_get_or(trace_state, "finished_at", "")
+	trace_status := dict_get_or(trace_state, "status", "")
+	run_dir := dict_get_or(run_state, "run_dir", "")
+
+	if current_step_index < 0 {
+		issues := push(issues, "current_step_index is negative")
+	}
+	if current_step_index > total_steps {
+		issues := push(issues, "current_step_index exceeds total steps")
+	}
+	if status == "running" {
+		if current_step_index >= total_steps && total_steps > 0 {
+			issues := push(issues, "run marked running but all steps appear processed")
+		}
+		if trace_finished_at != "" {
+			issues := push(issues, "run marked running but trace has finished_at")
+		}
+	}
+	if status_is_terminal(status) {
+		if trace_status == "running" {
+			issues := push(issues, "run is terminal but trace still marked running")
+		}
+	}
+	if status == "completed" {
+		if run_dir != "" {
+			if !file_exists(run_dir + "/report.json") {
+				issues := push(issues, "completed run missing report.json")
+			}
+			if !file_exists(run_dir + "/trace.json") {
+				issues := push(issues, "completed run missing trace.json")
+			}
+		}
+	}
+
+	return issues
+}
+
+func build_artifact_flags(run_dir) {
+	if run_dir == "" {
+		return {
+			"state_json": false,
+			"trace_json": false,
+			"trace_md": false,
+			"report_md": false,
+			"report_json": false
+		}
+	}
+	return {
+		"state_json": file_exists(run_dir + "/state.json"),
+		"trace_json": file_exists(run_dir + "/trace.json"),
+		"trace_md": file_exists(run_dir + "/trace.md"),
+		"report_md": file_exists(run_dir + "/report.md"),
+		"report_json": file_exists(run_dir + "/report.json")
+	}
+}
+
+func artifact_contract_version() {
+	return 1
+}
+
+func state_schema_version() {
+	return 1
+}
+
+func trace_schema_version() {
+	return 1
+}
+
+func ensure_trace_contract_fields(trace_state) {
+	if type(trace_state) != "dict" {
+		trace_state = {}
+	}
+	updated := false
+	if has_key(trace_state, "artifact_contract_version") == 0 {
+		trace_state["artifact_contract_version"] := artifact_contract_version()
+		updated = true
+	}
+	if has_key(trace_state, "schema_name") == 0 {
+		trace_state["schema_name"] := "dispatch-trace"
+		updated = true
+	}
+	if has_key(trace_state, "schema_version") == 0 {
+		trace_state["schema_version"] := trace_schema_version()
+		updated = true
+	}
+	return {
+		"trace_state": trace_state,
+		"updated": updated
+	}
+}
+
+func ensure_run_state_contract_fields(run_state) {
+	if type(run_state) != "dict" {
+		run_state = {}
+	}
+	updated := false
+	if has_key(run_state, "artifact_contract_version") == 0 {
+		run_state["artifact_contract_version"] := artifact_contract_version()
+		updated = true
+	}
+	if has_key(run_state, "schema_name") == 0 {
+		run_state["schema_name"] := "dispatch-run-state"
+		updated = true
+	}
+	if has_key(run_state, "schema_version") == 0 {
+		run_state["schema_version"] := state_schema_version()
+		updated = true
+	}
+	trace_result := ensure_trace_contract_fields(dict_get_or(run_state, "trace", {}))
+	run_state["trace"] := trace_result["trace_state"]
+	if dict_get_or(trace_result, "updated", false) {
+		updated = true
+	}
+	return {
+		"run_state": run_state,
+		"updated": updated
+	}
+}
+
+func repair_run_state(run_state) {
+	repaired := false
+	notes := []
+	contract_result := ensure_run_state_contract_fields(run_state)
+	run_state := contract_result["run_state"]
+	if dict_get_or(contract_result, "updated", false) {
+		repaired := true
+		notes := push(notes, "Backfilled missing run/trace artifact contract metadata")
+	}
+	steps := array_or_empty(dict_get_or(run_state, "steps", []))
+	total_steps := len(steps)
+	status := dict_get_or(run_state, "status", "unknown")
+	trace_state := dict_get_or(run_state, "trace", {})
+	trace_finished_at := dict_get_or(trace_state, "finished_at", "")
+	current_step_index := int_or_zero(dict_get_or(run_state, "current_step_index", 0))
+
+	if current_step_index < 0 {
+		run_state["current_step_index"] := 0
+		repaired := true
+		notes := push(notes, "Reset negative current_step_index to 0")
+	}
+
+	if current_step_index > total_steps {
+		run_state["current_step_index"] := total_steps
+		repaired := true
+		notes := push(notes, "Clamped current_step_index to total steps")
+	}
+
+	if status == "running" {
+		if total_steps > 0 {
+			if run_state["current_step_index"] >= total_steps {
+				run_state["status"] := "completed"
+				repaired := true
+				notes := push(notes, "Converted running status to completed because all steps were processed")
+			}
+		}
+		if trace_finished_at != "" {
+			run_state["status"] := "interrupted"
+			repaired := true
+			notes := push(notes, "Converted running status to interrupted because trace is already finished")
+		}
+	}
+
+	if run_state["status"] == "completed" {
+		trace_state["status"] := "completed"
+		if dict_get_or(trace_state, "finished_at", "") == "" {
+			trace_state["finished_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
+			repaired := true
+			notes := push(notes, "Added missing trace finished_at for completed run")
+		}
+		run_state["trace"] := trace_state
+	}
+
+	return {
+		"run_state": run_state,
+		"repaired": repaired,
+		"notes": notes
+	}
+}
+
+func run_is_newer(left_item, right_item) {
+	left_updated := to_string(dict_get_or(left_item, "updated_at", ""))
+	right_updated := to_string(dict_get_or(right_item, "updated_at", ""))
+	return left_updated > right_updated
+}
+
+func sort_runs_by_updated_desc(items) {
+	result := []
+	for item in items {
+		inserted := false
+		updated := []
+		for existing in result {
+			if inserted == false && run_is_newer(item, existing) {
+				updated := push(updated, item)
+				inserted := true
+			}
+			updated := push(updated, existing)
+		}
+		if inserted == false {
+			updated := push(updated, item)
+		}
+		result := updated
+	}
+	return result
+}
+
+func clone_steps(step_items) {
+	result := []
+	for item in step_items {
+		cloned := {}
+		for key in keys(item) {
+			cloned[key] := item[key]
+		}
+		result := push(result, cloned)
+	}
+	return result
+}
+
+func create_run_state(workflow, input_payload, output_root, options) {
+	output_root_validation := normalize_output_root(output_root)
+	if output_root_validation["ok"] {
+		output_root = output_root_validation["output_root"]
+	}
+	run_id := "run-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	ensure_dir(output_root)
+	run_dir := output_root + "/" + run_id
+	ensure_dir(run_dir)
+
+	trace_state := create_trace(run_id, workflow["name"])
+	trace_state := apply_trace_limits(trace_state, options)
+
+	state := {
+		"artifact_contract_version": artifact_contract_version(),
+		"schema_name": "dispatch-run-state",
+		"schema_version": state_schema_version(),
+		"run_id": run_id,
+		"workflow_id": workflow["id"],
+		"workflow_name": workflow["name"],
+		"status": "running",
+		"tags": normalize_run_tags(dict_get_or(options, "tags", [])),
+		"input": input_payload,
+		"current_step_index": 0,
+		"steps": clone_steps(workflow["steps"]),
+		"memory": create_memory(input_payload),
+		"approvals": [],
+		"handoffs": [],
+		"data": {
+			"input": input_payload
+		},
+		"retry_counts": {},
+		"errors": [],
+		"final_output": null,
+		"trace": trace_state,
+		"run_dir": run_dir,
+		"output_root": output_root,
+		"created_at": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
+		"updated_at": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
+		"options": options
+	}
+	contract_result := ensure_run_state_contract_fields(state)
+	state = contract_result["run_state"]
+	persist_run_state(state)
+	return state
+}
+
+func persist_run_state(run_state) {
+	contract_result := ensure_run_state_contract_fields(run_state)
+	run_state = contract_result["run_state"]
+	run_state["updated_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
+	redacted_state := redact_sensitive_data(run_state)
+	redacted_state_result := ensure_run_state_contract_fields(redacted_state)
+	redacted_state = redacted_state_result["run_state"]
+	redacted_trace := redact_sensitive_data(run_state["trace"])
+	trace_contract_result := ensure_trace_contract_fields(redacted_trace)
+	redacted_trace = trace_contract_result["trace_state"]
+	write_file(run_state["run_dir"] + "/state.json", to_json(redacted_state), true)
+	write_file(run_state["run_dir"] + "/trace.json", to_json(redacted_trace), true)
+	write_file(run_state["run_dir"] + "/trace.md", render_trace_markdown(redacted_trace), true)
+	upsert_run_index_entry(run_state)
+	return run_state
+}
+
+func load_run_state(output_root, run_id) {
+	output_root_validation := normalize_output_root(output_root)
+	if output_root_validation["ok"] == false {
+		return output_root_validation
+	}
+	output_root = output_root_validation["output_root"]
+	state_path := output_root + "/" + run_id + "/state.json"
+	loaded := read_json_or(state_path, null)
+	if type(loaded) == "null" {
+		return {
+			"ok": false,
+			"error": {
+				"code": "missing_run_state",
+				"message": "Could not load run state: " + state_path,
+				"retryable": false
+			}
+		}
+	}
+	contract_result := ensure_run_state_contract_fields(loaded)
+	loaded = contract_result["run_state"]
+	loaded["run_dir"] := output_root + "/" + run_id
+	loaded["output_root"] := output_root
+	artifact_flags := build_artifact_flags(loaded["run_dir"])
+	loaded["health"] := {
+		"issues": detect_run_issues(loaded),
+		"step_status_counts": collect_step_status_counts(loaded),
+		"artifacts": artifact_flags
+	}
+	return {
+		"ok": true,
+		"run_state": loaded
+	}
+}
+
+func list_runs(output_root) {
+	result := list_runs_with_diagnostics(output_root)
+	return dict_get_or(result, "runs", [])
+}
+
+func list_runs_with_diagnostics(output_root) {
+	output_root_validation := normalize_output_root(output_root)
+	if output_root_validation["ok"] == false {
+		return {
+			"runs": [],
+			"diagnostics": {
+				"index_source": "invalid_output_root",
+				"index_run_count": 0,
+				"scan_run_count": 0,
+				"index_fallback_count": 0,
+				"index_rebuild_count": 0
+			}
+		}
+	}
+	output_root = output_root_validation["output_root"]
+	diagnostics := {
+		"index_source": "index",
+		"index_run_count": 0,
+		"scan_run_count": 0,
+		"index_fallback_count": 0,
+		"index_rebuild_count": 0
+	}
+
+	runs_from_index := list_runs_from_index(output_root)
+	diagnostics["index_run_count"] := len(runs_from_index)
+	if len(runs_from_index) > 0 {
+		return {
+			"runs": runs_from_index,
+			"diagnostics": diagnostics
+		}
+	}
+
+	diagnostics["index_source"] := "scan"
+	diagnostics["index_fallback_count"] := 1
+	runs_from_scan := list_runs_by_scanning_state(output_root)
+	diagnostics["scan_run_count"] := len(runs_from_scan)
+	if len(runs_from_scan) > 0 {
+		diagnostics["index_rebuild_count"] := 1
+	}
+	return {
+		"runs": runs_from_scan,
+		"diagnostics": diagnostics
+	}
+}
+
+func extract_run_epoch_ms(run_id) {
+	parts := split(run_id, "-")
+	if len(parts) < 2 {
+		return 0
+	}
+	parsed := 0
+	try {
+		parsed = to_float(parts[1])
+	} except err {
+		return 0
+	}
+	return parsed
+}
+
+func should_prune_by_age(run_item, older_than_hours, now_epoch_ms) {
+	if older_than_hours <= 0 {
+		return false
+	}
+	run_epoch_ms := extract_run_epoch_ms(dict_get_or(run_item, "run_id", ""))
+	if run_epoch_ms <= 0 {
+		return false
+	}
+	age_hours := (now_epoch_ms - run_epoch_ms) / 3600000
+	return age_hours >= older_than_hours
+}
+
+func prune_runs(output_root, status_filter, max_count, older_than_hours, dry_run) {
+	output_root_validation := normalize_output_root(output_root)
+	if output_root_validation["ok"] == false {
+		return {
+			"dry_run": dry_run,
+			"status_filter": status_filter,
+			"older_than_hours": older_than_hours,
+			"max_count": max_count,
+			"candidate_count": 0,
+			"pruned_count": 0,
+			"candidates": [],
+			"error": output_root_validation["error"],
+			"audit_path": ""
+		}
+	}
+	output_root = output_root_validation["output_root"]
+	runs := list_runs(output_root)
+	filtered := filter_runs(runs, status_filter, "", false)
+	now_epoch_ms := current_timestamp()
+	selected := {}
+	selected_count := 0
+	for run_item in filtered {
+		run_id := dict_get_or(run_item, "run_id", "")
+		if should_prune_by_age(run_item, older_than_hours, now_epoch_ms) {
+			selected[run_id] := true
+		}
+		if max_count > 0 && selected_count >= max_count {
+			selected[run_id] := true
+		}
+		selected_count := selected_count + 1
+	}
+
+	candidates := []
+	pruned_count := 0
+	mutations := []
+	for run_item in filtered {
+		run_id := dict_get_or(run_item, "run_id", "")
+		if has_key(selected, run_id) == 0 {
+			continue
+		}
+		run_dir := output_root + "/" + run_id
+		candidates := push(candidates, {
+			"run_id": run_id,
+			"run_dir": run_dir,
+			"status": dict_get_or(run_item, "status", "unknown")
+		})
+		if dry_run == false {
+			write_file(run_dir + "/.dispatch-pruned", to_json({
+				"pruned_at": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
+				"reason": "dispatch cleanup"
+			}), true)
+			remove_run_index_entry(output_root, run_id)
+			mutations := push(mutations, {
+				"run_id": run_id,
+				"action": "pruned",
+				"status": dict_get_or(run_item, "status", "unknown")
+			})
+			pruned_count := pruned_count + 1
+		}
+	}
+
+	audit_path := ""
+	if dry_run == false {
+		audit_path = append_mutation_audit_record(output_root, "cleanup_apply", mutations, {
+			"status_filter": status_filter,
+			"older_than_hours": older_than_hours,
+			"max_count": max_count,
+			"candidate_count": len(candidates)
+		}, {})
+	}
+
+	return {
+		"dry_run": dry_run,
+		"status_filter": status_filter,
+		"older_than_hours": older_than_hours,
+		"max_count": max_count,
+		"candidate_count": len(candidates),
+		"pruned_count": pruned_count,
+		"candidates": candidates,
+		"audit_path": audit_path
+	}
+}
+
+func filter_runs(run_items, status_filter, topic_query, only_with_issues) {
+	status_filter := to_lower(trim(to_string(status_filter)))
+	topic_query := to_lower(trim(to_string(topic_query)))
+	filtered := []
+	for run_item in run_items {
+		if status_filter != "" {
+			if to_lower(to_string(dict_get_or(run_item, "status", ""))) != status_filter {
+				continue
+			}
+		}
+		if topic_query != "" {
+			topic := to_lower(to_string(dict_get_or(run_item, "topic", "")))
+			if contains(topic, topic_query) == 0 {
+				continue
+			}
+		}
+		if only_with_issues {
+			issues_count := int_or_zero(dict_get_or(run_item, "issues_count", 0))
+			if issues_count <= 0 {
+				continue
+			}
+		}
+		filtered := push(filtered, run_item)
+	}
+	return filtered
+}
+
+func parse_run_id_list(raw_value) {
+	items := []
+	seen := {}
+	if type(raw_value) == "array" {
+		for item in raw_value {
+			run_id := trim(to_string(item))
+			if run_id == "" {
+				continue
+			}
+			if has_key(seen, run_id) == 0 {
+				seen[run_id] := true
+				items := push(items, run_id)
+			}
+		}
+		return items
+	}
+	raw_text := replace(to_string(raw_value), "\n", ",")
+	for part in split(raw_text, ",") {
+		run_id := trim(to_string(part))
+		if run_id == "" {
+			continue
+		}
+		if has_key(seen, run_id) == 0 {
+			seen[run_id] := true
+			items := push(items, run_id)
+		}
+	}
+	return items
+}
+
+func select_doctor_scope_runs(run_items, options) {
+	selected_run_ids := parse_run_id_list(dict_get_or(options, "run_ids", []))
+	if len(selected_run_ids) > 0 {
+		selected_map := {}
+		for selected_run_id in selected_run_ids {
+			selected_map[selected_run_id] := true
+		}
+		scoped := []
+		for run_item in run_items {
+			run_id := to_string(dict_get_or(run_item, "run_id", ""))
+			if has_key(selected_map, run_id) == 0 {
+				continue
+			}
+			scoped := push(scoped, run_item)
+		}
+		return scoped
+	}
+	recent_count := parse_positive_number(dict_get_or(options, "recent_count", 0), 0)
+	if recent_count > 0 {
+		return paginate_runs(run_items, 0, recent_count)
+	}
+	return run_items
+}
+
+func paginate_runs(run_items, offset, limit) {
+	if offset < 0 {
+		offset = 0
+	}
+	if limit < 0 {
+		limit = 0
+	}
+	result := []
+	index := offset
+	max_count := len(run_items)
+	while index < max_count {
+		if limit > 0 && len(result) >= limit {
+			break
+		}
+		result := push(result, run_items[index])
+		index := index + 1
+	}
+	return result
+}
+
+func build_run_catalog(run_items) {
+	status_counts := {}
+	issues_total := 0
+	resumable_count := 0
+	for run_item in run_items {
+		status := to_string(dict_get_or(run_item, "status", "unknown"))
+		if has_key(status_counts, status) {
+			status_counts[status] := status_counts[status] + 1
+		} else {
+			status_counts[status] := 1
+		}
+		issues_total := issues_total + int_or_zero(dict_get_or(run_item, "issues_count", 0))
+		if dict_get_or(run_item, "resumable", false) {
+			resumable_count := resumable_count + 1
+		}
+	}
+	return {
+		"generated_at": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
+		"total_runs": len(run_items),
+		"resumable_runs": resumable_count,
+		"issues_total": issues_total,
+		"status_counts": status_counts
+	}
+}
+
+func summarize_run(run_state) {
+	issues := detect_run_issues(run_state)
+	return {
+		"run_id": run_state["run_id"],
+		"status": run_state["status"],
+		"workflow_id": dict_get_or(run_state, "workflow_id", "unknown"),
+		"workflow_name": run_state["workflow_name"],
+		"current_step_index": run_state["current_step_index"],
+		"total_steps": len(array_or_empty(dict_get_or(run_state, "steps", []))),
+		"tags": normalize_run_tags(dict_get_or(run_state, "tags", [])),
+		"run_dir": run_state["run_dir"],
+		"updated_at": run_state["updated_at"],
+		"step_status_counts": collect_step_status_counts(run_state),
+		"issues": issues,
+		"resumable": can_resume_status(dict_get_or(run_state, "status", "unknown")),
+		"artifacts": build_artifact_flags(dict_get_or(run_state, "run_dir", ""))
+	}
+}
+
+func doctor_runs(output_root, write_changes, options) {
+	output_root_validation := normalize_output_root(output_root)
+	if output_root_validation["ok"] == false {
+		return []
+	}
+	output_root = output_root_validation["output_root"]
+	runs := select_doctor_scope_runs(list_runs(output_root), options)
+	results := []
+	mutations := []
+	for run_item in runs {
+		run_id := dict_get_or(run_item, "run_id", "")
+		loaded := load_run_state(output_root, run_id)
+		if loaded["ok"] == false {
+			results := push(results, {
+				"run_id": run_id,
+				"status": dict_get_or(run_item, "status", "unknown"),
+				"load_ok": false,
+				"issues_before": 0,
+				"issues_after": 0,
+				"repaired": false,
+				"notes": []
+			})
+			continue
+		}
+		run_state := loaded["run_state"]
+		repair := repair_run_state(run_state)
+		issues_before := len(dict_get_or(dict_get_or(run_state, "health", {}), "issues", []))
+		issues_after := len(detect_run_issues(repair["run_state"]))
+		if repair["repaired"] && write_changes {
+			persist_run_state(repair["run_state"])
+			mutations := push(mutations, {
+				"run_id": run_id,
+				"action": "doctor_repair",
+				"notes": repair["notes"]
+			})
+		}
+		results := push(results, {
+			"run_id": run_id,
+			"status": dict_get_or(run_item, "status", "unknown"),
+			"load_ok": true,
+			"issues_before": issues_before,
+			"issues_after": issues_after,
+			"repaired": repair["repaired"],
+			"notes": repair["notes"]
+		})
+	}
+	if write_changes {
+		append_mutation_audit_record(output_root, "doctor_write", mutations, {
+			"checked_runs": len(runs),
+			"repaired_runs": len(mutations)
+		}, {})
+	}
+	return results
+}
+
+func read_artifact_or_empty(path) {
+	if !file_exists(path) {
+		return ""
+	}
+	return safe_read_file(path, "")
+}
+
+func count_token_occurrences(text_value, token) {
+	text := to_string(text_value)
+	needle := to_string(token)
+	if needle == "" {
+		return 0
+	}
+	parts := split(text, needle)
+	if len(parts) == 0 {
+		return 0
+	}
+	return len(parts) - 1
+}
+
+func slice_prefix(text_value, max_len) {
+	text := to_string(text_value)
+	limit := max_len
+	if limit < 0 {
+		limit = 0
+	}
+	if len(text) <= limit {
+		return text
+	}
+	return substring(text, 0, limit)
+}
+
+func slice_suffix(text_value, max_len) {
+	text := to_string(text_value)
+	limit := max_len
+	if limit < 0 {
+		limit = 0
+	}
+	text_len := len(text)
+	if text_len <= limit {
+		return text
+	}
+	return substring(text, text_len - limit, text_len)
+}
+
+func build_signature_fragment(content) {
+	text := to_string(content)
+	return join([
+		to_string(len(text)),
+		to_string(len(split(text, "\n"))),
+		to_string(count_token_occurrences(text, " ")),
+		to_string(count_token_occurrences(text, ":")),
+		to_string(count_token_occurrences(text, ",")),
+		to_string(count_token_occurrences(text, "{")),
+		to_string(count_token_occurrences(text, "}")),
+		to_string(count_token_occurrences(text, "[")),
+		to_string(count_token_occurrences(text, "]")),
+		to_string(count_token_occurrences(text, "\"")),
+		slice_prefix(text, 32),
+		slice_suffix(text, 32)
+	], "|")
+}
+
+func resolve_bundle_signing_key(options) {
+	if type(options) == "dict" && has_key(options, "signing_key") == 1 {
+		key := trim(to_string(options["signing_key"]))
+		if key != "" {
+			return key
+		}
+	}
+	return trim(to_string(env("DISPATCH_BUNDLE_SIGNING_KEY")))
+}
+
+func build_bundle_signature_value(run_id, artifacts, signing_key) {
+	artifact_keys := ["state_json", "trace_json", "trace_md", "report_json", "report_md"]
+	parts := ["dispatch-signature-v1", to_string(run_id), to_string(signing_key)]
+	for artifact_key in artifact_keys {
+		parts := push(parts, artifact_key)
+		parts := push(parts, build_signature_fragment(dict_get_or(artifacts, artifact_key, "")))
+	}
+	return join(parts, "::")
+}
+
+func bundle_signature_error(message) {
+	return {
+		"ok": false,
+		"error": {
+			"code": "invalid_bundle_signature",
+			"message": message,
+			"retryable": false
+		}
+	}
+}
+
+func export_run_bundle(output_root, run_id, bundle_path, options) {
+	output_root_validation := normalize_output_root(output_root)
+	if output_root_validation["ok"] == false {
+		return output_root_validation
+	}
+	output_root = output_root_validation["output_root"]
+	loaded := load_run_state(output_root, run_id)
+	if loaded["ok"] == false {
+		return loaded
+	}
+	include_signature := to_bool(dict_get_or(options, "include_signature", false), false)
+	signing_key := resolve_bundle_signing_key(options)
+	if include_signature && signing_key == "" {
+		return bundle_signature_error("Bundle signing is enabled but no signing key was provided.")
+	}
+	run_dir := output_root + "/" + run_id
+	artifacts := {
+		"state_json": read_artifact_or_empty(run_dir + "/state.json"),
+		"trace_json": read_artifact_or_empty(run_dir + "/trace.json"),
+		"trace_md": read_artifact_or_empty(run_dir + "/trace.md"),
+		"report_json": read_artifact_or_empty(run_dir + "/report.json"),
+		"report_md": read_artifact_or_empty(run_dir + "/report.md")
+	}
+	bundle := {
+		"bundle_version": 1,
+		"exported_at": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
+		"run_id": run_id,
+		"source_output_root": output_root,
+		"artifacts": artifacts
+	}
+	if include_signature {
+		bundle["signature"] := {
+			"algorithm": "dispatch-signature-v1",
+			"signed_at": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
+			"value": build_bundle_signature_value(run_id, artifacts, signing_key)
+		}
+	}
+	bundle_dir := dirname(bundle_path)
+	if bundle_dir != "" && bundle_dir != "." {
+		ensure_dir(bundle_dir)
+	}
+	write_file(bundle_path, to_json(bundle), true)
+	return {
+		"ok": true,
+		"bundle_path": bundle_path,
+		"run_id": run_id,
+		"artifact_count": len(keys(bundle["artifacts"]))
+	}
+}
+
+func import_run_bundle(output_root, bundle_path, options) {
+	output_root_validation := normalize_output_root(output_root)
+	if output_root_validation["ok"] == false {
+		return output_root_validation
+	}
+	output_root = output_root_validation["output_root"]
+	verify_signature := to_bool(dict_get_or(options, "verify_signature", false), false)
+	bundle_raw := safe_read_file(bundle_path, "")
+	if trim(bundle_raw) == "" {
+		return {
+			"ok": false,
+			"error": {
+				"code": "invalid_bundle",
+				"message": "Could not read bundle file: " + bundle_path,
+				"retryable": false
+			}
+		}
+	}
+	bundle := null
+	try {
+		bundle = parse_json(bundle_raw)
+	} except err {
+		return {
+			"ok": false,
+			"error": {
+				"code": "invalid_bundle",
+				"message": "Bundle file is not valid JSON: " + bundle_path,
+				"retryable": false
+			}
+		}
+	}
+	if type(bundle) != "dict" {
+		return {
+			"ok": false,
+			"error": {
+				"code": "invalid_bundle",
+				"message": "Bundle payload must be a JSON object.",
+				"retryable": false
+			}
+		}
+	}
+
+	source_run_id := trim(to_string(dict_get_or(bundle, "run_id", "")))
+	artifacts := dict_get_or(bundle, "artifacts", {})
+	if type(artifacts) != "dict" {
+		return {
+			"ok": false,
+			"error": {
+				"code": "invalid_bundle",
+				"message": "Bundle artifacts payload must be a JSON object.",
+				"retryable": false
+			}
+		}
+	}
+	if verify_signature {
+		signing_key := resolve_bundle_signing_key(options)
+		if signing_key == "" {
+			return bundle_signature_error("Bundle verification requires a signing key.")
+		}
+		signature := dict_get_or(bundle, "signature", null)
+		if type(signature) != "dict" {
+			return bundle_signature_error("Bundle signature metadata is missing.")
+		}
+		if source_run_id == "" {
+			return bundle_signature_error("Bundle run_id is required when signature verification is enabled.")
+		}
+		algorithm := to_string(dict_get_or(signature, "algorithm", ""))
+		if algorithm != "dispatch-signature-v1" {
+			return bundle_signature_error("Unsupported bundle signature algorithm: " + algorithm)
+		}
+		expected_signature := build_bundle_signature_value(source_run_id, artifacts, signing_key)
+		actual_signature := to_string(dict_get_or(signature, "value", ""))
+		if actual_signature == "" {
+			return bundle_signature_error("Bundle signature value is missing.")
+		}
+		if expected_signature != actual_signature {
+			return bundle_signature_error("Bundle signature verification failed.")
+		}
+	}
+	if source_run_id == "" {
+		source_run_id = "run-imported-" + to_string(current_timestamp())
+	}
+	target_run_id := source_run_id
+	while file_exists(output_root + "/" + target_run_id) {
+		target_run_id = source_run_id + "-import-" + to_string(random_int(1000, 9999))
+	}
+
+	ensure_dir(output_root)
+	run_dir := output_root + "/" + target_run_id
+	ensure_dir(run_dir)
+	artifact_keys := ["state_json", "trace_json", "trace_md", "report_json", "report_md"]
+	imported_artifacts := []
+	for artifact_key in artifact_keys {
+		content := to_string(dict_get_or(artifacts, artifact_key, ""))
+		if trim(content) == "" {
+			continue
+		}
+		file_name := replace(artifact_key, "_", ".")
+		write_file(run_dir + "/" + file_name, content, true)
+		imported_artifacts := push(imported_artifacts, file_name)
+	}
+
+	state_path := run_dir + "/state.json"
+	state_obj := read_json_or(state_path, null)
+	if type(state_obj) == "dict" {
+		state_obj["run_id"] := target_run_id
+		state_obj["run_dir"] := run_dir
+		state_obj["output_root"] := output_root
+		state_obj["updated_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
+		write_file(state_path, to_json(redact_sensitive_data(state_obj)), true)
+		upsert_run_index_entry(state_obj)
+	}
+
+	append_mutation_audit_record(output_root, "import_bundle", [{
+		"run_id": target_run_id,
+		"action": "imported",
+		"bundle_path": bundle_path
+	}], {
+		"source_run_id": source_run_id,
+		"imported_artifacts": imported_artifacts
+	}, {})
+
+	return {
+		"ok": true,
+		"run_id": target_run_id,
+		"run_dir": run_dir,
+		"imported_artifacts": imported_artifacts
+	}
+}
+
+export create_run_state := create_run_state
+export persist_run_state := persist_run_state
+export load_run_state := load_run_state
+export list_runs := list_runs
+export list_runs_with_diagnostics := list_runs_with_diagnostics
+export summarize_run := summarize_run
+export collect_step_status_counts := collect_step_status_counts
+export detect_run_issues := detect_run_issues
+export repair_run_state := repair_run_state
+export filter_runs := filter_runs
+export paginate_runs := paginate_runs
+export build_run_catalog := build_run_catalog
+export prune_runs := prune_runs
+export doctor_runs := doctor_runs
+export normalize_output_root := normalize_output_root
+export mutation_audit_path := mutation_audit_path
+export append_mutation_audit_record := append_mutation_audit_record
+export append_policy_deny_audit_record := append_policy_deny_audit_record
+export export_run_bundle := export_run_bundle
+export import_run_bundle := import_run_bundle

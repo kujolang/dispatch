@@ -1,0 +1,242 @@
+from src.core.utils import dict_get_or
+from sdk_adapter import call_agent_model
+from src.tools.tool import call_tool
+from src.core.errors import missing_agent_error, agent_execution_error
+
+func create_agent(agent_id, name, purpose, instructions, model_config, tools, handoff_targets, output_schema, guardrails) {
+	return {
+		"id": agent_id,
+		"name": name,
+		"purpose": purpose,
+		"instructions": instructions,
+		"model": model_config,
+		"tools": tools,
+		"handoff_targets": handoff_targets,
+		"output_schema": output_schema,
+		"guardrails": guardrails
+	}
+}
+
+func planner_output(agent, step_input, run_state) {
+	topic := dict_get_or(dict_get_or(step_input, "input", {}), "topic", "Unknown topic")
+	prompt := "Create a concise research plan for topic: " + topic
+	model_result := call_agent_model(agent, prompt, {
+		"offline_fixture": true,
+		"max_tokens": 180,
+		"temperature": 0.1
+	})
+
+	plan := {
+		"topic": topic,
+		"questions": [
+			"What problem does the topic solve?",
+			"What are the core workflow stages and responsibilities?",
+			"What reliability and governance mechanisms are required?",
+			"What evidence supports the final recommendations?"
+		],
+		"source_types": ["technical documentation", "architecture notes", "implementation guides"],
+		"expected_sections": ["Summary", "Findings", "Claims", "Evidence", "Limitations"],
+		"created_at": format_date(now(), "YYYY-MM-DD HH:mm:ss")
+	}
+
+	if dict_get_or(model_result, "ok", false) {
+		plan["model_brief"] := dict_get_or(model_result, "output_text", "")
+	} else {
+		plan["model_brief"] := "Model call unavailable; using deterministic planner output."
+	}
+
+	return {
+		"ok": true,
+		"data": plan
+	}
+}
+
+func research_output(agent, step_input, run_state, tool_registry, context) {
+	topic := dict_get_or(dict_get_or(step_input, "input", {}), "topic", "")
+	search_result := call_tool(tool_registry, "mock_web_search", {"query": topic}, context)
+	if dict_get_or(search_result, "ok", false) == false {
+		return search_result
+	}
+
+	results := dict_get_or(dict_get_or(search_result, "data", {}), "results", [])
+	evidence := []
+	source_docs := []
+	index := 0
+	while index < len(results) {
+		item := results[index]
+		source_id := dict_get_or(item, "source_id", "")
+		if source_id != "" {
+			lookup_result := call_tool(tool_registry, "local_source_lookup", {"source_id": source_id}, context)
+			if dict_get_or(lookup_result, "ok", false) {
+				source_docs := push(source_docs, dict_get_or(lookup_result, "data", {}))
+			}
+		}
+		evidence := push(evidence, {
+			"source_id": dict_get_or(item, "source_id", "source"),
+			"path": dict_get_or(item, "path", ""),
+			"snippet": dict_get_or(item, "snippet", ""),
+			"score": dict_get_or(item, "score", 0)
+		})
+		index := index + 1
+	}
+
+	return {
+		"ok": true,
+		"data": {
+			"topic": topic,
+			"query": topic,
+			"results": results,
+			"evidence": evidence,
+			"source_documents": source_docs,
+			"research_note": "Research agent gathered fixture-backed evidence for verification."
+		}
+	}
+}
+
+func verification_output(agent, step_input, run_state, tool_registry, context) {
+	sources := dict_get_or(step_input, "sources", {})
+	evidence := dict_get_or(sources, "evidence", [])
+	claim_bundle := dict_get_or(step_input, "claims", {})
+	claims := dict_get_or(claim_bundle, "claims", [])
+
+	verified_claims := []
+	key_findings := []
+	confidence_notes := []
+	index := 0
+	for claim in claims {
+		status := "supported"
+		if index % 4 == 1 {
+			status := "weakly_supported"
+		}
+		if index % 4 == 2 {
+			status := "conflicting"
+		}
+		if index % 4 == 3 {
+			status := "unsupported"
+		}
+		confidence := 0.9
+		if status == "weakly_supported" {
+			confidence := 0.65
+		}
+		if status == "conflicting" {
+			confidence := 0.45
+		}
+		if status == "unsupported" {
+			confidence := 0.2
+		}
+		verified := claim
+		verified["status"] := status
+		verified["confidence"] := confidence
+		verified_claims := push(verified_claims, verified)
+		key_findings := push(key_findings, dict_get_or(claim, "claim", ""))
+		confidence_notes := push(confidence_notes, "Claim " + dict_get_or(claim, "id", to_string(index + 1)) + " marked " + status + " with confidence " + to_string(confidence) + ".")
+		index := index + 1
+	}
+
+	citations_result := call_tool(tool_registry, "citation_formatter", {"claims": verified_claims}, context)
+	citations := []
+	if dict_get_or(citations_result, "ok", false) {
+		citations := dict_get_or(dict_get_or(citations_result, "data", {}), "citations", [])
+	}
+
+	return {
+		"ok": true,
+		"data": {
+			"claims": verified_claims,
+			"key_findings": key_findings,
+			"confidence_notes": confidence_notes,
+			"citations": citations,
+			"evidence_count": len(evidence)
+		}
+	}
+}
+
+func writer_output(agent, step_input, run_state, tool_registry, context) {
+	topic := dict_get_or(dict_get_or(step_input, "input", {}), "topic", "")
+	verification := dict_get_or(step_input, "verification", {})
+	claim_bundle := dict_get_or(step_input, "claims", {})
+	claims := dict_get_or(claim_bundle, "claims", [])
+
+	writer_tool_result := call_tool(tool_registry, "markdown_report_writer", {
+		"topic": topic,
+		"verification": verification,
+		"claims": claims
+	}, context)
+	if dict_get_or(writer_tool_result, "ok", false) == false {
+		return writer_tool_result
+	}
+
+	tool_payload := dict_get_or(writer_tool_result, "data", {})
+	model_prompt := "Draft a concise executive summary for this topic: " + topic
+	model_result := call_agent_model(agent, model_prompt, {
+		"offline_fixture": true,
+		"max_tokens": 220,
+		"temperature": 0.2
+	})
+	if dict_get_or(model_result, "ok", false) {
+		tool_payload["summary"] := dict_get_or(model_result, "output_text", tool_payload["summary"])
+	}
+	return {
+		"ok": true,
+		"data": tool_payload
+	}
+}
+
+func create_agent_handler_registry() {
+	return {}
+}
+
+func register_agent_handler(handler_registry, agent_id, handler) {
+	handler_registry[agent_id] := handler
+	return handler_registry
+}
+
+func register_default_agent_handlers() {
+	handler_registry := create_agent_handler_registry()
+	handler_registry := register_agent_handler(handler_registry, "planner", func(agent, step_input, run_state, tool_registry, context) {
+		return planner_output(agent, step_input, run_state)
+	})
+	handler_registry := register_agent_handler(handler_registry, "research", func(agent, step_input, run_state, tool_registry, context) {
+		return research_output(agent, step_input, run_state, tool_registry, context)
+	})
+	handler_registry := register_agent_handler(handler_registry, "verification", func(agent, step_input, run_state, tool_registry, context) {
+		return verification_output(agent, step_input, run_state, tool_registry, context)
+	})
+	handler_registry := register_agent_handler(handler_registry, "writer", func(agent, step_input, run_state, tool_registry, context) {
+		return writer_output(agent, step_input, run_state, tool_registry, context)
+	})
+	return handler_registry
+}
+
+func run_agent(agent_id, workflow_agents, step_input, run_state, tool_registry) {
+	if has_key(workflow_agents, agent_id) == 0 {
+		return missing_agent_error(agent_id)
+	}
+	agent := workflow_agents[agent_id]
+	context := {
+		"run_id": run_state["run_id"],
+		"input": run_state["input"],
+		"sources_dir": dict_get_or(tool_registry, "__sources_dir", "examples/research-report/sources")
+	}
+	handler_registry := register_default_agent_handlers()
+	if has_key(workflow_agents, "__agent_handlers") {
+		custom_handlers := workflow_agents["__agent_handlers"]
+		if type(custom_handlers) == "dict" {
+			for custom_agent_id in keys(custom_handlers) {
+				handler_registry[custom_agent_id] := custom_handlers[custom_agent_id]
+			}
+		}
+	}
+
+	if has_key(handler_registry, agent_id) == 0 {
+		return agent_execution_error(agent_id, "No implementation exists for this agent id.", false)
+	}
+	handler := handler_registry[agent_id]
+	return handler(agent, step_input, run_state, tool_registry, context)
+}
+
+export create_agent := create_agent
+export create_agent_handler_registry := create_agent_handler_registry
+export register_agent_handler := register_agent_handler
+export register_default_agent_handlers := register_default_agent_handlers
+export run_agent := run_agent

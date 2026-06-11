@@ -1,0 +1,18 @@
+func normalize_decision(raw_value, empty_fallback) {
+	normalized := to_lower(trim(to_string(raw_value)))
+	if normalized == "approve" || normalized == "approved" || normalized == "a" {
+		return "approved"
+	}
+	if normalized == "reject" || normalized == "rejected" || normalized == "r" {
+		return "rejected"
+	}
+	if normalized == "changes" || normalized == "request_changes" || normalized == "c" {
+		return "request_changes"
+	}
+	if normalized == "pending" || normalized == "" {
+		return empty_fallback
+	}
+	return "invalid"
+}
+
+export normalize_decision := normalize_decision

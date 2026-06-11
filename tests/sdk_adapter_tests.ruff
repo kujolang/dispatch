@@ -1,0 +1,50 @@
+test_setup {
+	from sdk_adapter import parse_json_from_output, build_bridge_parse_error_details, build_bridge_spawn_command
+}
+
+test "parse json from output supports trailing json line" {
+	parsed := parse_json_from_output("log line\n{\"ok\":true,\"value\":42}")
+	assert_true(parsed["ok"])
+	assert_equal(parsed["data"]["ok"], true)
+	assert_equal(parsed["data"]["value"], 42)
+}
+
+test "parse error details are redacted by default" {
+	details := build_bridge_parse_error_details({
+		"stdout": "token=secret-output",
+		"stderr": "apikey=secret-error"
+	}, {})
+	assert_equal(details["stdout_redacted"], true)
+	assert_equal(details["stderr_redacted"], true)
+	assert_true(details["stdout_bytes"] > 0)
+	assert_true(details["stderr_bytes"] > 0)
+	assert_equal(has_key(details, "stdout"), 0)
+	assert_equal(has_key(details, "stderr"), 0)
+}
+
+test "parse error details include raw output when debug enabled" {
+	details := build_bridge_parse_error_details({
+		"stdout": "hello",
+		"stderr": "world"
+	}, {
+		"debug_bridge_output": true
+	})
+	assert_equal(details["debug_bridge_output"], true)
+	assert_equal(details["stdout"], "hello")
+	assert_equal(details["stderr"], "world")
+}
+
+test "bridge spawn command is direct argv without shell wrapper" {
+	cmd := build_bridge_spawn_command({
+		"ai_sdk_path": "/tmp/ai-sdk",
+		"kujo_bin": "/usr/local/bin/kujo",
+		"bridge_script": "/tmp/bridge_chat.kujo"
+	})
+	assert_equal(cmd[0], "/usr/bin/env")
+	assert_equal(cmd[1], "-C")
+	assert_equal(cmd[2], "/tmp/ai-sdk")
+	assert_equal(cmd[3], "/usr/local/bin/kujo")
+	assert_equal(cmd[4], "run")
+	assert_equal(cmd[5], "/tmp/bridge_chat.kujo")
+	assert_equal(cmd[6], "--interpreter")
+}

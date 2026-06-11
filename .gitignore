@@ -1,9 +1,47 @@
+# OS files
 .DS_Store
+Thumbs.db
+
+# Editor/IDE files
 .idea/
 .vscode/
+*.swp
+*.swo
+*~
+
+# Logs and temporary files
 *.log
-/test_*.kujo
-/artifacts/
-/eval_results/
-/snapshots/
-tests/*.out
+*.tmp
+*.temp
+*.bak
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python leftovers (helpers, local tooling)
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Node leftovers
+node_modules/
+npm-debug.log*
+
+# Build, cache, and coverage artifacts
+build/
+dist/
+coverage/
+.cache/
+.kennel_tmp/
+
+# Local data artifacts
+outputs/
+*.db
+
+# Kujo dispatch transient test artifacts
+tests/tmp/*
+!tests/tmp/.gitkeep

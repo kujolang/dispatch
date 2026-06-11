@@ -1,0 +1,10 @@
+from src.workflows.workflow import create_research_report_workflow
+from src.core.state import create_run_state, summarize_run
+
+workflow := create_research_report_workflow("Shimless src smoke", true)
+run_state := create_run_state(workflow, {"topic": "Shimless src smoke"}, "tests/tmp/shimless-src-smoke-outputs", {
+	"auto_approve": true,
+	"interactive": false
+})
+summary := summarize_run(run_state)
+print("src-shimless-smoke:" + to_string(summary["run_id"]))

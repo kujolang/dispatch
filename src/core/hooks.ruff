@@ -1,0 +1,43 @@
+from src.core.utils import dict_get_or, ensure_dir
+
+func create_lifecycle_event(run_state, event_type, step_id, message, details) {
+	return {
+		"run_id": dict_get_or(run_state, "run_id", ""),
+		"workflow_id": dict_get_or(run_state, "workflow_id", ""),
+		"status": dict_get_or(run_state, "status", ""),
+		"event_type": event_type,
+		"step_id": step_id,
+		"message": message,
+		"details": details,
+		"timestamp": format_date(now(), "YYYY-MM-DD HH:mm:ss")
+	}
+}
+
+func emit_hook_event(options, event_payload) {
+	callback := dict_get_or(options, "event_hook", null)
+	if type(callback) != "null" {
+		callback(event_payload)
+	}
+	webhook_sink := dict_get_or(options, "webhook_sink", "")
+	if webhook_sink != "" {
+		dir_path := dirname(webhook_sink)
+		if dir_path != "" && dir_path != "." {
+			ensure_dir(dir_path)
+		}
+		existing := ""
+		if file_exists(webhook_sink) {
+			existing = read_file(webhook_sink)
+		}
+		line := to_json(event_payload)
+		if existing != "" {
+			line = existing + "\n" + line
+		}
+		write_file(webhook_sink, line, true)
+	}
+	return {
+		"ok": true
+	}
+}
+
+export create_lifecycle_event := create_lifecycle_event
+export emit_hook_event := emit_hook_event

@@ -1,0 +1,157 @@
+from src.core.utils import dict_get_or, redact_sensitive_data
+
+func report_schema_version() {
+	return 1
+}
+
+func ensure_report_contract_fields(report_payload) {
+	if type(report_payload) != "dict" {
+		report_payload = {}
+	}
+	if has_key(report_payload, "artifact_contract_version") == 0 {
+		report_payload["artifact_contract_version"] := 1
+	}
+	if has_key(report_payload, "schema_name") == 0 {
+		report_payload["schema_name"] := "dispatch-run-report"
+	}
+	if has_key(report_payload, "schema_version") == 0 {
+		report_payload["schema_version"] := report_schema_version()
+	}
+	return report_payload
+}
+
+func build_report_payload(run_state) {
+	input_payload := dict_get_or(run_state, "input", {})
+	topic := dict_get_or(input_payload, "topic", "Unknown topic")
+	verification := dict_get_or(run_state["data"], "verification", {})
+	claims := dict_get_or(run_state["data"], "claims", {})
+	sources := dict_get_or(run_state["data"], "sources", {})
+	report := dict_get_or(run_state["data"], "report", {})
+
+	key_findings := dict_get_or(report, "key_findings", [])
+	if len(key_findings) == 0 {
+		key_findings := dict_get_or(verification, "key_findings", [])
+	}
+
+	limitations := dict_get_or(report, "limitations", [])
+	if len(limitations) == 0 {
+		limitations := [
+			"The demo relies on local fixture sources rather than live web retrieval.",
+			"Confidence scores are heuristic and intended for workflow demonstration."
+		]
+	}
+
+	payload := {
+		"title": "Research Report Workflow Output",
+		"topic": topic,
+		"summary": dict_get_or(report, "summary", "Dispatch generated this report through a multi-step workflow."),
+		"key_findings": key_findings,
+		"claims": dict_get_or(claims, "claims", []),
+		"evidence": dict_get_or(sources, "evidence", []),
+		"citations": dict_get_or(verification, "citations", []),
+		"confidence_notes": dict_get_or(verification, "confidence_notes", []),
+		"limitations": limitations,
+		"generated_timestamp": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
+		"trace_id": run_state["run_id"],
+		"run_id": run_state["run_id"],
+		"artifact_contract_version": 1,
+		"schema_name": "dispatch-run-report",
+		"schema_version": report_schema_version(),
+		"run_status": dict_get_or(run_state, "status", "unknown"),
+		"total_steps": len(dict_get_or(run_state, "steps", [])),
+		"completed_steps": dict_get_or(dict_get_or(run_state, "trace", {}), "events", [])
+	}
+
+	completed_step_count := 0
+	for step in dict_get_or(run_state, "steps", []) {
+		if dict_get_or(step, "status", "") == "completed" {
+			completed_step_count := completed_step_count + 1
+		}
+	}
+	payload["completed_steps"] := completed_step_count
+
+	return payload
+}
+
+func render_markdown_report(report_payload) {
+	lines := []
+	lines := push(lines, "# " + report_payload["title"])
+	lines := push(lines, "")
+	lines := push(lines, "- Topic: " + report_payload["topic"])
+	lines := push(lines, "- Generated: " + report_payload["generated_timestamp"])
+	lines := push(lines, "- Run ID: " + report_payload["run_id"])
+	lines := push(lines, "- Run Status: " + report_payload["run_status"])
+	lines := push(lines, "- Steps Completed: " + to_string(report_payload["completed_steps"]) + "/" + to_string(report_payload["total_steps"]))
+	lines := push(lines, "")
+	lines := push(lines, "## Summary")
+	lines := push(lines, "")
+	lines := push(lines, report_payload["summary"])
+	lines := push(lines, "")
+	lines := push(lines, "## Key Findings")
+	lines := push(lines, "")
+	for finding in report_payload["key_findings"] {
+		lines := push(lines, "- " + to_string(finding))
+	}
+	lines := push(lines, "")
+	lines := push(lines, "## Claims")
+	lines := push(lines, "")
+	for claim in report_payload["claims"] {
+		claim_text := dict_get_or(claim, "claim", to_string(claim))
+		claim_status := dict_get_or(claim, "status", "unclassified")
+		lines := push(lines, "- " + claim_text + " (`" + claim_status + "`)")
+	}
+	lines := push(lines, "")
+	lines := push(lines, "## Evidence")
+	lines := push(lines, "")
+	for evidence in report_payload["evidence"] {
+		source_id := dict_get_or(evidence, "source_id", "source")
+		snippet := dict_get_or(evidence, "snippet", to_string(evidence))
+		lines := push(lines, "- **" + source_id + "**: " + snippet)
+	}
+	lines := push(lines, "")
+	lines := push(lines, "## Citations")
+	lines := push(lines, "")
+	for citation in report_payload["citations"] {
+		lines := push(lines, "- " + to_string(citation))
+	}
+	lines := push(lines, "")
+	lines := push(lines, "## Confidence Notes")
+	lines := push(lines, "")
+	for note in report_payload["confidence_notes"] {
+		lines := push(lines, "- " + to_string(note))
+	}
+	lines := push(lines, "")
+	lines := push(lines, "## Limitations")
+	lines := push(lines, "")
+	for limitation in report_payload["limitations"] {
+		lines := push(lines, "- " + to_string(limitation))
+	}
+	lines := push(lines, "")
+	lines := push(lines, "## Trace")
+	lines := push(lines, "")
+	lines := push(lines, "Trace and state artifacts are saved alongside this report as JSON and Markdown.")
+	lines := push(lines, "")
+
+	return join(lines, "\n")
+}
+
+func write_report_artifacts(run_state, report_payload) {
+	run_dir := run_state["run_dir"]
+	report_payload = ensure_report_contract_fields(report_payload)
+	redacted_payload := redact_sensitive_data(report_payload)
+	redacted_payload = ensure_report_contract_fields(redacted_payload)
+	report_md := render_markdown_report(redacted_payload)
+	write_file(run_dir + "/report.md", report_md, true)
+	write_file(run_dir + "/report.json", to_json(redacted_payload), true)
+	return {
+		"report_md_path": run_dir + "/report.md",
+		"report_json_path": run_dir + "/report.json",
+		"trace_json_path": run_dir + "/trace.json",
+		"trace_md_path": run_dir + "/trace.md",
+		"state_json_path": run_dir + "/state.json"
+	}
+}
+
+export build_report_payload := build_report_payload
+export render_markdown_report := render_markdown_report
+export write_report_artifacts := write_report_artifacts

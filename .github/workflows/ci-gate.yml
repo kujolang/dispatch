@@ -1,0 +1,66 @@
+name: CI Gate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: dispatch-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci-gate:
+    name: Dispatch CI Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DISPATCH_OFFLINE_FIXTURE: "true"
+
+    steps:
+      - name: Checkout dispatch repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Kujo runtime repository
+        uses: actions/checkout@v4
+        with:
+          repository: kujolang/kujo
+          path: .ci/kujo
+          fetch-depth: 1
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: .ci/kujo
+
+      - name: Build Kujo runtime
+        run: cargo build --release --locked --manifest-path .ci/kujo/Cargo.toml
+
+      - name: Export Kujo runtime path
+        run: echo "KUJO_BIN=${GITHUB_WORKSPACE}/.ci/kujo/target/release/kujo" >> "$GITHUB_ENV"
+
+      - name: Verify runtime supports Kujo script execution
+        run: |
+          "$KUJO_BIN" --help | grep -q "run"
+
+      - name: Run sdk adapter tests
+        timeout-minutes: 10
+        run: timeout 10m "$KUJO_BIN" test-run tests/sdk_adapter_tests.kujo -v
+
+      - name: Run policy precedence matrix tests
+        timeout-minutes: 15
+        run: timeout 20m "$KUJO_BIN" test-run tests/policy_precedence_tests.kujo -v
+
+      - name: Run dispatch regression tests
+        timeout-minutes: 20
+        run: timeout 20m "$KUJO_BIN" test-run tests/dispatch_tests.kujo -v

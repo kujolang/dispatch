@@ -1,28 +1,28 @@
 [package]
-name = "eval"
+name = "dispatch"
 version = "0.1.0"
-description = "Evaluation framework for AI-native software — 27 deterministic checks, 5 report formats, snapshot testing, retry support, security hardened. Contract v2.0.0."
+description = "Reliable workflow orchestration for multi-step AI agent systems in Kujo."
 license = "MIT"
-authors = ["Kujolang <contact@kujolang.ai>"]
+authors = ["Robert DeVore <me@robertdevore.com>"]
 homepage = ""
 repository = "https://github.com/kujolang/dispatch"
 documentation = ""
-keywords = ["kujo", "eval", "testing", "agents", "quality"]
-categories = ["ai", "developer-tools", "testing"]
+keywords = ["kujo", "agents", "workflow", "orchestration"]
+categories = ["ai", "developer-tools"]
 readme = "README.md"
 
 [package.status]
-stage = "production"
-stability = "stable"
-public_api = true
-notes = "27 checks, 5 report formats, 14 CLI commands, 7 test suites, and a 5-layer security model. Release gates are mandatory and currently green, and the repository includes a pinned-runtime Docker workflow; final human release sign-off and demo asset remain workflow tasks."
+stage = "experimental"
+stability = "early"
+public_api = false
+notes = "Workflow contracts are stabilizing and may change before 1.0."
 
 [kujo]
 minimum_version = "0.1.0"
-entry = "main.kujo"
-sources = ["src", "."]
-includes = ["README.md", "tests", "examples", "schema", "docs"]
-excludes = [".git", "kennel_packages", "dist", "build", "node_modules"]
+entry = "dispatch.kujo"
+sources = ["."]
+includes = ["README.md", "examples", "tests"]
+excludes = [".git", "kennel_packages", "dist", "build", "node_modules", "outputs"]
 
 [build]
 command = ""
@@ -30,25 +30,26 @@ output = "dist"
 artifacts = []
 
 [dependencies]
+ai-sdk = { source = "github:kujolang/ai-sdk", ref = "main" }
 
 [dev-dependencies]
 
 [scripts]
-test = "kujo test"
-smoke = "kujo run main.kujo run examples/basic_suite.json --json"
-init = "kujo run main.kujo init"
+demo = "kujo run --interpreter dispatch.kujo demo \"Research topic\" --yes"
+test = "kujo test-run tests/dispatch_tests.kujo"
 
 [package.exports]
-common = "src/common.kujo"
-cli = "src/cli.kujo"
-core = "src/eval_core.kujo"
-checks = "src/checks.kujo"
-report = "src/report.kujo"
-snapshot = "src/snapshot.kujo"
-config = "src/config.kujo"
+engine = "runner.kujo"
+cli = "dispatch.kujo"
+
+[package.metadata]
+bridge_script = "bridge_chat.kujo"
 
 [registry]
 index = ""
 publish = ""
 
 [trust]
+checksum = ""
+signature = ""
+signing_key = ""

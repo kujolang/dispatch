@@ -1,0 +1,725 @@
+from src.core.utils import dict_get_or, summarize_value
+from src.core.errors import invalid_step_error, approval_rejected_error
+from src.core.retry import run_with_retry
+from src.core.approval import create_approval_request, resolve_approval
+from src.core.handoff import create_handoff, summarize_handoff
+from src.core.memory import add_agent_note, add_step_output
+from src.core.trace import append_trace, finalize_trace
+from src.core.report import build_report_payload, write_report_artifacts
+from src.core.state import persist_run_state, append_policy_deny_audit_record
+from src.core.step import mark_step_started, mark_step_succeeded, mark_step_failed, mark_step_paused
+from src.tools.tool import call_tool, build_tool_payload
+from src.agents.agent import run_agent
+from src.core.hooks import create_lifecycle_event, emit_hook_event
+
+func replace_step(steps, target_index, replacement_step) {
+	updated := []
+	i := 0
+	while i < len(steps) {
+		if i == target_index {
+			updated := push(updated, replacement_step)
+		} else {
+			updated := push(updated, steps[i])
+		}
+		i := i + 1
+	}
+	return updated
+}
+
+func resolve_retry_policy(step, workflow) {
+	step_policy := dict_get_or(step, "retry_policy", null)
+	if type(step_policy) == "dict" {
+		return step_policy
+	}
+	return dict_get_or(workflow, "default_retry_policy", {
+		"max_attempts": 1,
+		"base_delay_ms": 0,
+		"max_delay_ms": 0,
+		"strategy": "none",
+		"retry_on_codes": []
+	})
+}
+
+func build_step_input(step, run_state) {
+	input_keys := dict_get_or(step, "input_from", [])
+	step_input := {}
+	for key in input_keys {
+		if key == "input" {
+			step_input["input"] := run_state["input"]
+			continue
+		}
+		if has_key(run_state["data"], key) {
+			step_input[key] := run_state["data"][key]
+		} else {
+			step_input[key] := null
+		}
+	}
+	return step_input
+}
+
+func value_matches_schema_type(value, expected_type) {
+	if expected_type == "" || expected_type == "any" {
+		return true
+	}
+	actual_type := type(value)
+	if expected_type == "number" {
+		return actual_type == "int" || actual_type == "float"
+	}
+	return actual_type == expected_type
+}
+
+func validate_schema_value(value, schema, value_path) {
+	if type(schema) != "dict" {
+		return {
+			"ok": true
+		}
+	}
+	expected_type := dict_get_or(schema, "type", "")
+	if value_matches_schema_type(value, expected_type) == false {
+		return {
+			"ok": false,
+			"message": value_path + " expected type " + expected_type + " but received " + type(value)
+		}
+	}
+
+	if expected_type == "dict" && type(value) == "dict" {
+		required := dict_get_or(schema, "required", [])
+		for required_key in required {
+			if has_key(value, required_key) == 0 {
+				return {
+					"ok": false,
+					"message": value_path + " missing required key \"" + required_key + "\""
+				}
+			}
+		}
+		properties := dict_get_or(schema, "properties", {})
+		if type(properties) == "dict" {
+			for property_key in keys(properties) {
+				if has_key(value, property_key) == 0 {
+					continue
+				}
+				property_result := validate_schema_value(value[property_key], properties[property_key], value_path + "." + property_key)
+				if property_result["ok"] == false {
+					return property_result
+				}
+			}
+		}
+	}
+
+	if expected_type == "array" && type(value) == "array" {
+		item_schema := dict_get_or(schema, "items", null)
+		if type(item_schema) == "dict" {
+			item_index := 0
+			while item_index < len(value) {
+				item_result := validate_schema_value(value[item_index], item_schema, value_path + "[" + to_string(item_index) + "]")
+				if item_result["ok"] == false {
+					return item_result
+				}
+				item_index := item_index + 1
+			}
+		}
+	}
+
+	return {
+		"ok": true
+	}
+}
+
+func validate_step_schema(step_id, schema_phase, schema, value) {
+	if type(schema) != "dict" {
+		return {
+			"ok": true
+		}
+	}
+	validation := validate_schema_value(value, schema, schema_phase)
+	if validation["ok"] {
+		return validation
+	}
+	return {
+		"ok": false,
+		"error": {
+			"code": "step_" + schema_phase + "_schema_validation_failed",
+			"message": "Schema validation failed for " + schema_phase + " on step " + step_id + ": " + validation["message"],
+			"retryable": false
+		}
+	}
+}
+
+func build_cancelled_result(run_state, reason, options) {
+	run_state["status"] := "cancelled"
+	run_state["cancelled_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
+	run_state["trace"] := append_trace(run_state["trace"], "run_cancelled", "workflow", "Workflow cancelled", {
+		"reason": reason
+	})
+	emit_hook_event(options, create_lifecycle_event(run_state, "run_cancelled", "workflow", "Workflow cancelled", {
+		"reason": reason
+	}))
+	run_state["trace"] := finalize_trace(run_state["trace"], "cancelled")
+	run_state := persist_run_state(run_state)
+	return {
+		"ok": false,
+		"paused": false,
+		"cancelled": true,
+		"run_state": run_state,
+		"error": {
+			"code": "workflow_cancelled",
+			"message": reason,
+			"retryable": false
+		}
+	}
+}
+
+func emit_lifecycle_event(run_state, options, event_type, step_id, message, details) {
+	event_payload := create_lifecycle_event(run_state, event_type, step_id, message, details)
+	emit_hook_event(options, event_payload)
+}
+
+func cancellation_requested(step, options, run_state, after_step) {
+	if dict_get_or(options, "cancel_requested", false) || dict_get_or(run_state, "cancel_requested", false) {
+		return {
+			"cancel": true,
+			"reason": "Cancellation requested before step " + step["id"]
+		}
+	}
+	cancel_after_step_id := dict_get_or(options, "cancel_after_step_id", "")
+	if after_step && cancel_after_step_id == step["id"] {
+		return {
+			"cancel": true,
+			"reason": "Cancellation requested after step " + step["id"]
+		}
+	}
+	return {
+		"cancel": false,
+		"reason": ""
+	}
+}
+
+func step_status_is_completed(steps, target_step_id) {
+	for item in steps {
+		if dict_get_or(item, "id", "") == target_step_id {
+			return dict_get_or(item, "status", "pending") == "completed"
+		}
+	}
+	return false
+}
+
+func step_dependencies_satisfied(steps, step) {
+	depends_on := dict_get_or(step, "depends_on", [])
+	for dependency_id in depends_on {
+		if step_status_is_completed(steps, dependency_id) == false {
+			return false
+		}
+	}
+	return true
+}
+
+func all_steps_completed(steps) {
+	for step in steps {
+		if dict_get_or(step, "status", "pending") != "completed" {
+			return false
+		}
+	}
+	return true
+}
+
+func execute_agent_step(step, workflow, step_input, run_state, tool_registry) {
+	agent_id := dict_get_or(step, "agent_id", "")
+	policy := resolve_retry_policy(step, workflow)
+	wrapped := run_with_retry("agent:" + agent_id, policy, func(attempt_number) {
+		return run_agent(agent_id, workflow["agents"], step_input, run_state, tool_registry)
+	})
+	if wrapped["ok"] {
+		return {
+			"ok": true,
+			"data": wrapped["result"]["data"],
+			"attempts": wrapped["attempts"],
+			"attempt_records": wrapped["attempt_records"]
+		}
+	}
+	return {
+		"ok": false,
+		"error": dict_get_or(wrapped["result"], "error", {"code": "agent_execution_failure", "message": "Unknown agent error", "retryable": false}),
+		"attempts": wrapped["attempts"],
+		"attempt_records": wrapped["attempt_records"]
+	}
+}
+
+func evaluate_tool_authorization(step, step_input, run_state, options) {
+	policy := dict_get_or(options, "tool_authorization_policy", null)
+	if type(policy) == "null" {
+		return {
+			"ok": true
+		}
+	}
+	policy_input := {
+		"run_id": dict_get_or(run_state, "run_id", ""),
+		"workflow_id": dict_get_or(run_state, "workflow_id", ""),
+		"step_id": dict_get_or(step, "id", ""),
+		"tool_name": dict_get_or(step, "tool_name", ""),
+		"step_input": step_input,
+		"status": dict_get_or(run_state, "status", "unknown")
+	}
+	decision := null
+	try {
+		decision = policy(policy_input)
+	} except err {
+		return {
+			"ok": false,
+			"error": {
+				"code": "tool_authorization_error",
+				"message": "Tool authorization policy execution failed for step " + dict_get_or(step, "id", ""),
+				"retryable": false
+			}
+		}
+	}
+
+	if type(decision) == "bool" {
+		if decision {
+			return {"ok": true}
+		}
+		return {
+			"ok": false,
+			"error": {
+				"code": "tool_execution_denied",
+				"message": "Tool execution denied by authorization policy for step " + dict_get_or(step, "id", ""),
+				"retryable": false
+			}
+		}
+	}
+
+	if type(decision) == "dict" {
+		allow := dict_get_or(decision, "allow", dict_get_or(decision, "ok", false))
+		if allow {
+			return {"ok": true}
+		}
+		deny_message := dict_get_or(decision, "message", "Tool execution denied by authorization policy.")
+		return {
+			"ok": false,
+			"error": {
+				"code": "tool_execution_denied",
+				"message": deny_message,
+				"retryable": false
+			}
+		}
+	}
+
+	return {
+		"ok": false,
+		"error": {
+			"code": "tool_authorization_error",
+			"message": "Tool authorization policy must return bool or dict.",
+			"retryable": false
+		}
+	}
+}
+
+func execute_tool_step(step, workflow, step_input, run_state, tool_registry, options) {
+	tool_name := dict_get_or(step, "tool_name", "")	
+	tool_payload := build_tool_payload(tool_registry, tool_name, step_input)
+	authorization := evaluate_tool_authorization(step, step_input, run_state, options)
+	if authorization["ok"] == false {
+		auth_error := dict_get_or(authorization, "error", {
+			"code": "tool_execution_denied",
+			"message": "Tool execution denied by authorization policy.",
+			"retryable": false
+		})
+		return {
+			"ok": false,
+			"error": auth_error,
+			"policy_denied": true,
+			"policy_deny_context": {
+				"tool_name": tool_name,
+				"step_input": step_input
+			},
+			"attempts": 1,
+			"attempt_records": []
+		}
+	}
+	policy := resolve_retry_policy(step, workflow)
+	wrapped := run_with_retry("tool:" + tool_name, policy, func(attempt_number) {
+		context := {
+			"run_id": run_state["run_id"],
+			"step_id": dict_get_or(step, "id", ""),
+			"input": run_state["input"],
+			"sources_dir": dict_get_or(tool_registry, "__sources_dir", "examples/research-report/sources")
+		}
+		return call_tool(tool_registry, tool_name, tool_payload, context)
+	})
+	if wrapped["ok"] {
+		return {
+			"ok": true,
+			"data": wrapped["result"]["data"],
+			"attempts": wrapped["attempts"],
+			"attempt_records": wrapped["attempt_records"]
+		}
+	}
+	return {
+		"ok": false,
+		"error": dict_get_or(wrapped["result"], "error", {"code": "tool_execution_failure", "message": "Unknown tool error", "retryable": false}),
+		"attempts": wrapped["attempts"],
+		"attempt_records": wrapped["attempt_records"]
+	}
+}
+
+func execute_approval_step(step, step_input, run_state, options) {
+	gate := dict_get_or(step, "approval_gate", {})
+	request := create_approval_request(
+		step["id"],
+		dict_get_or(gate, "reason", "Approval required."),
+		dict_get_or(gate, "summary", "Review output before proceeding."),
+		step_input
+	)
+	decision := resolve_approval(request, options)
+	if decision["ok"] == false {
+		return decision
+	}
+	approval := decision["approval"]
+	if decision["paused"] {
+		return {
+			"ok": true,
+			"paused": true,
+			"data": approval,
+			"attempts": 1,
+			"attempt_records": []
+		}
+	}
+	if approval["decision"] == "rejected" {
+		return {
+			"ok": false,
+			"error": approval_rejected_error("Approval rejected: " + dict_get_or(approval, "reviewer_note", "No note"))["error"],
+			"attempts": 1,
+			"attempt_records": []
+		}
+	}
+	if approval["decision"] == "request_changes" {
+		return {
+			"ok": true,
+			"paused": true,
+			"data": approval,
+			"attempts": 1,
+			"attempt_records": []
+		}
+	}
+	return {
+		"ok": true,
+		"paused": false,
+		"data": approval,
+		"attempts": 1,
+		"attempt_records": []
+	}
+}
+
+func execute_handoff_step(step, step_input, run_state) {
+	handoff_cfg := dict_get_or(step, "handoff", {})
+	handoff := create_handoff(
+		dict_get_or(handoff_cfg, "source_agent", "unknown"),
+		dict_get_or(handoff_cfg, "target_agent", "unknown"),
+		dict_get_or(handoff_cfg, "reason", "Handoff"),
+		step_input,
+		summarize_value(step_input, 240),
+		dict_get_or(handoff_cfg, "expected_next_action", "Continue workflow")
+	)
+	run_state["handoffs"] := push(run_state["handoffs"], handoff)
+	return {
+		"ok": true,
+		"data": handoff,
+		"attempts": 1,
+		"attempt_records": []
+	}
+}
+
+func execute_report_step(step, step_input, run_state) {
+	report_payload := build_report_payload(run_state)
+	paths := write_report_artifacts(run_state, report_payload)
+	return {
+		"ok": true,
+		"data": {
+			"report": report_payload,
+			"paths": paths
+		},
+		"attempts": 1,
+		"attempt_records": []
+	}
+}
+
+func execute_step(step, workflow, step_input, run_state, tool_registry, options) {
+	step_type := dict_get_or(step, "type", "")
+	if step_type == "agent" {
+		return execute_agent_step(step, workflow, step_input, run_state, tool_registry)
+	}
+	if step_type == "tool" {
+		return execute_tool_step(step, workflow, step_input, run_state, tool_registry, options)
+	}
+	if step_type == "approval" {
+		return execute_approval_step(step, step_input, run_state, options)
+	}
+	if step_type == "handoff" {
+		return execute_handoff_step(step, step_input, run_state)
+	}
+	if step_type == "report" {
+		return execute_report_step(step, step_input, run_state)
+	}
+	return invalid_step_error(step["id"], "Unsupported step type: " + step_type)
+}
+
+func run_workflow(workflow, run_state, tool_registry, options) {
+	run_state["status"] := "running"
+	total_steps := len(run_state["steps"])
+	index := run_state["current_step_index"]
+        cycle_progress := false
+        parallel_execution := dict_get_or(options, "parallel_execution", false)
+
+	while true {
+		if index >= total_steps {
+			if all_steps_completed(run_state["steps"]) {
+				break
+			}
+			if cycle_progress == false {
+				run_state["status"] := "failed"
+				run_state["failed_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
+				error_payload := {
+					"code": "dependency_deadlock",
+					"message": "No runnable steps were found. Check depends_on configuration for cycles or missing dependencies.",
+					"retryable": false
+				}
+				run_state["errors"] := push(run_state["errors"], {
+					"step_id": "workflow",
+					"error": error_payload,
+					"timestamp": format_date(now(), "YYYY-MM-DD HH:mm:ss")
+				})
+				run_state["trace"] := append_trace(run_state["trace"], "step_failed", "workflow", "Dependency deadlock", {
+					"error": error_payload
+				})
+				run_state["trace"] := finalize_trace(run_state["trace"], "failed")
+				run_state := persist_run_state(run_state)
+				return {
+					"ok": false,
+					"paused": false,
+					"run_state": run_state,
+					"error": error_payload
+				}
+			}
+			index = 0
+			cycle_progress = false
+			continue
+		}
+		step := run_state["steps"][index]
+		cancel_before_step := cancellation_requested(step, options, run_state, false)
+		if cancel_before_step["cancel"] {
+			return build_cancelled_result(run_state, cancel_before_step["reason"], options)
+		}
+		if step_dependencies_satisfied(run_state["steps"], step) == false {
+			index := index + 1
+			continue
+		}
+		if dict_get_or(step, "status", "pending") == "completed" {
+			index := index + 1
+			run_state["current_step_index"] := index
+			continue
+		}
+
+		step := mark_step_started(step)
+		step_input := build_step_input(step, run_state)
+		step["input"] := step_input
+		run_state["steps"] := replace_step(run_state["steps"], index, step)
+		run_state["trace"] := append_trace(run_state["trace"], "step_started", step["id"], "Step started: " + step["name"], {
+			"step_type": step["type"],
+			"input_summary": summarize_value(step_input, 220)
+		})
+		emit_lifecycle_event(run_state, options, "step_started", step["id"], "Step started: " + step["name"], {
+			"step_type": step["type"]
+		})
+		run_state := persist_run_state(run_state)
+		step_started_ms := current_timestamp()
+
+		input_validation := validate_step_schema(step["id"], "input", dict_get_or(step, "input_schema", null), step_input)
+		executed := {}
+		if input_validation["ok"] == false {
+			executed := {
+				"ok": false,
+				"error": input_validation["error"],
+				"attempts": 1,
+				"attempt_records": []
+			}
+		} else {
+			executed := execute_step(step, workflow, step_input, run_state, tool_registry, options)
+			if dict_get_or(executed, "ok", false) {
+				output_validation := validate_step_schema(step["id"], "output", dict_get_or(step, "output_schema", null), dict_get_or(executed, "data", null))
+				if output_validation["ok"] == false {
+					executed := {
+						"ok": false,
+						"error": output_validation["error"],
+						"attempts": dict_get_or(executed, "attempts", 1),
+						"attempt_records": dict_get_or(executed, "attempt_records", [])
+					}
+				}
+				timeout_ms := dict_get_or(step, "timeout_ms", 0)
+				if timeout_ms > 0 {
+					elapsed_ms := current_timestamp() - step_started_ms
+					if elapsed_ms > timeout_ms {
+						executed := {
+							"ok": false,
+							"error": {
+								"code": "step_timeout_exceeded",
+								"message": "Step " + step["id"] + " exceeded timeout of " + to_string(timeout_ms) + "ms (elapsed " + to_string(elapsed_ms) + "ms)",
+								"retryable": false
+							},
+							"attempts": dict_get_or(executed, "attempts", 1),
+							"attempt_records": dict_get_or(executed, "attempt_records", [])
+						}
+					}
+				}
+			}
+		}
+		if dict_get_or(executed, "paused", false) {
+			step := mark_step_paused(step, dict_get_or(executed, "data", null))
+			run_state["steps"] := replace_step(run_state["steps"], index, step)
+			run_state["status"] := "paused"
+			if step["type"] == "approval" {
+				decision := dict_get_or(dict_get_or(executed, "data", {}), "decision", "pending")
+				if decision == "request_changes" {
+					run_state["status"] := "needs_changes"
+				}
+			}
+			run_state["current_step_index"] := index
+			if step["type"] == "approval" {
+				run_state["approvals"] := push(run_state["approvals"], dict_get_or(executed, "data", {}))
+			}
+			run_state["trace"] := append_trace(run_state["trace"], "step_paused", step["id"], "Workflow paused at approval gate.", {
+				"decision": dict_get_or(dict_get_or(executed, "data", {}), "decision", "pending")
+			})
+			emit_lifecycle_event(run_state, options, "step_paused", step["id"], "Workflow paused at approval gate.", {
+				"decision": dict_get_or(dict_get_or(executed, "data", {}), "decision", "pending")
+			})
+			run_state := persist_run_state(run_state)
+			return {
+				"ok": true,
+				"paused": true,
+				"run_state": run_state
+			}
+		}
+
+		if dict_get_or(executed, "ok", false) == false {
+			if dict_get_or(executed, "policy_denied", false) {
+				policy_deny_context := dict_get_or(executed, "policy_deny_context", {})
+				policy_deny_error := dict_get_or(executed, "error", {
+					"code": "tool_execution_denied",
+					"message": "Tool execution denied by authorization policy.",
+					"retryable": false
+				})
+				audit_path := append_policy_deny_audit_record(dict_get_or(run_state, "output_root", ""), run_state, step, policy_deny_error, options, dict_get_or(policy_deny_context, "step_input", {}))
+				run_state["trace"] := append_trace(run_state["trace"], "policy_denied", dict_get_or(step, "id", ""), "Tool execution denied by policy", {
+					"tool_name": dict_get_or(policy_deny_context, "tool_name", dict_get_or(step, "tool_name", "")),
+					"error": policy_deny_error,
+					"command_name": dict_get_or(options, "command_name", "workflow"),
+					"audit_path": audit_path
+				})
+				emit_lifecycle_event(run_state, options, "policy_denied", dict_get_or(step, "id", ""), "Tool execution denied by policy", {
+					"tool_name": dict_get_or(policy_deny_context, "tool_name", dict_get_or(step, "tool_name", "")),
+					"error": policy_deny_error,
+					"audit_path": audit_path
+				})
+			}
+			step := mark_step_failed(step, dict_get_or(executed, "error", {"code": "step_failure", "message": "Unknown error", "retryable": false}), dict_get_or(executed, "attempts", 1))
+			run_state["steps"] := replace_step(run_state["steps"], index, step)
+			run_state["status"] := "failed"
+			run_state["failed_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
+			run_state["errors"] := push(run_state["errors"], {
+				"step_id": step["id"],
+				"error": step["error"],
+				"timestamp": format_date(now(), "YYYY-MM-DD HH:mm:ss")
+			})
+			run_state["trace"] := append_trace(run_state["trace"], "step_failed", step["id"], "Step failed", {
+				"error": step["error"],
+				"attempts": step["attempts"],
+				"attempt_records": dict_get_or(executed, "attempt_records", [])
+			})
+			emit_lifecycle_event(run_state, options, "step_failed", step["id"], "Step failed", {
+				"error": step["error"],
+				"attempts": step["attempts"]
+			})
+			run_state["trace"] := finalize_trace(run_state["trace"], "failed")
+			run_state := persist_run_state(run_state)
+			return {
+				"ok": false,
+				"paused": false,
+				"run_state": run_state,
+				"error": step["error"]
+			}
+		}
+
+		output_value := dict_get_or(executed, "data", null)
+		attempts := dict_get_or(executed, "attempts", 1)
+		step := mark_step_succeeded(step, output_value, attempts)
+		run_state["steps"] := replace_step(run_state["steps"], index, step)
+		retry_counts := run_state["retry_counts"]
+		retry_counts[step["id"]] := attempts
+		run_state["retry_counts"] := retry_counts
+
+		output_key := dict_get_or(step, "output_key", "")
+		if output_key != "" {
+			run_data := run_state["data"]
+			run_data[output_key] := output_value
+			run_state["data"] := run_data
+			run_state["memory"] := add_step_output(run_state["memory"], output_key, output_value)
+		}
+
+		if step["type"] == "agent" {
+			agent_id := dict_get_or(step, "agent_id", "")
+			run_state["memory"] := add_agent_note(run_state["memory"], agent_id, "Completed step " + step["id"])
+		}
+		if step["type"] == "approval" {
+			run_state["approvals"] := push(run_state["approvals"], output_value)
+		}
+		if step["type"] == "handoff" {
+			run_state["trace"] := append_trace(run_state["trace"], "handoff", step["id"], summarize_handoff(output_value), output_value)
+		}
+
+		run_state["trace"] := append_trace(run_state["trace"], "step_completed", step["id"], "Step completed: " + step["name"], {
+			"attempts": attempts,
+			"output_summary": summarize_value(output_value, 220),
+			"attempt_records": dict_get_or(executed, "attempt_records", [])
+		})
+		emit_lifecycle_event(run_state, options, "step_completed", step["id"], "Step completed: " + step["name"], {
+			"attempts": attempts
+		})
+		cancel_after_step := cancellation_requested(step, options, run_state, true)
+		if cancel_after_step["cancel"] {
+			run_state["steps"] := replace_step(run_state["steps"], index, step)
+			run_state["current_step_index"] := index + 1
+			return build_cancelled_result(run_state, cancel_after_step["reason"], options)
+		}
+
+		index := index + 1
+		cycle_progress = true
+		if parallel_execution == false {
+			run_state["current_step_index"] := index
+		} else {
+			run_state["current_step_index"] := index
+		}
+		run_state := persist_run_state(run_state)
+	}
+
+	run_state["status"] := "completed"
+	run_state["completed_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
+	if has_key(run_state["data"], "final_output") {
+		run_state["final_output"] := run_state["data"]["final_output"]
+	}
+	run_state["trace"] := append_trace(run_state["trace"], "run_completed", "workflow", "Workflow completed successfully", {
+		"completed_steps": len(run_state["steps"]),
+		"approvals": len(run_state["approvals"]),
+		"handoffs": len(run_state["handoffs"])
+	})
+	emit_lifecycle_event(run_state, options, "run_completed", "workflow", "Workflow completed successfully", {
+		"completed_steps": len(run_state["steps"])
+	})
+	run_state["trace"] := finalize_trace(run_state["trace"], "completed")
+	run_state := persist_run_state(run_state)
+	return {
+		"ok": true,
+		"paused": false,
+		"run_state": run_state
+	}
+}
+
+export run_workflow := run_workflow

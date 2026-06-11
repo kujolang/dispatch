@@ -1,638 +1,449 @@
-# Eval
+# Dispatch
 
-[![Version](https://img.shields.io/badge/version-0.3.1-blue)](https://github.com/kujolang/dispatch)
-[![Contract](https://img.shields.io/badge/contract-v2.0.0-green)](https://github.com/kujolang/dispatch)
-[![Checks](https://img.shields.io/badge/checks-27-orange)](https://github.com/kujolang/dispatch)
-[![Tests](https://img.shields.io/badge/tests-7%20suites%20passing-brightgreen)](https://github.com/kujolang/dispatch)
-[![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
+Dispatch is a workflow orchestration engine for reliable AI systems built in Kujo.
 
-> **v0.1.0** | Contract v2.0.0 | 27 checks | 5 report formats | 14 CLI commands | 7 test suites | 5-layer controls
+It routes structured work through repeatable workflow templates and produces reviewable run state, traces, reports, and handoff bundles.
 
-Evaluation framework for AI-native software — deterministic checks for agents, CLIs, files, snapshots, and workflow outputs.
+Dispatch is strongest as a Control-layer primitive: workflow routing, run-state persistence, import/export, approval gates, and auditable orchestration evidence.
 
-Eval answers the question:
+The verified path in this repository uses safe local/offline fixture runs by default. Live SDK integration is optional and requires a local `ai-sdk` checkout plus environment-specific validation.
 
-> Did the agent, workflow, model, generated output, or code change actually do the right thing?
+## Why Dispatch
 
-Spec defines what should happen. Eval checks whether the work actually produced the expected evidence.
+Single-step chat calls are rarely enough when work needs to be repeated, reviewed, and resumed. Dispatch provides:
 
-Eval is part of Kujo’s Control layer: measurable outcomes, repeatable checks, reviewable reports, and machine-readable evidence.
+- Declarative workflow steps and agent roles
+- Deterministic tool orchestration
+- Retry policies and failure semantics
+- Optional deterministic or random jitter in retry backoff
+- Human-in-the-loop approval controls
+- Persisted, resumable run state
+- Structured report outputs and trace artifacts
 
-## Why This Exists
+## Key Capabilities
 
-Every serious AI-native ecosystem needs evaluations. Without evals, agents are vibes. With evals, agents become software components that can be tested, trusted, compared, and improved.
+- Workflow schema with typed step metadata
+- Step lifecycle tracking (pending, running, paused, completed, failed)
+- Step input/output schema validation with actionable errors
+- Per-step timeout handling and cancellation lifecycle state
+- Lifecycle event hooks via callback and webhook sink outputs
+- Approval decisions (approved, rejected, request_changes)
+- DAG-style step dependencies (`depends_on`) with parallel-ready scheduling support
+- Agent-to-agent handoff events
+- Run cataloging and filtering (`runs --status`, `--topic`, `--issues-only`, `--json`)
+- Output retention cleanup with safe dry-run/apply modes (`cleanup`)
+- Workflow template selection by ID (`demo/resume --workflow <template-id>`)
+- Health diagnostics and repair (`doctor`, `doctor --write`)
+- Report generation (`report.md`, `report.json`)
+- Trace generation (`trace.json`, `trace.md`)
 
-Eval provides:
+## Architecture Overview
 
-- **27 deterministic checks** — command success/failure, file existence/content/line count, JSON shape/value/path, HTTP status/body, regex, timing, snapshots, directory comparison, environment variables, and more.
-- **5 report formats** — Markdown, HTML (collapsible details + summary cards), JUnit XML, TAP, and NDJSON streaming.
-- **Snapshot testing** — store expected outputs and detect regressions with unified diff.
-- **Run comparison** — compare two eval runs to detect improvements or regressions.
-- **Retry support** — mark flaky tests with `"retry": N` to auto-retry on failure.
-- **Dependency ordering** — declare `"depends_on": [...]` to skip tests when dependencies fail.
-- **Enterprise policy presets** — use `"policy_profile": "strict-ci" | "local-dev" | "release-gate"` for fast onboarding.
-- **Timing** — every run records `duration_ms`; `command_timing_less_than` check for perf regression.
-- **Quiet/verbose modes** — `--quiet` suppresses per-test output (CI mode); `--verbose` prints full check details.
-- **14 CLI commands** — init, run, report, compare, list-checks, snapshots, version, watch, lint, policy-explain, diff, export, verify-manifest, completion.
-- **CI-ready** — non-zero exit on failure; JSON/NDJSON output; GitHub Actions step summary; shields.io badge.
-- **Deterministic CI artifacts** — each run writes `summary.json` and `artifact-manifest.json` for machine consumers.
-- **Machine summary channel** — run/report write `cli-summary.json` (or `--summary-channel-path`) as a stable automation handoff artifact.
-- **Artifact integrity mode** — opt into SHA-256 checksums in `artifact-manifest.json` and verify with `verify-manifest`.
-- **Parallel scale mode** — opt into `--parallel-workers` for independent file-check fast paths with deterministic ordering.
-- **Retention controls** — bound output growth with `history_retention_runs` and `aux_artifact_retention_files`.
-- **Security controls** — 5-layer defense: command allowlisting + pattern policy, path boundary enforcement, output redaction, config size/depth limits, max output truncation.
-- **Command guardrails** — overly long command payloads are rejected before execution (`MAX_COMMAND_LENGTH`).
-- **Fully local** — no API keys, no network dependencies, completely deterministic.
+Architecture and extension diagrams:
 
-Kujo's core argument is that AI-native software needs new primitives. Eval is one of those primitives.
+- `docs/architecture-and-extension-diagrams.md`
 
-Traditional tests answer:
+Core modules:
 
-> Does this function return the expected value?
+- `dispatch.kujo`: CLI entrypoint and command routing
+- `src/cli/cli_args.kujo`: schema-driven CLI argument parsing
+- `src/workflows/workflow.kujo`: workflow templates and template registry
+- `src/core/runner.kujo`: orchestration engine entrypoint
+- `src/agents/agent.kujo`: agent execution entrypoint and handler registry mapping
+- `src/tools/tool.kujo`: tool registry, payload adapters, and tool invocation entrypoint
+- `tools/source_lookup.kujo`: source search and lookup handlers
+- `tools/content_processing.kujo`: claim/citation/report/timestamp handlers
+- `tools/reliability_tools.kujo`: reliability simulation handlers
+- `src/core/approval.kujo`: approval request/decision handling
+- `src/core/retry.kujo`: retry policies and attempt tracking
+- `src/core/state.kujo`: run persistence, summaries, filtering, diagnostics
+- `src/core/trace.kujo`: trace event model and markdown rendering
+- `src/core/hooks.kujo`: lifecycle event hook callback and webhook sink emission
+- `src/core/report.kujo`: report payload and artifact writing
+- `src/core/tool_policy.kujo`: centralized tool authorization policy parsing and builder
+- `src/core/plugins.kujo`: plugin registration and runtime injection for external tools/agents
+- `sdk_adapter.kujo`: external AI SDK bridge invocation
+- `bridge_chat.kujo`: Kujo bridge script executed from `AI_SDK_PATH`
 
-Eval answers:
+Module layout:
 
-> Did this agent or AI-assisted workflow produce the correct outcome under real project constraints?
+- Core implementation modules now live under `src/`.
+- Root-level runtime entry scripts are limited to `dispatch.kujo`, `sdk_adapter.kujo`, and `bridge_chat.kujo`.
+- New development should target `src/` modules directly.
 
-## Requirements
+## External AI SDK Integration (AI Chat Style)
 
-- Kujo CLI/runtime available on your machine.
-- No API keys or external services needed (fully local, deterministic).
+Dispatch uses the same pattern as `ai-chat`:
 
-## Containerized Usage
+1. Dispatch does not vendor `ai_sdk.kujo` or `providers.kujo`.
+2. `sdk_adapter.kujo` invokes a bridge process.
+3. The bridge runs with `AI_SDK_PATH` as module root and imports shared SDK modules from that external project.
 
-This repository includes a production-usable multi-stage `Dockerfile` that compiles the Kujo runtime from the pinned revision in `RUNTIME_VERSION`.
+This keeps SDK behavior centralized in one repository (`ai-sdk`) while allowing Dispatch to remain lightweight.
 
-Build the image:
+## Prerequisites
 
-```bash
-docker build -t kujo-eval:local .
-```
-
-Optionally override the runtime ref at build time:
-
-```bash
-docker build --build-arg KUJO_RUNTIME_REF=<tag-or-commit> -t kujo-eval:local .
-```
-
-Run a suite in the container:
-
-```bash
-docker run --rm -v "$PWD":/workspace -w /workspace kujo-eval:local run
-```
-
-Generate a report in the container:
-
-```bash
-docker run --rm -v "$PWD":/workspace -w /workspace kujo-eval:local report --format json --out eval_results/report.json
-```
-
-## Runtime Binary Selection (Important)
-
-`kujo-eval` expects the Kujo language runtime binary, not the Python `kujo` linter command.
-
-Recommended runtime for this repository:
-
-```bash
-export KUJO_BIN=./kujo
-"$KUJO_BIN" --version
-```
-
-When running examples in this README, replace `kujo` with `"$KUJO_BIN"` if your shell resolves `kujo` to a different tool.
-
-## VM-First Migration Note (Interpreter-Era Guidance)
-
-Older repository docs and shell snippets may still show interpreter-era commands such as:
-
-```bash
-kujo run main.kujo --interpreter run <suite>
-```
-
-Current recommended default is VM-first execution:
-
-```bash
-kujo run main.kujo run <suite>
-```
-
-Use `--interpreter` only for runtime compatibility checks, warning investigations, or parity debugging.
-
-Migration mapping:
-
-- Legacy: `kujo run main.kujo --interpreter <command>`
-- Preferred: `kujo run main.kujo <command>`
-- Optional compatibility check: `kujo run main.kujo --interpreter <command>`
-
-Interpreter mode can emit KUJORUN001 warning noise while still succeeding; rely on exit code plus generated artifacts (`summary.json`, `artifact-manifest.json`) for CI pass/fail decisions.
-
-## Operational Watchdog Controls
-
-Release and parity scripts include artifact-aware watchdogs to keep CI deterministic even when interpreter output capture behaves inconsistently.
-
-Watchdog loops use portable `sleep` polling so behavior stays consistent across macOS and Linux shells.
-
-- `scripts/release_quality_gates.sh`
-  - `KUJO_EVAL_GATE_TIMEOUT_SECONDS` (default: `120`)
-  - `KUJO_EVAL_BENCH_SUITE_BUDGET_MS` (default: `600`)
-  - `KUJO_EVAL_BENCH_MEDIUM_SUITE_BUDGET_MS` (default: `3000`)
-  - `KUJO_EVAL_BENCH_LARGE_SUITE_BUDGET_MS` (default: `8000`)
-  - `KUJO_EVAL_BENCH_IO_HEAVY_SUITE_BUDGET_MS` (default: `12000`)
-  - `KUJO_EVAL_REQUIRE_RELEASE_SIGNOFF` (default: `0`, set to `1` to require human approval)
-  - `KUJO_EVAL_RELEASE_SIGNOFF_FILE` (default: `docs/release-signoff.md`)
-- `scripts/cli_smoke_matrix.sh`
-  - `KUJO_EVAL_CLI_SMOKE_INCLUDE_INTERPRETER` (default: `0`)
-- `scripts/verify_artifact_contract.sh`
-  - deterministic artifact shape/path verification for `summary.json`, `artifact-manifest.json`, and `cli-summary.json`
-- `scripts/verify_docs_command_parity.sh`
-  - `KUJO_EVAL_DOCS_WATCHDOG_TIMEOUT_SECONDS` (default: `120`)
-
-Version note:
-
-- Use `version` for the CLI version/contract output.
-- `--version` is not implemented as a dedicated alias and falls back to help output.
-
-Example:
-
-```bash
-export KUJO_BIN=./kujo
-export KUJO_EVAL_GATE_TIMEOUT_SECONDS=180
-export KUJO_EVAL_BENCH_SUITE_BUDGET_MS=600
-export KUJO_EVAL_BENCH_MEDIUM_SUITE_BUDGET_MS=3000
-export KUJO_EVAL_BENCH_LARGE_SUITE_BUDGET_MS=8000
-export KUJO_EVAL_BENCH_IO_HEAVY_SUITE_BUDGET_MS=12000
-export KUJO_EVAL_DOCS_WATCHDOG_TIMEOUT_SECONDS=180
-scripts/cli_smoke_matrix.sh
-scripts/verify_artifact_contract.sh
-# Optional parity mode:
-# KUJO_EVAL_CLI_SMOKE_INCLUDE_INTERPRETER=1 scripts/cli_smoke_matrix.sh --include-interpreter
-scripts/release_quality_gates.sh
-```
-
-## Known Runtime Limitations
-
-- Interpreter mode may print KUJORUN001 type-check warnings even when commands exit successfully.
-- Command checks support native process timeout termination through `timeout_ms` and suite-level `timeout_seconds`.
-- `watch` is intentionally long-running and should be interrupted manually in local shells.
-- Command and file checks run in the host environment and are not a full sandbox boundary.
-- Some interpreter invocations can stall when stdout/stderr is shell-captured; release/parity gate scripts mitigate this with artifact-driven watchdogs.
-
-## Launch Scope Snapshot
-
-Evalis verified for deterministic local and CI evaluation workflows where shell/file access is expected and controlled by repository policy.
-
-It is not yet a universal fit for every enterprise testing context. Before broad rollout, evaluate the following constraints for your environment:
-
-- Timeout enforcement depends on runtime support for `execute_status` timeout handling in your target Kujo build.
-- No isolated sandbox boundary; commands execute with host-level permissions.
-- Runtime warning noise in interpreter mode may require log filtering in strict observability pipelines.
-- Feature roadmap items (LLM-as-judge, model-cost scoring, distributed execution) are intentionally out of current deterministic scope.
-
-If your use case needs strict isolation, guaranteed process preemption, or non-local execution controls, place Evalbehind additional platform controls (container boundaries, workload policies, and external supervisors).
-
-## Enterprise Deployment Patterns
-
-Evalcan be deployed in enterprise CI/CD and platform workflows with a simple layered model:
-
-1. **Runner boundary**: execute eval jobs in short-lived containers or isolated runners with least-privilege filesystem mounts.
-2. **Command policy**: define `allowed_commands`, `allowed_command_patterns`, and `blocked_arg_patterns` at suite level; override only where needed at test level.
-3. **Path policy**: scope file assertions using `allowed_paths` to explicitly owned workspace directories.
-4. **Environment policy**: expose only approved variables and enforce with `allowed_env_vars`.
-5. **Artifact policy**: keep report outputs (`--output-dir`) in per-run isolated folders and publish only required formats (JSON/JUnit/TAP/HTML/NDJSON).
-
-Suggested rollout:
-
-1. Start with `--json --quiet` in CI to establish deterministic pass/fail gates.
-2. Add JUnit/TAP report publication for existing enterprise test dashboards.
-3. Enforce suite-level command/path/env policy defaults before allowing per-test overrides.
-4. Add external supervision for hard-kill guarantees on long-running processes until native runtime preemption support is available.
-
-## Why Eval vs. Other Tools?
-
-| Feature | Eval| Jest | Pytest | Bats |
-|---------|-----------|------|--------|------|
-| **Language** | Kujo | JavaScript | Python | Bash |
-| **Dependencies** | Zero (Kujo runtime only) | npm + 100s packages | pip + plugins | Bash + helpers |
-| **Deterministic** | ✅ Fully | ⚠️ JS runtime variance | ⚠️ Python env variance | ❌ Shell-dependent |
-| **Command execution** | ✅ Native | ❌ Needs child_process | ❌ Needs subprocess | ✅ Native |
-| **File checks** | ✅ 11 types | ❌ Needs custom matchers | ❌ Needs custom fixtures | ❌ Manual |
-| **HTTP checks** | ✅ Built-in | ✅ With supertest | ✅ With requests | ❌ Needs curl |
-| **Snapshot testing** | ✅ Built-in diff | ✅ Built-in | ✅ With syrupy | ❌ Manual |
-| **Report formats** | 5 (md/html/junit/tap/ndjson) | 1 (CLI) | 2 (CLI + JUnit) | 1 (TAP) |
-| **Security model** | ✅ 5-layer defense | ❌ None | ❌ None | ❌ None |
-| **AI-native** | ✅ Purpose-built | ❌ Traditional | ❌ Traditional | ❌ Shell testing |
-| **Install size** | < 1MB | ~50MB+ | ~30MB+ | ~2MB |
-
-Eval fills a gap: it's a **deterministic, zero-dependency, AI-native evaluation framework** that tests outcomes (commands, files, JSON, HTTP) rather than code units. It's designed for agents, CLIs, and workflow outputs — not traditional unit tests.
-
-## Quick Wins — Copy-Paste Examples
-
-Three ready-to-use `eval.json` suites for common scenarios:
-
-| Use Case | File | What It Tests |
-|----------|------|---------------|
-| Enterprise CLI quality gate | [`examples/enterprise_cli_quality_gate.json`](examples/enterprise_cli_quality_gate.json) | Policy-first CLI behavior checks, output assertions, repository file guards |
-| Enterprise API contract gate | [`examples/enterprise_api_contract_gate.json`](examples/enterprise_api_contract_gate.json) | Fixture-backed API contract validation, JSON shape/value assertions, parallel file checks |
-| Enterprise agent output gate | [`examples/enterprise_agent_output_gate.json`](examples/enterprise_agent_output_gate.json) | Policy-first agent output validation for structure/content/confidence and timing |
-| Enterprise policy baseline | [`examples/policy_profile_release_gate.json`](examples/policy_profile_release_gate.json) | Profile-driven command/path/env policy defaults |
-| Strict-enterprise policy example | [`examples/strict_enterprise_policy_gate.json`](examples/strict_enterprise_policy_gate.json) | Minimum-privilege command/path/env allowlists with redaction audit defaults |
-| Sandbox-adjacent policy example | [`examples/sandbox_adjacent_policy_gate.json`](examples/sandbox_adjacent_policy_gate.json) | Constrained local policy boundaries for fixture-only command and file access |
-| Mixed large-suite accounting | [`examples/large_suite_fixture.json`](examples/large_suite_fixture.json) | Tags, dependencies, retries, skip behavior |
-
-Replace placeholders (URLs, file paths, tool names) with your actual values and run immediately.
-
-See architecture and lifecycle diagrams in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+- Kujo CLI/runtime installed
+- Local clone of `ai-sdk`
+- `dispatch` checked out locally
 
 ## Quick Start
 
 ```bash
-# Initialize an eval suite
-kujo run main.kujo init --name my-suite
+cd /path/to/kujo-dispatch
 
-# Run the suite (with optional flags)
-kujo run main.kujo run
+export KUJO_BIN=/path/to/kujo/target/release/kujo
+export AI_SDK_PATH=/path/to/ai-sdk
 
-# Run with filtering and HTML output
-kujo run main.kujo run --filter auth --format html
-
-# Run quietly (CI mode — summary only)
-kujo run main.kujo run --quiet --json
-
-# Run with a compact one-line human summary
-kujo run main.kujo run --summary-only
-
-# Run explicit suite with isolated output directory (recommended for scripts)
-kujo run main.kujo run examples/release_gate_suite.json --output-dir .eval_quickstart --json
-
-# Enterprise quickstart bundles (policy-first)
-kujo run main.kujo run examples/enterprise_cli_quality_gate.json --output-dir .eval_enterprise_cli --json
-kujo run main.kujo run examples/enterprise_api_contract_gate.json --output-dir .eval_enterprise_api --parallel-workers 8 --json
-kujo run main.kujo run examples/enterprise_agent_output_gate.json --output-dir .eval_enterprise_agent --parallel-workers 8 --json
-kujo run main.kujo run examples/strict_enterprise_policy_gate.json --output-dir .eval_enterprise_strict --json
-kujo run main.kujo run examples/sandbox_adjacent_policy_gate.json --output-dir .eval_sandbox_adjacent --json
-
-# Emit machine summary channel to an explicit path for automation
-kujo run main.kujo run examples/release_gate_suite.json --output-dir .eval_quickstart --summary-channel-path .eval_quickstart/run-channel.json --json
-
-# Generate report artifacts (md/html/junit/tap/ndjson)
-kujo run main.kujo report --format html
-kujo run main.kujo report --format junit
-kujo run main.kujo report --format tap
-
-# Re-run and report explicit suite using isolated output directory
-kujo run main.kujo report examples/release_gate_suite.json --rerun --output-dir .eval_quickstart --json
-
-# Emit report machine summary channel to an explicit path
-kujo run main.kujo report examples/release_gate_suite.json --rerun --output-dir .eval_quickstart --summary-channel-path .eval_quickstart/report-channel.json --json
-
-# Enable manifest checksums and verify artifact integrity
-kujo run main.kujo run examples/release_gate_suite.json --output-dir .eval_quickstart --artifact-checksums --json
-kujo run main.kujo verify-manifest --output-dir .eval_quickstart --json
-
-# List available check types
-kujo run main.kujo list-checks
-
-# Print contract version
-kujo run main.kujo version
-
-# Explain effective policy overlays
-kujo run main.kujo policy-explain examples/release_gate_suite.json --policy-stage release --json
+kujo run --interpreter dispatch.kujo demo "How do AI agent workflows differ from chatbots?" --yes
 ```
 
-`init` scaffolds a starter suite; edit the generated file before you rely on `validate` or `run`.
+## Configuration
 
-## Enterprise Quickstart Matrix (Risk Tiers)
+Dispatch reads the following environment variables:
 
-| Risk Tier | Best Fit | Command |
-|---|---|---|
-| Tier 1 (Local dev, low risk) | Fast feedback while iterating on checks and fixtures | `kujo run main.kujo run examples/enterprise_cli_quality_gate.json --output-dir .eval_enterprise_cli --json` |
-| Tier 2 (CI gate, medium risk) | Contract + payload validation in pull requests | `kujo run main.kujo run examples/enterprise_api_contract_gate.json --output-dir .eval_enterprise_api --parallel-workers 8 --json` |
-| Tier 3 (Release gate, high risk) | Policy-first release verification with strict controls | `kujo run main.kujo run examples/strict_enterprise_policy_gate.json --output-dir .eval_enterprise_strict --json` |
-| Tier 3 + constrained sandbox-adjacent workflows | Fixture-only policy boundaries for local security testing | `kujo run main.kujo run examples/sandbox_adjacent_policy_gate.json --output-dir .eval_sandbox_adjacent --json` |
-
-Policy visibility and command inventory for onboarding:
-
-```bash
-kujo run main.kujo policy-explain examples/release_gate_suite.json --policy-stage release --json
-bash scripts/generate_command_inventory.sh --check
-```
-
-## Repository Status (Validated Commands)
-
-Validated on 2026-05-25 with:
-
-```bash
-export KUJO_BIN=./kujo
-```
-
-| Command | Exit | Expected Output Signal |
-|---|---:|---|
-| `$KUJO_BIN run main.kujo version` | 0 | Prints `Evalv2.0.0` and `Contract version: 2.0.0` |
-| `$KUJO_BIN run main.kujo list-checks` | 0 | Prints available check list and `Total: 27 check types` |
-| `$KUJO_BIN run main.kujo snapshots` | 0 | Prints snapshot listing output (or empty listing message) |
-| `$KUJO_BIN run main.kujo diff README.md README.md` | 0 | Reports no differences for identical files |
-| `$KUJO_BIN run main.kujo run examples/release_gate_suite.json --output-dir .eval_status --json` | 0 | JSON result envelope includes `"ok":true` |
-| `$KUJO_BIN run main.kujo run examples/release_gate_suite.json --output-dir .eval_status --summary-only` | 0 | Prints compact summary and overwrites prior run artifacts safely |
-| `$KUJO_BIN run main.kujo report examples/release_gate_suite.json --rerun --output-dir .eval_status --json` | 0 | JSON result envelope includes `"ok":true` |
-| `$KUJO_BIN run main.kujo report examples/release_gate_suite.json --rerun --output-dir .eval_status --format junit` | 0 | Generates `.eval_status/eval-report.xml` |
-| `$KUJO_BIN run main.kujo report examples/release_gate_suite.json --rerun --output-dir .eval_status --format tap` | 0 | Generates `.eval_status/eval-report.tap` |
-| `$KUJO_BIN test` | 0 | Test suite runner reports all configured test files passing |
-| `$KUJO_BIN test --runtime interpreter` | non-zero | Interpreter mode is informational here and currently emits runtime warnings |
-
-## Check Types
-
-### Command Checks
-
-| Check | Description |
-|-------|-------------|
-| `command_succeeds` | Run a shell command, assert exit code 0 |
-| `command_fails` | Run a shell command, assert non-zero exit code |
-| `exit_code_equals` | Run a command, assert specific exit code |
-
-### Output Checks
-
-| Check | Description |
-|-------|-------------|
-| `output_contains` | Run command, assert stdout contains substring |
-| `output_does_not_contain` | Run command, assert stdout does NOT contain substring |
-| `output_matches_glob` | Run command, assert stdout matches glob/substring pattern |
-
-### File Checks
-
-| Check | Description |
-|-------|-------------|
-| `file_exists` | Assert a file path exists |
-| `file_does_not_exist` | Assert a file path does NOT exist |
-| `file_contains` | Assert file content contains a substring |
-| `file_does_not_contain` | Assert file content does NOT contain a substring |
-| `file_matches_glob` | Assert file content matches glob/substring pattern |
-| `file_size_greater_than` | Assert file size exceeds a byte threshold |
-| `file_size_less_than` | Assert file size is under a byte threshold |
-
-### Data Checks
-
-| Check | Description |
-|-------|-------------|
-| `json_matches_shape` | Assert JSON has expected keys |
-| `json_value_equals` | Assert a specific JSON path has an expected value |
-| `stdout_json_matches_shape` | Run command, parse stdout as JSON, validate shape |
-| `snapshot_matches` | Compare output against a stored snapshot |
-| `directory_diff` | Compare two directories and report differences |
-
-### Environment & Network Checks
-
-| Check | Description |
-|-------|-------------|
-| `env_var_equals` | Assert an environment variable has a specific value |
-| `http_status` | Assert an HTTP endpoint returns expected status code |
-
-## Eval Suite Format
-
-Create an `eval.json` file:
-
-```json
-{
-  "name": "my-agent-eval",
-  "description": "Tests for the auth agent workflow",
-  "version": "1.0.0",
-  "output_dir": "./eval_results",
-  "snapshot_dir": "./snapshots",
-  "stop_on_failure": false,
-  "tests": [
-    {
-      "name": "auth command succeeds",
-      "description": "The auth CLI should exit cleanly",
-      "check": "command_succeeds",
-      "params": {
-        "command": "kujo run auth.kujo login --user test"
-      }
-    },
-    {
-      "name": "output file exists",
-      "description": "Auth should produce a token file",
-      "check": "file_exists",
-      "params": {
-        "path": "./output/token.json"
-      }
-    },
-    {
-      "name": "token JSON has required keys",
-      "check": "json_matches_shape",
-      "params": {
-        "path": "./output/token.json",
-        "required_keys": ["access_token", "refresh_token", "expires_in"]
-      }
-    },
-    {
-      "name": "output contains success message",
-      "check": "output_contains",
-      "params": {
-        "command": "kujo run auth.kujo login --user test",
-        "expected": "Login successful"
-      }
-    }
-  ]
-}
-```
-
-## Policy Profiles And Retention
-
-Top-level optional controls for enterprise rollout:
-
-| Field | Type | Default | Purpose |
+| Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `policy_profile` | string | `""` | Preset security/governance baseline (`strict-ci`, `local-dev`, `release-gate`) |
-| `policy_stage_overlays` | object | `{}` | Stage-specific policy overrides keyed by `local`, `ci`, `release` (selected with `--policy-stage`) |
-| `history_retention_runs` | int | `200` | Maximum entries retained in `history.json` |
-| `aux_artifact_retention_files` | int | `25` | Maximum retained auxiliary backup artifacts (`*.bak`) |
-| `artifact_checksums` | bool | `false` | Include SHA-256 checksums in `artifact-manifest.json` |
+| `KUJO_BIN` | No | `kujo` | Kujo executable used to invoke bridge calls |
+| `AI_SDK_PATH` | Yes (for live SDK integration) | `../ai-sdk` | Directory containing `ai_sdk.kujo` and `providers.kujo` |
+| `DISPATCH_SDK_BRIDGE_SCRIPT` | No | `<PWD>/bridge_chat.kujo` | Override bridge script path |
+| `DISPATCH_OFFLINE_FIXTURE` | No | `true` | Enables fixture-mode model calls by default for the verified local/offline path |
+| `DISPATCH_ALLOW_ANY_SOURCES_DIR` | No | `false` | Allows non-default `--sources-dir` paths when explicitly set to `true` |
+| `DISPATCH_ALLOW_ANY_OUTPUT_ROOT` | No | `false` | Allows unconstrained `--output-root` paths (absolute and broader targets) when explicitly set to `true` |
+| `DISPATCH_ALLOW_ANY_CONFIG_PATH` | No | `false` | Allows absolute or otherwise unrestricted `--config` paths when explicitly set to `true` |
+| `DISPATCH_CONFIG_MAX_BYTES` | No | `262144` | Maximum config file size in bytes accepted by `--config` |
+| `DISPATCH_ALLOWED_TOOLS` | No | empty | Comma-separated allowlist of tool names permitted during tool steps |
+| `DISPATCH_DENIED_TOOLS` | No | empty | Comma-separated denylist of tool names blocked during tool steps |
+| `DISPATCH_POLICY_PROFILE` | No | empty | Named policy profile alias (`dev`, `development`, `staging`, `prod`, `production`) applied before explicit allow/deny overrides |
+| `DISPATCH_BUNDLE_SIGNING_KEY` | No | empty | Shared signing key used by `export-run --sign-bundle` and `import-run --verify-bundle-signature` |
+| `DISPATCH_STRICT_MUTATION_MODE` | No | `false` | When `true`, destructive commands require explicit confirmation |
+| `DISPATCH_MUTATION_CONFIRM` | No | `false` | Global mutation confirmation guard used with strict mutation mode |
+| `DISPATCH_MUTATION_AUDIT_MAX_BYTES` | No | `1048576` | Maximum active audit log size before rolling to a backup file |
+| `DISPATCH_MUTATION_AUDIT_MAX_BACKUPS` | No | `5` | Maximum rotating backup slots used for `dispatch-mutations.<slot>.jsonl` |
+| `DISPATCH_MUTATION_AUDIT_ROTATE_DAILY` | No | `false` | Enables daily rollover for mutation audit logs |
+| `DISPATCH_TRACE_MAX_EVENTS` | No | `400` | Global default maximum number of trace events retained per run |
+| `DISPATCH_TRACE_MAX_PAYLOAD_CHARS` | No | `2400` | Global default maximum payload characters retained per trace event |
+| `DISPATCH_SDK_DEBUG_OUTPUT` | No | `false` | Includes raw bridge stdout/stderr in parse-error details when set to `true` |
 
-Run/report outputs now include:
+By default, Dispatch only allows fixture sources under `examples/research-report/sources` for demo/resume runs.
 
-- `summary.json`: compact deterministic run summary for dashboards/status collectors
-- `artifact-manifest.json`: deterministic file index for CI artifact discovery
-- `cli-summary.json`: stable machine handoff channel for run/report command outcomes
+By default, Dispatch also restricts `--output-root` to safe relative directories and blocks absolute/traversal-like paths unless `DISPATCH_ALLOW_ANY_OUTPUT_ROOT=true` is set explicitly.
 
-When checksum mode is enabled (`artifact_checksums: true` or `--artifact-checksums`), `artifact-manifest.json` also includes a `checksums` block with SHA-256 digests. Validate it with:
+By default, Dispatch restricts `--config` to safe relative paths and enforces a maximum config size to reduce risky local path and oversized input scenarios.
 
-```bash
-kujo run main.kujo verify-manifest --output-dir ./eval_results --json
-```
-
-## Snapshot Testing
-
-Snapshots store expected output so you can detect regressions:
-
-```json
-{
-  "name": "snapshot test",
-  "check": "snapshot_matches",
-  "params": {
-    "name": "my-cli-help",
-    "command": "my-tool --help",
-    "snapshot_dir": "./snapshots"
-  }
-}
-```
-
-First run with `--update-snapshots` to create the baseline:
+## CLI Reference
 
 ```bash
-kujo run main.kujo run --update-snapshots
+kujo run --interpreter dispatch.kujo demo "Research topic" [--config config.json] [--workflow research-report] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs] [--allow-tools timestamp_tool,citation_formatter] [--deny-tools flaky_reliability_tool] [--trace-max-events 400] [--trace-max-payload-chars 2400]
+kujo run --interpreter dispatch.kujo show <run-id> [--output-root outputs] [--json]
+kujo run --interpreter dispatch.kujo inspect <run-id> [--output-root outputs] [--json]
+kujo run --interpreter dispatch.kujo resume <run-id> [--config config.json] [--workflow research-report] [--policy-profile staging] [--yes] [--non-interactive] [--output-root outputs] [--allow-tools timestamp_tool,citation_formatter] [--deny-tools flaky_reliability_tool] [--trace-max-events 400] [--trace-max-payload-chars 2400]
+kujo run --interpreter dispatch.kujo templates [--json]
+kujo run --interpreter dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]
+kujo run --interpreter dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]
+kujo run --interpreter dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]
+kujo run --interpreter dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]
+kujo run --interpreter dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]
 ```
 
-Subsequent runs will compare against the stored snapshot and fail if output changes.
+When strict mutation mode is enabled (`--strict-mutations` or `DISPATCH_STRICT_MUTATION_MODE=true`), `doctor --write`, `cleanup --apply`, and `import-run` are blocked unless `--confirm-mutation` is present or `DISPATCH_MUTATION_CONFIRM=true` is set.
 
-## Comparison
+`doctor` supports incremental scope via `--run-ids` (explicit run selection) and `--recent-count` (most recently updated runs only), which helps reduce scan latency on large catalogs.
 
-Compare two eval runs to detect regressions or improvements:
+`show --json`, `inspect --json`, and `doctor --json` emit consistent machine-readable envelopes with shared metadata keys (`command`, `ok`, and `output_root`) plus command-specific payload data.
+
+`runs --json --diagnostics` includes index diagnostics metadata such as `index_fallback_count` and `index_rebuild_count` to surface catalog/index health quickly.
+
+`demo --tags` stores normalized per-run metadata labels and `runs --tags` filters to runs that include all requested tags.
+
+Dispatch is template-driven: `demo` and `resume` select workflows by template ID through `--workflow <template-id>`. Direct Spec-file ingestion is not part of the verified command surface in this repository.
+
+Dispatch currently supports `help` and `--help`. `version` and `--version` are not implemented and return `Unknown command`.
+
+## Common Usage Flows
+
+### 1. Run a workflow interactively
 
 ```bash
-kujo run main.kujo compare ./eval_results/run-v1.json ./eval_results/run-v2.json
+kujo run --interpreter dispatch.kujo demo "How do AI workflows improve reliability?"
 ```
 
-## CI Integration
-
-Eval exits with code 1 on any test failure, making it CI-ready:
-
-```yaml
-- name: Run eval suite
-  run: kujo run main.kujo run --json
-```
-
-Use `--json` for machine-readable output in CI pipelines.
-
-## CLI Exit Code Contract
-
-Evalcurrently uses explicit process exit classes:
-
-| Exit Code | Class | Meaning |
-|---:|---|---|
-| `0` | Success | Command completed successfully (for `run`, all assertions passed). |
-| `1` | Assertion failure | At least one eval assertion failed during `run`. |
-| `1` | Usage/config/runtime error | Invalid command usage, missing/invalid config, or command execution error. |
-
-Practical CI guidance:
-
-1. Treat any non-zero exit as a hard failure gate.
-2. Parse `--json` envelopes to distinguish assertion failures from usage/config/runtime failures.
-3. Use JUnit/TAP artifacts for external dashboards where required.
-
-## Command Reference
-
-| Command | Description |
-|---------|-------------|
-| `init` | Create an eval suite file (`--name <name>`) |
-| `run` | Execute all tests in a suite (`--filter`, `--exclude`, `--tags`, `--only-failed`, `--quiet`, `--summary-only`, `--verbose`, `--json`) |
-| `report` | Generate a report from cached results (`--rerun`, `--format <md\|html\|junit\|tap\|ndjson>`, `--json`) |
-| `compare` | Compare two eval run result files |
-| `list-checks` | List all 27 available check types |
-| `snapshots` | List stored snapshots (`--snapshot-dir <dir>`) |
-| `version` | Print eval contract version (currently v2.0.0) |
-| `watch` | Watch config file and re-run on changes |
-| `lint` | Validate eval config without executing tests |
-| `policy-explain` | Print effective merged command/path/env policy for a given stage |
-| `diff` | Compare two files line-by-line |
-| `export` | Export an eval suite as a shell script |
-| `verify-manifest` | Verify artifact-manifest checksum entries against current files |
-| `completion` | Generate shell completion script (`--shell bash\|zsh\|fish`) |
-
-**Common flags**: `--json` (machine output), `--config <path>`, `--output-dir <dir>`, `--update-snapshots`, `--format <md|html|junit|tap|ndjson>`, `--quiet`, `--summary-only`, `--verbose`
-
-Generated command inventory: [`docs/COMMAND_INVENTORY.md`](docs/COMMAND_INVENTORY.md) (validated via `bash scripts/generate_command_inventory.sh --check`).
-
-## Flaky Test Retry
-
-Add a `"retry"` field to any test definition to automatically retry on failure:
-
-```json
-{
-  "name": "flaky network check",
-  "check": "http_status",
-  "params": { "url": "https://api.example.com/health" },
-  "retry": 2
-}
-```
-
-The test will run up to 3 times (1 initial + 2 retries) and pass if any attempt succeeds.
-
-## Contract Version
-
-Eval uses a `describe_module()` function for runtime contract discovery. Call it from any Kujo script:
+### 2. Run non-interactive and pause at approval
 
 ```bash
-kujo run main.kujo version
-# Evalv2.0.0
-# Contract version: 2.0.0
+kujo run --interpreter dispatch.kujo demo "How do AI workflows improve reliability?" --non-interactive
 ```
 
-The result envelope contract (`{ok, error, data}`) is stable since v2.0.0 and used consistently across all source modules.
+### 3. Resume a paused run
 
-## Roadmap
+```bash
+kujo run --interpreter dispatch.kujo resume <run-id> --yes
+```
 
-See [`docs/enhancement-roadmap.md`](docs/enhancement-roadmap.md) for the full prioritized roadmap. **All 37 of 37 items complete** 🎉
+### 4. Inspect runs and diagnostics
 
-**Completed**:
-- [x] 27 check types (command, file, output, JSON, snapshot, diff, glob, HTTP, env, file size)
-- [x] Markdown, JUnit XML, TAP, and HTML report formats
-- [x] Snapshot testing with unified diff output
-- [x] Run comparison (regression/improvement detection)
-- [x] CI-ready exit codes and JSON output
-- [x] Suite initialization (`eval init`) with scaffolding
-- [x] Test filtering (`--filter`, `--exclude`, `--tags`, `--skip-tags`, `--only-failed`)
-- [x] Before/after hooks (setup, teardown, before_each, after_each)
-- [x] Progress output (`[PASS]`/`[FAIL]` per test)
-- [x] Cached results (`last_run.json`) for report generation, `--rerun` support
-- [x] Security hardening (command allowlisting, path boundaries, output redaction, config limits)
-- [x] Shared utility module (`src/common.kujo`), CLI extraction (`src/cli.kujo`)
-- [x] Architecture, contributing, and security documentation
-- [x] CLI integration tests, security regression tests, edge case tests
-- [x] Release quality gates, supply-chain policy checks, compatibility matrix CI
-- [x] Kujo runtime version pinning (`RUNTIME_VERSION`)
-- [x] Standardized result envelope (`{ok, error, data}`) across all modules (contract v2.0.0)
-- [x] HTML report with collapsible failure details and summary cards
-- [x] Timeout enforcement documented (pending Kujo runtime support — see `src/checks.kujo`)
-- [x] `--quiet` and `--verbose` flags for CI and debugging workflows
-- [x] Real timing (`duration_ms`) recorded for every suite run
-- [x] Flaky test retry support (`"retry": N` in test definitions)
-- [x] `describe_module()` contract discovery function
-- [x] Enhanced security patterns (nc, telnet, eval, subshell injection)
-- [x] Token/API key redaction expanded
+```bash
+kujo run --interpreter dispatch.kujo runs --json
+kujo run --interpreter dispatch.kujo runs --tags env:prod,project:dispatch --json
+kujo run --interpreter dispatch.kujo inspect <run-id> --json
+kujo run --interpreter dispatch.kujo doctor --json
+```
 
-**Future**:
-- [ ] LLM-as-judge evaluations
-- [ ] Agent replay evaluation
-- [ ] Workflow-level evals
-- [ ] Model comparison scoring
-- [ ] Cost and latency scoring
-- [ ] Scout-assisted eval generation
-- [ ] Distributed suite execution across workers/runners
+### 4b. Persist doctor repairs to state
+
+```bash
+kujo run --interpreter dispatch.kujo doctor --write
+```
+
+### 5. Run the CRUD reliability template
+
+```bash
+kujo run --interpreter dispatch.kujo demo "Orders API reliability" --workflow crud-reliability --yes
+```
+
+### 6. Use config-file driven runs with CLI precedence
+
+```bash
+kujo run --interpreter dispatch.kujo demo --config ./dispatch-config.json --decision approve
+```
+
+### 3b. Inspect available workflow templates
+
+```bash
+kujo run --interpreter dispatch.kujo templates
+kujo run --interpreter dispatch.kujo templates --json
+```
+
+### 6b. Enforce tool authorization policy from CLI
+
+```bash
+kujo run --interpreter dispatch.kujo demo "Policy constrained run" --yes --allow-tools timestamp_tool,citation_formatter --deny-tools flaky_reliability_tool
+```
+
+### 7. Export and import run bundles
+
+```bash
+kujo run --interpreter dispatch.kujo export-run <run-id> --bundle-path bundles/run.json --sign-bundle
+kujo run --interpreter dispatch.kujo import-run --bundle-path bundles/run.json --output-root outputs-imported --verify-bundle-signature
+```
+
+When signature mode is enabled, Dispatch writes `signature` metadata into the bundle and verifies it during import. Verification failures return deterministic `invalid_bundle_signature` errors.
+
+`--signing-key` can be passed directly, but using `DISPATCH_BUNDLE_SIGNING_KEY` is recommended for non-interactive and managed environments.
+
+## Demo Workflow Included
+
+Built-in workflow templates:
+
+- `research-report`: General evidence-backed research report workflow
+- `crud-reliability`: CRUD API reliability review focused on contract checks, migration safety, auth checks, and error-budget notes
+
+The baseline execution lifecycle demonstrates:
+
+1. Planning
+2. Source gathering
+3. Retry probe
+4. Claim extraction
+5. Verification
+6. Handoff to writer
+7. Human approval gate
+8. Report generation
+9. Finalization and artifact write-out
+
+## Output Artifacts
+
+Each run is written to:
+
+```text
+outputs/<run-id>/
+```
+
+Artifacts:
+
+- `state.json`: full run state snapshot
+- `trace.json`: structured execution trace
+- `trace.md`: human-readable trace timeline
+- `report.md`: human-readable report
+- `report.json`: machine-readable report payload
+- `dispatch-mutations.jsonl`: active mutation/policy audit log for `doctor --write`, `cleanup --apply`, bundle imports, and policy-denied tool attempts
+- `dispatch-mutations.<slot>.jsonl`: rotated mutation audit backups controlled by `DISPATCH_MUTATION_AUDIT_MAX_BYTES` and `DISPATCH_MUTATION_AUDIT_MAX_BACKUPS`
+- `.dispatch-run-index.json`: run metadata index used for faster run listing/filtering
+
+Contract metadata is embedded in persisted machine-readable artifacts: `state.json`, `trace.json`, and `report.json` include `artifact_contract_version`, `schema_name`, and `schema_version` fields to support schema-aware integrations and forward-compatible readers.
+
+Dispatch redacts sensitive fields (for example keys containing `api_key`, `token`, `authorization`, `secret`, `password`) before writing persisted artifacts.
+
+Policy-denied tool execution attempts are recorded in trace events (`policy_denied`) and mutation audit entries (`operation=policy_deny`) including run and command context.
+
+Tool policy can be sourced from a reusable profile alias (`--policy-profile`, `policy_profile`, `DISPATCH_POLICY_PROFILE`) plus explicit allow/deny controls. Explicit `allow_tools` and `deny_tools` override profile defaults when provided. CLI flags take precedence over config and environment values.
+
+Built-in policy profile aliases:
+
+- `dev` / `development`: no allow/deny restrictions (open profile)
+- `staging`: deny `flaky_reliability_tool`
+- `prod` / `production`: allow `mock_web_search`, `local_source_lookup`, `claim_extraction`, `citation_formatter`, `markdown_report_writer`, `timestamp_tool`; deny `flaky_reliability_tool`
+
+## Testing
+
+```bash
+kujo test-run tests/dispatch_tests.kujo
+```
+
+## CI Gate
+
+Repository CI is enforced by GitHub Actions in `.github/workflows/ci-gate.yml`.
+
+The gate builds Kujo from `kujolang/kujo`, exports `KUJO_BIN` for test child processes, and runs:
+
+```bash
+$KUJO_BIN test-run tests/sdk_adapter_tests.kujo -v
+$KUJO_BIN test-run tests/policy_precedence_tests.kujo -v
+$KUJO_BIN test-run tests/dispatch_tests.kujo -v
+```
+
+Equivalent local validation:
+
+```bash
+export KUJO_BIN=/path/to/kujo/target/debug/kujo
+export DISPATCH_OFFLINE_FIXTURE=true
+
+$KUJO_BIN test-run tests/sdk_adapter_tests.kujo -v
+$KUJO_BIN test-run tests/policy_precedence_tests.kujo -v
+$KUJO_BIN test-run tests/dispatch_tests.kujo -v
+```
+
+## Improvement Checklist
+
+Track prioritized hardening, architecture cleanup, extensibility work, and testing backlog in:
+
+- `docs/dispatch-next-session-checklist-v2.md`
+
+`docs/dispatch-next-session-checklist-v2.md` is now complete and serves as an implementation audit trail for enterprise hardening milestones.
+
+`docs/dispatch-next-session-checklist.md` is kept as historical context from the earlier backlog phase.
+
+## Release Process
+
+Release governance artifacts:
+
+- `CHANGELOG.md`: changelog format and versioning policy.
+- `docs/release-checklist.md`: step-by-step release gate and tagging checklist.
+
+Release versions are sourced from `kennel.toml` (`[package].version`) and should be updated together with the corresponding changelog release section.
+
+For v1.0 pre-release walkthroughs, prefer the repository-root invocation pattern to avoid shell cwd drift:
+
+```bash
+pushd "$(git rev-parse --show-toplevel)"
+export KUJO_BIN=/path/to/kujo
+export DISPATCH_OFFLINE_FIXTURE=true
+
+$KUJO_BIN test-run tests/sdk_adapter_tests.kujo -v
+$KUJO_BIN test-run tests/policy_precedence_tests.kujo -v
+$KUJO_BIN test-run tests/dispatch_tests.kujo -v
+popd
+```
+
+## Enterprise Deployment Guide
+
+For production assumptions, hardening controls, monitoring expectations, upgrade strategy, and non-goals, see:
+
+- `docs/enterprise-deployment.md`
+
+Enterprise quickstart profile examples (copy-paste defaults):
+
+```bash
+# Development
+export DISPATCH_POLICY_PROFILE=development
+export DISPATCH_STRICT_MUTATION_MODE=false
+kujo run --interpreter dispatch.kujo demo "Development profile smoke" --policy-profile development --yes --non-interactive --decision approve --output-root tests/tmp/profile-dev-outputs
+
+# Staging
+export DISPATCH_POLICY_PROFILE=staging
+export DISPATCH_STRICT_MUTATION_MODE=true
+export DISPATCH_MUTATION_CONFIRM=false
+kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/profile-staging-outputs --json --diagnostics
+
+# Production
+export DISPATCH_POLICY_PROFILE=production
+export DISPATCH_STRICT_MUTATION_MODE=true
+export DISPATCH_MUTATION_CONFIRM=true
+kujo run --interpreter dispatch.kujo doctor --output-root tests/tmp/profile-prod-outputs --strict-mutations --confirm-mutation
+```
+
+For environment hardening rationale and rollout policy, use the full deployment guide in `docs/enterprise-deployment.md`.
+
+## Extension Guide
+
+Dispatch is designed to be extended safely and incrementally:
+
+- Add new workflow templates in `src/workflows/workflow.kujo`
+- Add new tools in `src/tools/tool.kujo` with per-tool payload adapters instead of runner-specific branching
+- Register project-specific plugins via `src/core/plugins.kujo` to inject tools and agents without core edits
+- Extend decision policies in `src/core/approval.kujo` and `src/core/retry.kujo`
+- Add reporting outputs in `src/core/report.kujo`
+- Integrate observability sinks from trace events
+
+## Troubleshooting
+
+### AI SDK not found
+
+Set `AI_SDK_PATH` to a directory that contains both `ai_sdk.kujo` and `providers.kujo`.
+
+### Bridge execution errors
+
+- Verify `KUJO_BIN` points to a valid Kujo binary.
+- Verify `DISPATCH_SDK_BRIDGE_SCRIPT` (if set) points to a valid file.
+- Run with `--interpreter` during development.
+- Bridge parse failures redact raw stdout/stderr by default; set `DISPATCH_SDK_DEBUG_OUTPUT=true` only for local debugging.
+
+### Sources validation errors in demo mode
+
+Ensure your sources directory exists and includes markdown fixtures (`.md` files).
+
+If you intentionally need a different sources directory, set `DISPATCH_ALLOW_ANY_SOURCES_DIR=true` explicitly.
+
+### RUFRUN undefined-function warnings
+
+Some Kujo interpreter runs can emit `RUFRUN001` warnings while still executing correctly. Treat command exit status and functional output as the primary success signal.
 
 ## Repository Layout
 
-- `main.kujo`: CLI entry point and command dispatcher for the full command surface
-- `src/common.kujo`: Shared utilities (`dict_get_or`, `normalize_*`, `make_check_*`)
-- `src/cli.kujo`: CLI argument parsing and help text
-- `src/config.kujo`: Configuration loading, validation, and KNOWN_CHECKS
-- `src/checks.kujo`: All 27 check implementations + security validators
-- `src/eval_core.kujo`: Core eval engine, suite runner, compare_runs
-- `src/report.kujo`: Markdown, HTML, JUnit XML, TAP, and NDJSON report generation
-- `src/snapshot.kujo`: Snapshot management (save, compare, diff, list, delete)
-- `tests/`: 7 test suites — contract, security, CLI integration, coverage, benchmark, quality, stress
-- `examples/`: Example eval suites (basic, release-gate, self-check, snapshot)
-- `schema/eval-suite.schema.json`: JSON Schema for VSCode autocomplete + validation
-- `docs/`: Architecture, contributing, security, agent notes, ecosystem integration, roadmaps
-- `docs/CONTRIBUTING.md`: Contributing guide and code conventions
-- `docs/SECURITY.md`: Security model, known limitations, reporting
-- `docs/agent-notes.md`: Kujo runtime quirks and lessons learned
-- `docs/release-candidate-runbook.md`: Human runbook for pre-tag release validation
-- `RUNTIME_VERSION`: Pinned Kujo runtime commit hash for reproducible CI
-
-### Root Layout Notes
-
-- `main.kujo` intentionally stays at the repository root as the CLI entrypoint referenced by docs, scripts, and CI.
-- `CONTRIBUTING.md` and `SECURITY.md` at root are lightweight pointers for enterprise discoverability; canonical content remains in `docs/`.
-- Functional implementation modules remain under `src/`; root files are only packaging, entrypoint, policy, and governance artifacts.
-- `tests/*.out` files are treated as runtime artifacts and intentionally remain untracked.
-
-## License
-
-MIT
+```text
+dispatch/
+  README.md
+  src/
+    cli/
+      cli_args.kujo
+    workflows/
+      workflow.kujo
+    agents/
+      agent.kujo
+    tools/
+      tool.kujo
+    core/
+      approval.kujo
+      decision.kujo
+      handoff.kujo
+      hooks.kujo
+      plugins.kujo
+      report.kujo
+      retry.kujo
+      runner.kujo
+      state.kujo
+      step.kujo
+      trace.kujo
+  dispatch.kujo
+  tools/
+    source_lookup.kujo
+    content_processing.kujo
+    reliability_tools.kujo
+  sdk_adapter.kujo
+  bridge_chat.kujo
+  examples/
+    research-report/
+      sources/
+  outputs/
+  tests/
+    dispatch_tests.kujo
+```

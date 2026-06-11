@@ -1,0 +1,2654 @@
+test_setup {
+	from src.workflows.workflow import create_research_report_workflow, create_workflow_by_template, create_workflow, list_workflow_templates
+	from src.tools.tool import register_default_tools, call_tool, create_tool_registry, create_tool, register_tool, build_tool_payload
+	from src.core.retry import run_with_retry, compute_delay
+	from src.core.approval import create_approval_request, resolve_approval
+	from src.core.decision import normalize_decision
+	from src.cli.cli_args import parse_cli_args, parsed_has_flag, parsed_flag_value
+	from src.core.handoff import create_handoff
+	from src.core.state import create_run_state, load_run_state, list_runs, list_runs_with_diagnostics, summarize_run, detect_run_issues, repair_run_state, persist_run_state, filter_runs, paginate_runs, build_run_catalog, prune_runs, doctor_runs, normalize_output_root, mutation_audit_path, append_mutation_audit_record, export_run_bundle, import_run_bundle
+	from src.core.trace import create_trace, append_trace, finalize_trace, collect_event_type_counts, render_trace_markdown, apply_trace_limits
+	from src.core.report import build_report_payload, render_markdown_report, write_report_artifacts
+	from src.core.runner import run_workflow
+	from src.agents.agent import run_agent
+	from src.core.plugins import create_plugin, create_plugin_registry, register_plugin, apply_plugins_to_runtime
+	from src.core.step import create_step
+	from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_policy, build_tool_authorization_policy_with_profile
+	from tools.source_lookup import mock_web_search_handler, canonicalize_path, path_is_within_root
+	from src.core.utils import dict_get_or
+}
+
+test "workflow creation includes required sections" {
+	workflow := create_research_report_workflow("Agent reliability", true)
+	assert_equal(workflow["name"], "Research Report Workflow")
+	assert_equal(has_key(workflow, "input_schema"), 1)
+	assert_equal(has_key(workflow, "agents"), 1)
+	assert_true(len(workflow["steps"]) >= 8)
+	assert_equal(has_key(workflow, "default_retry_policy"), 1)
+	assert_equal(has_key(workflow, "output_schema"), 1)
+}
+
+test "workflow template selection supports known and unknown IDs" {
+	selected := create_workflow_by_template("research-report", "Template topic", true)
+	assert_true(selected["ok"])
+	assert_equal(selected["workflow"]["name"], "Research Report Workflow")
+
+	crud_selected := create_workflow_by_template("crud-reliability", "Template topic", true)
+	assert_true(crud_selected["ok"])
+	assert_equal(crud_selected["workflow"]["name"], "CRUD Reliability Workflow")
+
+	missing := create_workflow_by_template("unknown-template", "Template topic", true)
+	assert_false(missing["ok"])
+	assert_equal(missing["error"]["code"], "missing_workflow")
+}
+
+test "workflow template introspection exposes summary metadata" {
+	templates := list_workflow_templates()
+	assert_true(len(templates) >= 2)
+	research_found := false
+	crud_found := false
+	for template in templates {
+		template_id := dict_get_or(template, "template_id", "")
+		if template_id == "research-report" {
+			research_found = true
+		}
+		if template_id == "crud-reliability" {
+			crud_found = true
+		}
+		assert_true(dict_get_or(template, "step_count", 0) > 0)
+		assert_true(dict_get_or(template, "tool_count", 0) > 0)
+		assert_true(has_key(template, "tools") == 1)
+	}
+	assert_true(research_found)
+	assert_true(crud_found)
+}
+
+test "templates command supports text and json output" {
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+	text_result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"templates"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_true(text_result.success)
+	text_output := to_string(text_result.stdout)
+	assert_equal(contains(text_output, "research-report"), 1)
+	assert_equal(contains(text_output, "crud-reliability"), 1)
+
+	json_result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"templates",
+		"--json"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_true(json_result.success)
+	parsed := parse_json(to_string(json_result.stdout))
+	assert_true(has_key(parsed, "templates") == 1)
+	assert_true(len(dict_get_or(parsed, "templates", [])) >= 2)
+}
+
+test "crud reliability workflow template runs with fixture tools" {
+	selected := create_workflow_by_template("crud-reliability", "Orders API reliability", true)
+	assert_true(selected["ok"])
+	workflow := selected["workflow"]
+	run_state := create_run_state(workflow, {"topic": "Orders API reliability"}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	tool_registry := register_default_tools("examples/research-report/sources")
+	result := run_workflow(workflow, run_state, tool_registry, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	assert_true(result["ok"])
+	assert_equal(result["run_state"]["status"], "completed")
+	assert_equal(result["run_state"]["workflow_name"], "CRUD Reliability Workflow")
+}
+
+test "tool registry registers and executes tools" {
+	registry := register_default_tools("examples/research-report/sources")
+	assert_equal(has_key(registry, "mock_web_search"), 1)
+	search_result := call_tool(registry, "mock_web_search", {"query": "workflow approvals"}, {
+		"run_id": "test-run-1",
+		"input": {"topic": "workflow approvals"},
+		"sources_dir": "examples/research-report/sources"
+	})
+	assert_true(search_result["ok"])
+	assert_true(len(search_result["data"]["results"]) > 0)
+}
+
+test "module-level source tool handler returns search results" {
+	result := mock_web_search_handler({"query": "workflow approvals"}, {
+		"run_id": "module-tool-test-1",
+		"input": {"topic": "workflow approvals"},
+		"sources_dir": "examples/research-report/sources"
+	})
+	assert_true(result["ok"])
+	assert_true(len(result["data"]["results"]) > 0)
+}
+
+test "tool payload adapters support custom mapping" {
+	registry := create_tool_registry()
+	registry := register_tool(registry, create_tool(
+		"custom_payload_tool",
+		"Maps step_input into a focused payload.",
+		{"type": "dict"},
+		{"type": "dict"},
+		func(input_payload, context) {
+			return {
+				"ok": true,
+				"data": input_payload
+			}
+		},
+		func(step_input) {
+			return {
+				"mapped_topic": dict_get_or(dict_get_or(step_input, "input", {}), "topic", "")
+			}
+		}
+	))
+	step_input := {
+		"input": {"topic": "Adapter topic"},
+		"extra": "ignored"
+	}
+	payload := build_tool_payload(registry, "custom_payload_tool", step_input)
+	assert_equal(payload["mapped_topic"], "Adapter topic")
+
+	result := call_tool(registry, "custom_payload_tool", payload, {
+		"run_id": "adapter-tool-run",
+		"input": {"topic": "Adapter topic"},
+		"sources_dir": "examples/research-report/sources"
+	})
+	assert_true(result["ok"])
+	assert_equal(result["data"]["mapped_topic"], "Adapter topic")
+}
+
+test "local source lookup blocks unsafe source ids" {
+	registry := register_default_tools("examples/research-report/sources")
+	context := {
+		"run_id": "test-run-sec-001",
+		"input": {"topic": "security"},
+		"sources_dir": "examples/research-report/sources"
+	}
+
+	allowed := call_tool(registry, "local_source_lookup", {"source_id": "source-1"}, context)
+	assert_true(allowed["ok"])
+
+	blocked_values := ["../secret", "..%2fsecret", "a/b", "/etc/passwd", "..\\secret"]
+	for blocked in blocked_values {
+		result := call_tool(registry, "local_source_lookup", {"source_id": blocked}, context)
+		assert_false(result["ok"])
+		assert_equal(result["error"]["code"], "invalid_source_id")
+	}
+}
+
+test "tool registry rejects invalid sources directories" {
+	invalid_registry := register_default_tools("../examples/research-report/sources")
+	invalid_search := call_tool(invalid_registry, "mock_web_search", {"query": "workflow approvals"}, {
+		"run_id": "test-run-sec-002",
+		"input": {"topic": "workflow approvals"},
+		"sources_dir": "../examples/research-report/sources"
+	})
+	assert_false(invalid_search["ok"])
+	assert_equal(invalid_search["error"]["code"], "invalid_sources_dir")
+
+	valid_registry := register_default_tools("examples/research-report/sources")
+	valid_search := call_tool(valid_registry, "mock_web_search", {"query": "workflow approvals"}, {
+		"run_id": "test-run-sec-002-valid",
+		"input": {"topic": "workflow approvals"},
+		"sources_dir": "examples/research-report/sources"
+	})
+	assert_true(valid_search["ok"])
+}
+
+test "retry behavior succeeds after transient failures" {
+	counter := {"value": 0}
+	policy := {
+		"max_attempts": 4,
+		"base_delay_ms": 0,
+		"max_delay_ms": 0,
+		"strategy": "linear",
+		"retry_on_codes": ["flaky_failure"]
+	}
+	result := run_with_retry("test-flaky", policy, func(attempt_number) {
+		counter["value"] := counter["value"] + 1
+		if counter["value"] < 3 {
+			return {
+				"ok": false,
+				"error": {
+					"code": "flaky_failure",
+					"message": "not yet",
+					"retryable": true
+				}
+			}
+		}
+		return {
+			"ok": true,
+			"data": {"done": true}
+		}
+	})
+	assert_true(result["ok"])
+	assert_equal(result["attempts"], 3)
+}
+
+test "retry delay supports deterministic jitter" {
+	policy := {
+		"base_delay_ms": 10,
+		"max_delay_ms": 100,
+		"strategy": "linear",
+		"jitter": "deterministic",
+		"jitter_ms": 5,
+		"jitter_seed": 7
+	}
+	delay0 := compute_delay(0, policy)
+	delay1 := compute_delay(1, policy)
+	delay2 := compute_delay(2, policy)
+	assert_equal(delay0, 11)
+	assert_equal(delay1, 22)
+	assert_equal(delay2, 33)
+}
+
+test "approval decision handling supports approve reject and pause" {
+	request := create_approval_request("approval_gate", "Need review", "Review verification output", {"claims": 3})
+	approved := resolve_approval(request, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	assert_true(approved["ok"])
+	assert_false(approved["paused"])
+	assert_equal(approved["approval"]["decision"], "approved")
+
+	request2 := create_approval_request("approval_gate", "Need review", "Review verification output", {"claims": 3})
+	rejected := resolve_approval(request2, {
+		"interactive": false,
+		"simulated_decision": "rejected",
+		"simulated_note": "Needs changes"
+	})
+	assert_true(rejected["ok"])
+	assert_equal(rejected["approval"]["decision"], "rejected")
+
+	request3 := create_approval_request("approval_gate", "Need review", "Review verification output", {"claims": 3})
+	paused := resolve_approval(request3, {
+		"interactive": false
+	})
+	assert_true(paused["ok"])
+	assert_true(paused["paused"])
+}
+
+test "approval rejects invalid simulated decision values" {
+	request := create_approval_request("approval_gate", "Need review", "Review verification output", {"claims": 3})
+	invalid := resolve_approval(request, {
+		"interactive": false,
+		"simulated_decision": "maybe"
+	})
+	assert_false(invalid["ok"])
+	assert_equal(invalid["error"]["code"], "invalid_approval_decision")
+}
+
+test "decision normalization matrix supports shared CLI and approval logic" {
+	approved_inputs := ["approve", "approved", "a", " APPROVE "]
+	for value in approved_inputs {
+		assert_equal(normalize_decision(value, "pending"), "approved")
+		assert_equal(normalize_decision(value, ""), "approved")
+	}
+
+	rejected_inputs := ["reject", "rejected", "r"]
+	for value in rejected_inputs {
+		assert_equal(normalize_decision(value, "pending"), "rejected")
+		assert_equal(normalize_decision(value, ""), "rejected")
+	}
+
+	change_inputs := ["changes", "request_changes", "c"]
+	for value in change_inputs {
+		assert_equal(normalize_decision(value, "pending"), "request_changes")
+		assert_equal(normalize_decision(value, ""), "request_changes")
+	}
+
+	assert_equal(normalize_decision("", "pending"), "pending")
+	assert_equal(normalize_decision("pending", "pending"), "pending")
+	assert_equal(normalize_decision("", ""), "")
+	assert_equal(normalize_decision("maybe", "pending"), "invalid")
+}
+
+test "cli args parser handles flags and positionals with schema" {
+	parsed := parse_cli_args([
+		"demo", "topic", "--yes", "--output-root", "tmp", "--decision", "approved"
+	], {
+		"flags": {
+			"--yes": {"takes_value": false, "default": false},
+			"--output-root": {"takes_value": true, "default": "outputs"},
+			"--decision": {"takes_value": true, "default": ""}
+		}
+	})
+	assert_true(parsed["ok"])
+	assert_true(parsed_has_flag(parsed, "--yes"))
+	assert_equal(parsed_flag_value(parsed, "--output-root", "outputs"), "tmp")
+	assert_equal(parsed_flag_value(parsed, "--decision", ""), "approved")
+	assert_equal(parsed["positionals"][0], "demo")
+	assert_equal(parsed["positionals"][1], "topic")
+}
+
+test "cli args parser returns missing value and unknown flag errors" {
+	missing_value := parse_cli_args(["--output-root"], {
+		"flags": {
+			"--output-root": {"takes_value": true, "default": "outputs"}
+		}
+	})
+	assert_false(missing_value["ok"])
+	assert_equal(missing_value["error"]["code"], "missing_flag_value")
+
+	unknown_flag := parse_cli_args(["--bogus"], {
+		"flags": {
+			"--output-root": {"takes_value": true, "default": "outputs"}
+		}
+	})
+	assert_false(unknown_flag["ok"])
+	assert_equal(unknown_flag["error"]["code"], "unknown_flag")
+}
+
+test "cli args parser enforces required flags" {
+	parsed := parse_cli_args([], {
+		"flags": {
+			"--output-root": {"takes_value": true, "required": true}
+		}
+	})
+	assert_false(parsed["ok"])
+	assert_equal(parsed["error"]["code"], "missing_required_flag")
+}
+
+test "step schema validation enforces input and output contracts" {
+	default_retry := {
+		"max_attempts": 1,
+		"base_delay_ms": 0,
+		"max_delay_ms": 0,
+		"strategy": "none",
+		"retry_on_codes": []
+	}
+
+	pass_step := create_step("schema_pass", "Schema Pass", "tool", {
+		"tool_name": "timestamp_tool",
+		"input_from": ["input"],
+		"output_key": "schema_output",
+		"input_schema": {
+			"type": "dict",
+			"required": ["input"]
+		},
+		"output_schema": {
+			"type": "dict",
+			"required": ["timestamp"],
+			"properties": {
+				"timestamp": {"type": "string"}
+			}
+		}
+	})
+	pass_workflow := create_workflow({
+		"id": "schema_pass_workflow",
+		"name": "Schema Pass Workflow",
+		"description": "Schema validation pass path",
+		"input_schema": {"type": "dict"},
+		"agents": {},
+		"tools": ["timestamp_tool"],
+		"steps": [pass_step],
+		"memory_config": {},
+		"default_retry_policy": default_retry,
+		"approval_config": {"auto_approve": true},
+		"output_schema": {"type": "dict"}
+	})
+	pass_state := create_run_state(pass_workflow, {"topic": "Schema pass"}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	pass_registry := register_default_tools("examples/research-report/sources")
+	pass_result := run_workflow(pass_workflow, pass_state, pass_registry, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	assert_true(pass_result["ok"])
+
+	input_fail_step := create_step("schema_input_fail", "Schema Input Fail", "tool", {
+		"tool_name": "timestamp_tool",
+		"input_from": ["plan"],
+		"output_key": "schema_output",
+		"input_schema": {
+			"type": "dict",
+			"required": ["input"]
+		}
+	})
+	input_fail_workflow := create_workflow({
+		"id": "schema_input_fail_workflow",
+		"name": "Schema Input Fail Workflow",
+		"description": "Schema input validation failure",
+		"input_schema": {"type": "dict"},
+		"agents": {},
+		"tools": ["timestamp_tool"],
+		"steps": [input_fail_step],
+		"memory_config": {},
+		"default_retry_policy": default_retry,
+		"approval_config": {"auto_approve": true},
+		"output_schema": {"type": "dict"}
+	})
+	input_fail_state := create_run_state(input_fail_workflow, {"topic": "Schema input fail"}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	input_fail_registry := register_default_tools("examples/research-report/sources")
+	input_fail_result := run_workflow(input_fail_workflow, input_fail_state, input_fail_registry, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	assert_false(input_fail_result["ok"])
+	assert_equal(input_fail_result["error"]["code"], "step_input_schema_validation_failed")
+
+	output_fail_step := create_step("schema_output_fail", "Schema Output Fail", "tool", {
+		"tool_name": "bad_output_tool",
+		"input_from": ["input"],
+		"output_key": "bad_output",
+		"output_schema": {
+			"type": "dict",
+			"required": ["generated_at"]
+		}
+	})
+	output_fail_workflow := create_workflow({
+		"id": "schema_output_fail_workflow",
+		"name": "Schema Output Fail Workflow",
+		"description": "Schema output validation failure",
+		"input_schema": {"type": "dict"},
+		"agents": {},
+		"tools": ["bad_output_tool"],
+		"steps": [output_fail_step],
+		"memory_config": {},
+		"default_retry_policy": default_retry,
+		"approval_config": {"auto_approve": true},
+		"output_schema": {"type": "dict"}
+	})
+	output_fail_state := create_run_state(output_fail_workflow, {"topic": "Schema output fail"}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	output_fail_registry := create_tool_registry()
+	output_fail_registry := register_tool(output_fail_registry, create_tool(
+		"bad_output_tool",
+		"Returns output that violates the required schema.",
+		{"type": "dict"},
+		{"type": "dict"},
+		func(input_payload, context) {
+			return {
+				"ok": true,
+				"data": {
+					"value": "missing generated_at"
+				}
+			}
+		},
+		func(step_input) {
+			return step_input
+		}
+	))
+	output_fail_result := run_workflow(output_fail_workflow, output_fail_state, output_fail_registry, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	assert_false(output_fail_result["ok"])
+	assert_equal(output_fail_result["error"]["code"], "step_output_schema_validation_failed")
+}
+
+test "step timeout and cancellation handling update run lifecycle" {
+	default_retry := {
+		"max_attempts": 1,
+		"base_delay_ms": 0,
+		"max_delay_ms": 0,
+		"strategy": "none",
+		"retry_on_codes": []
+	}
+
+	timeout_step := create_step("timeout_step", "Timeout Step", "tool", {
+		"tool_name": "slow_tool",
+		"input_from": ["input"],
+		"output_key": "timeout_result",
+		"timeout_ms": 5
+	})
+	timeout_workflow := create_workflow({
+		"id": "timeout_workflow",
+		"name": "Timeout Workflow",
+		"description": "Timeout behavior",
+		"input_schema": {"type": "dict"},
+		"agents": {},
+		"tools": ["slow_tool"],
+		"steps": [timeout_step],
+		"memory_config": {},
+		"default_retry_policy": default_retry,
+		"approval_config": {"auto_approve": true},
+		"output_schema": {"type": "dict"}
+	})
+	timeout_state := create_run_state(timeout_workflow, {"topic": "Timeout"}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	timeout_registry := create_tool_registry()
+	timeout_registry := register_tool(timeout_registry, create_tool(
+		"slow_tool",
+		"Sleeps long enough to exceed timeout",
+		{"type": "dict"},
+		{"type": "dict"},
+		func(input_payload, context) {
+			sleep(20)
+			return {
+				"ok": true,
+				"data": {"done": true}
+			}
+		},
+		func(step_input) {
+			return step_input
+		}
+	))
+	timeout_result := run_workflow(timeout_workflow, timeout_state, timeout_registry, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	assert_false(timeout_result["ok"])
+	assert_equal(timeout_result["error"]["code"], "step_timeout_exceeded")
+
+	cancel_step_one := create_step("cancel_first", "Cancel First", "tool", {
+		"tool_name": "timestamp_tool",
+		"input_from": ["input"],
+		"output_key": "first"
+	})
+	cancel_step_two := create_step("cancel_second", "Cancel Second", "tool", {
+		"tool_name": "timestamp_tool",
+		"input_from": ["input"],
+		"output_key": "second"
+	})
+	cancel_workflow := create_workflow({
+		"id": "cancel_workflow",
+		"name": "Cancel Workflow",
+		"description": "Cancellation behavior",
+		"input_schema": {"type": "dict"},
+		"agents": {},
+		"tools": ["timestamp_tool"],
+		"steps": [cancel_step_one, cancel_step_two],
+		"memory_config": {},
+		"default_retry_policy": default_retry,
+		"approval_config": {"auto_approve": true},
+		"output_schema": {"type": "dict"}
+	})
+	cancel_state := create_run_state(cancel_workflow, {"topic": "Cancel"}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	cancel_registry := register_default_tools("examples/research-report/sources")
+	cancel_result := run_workflow(cancel_workflow, cancel_state, cancel_registry, {
+		"auto_approve": true,
+		"interactive": false,
+		"cancel_after_step_id": "cancel_first"
+	})
+	assert_false(cancel_result["ok"])
+	assert_true(cancel_result["cancelled"])
+	assert_equal(cancel_result["error"]["code"], "workflow_cancelled")
+	assert_equal(cancel_result["run_state"]["status"], "cancelled")
+}
+
+test "lifecycle hooks emit callback and webhook sink events" {
+	default_retry := {
+		"max_attempts": 1,
+		"base_delay_ms": 0,
+		"max_delay_ms": 0,
+		"strategy": "none",
+		"retry_on_codes": []
+	}
+	hook_step := create_step("hook_step", "Hook Step", "tool", {
+		"tool_name": "timestamp_tool",
+		"input_from": ["input"],
+		"output_key": "hook_output"
+	})
+	hook_workflow := create_workflow({
+		"id": "hook_workflow",
+		"name": "Hook Workflow",
+		"description": "Lifecycle hook emission",
+		"input_schema": {"type": "dict"},
+		"agents": {},
+		"tools": ["timestamp_tool"],
+		"steps": [hook_step],
+		"memory_config": {},
+		"default_retry_policy": default_retry,
+		"approval_config": {"auto_approve": true},
+		"output_schema": {"type": "dict"}
+	})
+	hook_state := create_run_state(hook_workflow, {"topic": "Hook topic"}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	hook_registry := register_default_tools("examples/research-report/sources")
+	hook_callback_path := hook_state["run_dir"] + "/hook-callback-events.jsonl"
+	hook_sink_path := hook_state["run_dir"] + "/hook-events.jsonl"
+	hook_result := run_workflow(hook_workflow, hook_state, hook_registry, {
+		"auto_approve": true,
+		"interactive": false,
+		"webhook_sink": hook_sink_path,
+		"event_hook": func(event_payload) {
+			existing := ""
+			if file_exists(hook_callback_path) {
+				existing = read_file(hook_callback_path)
+			}
+			line := to_json(event_payload)
+			if existing != "" {
+				line = existing + "\n" + line
+			}
+			write_file(hook_callback_path, line, true)
+			return {
+				"ok": true
+			}
+		}
+	})
+	assert_true(hook_result["ok"])
+
+	hook_callback_raw := read_file(hook_callback_path)
+	callback_lines := split(hook_callback_raw, "\n")
+	assert_true(len(callback_lines) >= 3)
+	assert_equal(contains(hook_callback_raw, "\"event_type\":\"step_started\""), 1)
+	assert_equal(contains(hook_callback_raw, "\"event_type\":\"run_completed\""), 1)
+
+	hook_sink_raw := read_file(hook_sink_path)
+	hook_sink_lines := split(hook_sink_raw, "\n")
+	assert_true(len(hook_sink_lines) >= 3)
+	assert_equal(contains(hook_sink_raw, "\"event_type\":\"step_started\""), 1)
+	assert_equal(contains(hook_sink_raw, "\"event_type\":\"run_completed\""), 1)
+}
+
+test "doctor write persists repaired state changes" {
+	output_root := "tests/tmp/doctor-outputs"
+	workflow := create_research_report_workflow("Doctor topic", true)
+	run_state := create_run_state(workflow, {"topic": "Doctor topic"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_state["status"] := "running"
+	run_state["current_step_index"] := len(run_state["steps"]) + 4
+	run_state := persist_run_state(run_state)
+
+	dry_diag := doctor_runs(output_root, false, {})
+	assert_true(len(dry_diag) >= 1)
+	assert_true(dry_diag[0]["repaired"])
+
+	loaded_before := load_run_state(output_root, run_state["run_id"])
+	assert_true(loaded_before["ok"])
+	assert_equal(loaded_before["run_state"]["status"], "running")
+
+	write_diag := doctor_runs(output_root, true, {})
+	assert_true(len(write_diag) >= 1)
+	assert_true(write_diag[0]["repaired"])
+
+	loaded_after := load_run_state(output_root, run_state["run_id"])
+	assert_true(loaded_after["ok"])
+	assert_equal(loaded_after["run_state"]["status"], "completed")
+}
+
+test "load run state fails safely on malformed json" {
+	output_root := "tests/tmp/malformed-state-outputs"
+	workflow := create_research_report_workflow("Malformed topic", true)
+	run_state := create_run_state(workflow, {"topic": "Malformed topic"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	state_path := run_state["run_dir"] + "/state.json"
+	write_file(state_path, "{ malformed", true)
+
+	loaded := load_run_state(output_root, run_state["run_id"])
+	assert_false(loaded["ok"])
+	assert_equal(loaded["error"]["code"], "missing_run_state")
+}
+
+test "dispatch runs rejects invalid numeric flags" {
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+	process_result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"runs",
+		"--output-root",
+		"tests/tmp/outputs",
+		"--limit",
+		"abc"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_false(process_result.success)
+	combined := to_string(process_result.stdout) + "\n" + to_string(process_result.stderr)
+	assert_equal(contains(combined, "Invalid value for --limit"), 1)
+}
+
+test "state persistence saves and reloads run" {
+	workflow := create_research_report_workflow("State persistence topic", true)
+	run_state := create_run_state(workflow, {"topic": "State persistence topic"}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	loaded := load_run_state("tests/tmp/outputs", run_state["run_id"])
+	assert_true(loaded["ok"])
+	assert_equal(loaded["run_state"]["run_id"], run_state["run_id"])
+	assert_equal(dict_get_or(loaded["run_state"], "artifact_contract_version", 0), 1)
+	assert_equal(dict_get_or(loaded["run_state"], "schema_name", ""), "dispatch-run-state")
+	assert_equal(dict_get_or(loaded["run_state"], "schema_version", 0), 1)
+	loaded_trace := dict_get_or(loaded["run_state"], "trace", {})
+	assert_equal(dict_get_or(loaded_trace, "artifact_contract_version", 0), 1)
+	assert_equal(dict_get_or(loaded_trace, "schema_name", ""), "dispatch-trace")
+	assert_equal(dict_get_or(loaded_trace, "schema_version", 0), 1)
+}
+
+test "load run state backfills missing contract schema metadata" {
+	output_root := "tests/tmp/contract-backfill-outputs"
+	workflow := create_research_report_workflow("Contract backfill topic", true)
+	run_state := create_run_state(workflow, {"topic": "Contract backfill topic"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	state_path := run_state["run_dir"] + "/state.json"
+	legacy_state := parse_json(read_file(state_path))
+	legacy_without_contract := {}
+	for key in keys(legacy_state) {
+		if key == "artifact_contract_version" || key == "schema_name" || key == "schema_version" || key == "trace" {
+			continue
+		}
+		legacy_without_contract[key] := legacy_state[key]
+	}
+	legacy_trace := dict_get_or(legacy_state, "trace", {})
+	legacy_trace_without_contract := {}
+	for trace_key in keys(legacy_trace) {
+		if trace_key == "artifact_contract_version" || trace_key == "schema_name" || trace_key == "schema_version" {
+			continue
+		}
+		legacy_trace_without_contract[trace_key] := legacy_trace[trace_key]
+	}
+	legacy_without_contract["trace"] := legacy_trace_without_contract
+	write_file(state_path, to_json(legacy_without_contract), true)
+
+	loaded := load_run_state(output_root, run_state["run_id"])
+	assert_true(loaded["ok"])
+	backfilled := loaded["run_state"]
+	assert_equal(dict_get_or(backfilled, "artifact_contract_version", 0), 1)
+	assert_equal(dict_get_or(backfilled, "schema_name", ""), "dispatch-run-state")
+	assert_equal(dict_get_or(backfilled, "schema_version", 0), 1)
+	backfilled_trace := dict_get_or(backfilled, "trace", {})
+	assert_equal(dict_get_or(backfilled_trace, "artifact_contract_version", 0), 1)
+	assert_equal(dict_get_or(backfilled_trace, "schema_name", ""), "dispatch-trace")
+	assert_equal(dict_get_or(backfilled_trace, "schema_version", 0), 1)
+}
+
+test "state repair can recover inconsistent running metadata" {
+	workflow := create_research_report_workflow("Repair test topic", true)
+	run_state := create_run_state(workflow, {"topic": "Repair test topic"}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_state["status"] := "running"
+	run_state["current_step_index"] := len(run_state["steps"]) + 3
+	issues_before := detect_run_issues(run_state)
+	assert_true(len(issues_before) > 0)
+	repair := repair_run_state(run_state)
+	assert_true(repair["repaired"])
+	assert_equal(repair["run_state"]["status"], "completed")
+	assert_true(len(repair["notes"]) > 0)
+}
+
+test "trace generation creates events and final status" {
+	trace := create_trace("run-trace-1", "Trace Test Workflow")
+	trace := append_trace(trace, "step_started", "s1", "Started", {"a": 1})
+	trace := append_trace(trace, "step_completed", "s1", "Completed", {"b": 2})
+	trace := finalize_trace(trace, "completed")
+	assert_equal(trace["status"], "completed")
+	assert_true(len(trace["events"]) == 2)
+}
+
+test "trace markdown includes event counts and timeline" {
+	trace := create_trace("run-trace-md", "Trace Markdown Workflow")
+	trace := append_trace(trace, "step_started", "s1", "Started", {"a": 1})
+	trace := append_trace(trace, "step_completed", "s1", "Completed", {"b": 2})
+	trace := append_trace(trace, "step_started", "s2", "Started", {"a": 2})
+	trace := finalize_trace(trace, "completed")
+	counts := collect_event_type_counts(trace)
+	assert_equal(counts["step_started"], 2)
+	assert_equal(counts["step_completed"], 1)
+	markdown := render_trace_markdown(trace)
+	assert_equal(contains(markdown, "## Event Type Counts"), 1)
+	assert_equal(contains(markdown, "step_started: 2"), 1)
+	assert_equal(contains(markdown, "## Events"), 1)
+}
+
+test "handoff creation includes required fields" {
+	handoff := create_handoff("planner", "research", "Ready for evidence", {"plan": true}, "Plan completed", "Gather sources")
+	assert_equal(handoff["source_agent"], "planner")
+	assert_equal(handoff["target_agent"], "research")
+	assert_equal(has_key(handoff, "timestamp"), 1)
+}
+
+test "agent registry dispatch executes mapped and custom handlers" {
+	workflow := create_research_report_workflow("Agent registry topic", true)
+	workflow_agents := workflow["agents"]
+	workflow_agents["custom_agent"] := {
+		"id": "custom_agent",
+		"name": "Custom Agent",
+		"purpose": "Custom test agent",
+		"instructions": "Return fixture payload",
+		"model": {},
+		"tools": [],
+		"handoff_targets": [],
+		"output_schema": {"type": "dict"},
+		"guardrails": []
+	}
+	workflow_agents["__agent_handlers"] := {
+		"custom_agent": func(agent, step_input, run_state, tool_registry, context) {
+			return {
+				"ok": true,
+				"data": {
+					"custom": true,
+					"run_id": context["run_id"]
+				}
+			}
+		}
+	}
+	run_state := {
+		"run_id": "agent-registry-run",
+		"input": {"topic": "Agent registry topic"}
+	}
+	registry := register_default_tools("examples/research-report/sources")
+
+	planner_result := run_agent("planner", workflow_agents, {
+		"input": {"topic": "Agent registry topic"}
+	}, run_state, registry)
+	assert_true(planner_result["ok"])
+	assert_true(len(planner_result["data"]["questions"]) > 0)
+
+	custom_result := run_agent("custom_agent", workflow_agents, {}, run_state, registry)
+	assert_true(custom_result["ok"])
+	assert_true(custom_result["data"]["custom"])
+}
+
+test "agent registry dispatch reports unknown handler mapping" {
+	workflow := create_research_report_workflow("Unknown handler topic", true)
+	workflow_agents := workflow["agents"]
+	workflow_agents["ghost_agent"] := {
+		"id": "ghost_agent",
+		"name": "Ghost Agent",
+		"purpose": "No handler",
+		"instructions": "No-op",
+		"model": {},
+		"tools": [],
+		"handoff_targets": [],
+		"output_schema": {"type": "dict"},
+		"guardrails": []
+	}
+	run_state := {
+		"run_id": "agent-unknown-run",
+		"input": {"topic": "Unknown handler topic"}
+	}
+	registry := register_default_tools("examples/research-report/sources")
+	result := run_agent("ghost_agent", workflow_agents, {}, run_state, registry)
+	assert_false(result["ok"])
+	assert_equal(result["error"]["code"], "agent_execution_failure")
+}
+
+test "plugin registration injects custom tool and agent" {
+	workflow := create_research_report_workflow("Plugin topic", true)
+	tool_registry := register_default_tools("examples/research-report/sources")
+
+	custom_tool := create_tool(
+		"plugin_echo_tool",
+		"Echoes plugin payload for integration checks.",
+		{"type": "dict"},
+		{"type": "dict"},
+		func(input_payload, context) {
+			return {
+				"ok": true,
+				"data": {
+					"echo": dict_get_or(input_payload, "value", "")
+				}
+			}
+		},
+		func(step_input) {
+			return {
+				"value": dict_get_or(dict_get_or(step_input, "input", {}), "topic", "")
+			}
+		}
+	)
+	plugin := create_plugin(
+		"sample-plugin",
+		{
+			"plugin_agent": {
+				"id": "plugin_agent",
+				"name": "Plugin Agent",
+				"purpose": "Runs external plugin logic",
+				"instructions": "Return plugin marker",
+				"model": {},
+				"tools": ["plugin_echo_tool"],
+				"handoff_targets": [],
+				"output_schema": {"type": "dict"},
+				"guardrails": []
+			}
+		},
+		{
+			"plugin_agent": func(agent, step_input, run_state, runtime_tool_registry, context) {
+				tool_result := call_tool(runtime_tool_registry, "plugin_echo_tool", {
+					"value": "plugin-agent-ok"
+				}, context)
+				return {
+					"ok": true,
+					"data": {
+						"agent": "plugin_agent",
+						"tool_echo": dict_get_or(dict_get_or(tool_result, "data", {}), "echo", "")
+					}
+				}
+			}
+		},
+		[custom_tool]
+	)
+	plugin_registry := create_plugin_registry()
+	plugin_registry := register_plugin(plugin_registry, plugin)
+	updated := apply_plugins_to_runtime(workflow, tool_registry, plugin_registry)
+	workflow := updated["workflow"]
+	tool_registry := updated["tool_registry"]
+
+	assert_equal(has_key(workflow["agents"], "plugin_agent"), 1)
+	assert_equal(has_key(tool_registry, "plugin_echo_tool"), 1)
+
+	tool_check := call_tool(tool_registry, "plugin_echo_tool", {
+		"value": "plugin-tool-ok"
+	}, {
+		"run_id": "plugin-run",
+		"input": {"topic": "Plugin topic"},
+		"sources_dir": "examples/research-report/sources"
+	})
+	assert_true(tool_check["ok"])
+	assert_equal(tool_check["data"]["echo"], "plugin-tool-ok")
+
+	agent_check := run_agent("plugin_agent", workflow["agents"], {
+		"input": {"topic": "Plugin topic"}
+	}, {
+		"run_id": "plugin-run",
+		"input": {"topic": "Plugin topic"}
+	}, tool_registry)
+	assert_true(agent_check["ok"])
+	assert_equal(agent_check["data"]["tool_echo"], "plugin-agent-ok")
+}
+
+test "runner executes workflow and writes final report" {
+	workflow := create_research_report_workflow("How do AI workflows differ from chatbots?", true)
+	run_state := create_run_state(workflow, {"topic": "How do AI workflows differ from chatbots?"}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	tool_registry := register_default_tools("examples/research-report/sources")
+	result := run_workflow(workflow, run_state, tool_registry, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	assert_true(result["ok"])
+	assert_false(result["paused"])
+	final_state := result["run_state"]
+	assert_equal(final_state["status"], "completed")
+	assert_true(file_exists(final_state["run_dir"] + "/report.md"))
+	assert_true(file_exists(final_state["run_dir"] + "/report.json"))
+	assert_true(file_exists(final_state["run_dir"] + "/trace.json"))
+	assert_true(file_exists(final_state["run_dir"] + "/trace.md"))
+	assert_true(file_exists(final_state["run_dir"] + "/state.json"))
+}
+
+test "report payload and markdown include lifecycle metadata" {
+	workflow := create_research_report_workflow("Report metadata topic", true)
+	run_state := create_run_state(workflow, {"topic": "Report metadata topic"}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	tool_registry := register_default_tools("examples/research-report/sources")
+	result := run_workflow(workflow, run_state, tool_registry, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	assert_true(result["ok"])
+	final_state := result["run_state"]
+	payload := build_report_payload(final_state)
+	assert_equal(dict_get_or(payload, "artifact_contract_version", 0), 1)
+	assert_equal(dict_get_or(payload, "schema_name", ""), "dispatch-run-report")
+	assert_equal(dict_get_or(payload, "schema_version", 0), 1)
+	assert_equal(payload["run_status"], "completed")
+	assert_equal(payload["total_steps"], len(final_state["steps"]))
+	assert_equal(payload["completed_steps"], len(final_state["steps"]))
+	markdown := render_markdown_report(payload)
+	assert_equal(contains(markdown, "Run Status: completed"), 1)
+	assert_equal(contains(markdown, "Steps Completed:"), 1)
+	paths := write_report_artifacts(final_state, payload)
+	persisted_report := parse_json(read_file(paths["report_json_path"]))
+	assert_equal(dict_get_or(persisted_report, "artifact_contract_version", 0), 1)
+	assert_equal(dict_get_or(persisted_report, "schema_name", ""), "dispatch-run-report")
+	assert_equal(dict_get_or(persisted_report, "schema_version", 0), 1)
+	assert_true(file_exists(paths["report_md_path"]))
+	assert_true(file_exists(paths["report_json_path"]))
+	assert_true(file_exists(paths["trace_json_path"]))
+	assert_true(file_exists(paths["trace_md_path"]))
+	assert_true(file_exists(paths["state_json_path"]))
+}
+
+test "run listing filters and catalog support automation workflows" {
+	output_root := "tests/tmp/catalog-outputs"
+	workflow := create_research_report_workflow("Catalog Alpha", true)
+
+	run_a := create_run_state(workflow, {"topic": "Catalog Alpha"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_a["status"] := "completed"
+	run_a["current_step_index"] := len(run_a["steps"])
+	run_a := persist_run_state(run_a)
+
+	run_b := create_run_state(workflow, {"topic": "Catalog Beta"}, output_root, {
+		"auto_approve": false,
+		"interactive": false
+	})
+	run_b["status"] := "running"
+	run_b["current_step_index"] := len(run_b["steps"]) + 1
+	run_b := persist_run_state(run_b)
+
+	runs := list_runs(output_root)
+	assert_true(len(runs) >= 2)
+
+	completed_runs := filter_runs(runs, "completed", "", false)
+	assert_true(len(completed_runs) >= 1)
+	assert_equal(completed_runs[0]["status"], "completed")
+
+	topic_runs := filter_runs(runs, "", "alpha", false)
+	assert_true(len(topic_runs) >= 1)
+	assert_equal(contains(to_lower(topic_runs[0]["topic"]), "alpha"), 1)
+
+	issue_runs := filter_runs(runs, "", "", true)
+	assert_true(len(issue_runs) >= 1)
+	assert_true(issue_runs[0]["issues_count"] > 0)
+
+	catalog := build_run_catalog(runs)
+	assert_true(catalog["total_runs"] >= 2)
+	assert_true(has_key(catalog["status_counts"], "completed") == 1)
+	assert_true(catalog["issues_total"] >= 1)
+}
+
+test "cleanup command supports dry-run and apply pruning" {
+	output_root := "tests/tmp/cleanup-outputs"
+	workflow := create_research_report_workflow("Cleanup Topic", true)
+
+	run_one := create_run_state(workflow, {"topic": "Cleanup One"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_one["status"] := "completed"
+	run_one := persist_run_state(run_one)
+
+	run_two := create_run_state(workflow, {"topic": "Cleanup Two"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_two["status"] := "completed"
+	run_two := persist_run_state(run_two)
+
+	run_three := create_run_state(workflow, {"topic": "Cleanup Three"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_three["status"] := "completed"
+	run_three := persist_run_state(run_three)
+
+	runs_before := list_runs(output_root)
+	assert_true(len(runs_before) >= 3)
+
+	dry_run := prune_runs(output_root, "completed", 1, 0, true)
+	assert_true(dry_run["dry_run"])
+	assert_true(dry_run["candidate_count"] >= 1)
+	assert_equal(dry_run["pruned_count"], 0)
+	runs_after_dry := list_runs(output_root)
+	assert_true(len(runs_after_dry) >= 3)
+
+	apply_run := prune_runs(output_root, "completed", 1, 0, false)
+	assert_false(apply_run["dry_run"])
+	assert_true(apply_run["candidate_count"] >= 1)
+	assert_true(apply_run["pruned_count"] >= 1)
+	runs_after_apply := list_runs(output_root)
+	assert_equal(len(runs_after_apply), 1)
+}
+
+test "run pagination handles larger catalogs" {
+	output_root := "tests/tmp/pagination-outputs"
+	workflow := create_research_report_workflow("Pagination Topic", true)
+	i := 0
+	while i < 12 {
+		run_item := create_run_state(workflow, {"topic": "Pagination " + to_string(i)}, output_root, {
+			"auto_approve": true,
+			"interactive": false
+		})
+		run_item["status"] := "completed"
+		run_item := persist_run_state(run_item)
+		i := i + 1
+	}
+
+	runs := list_runs(output_root)
+	assert_true(len(runs) >= 12)
+	page := paginate_runs(runs, 5, 4)
+	assert_equal(len(page), 4)
+	assert_equal(page[0]["run_id"], runs[5]["run_id"])
+	rest := paginate_runs(runs, 10, 0)
+	assert_true(len(rest) >= 2)
+}
+
+test "dependency scheduling supports parallel-ready DAG steps" {
+	default_retry := {
+		"max_attempts": 1,
+		"base_delay_ms": 0,
+		"max_delay_ms": 0,
+		"strategy": "none",
+		"retry_on_codes": []
+	}
+	step_a := create_step("dag_a", "DAG A", "tool", {
+		"tool_name": "timestamp_tool",
+		"input_from": ["input"],
+		"output_key": "a"
+	})
+	step_b := create_step("dag_b", "DAG B", "tool", {
+		"tool_name": "timestamp_tool",
+		"input_from": ["input"],
+		"output_key": "b"
+	})
+	step_join := create_step("dag_join", "DAG Join", "tool", {
+		"tool_name": "combine_tool",
+		"input_from": ["a", "b"],
+		"depends_on": ["dag_a", "dag_b"],
+		"output_key": "combined"
+	})
+	dag_workflow := create_workflow({
+		"id": "dag_workflow",
+		"name": "DAG Workflow",
+		"description": "Dependency scheduling",
+		"input_schema": {"type": "dict"},
+		"agents": {},
+		"tools": ["timestamp_tool", "combine_tool"],
+		"steps": [step_a, step_b, step_join],
+		"memory_config": {},
+		"default_retry_policy": default_retry,
+		"approval_config": {"auto_approve": true},
+		"output_schema": {"type": "dict"}
+	})
+	dag_state := create_run_state(dag_workflow, {"topic": "DAG"}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	dag_registry := register_default_tools("examples/research-report/sources")
+	dag_registry := register_tool(dag_registry, create_tool(
+		"combine_tool",
+		"Combines dependency outputs.",
+		{"type": "dict"},
+		{"type": "dict"},
+		func(input_payload, context) {
+			return {
+				"ok": true,
+				"data": {
+					"has_a": type(dict_get_or(input_payload, "a", null)) == "dict",
+					"has_b": type(dict_get_or(input_payload, "b", null)) == "dict"
+				}
+			}
+		},
+		func(step_input) {
+			return step_input
+		}
+	))
+	dag_result := run_workflow(dag_workflow, dag_state, dag_registry, {
+		"auto_approve": true,
+		"interactive": false,
+		"parallel_execution": true
+	})
+	assert_true(dag_result["ok"])
+	assert_equal(dag_result["run_state"]["status"], "completed")
+	combined := dict_get_or(dag_result["run_state"]["data"], "combined", {})
+	assert_true(dict_get_or(combined, "has_a", false))
+	assert_true(dict_get_or(combined, "has_b", false))
+}
+
+test "summarize run reports artifact availability" {
+	workflow := create_research_report_workflow("Summary artifact topic", true)
+	run_state := create_run_state(workflow, {"topic": "Summary artifact topic"}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	tool_registry := register_default_tools("examples/research-report/sources")
+	result := run_workflow(workflow, run_state, tool_registry, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	assert_true(result["ok"])
+	summary := summarize_run(result["run_state"])
+	assert_true(summary["artifacts"]["state_json"])
+	assert_true(summary["artifacts"]["trace_json"])
+	assert_true(summary["artifacts"]["trace_md"])
+	assert_true(summary["artifacts"]["report_md"])
+	assert_true(summary["artifacts"]["report_json"])
+}
+
+test "request changes pause can be resumed to completion" {
+	workflow := create_research_report_workflow("Approval lifecycle topic", false)
+	run_state := create_run_state(workflow, {"topic": "Approval lifecycle topic"}, "tests/tmp/outputs", {
+		"auto_approve": false,
+		"interactive": false
+	})
+	tool_registry := register_default_tools("examples/research-report/sources")
+	first := run_workflow(workflow, run_state, tool_registry, {
+		"auto_approve": false,
+		"interactive": false,
+		"simulated_decision": "changes",
+		"simulated_note": "Need stronger evidence"
+	})
+	assert_true(first["ok"])
+	assert_true(first["paused"])
+	paused_state := first["run_state"]
+	assert_equal(paused_state["status"], "needs_changes")
+
+	second := run_workflow(workflow, paused_state, tool_registry, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	assert_true(second["ok"])
+	assert_false(second["paused"])
+	assert_equal(second["run_state"]["status"], "completed")
+}
+
+test "rejected approval ends workflow with failure" {
+	workflow := create_research_report_workflow("Approval rejection topic", false)
+	run_state := create_run_state(workflow, {"topic": "Approval rejection topic"}, "tests/tmp/outputs", {
+		"auto_approve": false,
+		"interactive": false
+	})
+	tool_registry := register_default_tools("examples/research-report/sources")
+	result := run_workflow(workflow, run_state, tool_registry, {
+		"auto_approve": false,
+		"interactive": false,
+		"simulated_decision": "rejected",
+		"simulated_note": "Risk not acceptable"
+	})
+	assert_false(result["ok"])
+	assert_false(result["paused"])
+	assert_equal(result["run_state"]["status"], "failed")
+	assert_equal(result["error"]["code"], "approval_rejected")
+}
+
+test "persisted artifacts redact sensitive values" {
+	workflow := create_research_report_workflow("Redaction topic", true)
+	run_state := create_run_state(workflow, {
+		"topic": "Redaction topic",
+		"api_key": "STATE_SECRET_123"
+	}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_state["trace"] := append_trace(run_state["trace"], "custom_event", "custom_step", "custom", {
+		"authorization": "Bearer TRACE_SECRET_456"
+	})
+	run_data := run_state["data"]
+	run_data["token"] := "DATA_SECRET_789"
+	run_state["data"] := run_data
+	run_state := persist_run_state(run_state)
+
+	state_raw := read_file(run_state["run_dir"] + "/state.json")
+	trace_raw := read_file(run_state["run_dir"] + "/trace.json")
+	trace_md_raw := read_file(run_state["run_dir"] + "/trace.md")
+
+	assert_equal(contains(state_raw, "STATE_SECRET_123"), 0)
+	assert_equal(contains(state_raw, "DATA_SECRET_789"), 0)
+	assert_equal(contains(trace_raw, "TRACE_SECRET_456"), 0)
+	assert_equal(contains(trace_md_raw, "TRACE_SECRET_456"), 0)
+	assert_equal(contains(state_raw, "[REDACTED]"), 1)
+	assert_equal(contains(trace_raw, "[REDACTED]"), 1)
+}
+
+test "report artifacts redact sensitive fields" {
+	workflow := create_research_report_workflow("Report redaction topic", true)
+	run_state := create_run_state(workflow, {"topic": "Report redaction topic"}, "tests/tmp/outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+
+	payload := {
+		"title": "Redaction Report",
+		"topic": "Report redaction topic",
+		"summary": "Summary",
+		"key_findings": [],
+		"claims": [],
+		"evidence": [],
+		"citations": [],
+		"confidence_notes": [],
+		"limitations": [],
+		"generated_timestamp": "2026-05-21 00:00:00",
+		"trace_id": run_state["run_id"],
+		"run_id": run_state["run_id"],
+		"run_status": "completed",
+		"total_steps": 0,
+		"completed_steps": 0,
+		"api_key": "REPORT_SECRET_321"
+	}
+
+	paths := write_report_artifacts(run_state, payload)
+	report_json_raw := read_file(paths["report_json_path"])
+	report_json_payload := parse_json(report_json_raw)
+	assert_equal(contains(report_json_raw, "REPORT_SECRET_321"), 0)
+	assert_equal(contains(report_json_raw, "[REDACTED]"), 1)
+	assert_equal(dict_get_or(report_json_payload, "artifact_contract_version", 0), 1)
+	assert_equal(dict_get_or(report_json_payload, "schema_name", ""), "dispatch-run-report")
+	assert_equal(dict_get_or(report_json_payload, "schema_version", 0), 1)
+}
+
+test "output root validation blocks dangerous paths and allows safe relative roots" {
+	blocked := ["", ".", "..", "/", "~/tmp/dispatch", "tests/../tmp/outputs"]
+	for item in blocked {
+		result := normalize_output_root(item)
+		assert_false(result["ok"])
+		assert_equal(result["error"]["code"], "invalid_output_root")
+	}
+
+	allowed := normalize_output_root("tests/tmp/safe-output-root")
+	assert_true(allowed["ok"])
+	assert_equal(allowed["output_root"], "tests/tmp/safe-output-root")
+}
+
+test "dispatch blocks unsafe output roots without opt in" {
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+	blocked := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"runs",
+		"--output-root",
+		"/tmp/dispatch-test"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_false(blocked.success)
+	combined := to_string(blocked.stdout) + "\n" + to_string(blocked.stderr)
+	assert_equal(contains(combined, "Absolute output-root paths are blocked by default"), 1)
+}
+
+test "dispatch blocks unsafe config paths without opt in" {
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+	blocked := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"demo",
+		"Config path policy",
+		"--config",
+		"/tmp/dispatch-policy-config.json"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_false(blocked.success)
+	combined := to_string(blocked.stdout) + "\n" + to_string(blocked.stderr)
+	assert_equal(contains(combined, "Absolute config paths are blocked by default"), 1)
+}
+
+test "dispatch blocks oversized config files" {
+	config_path := "tests/tmp/dispatch-large-config.json"
+	large_blob := ""
+	i := 0
+	while i < 270000 {
+		large_blob = large_blob + "a"
+		i := i + 1
+	}
+	write_file(config_path, to_json({
+		"topic": "Large Config Topic",
+		"decision": "approve",
+		"blob": large_blob
+	}), true)
+
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+	result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"demo",
+		"Large Config Topic",
+		"--config",
+		config_path
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_false(result.success)
+	combined := to_string(result.stdout) + "\n" + to_string(result.stderr)
+	assert_equal(contains(combined, "Config file exceeds maximum size"), 1)
+}
+
+test "canonical source path helpers enforce root boundaries" {
+	canonical := canonicalize_path("examples/research-report/sources/../sources")
+	assert_equal(canonical, "examples/research-report/sources")
+	assert_true(path_is_within_root("examples/research-report/sources/source-1.md", "examples/research-report/sources"))
+	assert_false(path_is_within_root("examples/research-report/other/source-1.md", "examples/research-report/sources"))
+}
+
+test "doctor and cleanup persist mutation audit artifacts" {
+	output_root := "tests/tmp/audit-outputs"
+	workflow := create_research_report_workflow("Audit Topic", true)
+
+	run_repair := create_run_state(workflow, {"topic": "Audit Repair"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_repair["status"] := "running"
+	run_repair["current_step_index"] := len(run_repair["steps"]) + 2
+	run_repair := persist_run_state(run_repair)
+
+	run_cleanup := create_run_state(workflow, {"topic": "Audit Cleanup"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_cleanup["status"] := "completed"
+	run_cleanup["current_step_index"] := len(run_cleanup["steps"])
+	run_cleanup := persist_run_state(run_cleanup)
+
+	doctor_result := doctor_runs(output_root, true, {})
+	assert_true(len(doctor_result) >= 1)
+	cleanup_result := prune_runs(output_root, "completed", 1, 0, false)
+	assert_true(cleanup_result["pruned_count"] >= 1)
+
+	audit_path := mutation_audit_path(output_root)
+	assert_true(file_exists(audit_path))
+	audit_raw := read_file(audit_path)
+	assert_equal(contains(audit_raw, "\"operation\":\"doctor_write\""), 1)
+	assert_equal(contains(audit_raw, "\"operation\":\"cleanup_apply\""), 1)
+}
+
+test "strict mutation mode blocks destructive commands unless confirmed" {
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+
+	doctor_blocked := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"doctor",
+		"--output-root",
+		"tests/tmp/strict-doctor",
+		"--write",
+		"--strict-mutations"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_false(doctor_blocked.success)
+	doctor_blocked_output := to_string(doctor_blocked.stdout) + "\n" + to_string(doctor_blocked.stderr)
+	assert_equal(contains(doctor_blocked_output, "Strict mutation mode blocked doctor --write"), 1)
+
+	doctor_allowed := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"doctor",
+		"--output-root",
+		"tests/tmp/strict-doctor",
+		"--write",
+		"--strict-mutations",
+		"--confirm-mutation"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_true(doctor_allowed.success)
+	doctor_allowed_output := to_string(doctor_allowed.stdout) + "\n" + to_string(doctor_allowed.stderr)
+	assert_equal(contains(doctor_allowed_output, "Strict mutation mode blocked"), 0)
+
+	cleanup_blocked := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"cleanup",
+		"--output-root",
+		"tests/tmp/strict-cleanup",
+		"--apply",
+		"--strict-mutations"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_false(cleanup_blocked.success)
+	cleanup_blocked_output := to_string(cleanup_blocked.stdout) + "\n" + to_string(cleanup_blocked.stderr)
+	assert_equal(contains(cleanup_blocked_output, "Strict mutation mode blocked cleanup --apply"), 1)
+
+	cleanup_allowed := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"cleanup",
+		"--output-root",
+		"tests/tmp/strict-cleanup",
+		"--apply",
+		"--strict-mutations",
+		"--confirm-mutation"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_true(cleanup_allowed.success)
+	cleanup_allowed_output := to_string(cleanup_allowed.stdout) + "\n" + to_string(cleanup_allowed.stderr)
+	assert_equal(contains(cleanup_allowed_output, "Strict mutation mode blocked"), 0)
+
+	import_blocked := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"import-run",
+		"--bundle-path",
+		"tests/tmp/strict-mode-missing-bundle.json",
+		"--strict-mutations"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_false(import_blocked.success)
+	import_blocked_output := to_string(import_blocked.stdout) + "\n" + to_string(import_blocked.stderr)
+	assert_equal(contains(import_blocked_output, "Strict mutation mode blocked import-run --bundle-path"), 1)
+
+	import_allowed := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"import-run",
+		"--bundle-path",
+		"tests/tmp/strict-mode-missing-bundle.json",
+		"--strict-mutations",
+		"--confirm-mutation"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_false(import_allowed.success)
+	import_allowed_output := to_string(import_allowed.stdout) + "\n" + to_string(import_allowed.stderr)
+	assert_equal(contains(import_allowed_output, "Strict mutation mode blocked"), 0)
+	assert_equal(contains(import_allowed_output, "Could not read bundle file"), 1)
+}
+
+test "src import smoke fixture runs successfully" {
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+
+	src_smoke := spawn_process([
+		kujo_bin,
+		"run",
+		"tests/fixtures/shimless_src_smoke.kujo",
+		"--interpreter"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_true(src_smoke.success)
+	assert_true(contains(to_string(src_smoke.stdout), "src-shimless-smoke:") >= 0)
+}
+
+test "mutation audit rotation keeps active log bounded and rolls over" {
+	output_root := "tests/tmp/audit-rotation-outputs"
+	large_blob := "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
+
+	first_path := append_mutation_audit_record(output_root, "rotation_test_1", [{
+		"run_id": "run-1",
+		"action": "first"
+	}], {
+		"blob": large_blob
+	}, {
+		"max_bytes": 300,
+		"max_backups": 3,
+		"rotate_daily": false
+	})
+	assert_equal(first_path, mutation_audit_path(output_root))
+
+	second_path := append_mutation_audit_record(output_root, "rotation_test_2", [{
+		"run_id": "run-2",
+		"action": "second"
+	}], {
+		"blob": large_blob
+	}, {
+		"max_bytes": 300,
+		"max_backups": 3,
+		"rotate_daily": false
+	})
+	assert_equal(second_path, mutation_audit_path(output_root))
+
+	audit_raw := read_file(mutation_audit_path(output_root))
+	assert_equal(contains(audit_raw, "\"operation\":\"rotation_test_2\""), 1)
+	assert_equal(contains(audit_raw, "\"operation\":\"rotation_test_1\""), 0)
+
+	entries := list_dir(output_root)
+	rotation_files := []
+	for entry in entries {
+		entry_name := replace(entry, "/", "")
+		if starts_with(entry_name, "dispatch-mutations.") && ends_with(entry_name, ".jsonl") {
+			rotation_files := push(rotation_files, entry_name)
+		}
+	}
+	assert_true(len(rotation_files) >= 1)
+	rotated_has_first := false
+	for rotation_file in rotation_files {
+		rotated_raw := read_file(output_root + "/" + rotation_file)
+		if contains(rotated_raw, "\"operation\":\"rotation_test_1\"") == 1 {
+			rotated_has_first = true
+		}
+	}
+	assert_true(rotated_has_first)
+}
+
+test "doctor incremental mode supports recent count and explicit run IDs" {
+	output_root := "tests/tmp/doctor-incremental-outputs"
+	workflow := create_research_report_workflow("Doctor Incremental Topic", true)
+
+	run_one := create_run_state(workflow, {"topic": "Doctor Incremental 1"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_one["status"] := "completed"
+	run_one["updated_at"] := "2026-01-01 00:00:01"
+	run_one := persist_run_state(run_one)
+
+	run_two := create_run_state(workflow, {"topic": "Doctor Incremental 2"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_two["status"] := "completed"
+	run_two["updated_at"] := "2026-01-01 00:00:02"
+	run_two := persist_run_state(run_two)
+
+	run_three := create_run_state(workflow, {"topic": "Doctor Incremental 3"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_three["status"] := "completed"
+	run_three["updated_at"] := "2026-01-01 00:00:03"
+	run_three := persist_run_state(run_three)
+
+	recent_diag := doctor_runs(output_root, false, {
+		"recent_count": 1
+	})
+	assert_equal(len(recent_diag), 1)
+	recent_run_id := dict_get_or(recent_diag[0], "run_id", "")
+	recent_is_known := recent_run_id == run_one["run_id"] || recent_run_id == run_two["run_id"] || recent_run_id == run_three["run_id"]
+	assert_true(recent_is_known)
+
+	selected_diag := doctor_runs(output_root, false, {
+		"run_ids": run_one["run_id"] + "," + run_three["run_id"]
+	})
+	assert_equal(len(selected_diag), 2)
+
+	selected_has_run_one := false
+	selected_has_run_three := false
+	for item in selected_diag {
+		if dict_get_or(item, "run_id", "") == run_one["run_id"] {
+			selected_has_run_one = true
+		}
+		if dict_get_or(item, "run_id", "") == run_three["run_id"] {
+			selected_has_run_three = true
+		}
+	}
+	assert_true(selected_has_run_one)
+	assert_true(selected_has_run_three)
+}
+
+test "run index is created and scanner fallback works when index is malformed" {
+	output_root := "tests/tmp/index-outputs"
+	workflow := create_research_report_workflow("Index Topic", true)
+	run_state := create_run_state(workflow, {"topic": "Index Topic"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_state["status"] := "completed"
+	run_state := persist_run_state(run_state)
+
+	index_path := output_root + "/.dispatch-run-index.json"
+	assert_true(file_exists(index_path))
+	write_file(index_path, "{ malformed", true)
+	runs_payload := list_runs_with_diagnostics(output_root)
+	runs := dict_get_or(runs_payload, "runs", [])
+	diagnostics := dict_get_or(runs_payload, "diagnostics", {})
+	assert_true(len(runs) >= 1)
+	assert_equal(dict_get_or(diagnostics, "index_source", ""), "scan")
+	assert_equal(dict_get_or(diagnostics, "index_fallback_count", 0), 1)
+	assert_equal(dict_get_or(diagnostics, "index_rebuild_count", 0), 1)
+}
+
+test "high volume run index listing remains deterministic" {
+	output_root := "tests/tmp/index-stress-outputs-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	workflow := create_research_report_workflow("Index Stress Topic", true)
+	total_runs := 140
+	expected_completed := 0
+
+	i := 0
+	while i < total_runs {
+		run_topic := "Stress Topic Beta " + to_string(i)
+		if i % 2 == 0 {
+			run_topic = "Stress Topic Alpha " + to_string(i)
+		}
+
+		run_state := create_run_state(workflow, {"topic": run_topic}, output_root, {
+			"auto_approve": true,
+			"interactive": false,
+			"tags": ["env:stress", "batch:" + to_string(i % 5)]
+		})
+
+		run_status := "interrupted"
+		if i % 3 == 0 {
+			run_status = "completed"
+			expected_completed = expected_completed + 1
+		} else {
+			if i % 3 == 1 {
+				run_status = "failed"
+			}
+		}
+
+		run_state["status"] := run_status
+		run_state["updated_at"] := "2026-02-01 00:00:" + to_string(1000 + i)
+		run_state := persist_run_state(run_state)
+		i = i + 1
+	}
+
+	first_payload := list_runs_with_diagnostics(output_root)
+	first_runs := dict_get_or(first_payload, "runs", [])
+	first_diagnostics := dict_get_or(first_payload, "diagnostics", {})
+	assert_equal(len(first_runs), total_runs)
+	assert_equal(dict_get_or(first_diagnostics, "index_source", ""), "index")
+	assert_true(dict_get_or(first_diagnostics, "index_run_count", 0) >= total_runs)
+
+	completed_runs := filter_runs(first_runs, "completed", "", false)
+	assert_equal(len(completed_runs), expected_completed)
+
+	page_one := paginate_runs(first_runs, 0, 30)
+	page_two := paginate_runs(first_runs, 30, 30)
+	assert_equal(len(page_one), 30)
+	assert_equal(len(page_two), 30)
+	assert_false(dict_get_or(page_one[0], "run_id", "") == dict_get_or(page_two[0], "run_id", ""))
+
+	second_payload := list_runs_with_diagnostics(output_root)
+	second_runs := dict_get_or(second_payload, "runs", [])
+	assert_equal(len(second_runs), total_runs)
+
+	compare_count := 20
+	j := 0
+	while j < compare_count {
+		assert_equal(dict_get_or(first_runs[j], "run_id", ""), dict_get_or(second_runs[j], "run_id", ""))
+		j = j + 1
+	}
+
+	catalog := build_run_catalog(first_runs)
+	assert_equal(dict_get_or(catalog, "total_runs", 0), total_runs)
+	status_counts := dict_get_or(catalog, "status_counts", {})
+	assert_equal(dict_get_or(status_counts, "completed", 0), expected_completed)
+}
+
+test "trace truncation preserves limits and summary metadata" {
+	trace := create_trace("trace-truncation-run", "Trace Truncation Workflow")
+	trace := apply_trace_limits(trace, {
+		"trace_max_events": 3,
+		"trace_max_payload_chars": 80
+	})
+	i := 0
+	while i < 8 {
+		trace := append_trace(trace, "step_completed", "step-" + to_string(i), "Completed step", {
+			"blob": "abcdefghijklmnopqrstuvwxyz-abcdefghijklmnopqrstuvwxyz-abcdefghijklmnopqrstuvwxyz"
+		})
+		i := i + 1
+	}
+	assert_equal(len(trace["events"]), 3)
+	truncation := dict_get_or(trace, "truncated", {})
+	assert_true(dict_get_or(truncation, "events_dropped", 0) >= 5)
+	assert_true(dict_get_or(trace, "event_count_total", 0) >= 8)
+}
+
+test "dispatch runs json exposes filtered and page catalogs" {
+	output_root := "tests/tmp/runs-json-catalog-outputs"
+	workflow := create_research_report_workflow("Runs Catalog Topic", true)
+	i := 0
+	while i < 5 {
+		run_item := create_run_state(workflow, {"topic": "Runs Catalog " + to_string(i)}, output_root, {
+			"auto_approve": true,
+			"interactive": false
+		})
+		run_item["status"] := "completed"
+		run_item := persist_run_state(run_item)
+		i := i + 1
+	}
+
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+	process_result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"runs",
+		"--output-root",
+		output_root,
+		"--limit",
+		"2",
+		"--offset",
+		"1",
+		"--json",
+		"--diagnostics"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_true(process_result.success)
+	parsed := parse_json(to_string(process_result.stdout))
+	assert_true(has_key(parsed, "page_catalog") == 1)
+	assert_true(has_key(parsed, "filtered_catalog") == 1)
+	assert_true(has_key(parsed, "diagnostics") == 1)
+	assert_equal(dict_get_or(dict_get_or(parsed, "page_catalog", {}), "total_runs", 0), 2)
+	assert_true(dict_get_or(dict_get_or(parsed, "filtered_catalog", {}), "total_runs", 0) >= 5)
+}
+
+test "workflow config file supports parsing and cli override precedence" {
+	config_path := "tests/tmp/dispatch-demo-config.json"
+	write_file(config_path, to_json({
+		"topic": "Config Driven Topic",
+		"workflow": "research-report",
+		"yes": true,
+		"non_interactive": true,
+		"output_root": "tests/tmp/config-workflow-outputs",
+		"sources_dir": "examples/research-report/sources",
+		"decision": "maybe"
+	}), true)
+
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+
+	invalid_result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"demo",
+		"--config",
+		config_path
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_false(invalid_result.success)
+	invalid_output := to_string(invalid_result.stdout) + "\n" + to_string(invalid_result.stderr)
+	assert_equal(contains(invalid_output, "Invalid --decision value"), 1)
+
+	override_result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"demo",
+		"--config",
+		config_path,
+		"--decision",
+		"approve"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 300000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_true(override_result.success)
+	override_output := to_string(override_result.stdout)
+	assert_equal(contains(override_output, "Run ID:"), 1)
+}
+
+test "tool policy parsing and enforcement supports allow deny normalization" {
+	parsed := parse_tool_name_list(" timestamp_tool,markdown_report_writer, timestamp_tool ")
+	assert_equal(len(parsed), 2)
+	assert_equal(parsed[0], "timestamp_tool")
+	assert_equal(parsed[1], "markdown_report_writer")
+
+	policy_settings := build_tool_authorization_policy(["timestamp_tool"], ["flaky_reliability_tool"])
+	policy := dict_get_or(policy_settings, "policy", null)
+	assert_true(type(policy) != "null")
+
+	denied := policy({"tool_name": "flaky_reliability_tool"})
+	assert_false(dict_get_or(denied, "allow", true))
+
+	not_allowed := policy({"tool_name": "citation_formatter"})
+	assert_false(dict_get_or(not_allowed, "allow", true))
+
+	allowed := policy({"tool_name": "timestamp_tool"})
+	assert_true(allowed)
+}
+
+test "policy profile aliases resolve and explicit lists override profile defaults" {
+	prod_settings := build_tool_authorization_policy_with_profile("prod", [], [])
+	assert_true(dict_get_or(prod_settings, "ok", false))
+	assert_equal(dict_get_or(prod_settings, "policy_profile", ""), "prod")
+	prod_policy := dict_get_or(prod_settings, "policy", null)
+	assert_true(type(prod_policy) != "null")
+	prod_denied := prod_policy({"tool_name": "flaky_reliability_tool"})
+	assert_false(dict_get_or(prod_denied, "allow", true))
+	prod_unknown := prod_policy({"tool_name": "nonexistent_tool"})
+	assert_false(dict_get_or(prod_unknown, "allow", true))
+
+	override_settings := build_tool_authorization_policy_with_profile("prod", ["timestamp_tool"], [])
+	assert_true(dict_get_or(override_settings, "ok", false))
+	override_policy := dict_get_or(override_settings, "policy", null)
+	assert_true(type(override_policy) != "null")
+	override_allowed := override_policy({"tool_name": "timestamp_tool"})
+	assert_true(override_allowed)
+	override_not_allowed := override_policy({"tool_name": "citation_formatter"})
+	assert_false(dict_get_or(override_not_allowed, "allow", true))
+
+	deny_override := build_tool_authorization_policy_with_profile("dev", [], ["timestamp_tool"])
+	assert_true(dict_get_or(deny_override, "ok", false))
+	deny_policy := dict_get_or(deny_override, "policy", null)
+	assert_true(type(deny_policy) != "null")
+	deny_result := deny_policy({"tool_name": "timestamp_tool"})
+	assert_false(dict_get_or(deny_result, "allow", true))
+
+	missing_profile := build_tool_authorization_policy_with_profile("unknown-profile", [], [])
+	assert_false(dict_get_or(missing_profile, "ok", true))
+	assert_true(contains(to_string(dict_get_or(missing_profile, "message", "")), "Unknown policy profile alias") >= 0)
+}
+
+test "policy profile aliases work via config and cli override" {
+	config_path := "tests/tmp/dispatch-policy-profile-config.json"
+	write_file(config_path, to_json({
+		"topic": "Policy profile config topic",
+		"workflow": "research-report",
+		"policy_profile": "development",
+		"yes": true,
+		"non_interactive": true,
+		"output_root": "tests/tmp/policy-profile-config-outputs",
+		"sources_dir": "examples/research-report/sources",
+		"decision": "approve"
+	}), true)
+
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+
+	config_result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"demo",
+		"--config",
+		config_path
+	], {
+		"inherit_env": true,
+		"timeout_ms": 300000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_true(config_result.success)
+	assert_true(contains(to_string(config_result.stdout), "Run ID:") >= 0)
+}
+
+test "dispatch runs supports workflow filter" {
+	output_root := "tests/tmp/runs-workflow-filter-outputs"
+	research_workflow := create_research_report_workflow("Filter Topic", true)
+	research_run := create_run_state(research_workflow, {"topic": "Filter Research"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	research_run["status"] := "completed"
+	research_run := persist_run_state(research_run)
+
+	crud_result := create_workflow_by_template("crud-reliability", "Filter Topic", true)
+	assert_true(crud_result["ok"])
+	crud_run := create_run_state(crud_result["workflow"], {"topic": "Filter CRUD"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	crud_run["status"] := "completed"
+	crud_run := persist_run_state(crud_run)
+
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+	result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"runs",
+		"--output-root",
+		output_root,
+		"--workflow",
+		"crud",
+		"--json"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_true(result.success)
+	parsed := parse_json(to_string(result.stdout))
+	runs := dict_get_or(parsed, "runs", [])
+	assert_true(len(runs) >= 1)
+	for run_item in runs {
+		workflow_name := to_lower(to_string(dict_get_or(run_item, "workflow_name", "")))
+		assert_equal(contains(workflow_name, "crud"), 1)
+	}
+}
+
+test "show inspect and doctor json envelopes are consistent" {
+	output_root := "tests/tmp/json-envelopes-outputs-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	workflow := create_research_report_workflow("Envelope Topic", true)
+	run_state := create_run_state(workflow, {"topic": "Envelope Topic"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_state["status"] := "completed"
+	run_state := persist_run_state(run_state)
+
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+
+	show_result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"show",
+		run_state["run_id"],
+		"--output-root",
+		output_root,
+		"--json"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_true(show_result.success)
+	show_payload := parse_json(to_string(show_result.stdout))
+	assert_equal(dict_get_or(show_payload, "command", ""), "show")
+	assert_true(dict_get_or(show_payload, "ok", false))
+	assert_equal(dict_get_or(show_payload, "output_root", ""), output_root)
+	show_contract := dict_get_or(show_payload, "contract", {})
+	assert_equal(dict_get_or(show_contract, "artifact_contract_version", 0), 1)
+	assert_equal(dict_get_or(dict_get_or(show_contract, "state", {}), "schema_name", ""), "dispatch-run-state")
+	assert_equal(dict_get_or(dict_get_or(show_contract, "state", {}), "schema_version", 0), 1)
+	assert_equal(dict_get_or(dict_get_or(show_contract, "trace", {}), "schema_name", ""), "dispatch-trace")
+	assert_equal(dict_get_or(dict_get_or(show_contract, "trace", {}), "schema_version", 0), 1)
+	show_summary := dict_get_or(show_payload, "summary", {})
+	assert_equal(dict_get_or(show_summary, "run_id", ""), run_state["run_id"])
+
+	inspect_result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"inspect",
+		run_state["run_id"],
+		"--output-root",
+		output_root,
+		"--json"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_true(inspect_result.success)
+	inspect_payload := parse_json(to_string(inspect_result.stdout))
+	assert_equal(dict_get_or(inspect_payload, "command", ""), "inspect")
+	assert_true(dict_get_or(inspect_payload, "ok", false))
+	assert_equal(dict_get_or(inspect_payload, "output_root", ""), output_root)
+	inspect_contract := dict_get_or(inspect_payload, "contract", {})
+	assert_equal(dict_get_or(inspect_contract, "artifact_contract_version", 0), 1)
+	assert_equal(dict_get_or(dict_get_or(inspect_contract, "state", {}), "schema_name", ""), "dispatch-run-state")
+	assert_equal(dict_get_or(dict_get_or(inspect_contract, "state", {}), "schema_version", 0), 1)
+	assert_equal(dict_get_or(dict_get_or(inspect_contract, "trace", {}), "schema_name", ""), "dispatch-trace")
+	assert_equal(dict_get_or(dict_get_or(inspect_contract, "trace", {}), "schema_version", 0), 1)
+	inspect_summary := dict_get_or(inspect_payload, "summary", {})
+	assert_equal(dict_get_or(inspect_summary, "run_id", ""), run_state["run_id"])
+	inspect_steps := dict_get_or(inspect_payload, "steps", [])
+	assert_true(len(inspect_steps) >= 1)
+
+	doctor_result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"doctor",
+		"--output-root",
+		output_root,
+		"--json"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_true(doctor_result.success)
+	doctor_payload := parse_json(to_string(doctor_result.stdout))
+	assert_equal(dict_get_or(doctor_payload, "command", ""), "doctor")
+	assert_true(dict_get_or(doctor_payload, "ok", false))
+	assert_equal(dict_get_or(doctor_payload, "output_root", ""), output_root)
+	doctor_runs := dict_get_or(doctor_payload, "runs", [])
+	assert_true(len(doctor_runs) >= 1)
+	doctor_summary := dict_get_or(doctor_payload, "summary", {})
+	assert_true(dict_get_or(doctor_summary, "total_runs", 0) >= 1)
+}
+
+test "dispatch run tags persist and runs supports tags filter" {
+	output_root := "tests/tmp/runs-tags-filter-outputs-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	workflow := create_research_report_workflow("Tag Topic", true)
+
+	prod_run := create_run_state(workflow, {"topic": "Tag Prod"}, output_root, {
+		"auto_approve": true,
+		"interactive": false,
+		"tags": ["env:prod", "project:dispatch"]
+	})
+	prod_run["status"] := "completed"
+	prod_run := persist_run_state(prod_run)
+
+	dev_run := create_run_state(workflow, {"topic": "Tag Dev"}, output_root, {
+		"auto_approve": true,
+		"interactive": false,
+		"tags": ["env:dev", "project:dispatch"]
+	})
+	dev_run["status"] := "completed"
+	dev_run := persist_run_state(dev_run)
+
+	loaded_prod := load_run_state(output_root, prod_run["run_id"])
+	assert_true(loaded_prod["ok"])
+	loaded_prod_tags := to_json(dict_get_or(loaded_prod["run_state"], "tags", []))
+	assert_equal(contains(loaded_prod_tags, "env:prod"), 1)
+	assert_equal(contains(loaded_prod_tags, "project:dispatch"), 1)
+
+	all_runs := list_runs(output_root)
+	assert_true(len(all_runs) >= 2)
+
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+	result := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"runs",
+		"--output-root",
+		output_root,
+		"--tags",
+		"env:prod",
+		"--json"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_true(result.success)
+	parsed := parse_json(to_string(result.stdout))
+	filters := dict_get_or(parsed, "filters", {})
+	filter_tags := to_json(dict_get_or(filters, "tags", []))
+	assert_true(contains(filter_tags, "env:prod") >= 0)
+	runs := dict_get_or(parsed, "runs", [])
+	assert_equal(len(runs), 1)
+	matched_tags := dict_get_or(runs[0], "tags", [])
+	has_prod := false
+	has_dev := false
+	for tag in matched_tags {
+		if to_string(tag) == "env:prod" {
+			has_prod = true
+		}
+		if to_string(tag) == "env:dev" {
+			has_dev = true
+		}
+	}
+	assert_true(has_prod)
+	assert_false(has_dev)
+	assert_equal(dict_get_or(runs[0], "run_id", ""), prod_run["run_id"])
+
+	assert_true(dict_get_or(load_run_state(output_root, dev_run["run_id"]), "ok", false))
+}
+
+test "tool authorization policy supports deny and allow outcomes" {
+	default_retry := {
+		"max_attempts": 1,
+		"base_delay_ms": 0,
+		"max_delay_ms": 0,
+		"strategy": "none",
+		"retry_on_codes": []
+	}
+	step := create_step("auth_tool_step", "Auth Tool Step", "tool", {
+		"tool_name": "timestamp_tool",
+		"input_from": ["input"],
+		"output_key": "auth_output"
+	})
+	workflow := create_workflow({
+		"id": "tool_auth_workflow",
+		"name": "Tool Auth Workflow",
+		"description": "Authorization policy checks",
+		"input_schema": {"type": "dict"},
+		"agents": {},
+		"tools": ["timestamp_tool"],
+		"steps": [step],
+		"memory_config": {},
+		"default_retry_policy": default_retry,
+		"approval_config": {"auto_approve": true},
+		"output_schema": {"type": "dict"}
+	})
+
+	deny_state := create_run_state(workflow, {"topic": "Policy deny"}, "tests/tmp/authz-outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	registry := register_default_tools("examples/research-report/sources")
+	deny_result := run_workflow(workflow, deny_state, registry, {
+		"auto_approve": true,
+		"interactive": false,
+		"command_name": "test_policy_deny",
+		"tool_authorization_policy": func(policy_input) {
+			return {
+				"allow": false,
+				"message": "Denied by policy for " + dict_get_or(policy_input, "tool_name", "")
+			}
+		}
+	})
+	assert_false(deny_result["ok"])
+	assert_equal(deny_result["error"]["code"], "tool_execution_denied")
+	trace_events := dict_get_or(dict_get_or(deny_result["run_state"], "trace", {}), "events", [])
+	has_policy_denied := false
+	for event in trace_events {
+		if dict_get_or(event, "type", "") == "policy_denied" {
+			has_policy_denied = true
+		}
+	}
+	assert_true(has_policy_denied)
+	audit_raw := read_file(mutation_audit_path("tests/tmp/authz-outputs"))
+	assert_equal(contains(audit_raw, "\"operation\":\"policy_deny\""), 1)
+	assert_equal(contains(audit_raw, "\"command_name\":\"test_policy_deny\""), 1)
+
+	allow_state := create_run_state(workflow, {"topic": "Policy allow"}, "tests/tmp/authz-outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	allow_result := run_workflow(workflow, allow_state, registry, {
+		"auto_approve": true,
+		"interactive": false,
+		"tool_authorization_policy": func(policy_input) {
+			return true
+		}
+	})
+	assert_true(allow_result["ok"])
+	assert_equal(allow_result["run_state"]["status"], "completed")
+}
+
+test "run export and import support round trip bundles" {
+	output_root := "tests/tmp/export-import-source"
+	workflow := create_research_report_workflow("Export Import Topic", true)
+	run_state := create_run_state(workflow, {"topic": "Export Import Topic"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_state["status"] := "completed"
+	run_state := persist_run_state(run_state)
+
+	bundle_path := "tests/tmp/run-bundles/export-bundle.json"
+	exported := export_run_bundle(output_root, run_state["run_id"], bundle_path, {})
+	assert_true(exported["ok"])
+	assert_true(file_exists(bundle_path))
+
+	imported := import_run_bundle("tests/tmp/export-import-target", bundle_path, {})
+	assert_true(imported["ok"])
+	loaded := load_run_state("tests/tmp/export-import-target", imported["run_id"])
+	assert_true(loaded["ok"])
+	assert_equal(loaded["run_state"]["run_id"], imported["run_id"])
+	assert_equal(dict_get_or(loaded["run_state"], "artifact_contract_version", 0), 1)
+	assert_equal(dict_get_or(loaded["run_state"], "schema_name", ""), "dispatch-run-state")
+	assert_equal(dict_get_or(loaded["run_state"], "schema_version", 0), 1)
+}
+
+test "signed bundle verification supports deterministic pass and fail paths" {
+	output_root := "tests/tmp/export-import-signed-source"
+	workflow := create_research_report_workflow("Signed Export Topic", true)
+	run_state := create_run_state(workflow, {"topic": "Signed Export Topic"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_state["status"] := "completed"
+	run_state := persist_run_state(run_state)
+
+	bundle_path := "tests/tmp/run-bundles/signed-export-bundle.json"
+	signing_key := "dispatch-test-signing-key"
+	exported := export_run_bundle(output_root, run_state["run_id"], bundle_path, {
+		"include_signature": true,
+		"signing_key": signing_key
+	})
+	assert_true(exported["ok"])
+
+	verified := import_run_bundle("tests/tmp/export-import-signed-target", bundle_path, {
+		"verify_signature": true,
+		"signing_key": signing_key
+	})
+	assert_true(verified["ok"])
+
+	tampered_path := "tests/tmp/run-bundles/signed-export-bundle-tampered.json"
+	bundle_payload := parse_json(read_file(bundle_path))
+	artifacts := dict_get_or(bundle_payload, "artifacts", {})
+	artifacts["state_json"] := to_string(dict_get_or(artifacts, "state_json", "")) + "\nTampered"
+	bundle_payload["artifacts"] := artifacts
+	write_file(tampered_path, to_json(bundle_payload), true)
+
+	tampered := import_run_bundle("tests/tmp/export-import-signed-target", tampered_path, {
+		"verify_signature": true,
+		"signing_key": signing_key
+	})
+	assert_false(tampered["ok"])
+	assert_equal(tampered["error"]["code"], "invalid_bundle_signature")
+	assert_equal(contains(to_string(tampered["error"]["message"]), "verification failed"), 1)
+
+	unsigned := export_run_bundle(output_root, run_state["run_id"], "tests/tmp/run-bundles/unsigned-export-bundle.json", {})
+	assert_true(unsigned["ok"])
+	unsigned_verified := import_run_bundle("tests/tmp/export-import-signed-target", "tests/tmp/run-bundles/unsigned-export-bundle.json", {
+		"verify_signature": true,
+		"signing_key": signing_key
+	})
+	assert_false(unsigned_verified["ok"])
+	assert_equal(unsigned_verified["error"]["code"], "invalid_bundle_signature")
+	assert_equal(contains(to_string(unsigned_verified["error"]["message"]), "metadata is missing"), 1)
+}
+
+test "cli negative path matrix returns deterministic errors" {
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+
+	cases := [
+		{
+			"args": ["runs", "--status", "bogus"],
+			"expected": "Invalid value for --status"
+		},
+		{
+			"args": ["cleanup", "--status", "bogus"],
+			"expected": "Invalid value for --status"
+		},
+		{
+			"args": ["cleanup", "--max-count"],
+			"expected": "Missing value for flag: --max-count"
+		}
+	]
+
+	for case_item in cases {
+		process_args := [kujo_bin, "run", "--interpreter", "dispatch.kujo"]
+		for extra in dict_get_or(case_item, "args", []) {
+			process_args := push(process_args, extra)
+		}
+		result := spawn_process(process_args, {
+			"inherit_env": true,
+			"timeout_ms": 120000,
+			"max_output_bytes": 1024 * 1024
+		})
+		assert_false(result.success)
+		combined := to_string(result.stdout) + "\n" + to_string(result.stderr)
+		assert_equal(contains(combined, dict_get_or(case_item, "expected", "")), 1)
+	}
+}
+
+test "dispatch help usage snapshot remains compatible" {
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+
+	invocations := [
+		["help"],
+		["--", "--help"],
+		["--", "-h"]
+	]
+	usage_snapshot := [
+		"kujo run --interpreter dispatch.kujo demo \"Research topic\" [--workflow research-report] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs]",
+		"kujo run --interpreter dispatch.kujo show <run-id> [--output-root outputs] [--json]",
+		"kujo run --interpreter dispatch.kujo inspect <run-id> [--output-root outputs] [--json]",
+		"kujo run --interpreter dispatch.kujo resume <run-id> [--workflow research-report] [--policy-profile staging] [--yes] [--non-interactive] [--output-root outputs]",
+		"kujo run --interpreter dispatch.kujo templates [--json]",
+		"kujo run --interpreter dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]",
+		"kujo run --interpreter dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
+		"kujo run --interpreter dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]",
+		"kujo run --interpreter dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]",
+		"kujo run --interpreter dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]"
+	]
+
+	invocation_index := 0
+	while invocation_index < len(invocations) {
+		process_args := [kujo_bin, "run", "--interpreter", "dispatch.kujo"]
+		command_tokens := invocations[invocation_index]
+		token_index := 0
+		while token_index < len(command_tokens) {
+			process_args = push(process_args, command_tokens[token_index])
+			token_index = token_index + 1
+		}
+
+		result := spawn_process(process_args, {
+			"inherit_env": true,
+			"timeout_ms": 120000,
+			"max_output_bytes": 1024 * 1024
+		})
+		assert_true(result.success)
+		combined := to_string(result.stdout) + "\n" + to_string(result.stderr)
+		assert_true(index_of(combined, "Dispatch") >= 0)
+		assert_true(index_of(combined, "Usage:") >= 0)
+
+		lines := split(combined, "\n")
+		usage_lines := []
+		line_index := 0
+		while line_index < len(lines) {
+			line_text := trim(to_string(lines[line_index]))
+			if starts_with(line_text, "kujo run --interpreter dispatch.kujo ") {
+				usage_lines = push(usage_lines, line_text)
+			}
+			line_index = line_index + 1
+		}
+
+		assert_equal(len(usage_lines), len(usage_snapshot))
+		usage_index := 0
+		while usage_index < len(usage_snapshot) {
+			assert_equal(usage_lines[usage_index], usage_snapshot[usage_index])
+			usage_index = usage_index + 1
+		}
+
+		invocation_index = invocation_index + 1
+	}
+}
+
+test "dispatch unknown command prints usage snapshot" {
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+
+	unknown := spawn_process([
+		kujo_bin,
+		"run",
+		"--interpreter",
+		"dispatch.kujo",
+		"unknown-command"
+	], {
+		"inherit_env": true,
+		"timeout_ms": 120000,
+		"max_output_bytes": 1024 * 1024
+	})
+	assert_false(unknown.success)
+	combined := to_string(unknown.stdout) + "\n" + to_string(unknown.stderr)
+	assert_true(index_of(combined, "Unknown command: unknown-command") >= 0)
+
+	expected_tokens := [
+		"dispatch.kujo demo",
+		"dispatch.kujo show",
+		"dispatch.kujo inspect",
+		"dispatch.kujo resume",
+		"dispatch.kujo templates",
+		"dispatch.kujo runs",
+		"dispatch.kujo doctor",
+		"dispatch.kujo cleanup",
+		"dispatch.kujo export-run",
+		"dispatch.kujo import-run"
+	]
+	token_index := 0
+	while token_index < len(expected_tokens) {
+		assert_true(index_of(combined, expected_tokens[token_index]) >= 0)
+		token_index = token_index + 1
+	}
+}
+
+test "long run stress fixture keeps traces bounded" {
+	fixture_raw := read_file("tests/fixtures/trace_stress_fixture.json")
+	fixture := parse_json(fixture_raw)
+	step_count := dict_get_or(fixture, "step_count", 60)
+	trace_max_events := dict_get_or(fixture, "trace_max_events", 60)
+	trace_max_payload_chars := dict_get_or(fixture, "trace_max_payload_chars", 200)
+
+	steps := []
+	i := 0
+	while i < step_count {
+		steps := push(steps, create_step("stress_step_" + to_string(i), "Stress Step " + to_string(i), "tool", {
+			"tool_name": "timestamp_tool",
+			"input_from": ["input"],
+			"output_key": "stress_output_" + to_string(i)
+		}))
+		i := i + 1
+	}
+
+	workflow := create_workflow({
+		"id": "trace_stress_workflow",
+		"name": "Trace Stress Workflow",
+		"description": "Stress trace bounds under long runs",
+		"input_schema": {"type": "dict"},
+		"agents": {},
+		"tools": ["timestamp_tool"],
+		"steps": steps,
+		"memory_config": {},
+		"default_retry_policy": {
+			"max_attempts": 1,
+			"base_delay_ms": 0,
+			"max_delay_ms": 0,
+			"strategy": "none",
+			"retry_on_codes": []
+		},
+		"approval_config": {"auto_approve": true},
+		"output_schema": {"type": "dict"}
+	})
+	run_state := create_run_state(workflow, {"topic": "Trace stress topic"}, "tests/tmp/stress-outputs", {
+		"auto_approve": true,
+		"interactive": false,
+		"trace_max_events": trace_max_events,
+		"trace_max_payload_chars": trace_max_payload_chars
+	})
+	registry := register_default_tools("examples/research-report/sources")
+	result := run_workflow(workflow, run_state, registry, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	assert_true(result["ok"])
+	final_trace := dict_get_or(result["run_state"], "trace", {})
+	assert_true(len(dict_get_or(final_trace, "events", [])) <= trace_max_events)
+	assert_true(dict_get_or(dict_get_or(final_trace, "truncated", {}), "events_dropped", 0) > 0)
+	assert_true(dict_get_or(final_trace, "event_count_total", 0) > len(dict_get_or(final_trace, "events", [])))
+}
+
+test "corruption matrix covers malformed and missing artifact scenarios" {
+	output_root := "tests/tmp/corruption-matrix-outputs"
+	workflow := create_research_report_workflow("Corruption Matrix Topic", true)
+
+	malformed := create_run_state(workflow, {"topic": "Malformed"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	write_file(malformed["run_dir"] + "/state.json", "{ malformed", true)
+	malformed_loaded := load_run_state(output_root, malformed["run_id"])
+	assert_false(malformed_loaded["ok"])
+
+	partial_run_id := "run-" + to_string(current_timestamp()) + "-9001"
+	partial_run_dir := output_root + "/" + partial_run_id
+	create_dir(output_root)
+	create_dir(partial_run_dir)
+	write_file(partial_run_dir + "/state.json", to_json({
+		"run_id": partial_run_id,
+		"workflow_id": "partial_workflow",
+		"workflow_name": "Partial Workflow",
+		"status": "completed",
+		"input": {"topic": "Partial"},
+		"current_step_index": 1,
+		"steps": [{"id": "s1", "status": "completed"}],
+		"trace": {
+			"status": "running",
+			"events": [],
+			"started_at": "2026-05-22 00:00:00",
+			"finished_at": ""
+		},
+		"run_dir": partial_run_dir,
+		"output_root": output_root,
+		"updated_at": "2026-05-22 00:00:00"
+	}), true)
+
+	runs := list_runs(output_root)
+	assert_true(len(runs) >= 1)
+	diagnostics := doctor_runs(output_root, false, {})
+	assert_true(len(diagnostics) >= 1)
+
+	has_issueful_run := false
+	for item in diagnostics {
+		if dict_get_or(item, "load_ok", true) == false || dict_get_or(item, "issues_before", 0) > 0 {
+			has_issueful_run = true
+		}
+	}
+	assert_true(has_issueful_run)
+}
