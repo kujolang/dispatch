@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/kujolang/dispatch/raw/main/schema/eval-suite.schema.json",
-  "title": "Kujo Eval Suite",
-  "description": "Configuration schema for Kujo Eval evaluation suites (contract v2.0.0).",
+  "title": "EvalSuite",
+  "description": "Configuration schema for Evalevaluation suites (contract v2.0.0).",
   "type": "object",
   "required": ["name", "tests"],
   "properties": {

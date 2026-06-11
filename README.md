@@ -6,7 +6,7 @@
 [![Tests](https://img.shields.io/badge/tests-7%20suites%20passing-brightgreen)](https://github.com/kujolang/dispatch)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
-> **v0.3.1** | Contract v2.0.0 | 27 checks | 5 report formats | 14 CLI commands | 7 test suites | 5-layer controls
+> **v0.1.0** | Contract v2.0.0 | 27 checks | 5 report formats | 14 CLI commands | 7 test suites | 5-layer controls
 
 Evaluation framework for AI-native software — deterministic checks for agents, CLIs, files, snapshots, and workflow outputs.
 
@@ -177,7 +177,7 @@ scripts/release_quality_gates.sh
 
 ## Launch Scope Snapshot
 
-Kujo Eval is verified for deterministic local and CI evaluation workflows where shell/file access is expected and controlled by repository policy.
+Evalis verified for deterministic local and CI evaluation workflows where shell/file access is expected and controlled by repository policy.
 
 It is not yet a universal fit for every enterprise testing context. Before broad rollout, evaluate the following constraints for your environment:
 
@@ -186,11 +186,11 @@ It is not yet a universal fit for every enterprise testing context. Before broad
 - Runtime warning noise in interpreter mode may require log filtering in strict observability pipelines.
 - Feature roadmap items (LLM-as-judge, model-cost scoring, distributed execution) are intentionally out of current deterministic scope.
 
-If your use case needs strict isolation, guaranteed process preemption, or non-local execution controls, place Kujo Eval behind additional platform controls (container boundaries, workload policies, and external supervisors).
+If your use case needs strict isolation, guaranteed process preemption, or non-local execution controls, place Evalbehind additional platform controls (container boundaries, workload policies, and external supervisors).
 
 ## Enterprise Deployment Patterns
 
-Kujo Eval can be deployed in enterprise CI/CD and platform workflows with a simple layered model:
+Evalcan be deployed in enterprise CI/CD and platform workflows with a simple layered model:
 
 1. **Runner boundary**: execute eval jobs in short-lived containers or isolated runners with least-privilege filesystem mounts.
 2. **Command policy**: define `allowed_commands`, `allowed_command_patterns`, and `blocked_arg_patterns` at suite level; override only where needed at test level.
@@ -207,7 +207,7 @@ Suggested rollout:
 
 ## Why Eval vs. Other Tools?
 
-| Feature | Kujo Eval | Jest | Pytest | Bats |
+| Feature | Eval| Jest | Pytest | Bats |
 |---------|-----------|------|--------|------|
 | **Language** | Kujo | JavaScript | Python | Bash |
 | **Dependencies** | Zero (Kujo runtime only) | npm + 100s packages | pip + plugins | Bash + helpers |
@@ -325,7 +325,7 @@ export KUJO_BIN=./kujo
 
 | Command | Exit | Expected Output Signal |
 |---|---:|---|
-| `$KUJO_BIN run main.kujo version` | 0 | Prints `Kujo Eval v2.0.0` and `Contract version: 2.0.0` |
+| `$KUJO_BIN run main.kujo version` | 0 | Prints `Evalv2.0.0` and `Contract version: 2.0.0` |
 | `$KUJO_BIN run main.kujo list-checks` | 0 | Prints available check list and `Total: 27 check types` |
 | `$KUJO_BIN run main.kujo snapshots` | 0 | Prints snapshot listing output (or empty listing message) |
 | `$KUJO_BIN run main.kujo diff README.md README.md` | 0 | Reports no differences for identical files |
@@ -502,7 +502,7 @@ Use `--json` for machine-readable output in CI pipelines.
 
 ## CLI Exit Code Contract
 
-Kujo Eval currently uses explicit process exit classes:
+Evalcurrently uses explicit process exit classes:
 
 | Exit Code | Class | Meaning |
 |---:|---|---|
@@ -560,7 +560,7 @@ Eval uses a `describe_module()` function for runtime contract discovery. Call it
 
 ```bash
 kujo run main.kujo version
-# Kujo Eval v2.0.0
+# Evalv2.0.0
 # Contract version: 2.0.0
 ```
 

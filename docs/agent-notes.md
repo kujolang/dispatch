@@ -1,4 +1,4 @@
-# Agent Notes — Kujo Eval Development
+# Agent Notes — EvalDevelopment
 
 > **Purpose**: Capture runtime quirks, gotchas, and workflow lessons learned during development loops. Read this before starting any new loop to avoid repeating mistakes.
 

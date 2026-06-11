@@ -1,4 +1,4 @@
-# Kujo Eval Final-Boss Source Of Truth
+# EvalFinal-Boss Source Of Truth
 
 Date: 2026-05-26
 Repository: `kujo-eval`

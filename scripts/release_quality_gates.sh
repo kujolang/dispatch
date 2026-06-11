@@ -7,7 +7,7 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export KUJO_BIN="${KUJO_BIN:-$PROJECT_ROOT/kujo}"
 cd "$PROJECT_ROOT"
 
-echo "=== Kujo Eval Release Quality Gates ==="
+echo "=== EvalRelease Quality Gates ==="
 echo ""
 
 mkdir -p eval_results

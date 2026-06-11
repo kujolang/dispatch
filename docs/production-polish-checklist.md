@@ -25,7 +25,7 @@ These items ensure the project makes an excellent first impression when someone 
 
 ### [x] P1.2 — Add a "Why Not X?" comparison section to README
 
-**Description**: Compare Kujo Eval to similar tools in other ecosystems: Jest, Pytest, Bats, ShellSpec, etc. Highlight what makes eval unique (AI-native, deterministic, no dependencies).
+**Description**: Compare Evalto similar tools in other ecosystems: Jest, Pytest, Bats, ShellSpec, etc. Highlight what makes eval unique (AI-native, deterministic, no dependencies).
 
 **Implementation**: Add a comparison table to README with columns: Feature, Kujo Eval, Jest, Pytest, Bats.
 

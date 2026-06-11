@@ -1,6 +1,6 @@
 {
   "name": "kujo-eval-self-check",
-  "description": "Dogfood eval suite — Kujo Eval testing itself.",
+  "description": "Dogfood eval suite — Evaltesting itself.",
   "version": "0.1.0",
   "output_dir": "./eval_results",
   "snapshot_dir": "./snapshots",
@@ -49,7 +49,7 @@
     {
       "name": "version command works",
       "check": "output_contains",
-      "params": { "command": "echo 'Kujo Eval v1.0.0'", "expected": "Kujo Eval" }
+      "params": { "command": "echo 'Evalv1.0.0'", "expected": "Kujo Eval" }
     },
     {
       "name": "help command shows usage",

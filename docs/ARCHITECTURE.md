@@ -2,7 +2,7 @@
 
 ## System Overview
 
-Kujo Eval is a deterministic evaluation engine for agent and workflow outcomes. The architecture is centered on a single suite contract (`eval.json`), a deterministic run engine, and artifact-first outputs for CI automation.
+Evalis a deterministic evaluation engine for agent and workflow outcomes. The architecture is centered on a single suite contract (`eval.json`), a deterministic run engine, and artifact-first outputs for CI automation.
 
 Core goals:
 
@@ -134,7 +134,7 @@ Integrity flow:
 
 ## Fixture-Heavy Performance Probe
 
-To detect I/O regression drift beyond lightweight smoke suites, Kujo Eval includes a fixture-heavy suite:
+To detect I/O regression drift beyond lightweight smoke suites, Evalincludes a fixture-heavy suite:
 
 - `examples/io_heavy_regression_suite.json`
 

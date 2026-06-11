@@ -1,6 +1,6 @@
 # Ecosystem Integration Guide
 
-How Kujo Eval integrates with other Kujo ecosystem tools.
+How Evalintegrates with other Kujo ecosystem tools.
 
 ## Kennel Package Workflow (G.1)
 

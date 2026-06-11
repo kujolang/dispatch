@@ -1,4 +1,4 @@
-# Kujo Eval Codex Next Session Checklist
+# EvalCodex Next Session Checklist
 
 Date created: 2026-05-26
 Source review: production-hardening pass after VM-first migration

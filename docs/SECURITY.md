@@ -2,7 +2,7 @@
 
 ## Security Model
 
-Kujo Eval executes user-provided shell commands and reads arbitrary files as part of its evaluation checks. The following protections are in place:
+Evalexecutes user-provided shell commands and reads arbitrary files as part of its evaluation checks. The following protections are in place:
 
 ### Command Allowlisting
 
@@ -34,7 +34,7 @@ Path policy controls:
 
 ## Enterprise Deployment Patterns
 
-Kujo Eval is intended for controlled execution environments. For enterprise rollout, use defense-in-depth around the runtime:
+Evalis intended for controlled execution environments. For enterprise rollout, use defense-in-depth around the runtime:
 
 1. **Isolated execution**: run suites in ephemeral containers or isolated CI workers.
 2. **Least privilege**: mount only required directories and avoid privileged runner accounts.

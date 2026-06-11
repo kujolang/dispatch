@@ -96,7 +96,7 @@ cleanup_smoke_dir() {
 	trap - EXIT
 }
 
-echo "=== Kujo Eval CLI Smoke Matrix ==="
+echo "=== EvalCLI Smoke Matrix ==="
 run_matrix "vm"
 if [ "$INCLUDE_INTERPRETER" -eq 1 ]; then
 	run_matrix "interpreter"

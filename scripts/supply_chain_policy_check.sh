@@ -21,7 +21,7 @@ check() {
     fi
 }
 
-echo "=== Kujo Eval Supply-Chain Policy Check ==="
+echo "=== EvalSupply-Chain Policy Check ==="
 echo ""
 
 # 1. No root scratch Kujo files

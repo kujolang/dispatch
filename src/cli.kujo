@@ -6,7 +6,7 @@
 from src.common import dict_get_or, normalize_string
 
 export func print_help() {
-	print("Kujo Eval — AI-native evaluation framework")
+	print("Eval— AI-native evaluation framework")
 	print("")
 	print("Usage:")
 	print("  kujo run main.kujo init [--name <name>]")

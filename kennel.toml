@@ -1,9 +1,9 @@
 [package]
 name = "eval"
-version = "0.3.1"
+version = "0.1.0"
 description = "Evaluation framework for AI-native software — 27 deterministic checks, 5 report formats, snapshot testing, retry support, security hardened. Contract v2.0.0."
 license = "MIT"
-authors = ["Robert DeVore <me@robertdevore.com>"]
+authors = ["Kujolang <contact@kujolang.ai>"]
 homepage = ""
 repository = "https://github.com/kujolang/dispatch"
 documentation = ""

@@ -1,6 +1,6 @@
 [package]
 name = "eval"
-version = "0.3.1"
+version = "0.1.0"
 description = "Evaluation framework for AI-native software — deterministic checks for agents, CLIs, files, snapshots, and workflow outputs. Contract v2.0.0."
 
 [dependencies]

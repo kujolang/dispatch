@@ -283,7 +283,7 @@ Exit: 1
 
 Excerpt:
 ```text
-=== Kujo Eval Release Quality Gates ===
+=== EvalRelease Quality Gates ===
 
 [GATE 1] Running test suites...
 [✓] tests/contract_tests.kujo (22.95ms)
@@ -310,7 +310,7 @@ Exit: 1
 
 Excerpt:
 ```text
-=== Kujo Eval Supply-Chain Policy Check ===
+=== EvalSupply-Chain Policy Check ===
 
   PASS: No root scratch .kujo files
   PASS: All src/*.kujo files exist

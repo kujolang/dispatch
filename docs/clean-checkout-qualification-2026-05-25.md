@@ -15,7 +15,7 @@ Note: Interpreter-mode commands continue to emit KUJORUN001 type-check warnings 
 
 | Command | Exit | Signal Observed |
 |---|---:|---|
-| `kujo run main.kujo --interpreter version` | 0 | Printed `Kujo Eval v2.0.0` and contract version |
+| `kujo run main.kujo --interpreter version` | 0 | Printed `Evalv2.0.0` and contract version |
 | `kujo run main.kujo --interpreter list-checks` | 0 | Printed check list with `Total: 27 check types` |
 | `kujo run main.kujo --interpreter run examples/release_gate_suite.json --output-dir .eval_clean --json` | 0 | JSON envelope included `"ok":true` |
 | `kujo run main.kujo --interpreter report examples/release_gate_suite.json --rerun --output-dir .eval_clean --json` | 0 | JSON envelope included `"ok":true` |

@@ -1,4 +1,4 @@
-# Kujo Eval Release Candidate Runbook
+# EvalRelease Candidate Runbook
 
 Use this runbook before tagging a release.
 All commands are VM-first and should be executed from the repository root.
