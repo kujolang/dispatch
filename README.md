@@ -403,9 +403,9 @@ Ensure your sources directory exists and includes markdown fixtures (`.md` files
 
 If you intentionally need a different sources directory, set `DISPATCH_ALLOW_ANY_SOURCES_DIR=true` explicitly.
 
-### RUFRUN undefined-function warnings
+### Undefined-function warnings
 
-Some Kujo interpreter runs can emit `RUFRUN001` warnings while still executing correctly. Treat command exit status and functional output as the primary success signal.
+Some Kujo interpreter runs can emit warnings about undefined functions while still executing correctly. Treat command exit status and functional output as the primary success signal.
 
 ## Repository Layout
 
