@@ -7,21 +7,83 @@ from src.core.state import create_run_state, load_run_state, list_runs, list_run
 from src.core.runner import run_workflow
 from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_policy_with_profile
 
+func print_lines(lines) {
+	for line in lines {
+		print(line)
+	}
+}
+
+func print_kv(label, value) {
+	print(label + ": " + to_string(value))
+}
+
 func print_help() {
-	print("Dispatch")
-	print("Kujo agent workflow engine for reliable AI workflows.")
-	print("")
-	print("Usage:")
-	print("  kujo run --interpreter dispatch.kujo demo \"Research topic\" [--workflow research-report] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs]")
-	print("  kujo run --interpreter dispatch.kujo show <run-id> [--output-root outputs] [--json]")
-	print("  kujo run --interpreter dispatch.kujo inspect <run-id> [--output-root outputs] [--json]")
-	print("  kujo run --interpreter dispatch.kujo resume <run-id> [--workflow research-report] [--policy-profile staging] [--yes] [--non-interactive] [--output-root outputs]")
-	print("  kujo run --interpreter dispatch.kujo templates [--json]")
-	print("  kujo run --interpreter dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]")
-	print("  kujo run --interpreter dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]")
-	print("  kujo run --interpreter dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]")
-	print("  kujo run --interpreter dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]")
-	print("  kujo run --interpreter dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]")
+	print_lines([
+		"Dispatch",
+		"Kujo agent workflow engine for reliable AI workflows.",
+		"",
+		"Usage:",
+		"  kujo run --interpreter dispatch.kujo demo \"Research topic\" [--workflow research-report] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs]",
+		"  kujo run --interpreter dispatch.kujo show <run-id> [--output-root outputs] [--json]",
+		"  kujo run --interpreter dispatch.kujo inspect <run-id> [--output-root outputs] [--json]",
+		"  kujo run --interpreter dispatch.kujo resume <run-id> [--workflow research-report] [--policy-profile staging] [--yes] [--non-interactive] [--output-root outputs]",
+		"  kujo run --interpreter dispatch.kujo templates [--json]",
+		"  kujo run --interpreter dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]",
+		"  kujo run --interpreter dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
+		"  kujo run --interpreter dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]",
+		"  kujo run --interpreter dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]",
+		"  kujo run --interpreter dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]"
+	])
+}
+
+func build_contract_metadata(run_state) {
+	return {
+		"artifact_contract_version": dict_get_or(run_state, "artifact_contract_version", 0),
+		"state": {
+			"schema_name": dict_get_or(run_state, "schema_name", ""),
+			"schema_version": dict_get_or(run_state, "schema_version", 0)
+		},
+		"trace": {
+			"schema_name": dict_get_or(dict_get_or(run_state, "trace", {}), "schema_name", ""),
+			"schema_version": dict_get_or(dict_get_or(run_state, "trace", {}), "schema_version", 0)
+		}
+	}
+}
+
+func build_artifact_paths(run_state) {
+	run_dir := run_state["run_dir"]
+	artifacts := {
+		"state": run_dir + "/state.json",
+		"trace_json": run_dir + "/trace.json",
+		"trace_markdown": run_dir + "/trace.md"
+	}
+	if file_exists(run_dir + "/report.md") {
+		artifacts["report_md"] := run_dir + "/report.md"
+	}
+	if file_exists(run_dir + "/report.json") {
+		artifacts["report_json"] := run_dir + "/report.json"
+	}
+	return artifacts
+}
+
+func print_run_completion(final_state) {
+	print_kv("Run ID", final_state["run_id"])
+	print_kv("Status", final_state["status"])
+	print_kv("Run Directory", final_state["run_dir"])
+}
+
+func print_artifact_summary(run_state) {
+	run_dir := run_state["run_dir"]
+	print("Artifacts:")
+	print("- state: " + run_dir + "/state.json")
+	print("- trace json: " + run_dir + "/trace.json")
+	print("- trace md: " + run_dir + "/trace.md")
+	if file_exists(run_dir + "/report.md") {
+		print("- report md: " + run_dir + "/report.md")
+	}
+	if file_exists(run_dir + "/report.json") {
+		print("- report json: " + run_dir + "/report.json")
+	}
 }
 
 	func key_exists(map_obj, key_name) {
@@ -713,9 +775,7 @@ func run_demo(command_args) {
 	})
 
 	final_state := result["run_state"]
-	print("Run ID: " + final_state["run_id"])
-	print("Status: " + final_state["status"])
-	print("Run Directory: " + final_state["run_dir"])
+	print_run_completion(final_state)
 	if file_exists(final_state["run_dir"] + "/report.md") {
 		print("Report: " + final_state["run_dir"] + "/report.md")
 	}
@@ -757,28 +817,8 @@ func run_show(command_args) {
 	}
 	run_state := loaded["run_state"]
 	summary := summarize_run(run_state)
-	contract := {
-		"artifact_contract_version": dict_get_or(run_state, "artifact_contract_version", 0),
-		"state": {
-			"schema_name": dict_get_or(run_state, "schema_name", ""),
-			"schema_version": dict_get_or(run_state, "schema_version", 0)
-		},
-		"trace": {
-			"schema_name": dict_get_or(dict_get_or(run_state, "trace", {}), "schema_name", ""),
-			"schema_version": dict_get_or(dict_get_or(run_state, "trace", {}), "schema_version", 0)
-		}
-	}
-	artifacts := {
-		"state": run_state["run_dir"] + "/state.json",
-		"trace_json": run_state["run_dir"] + "/trace.json",
-		"trace_markdown": run_state["run_dir"] + "/trace.md"
-	}
-	if file_exists(run_state["run_dir"] + "/report.md") {
-		artifacts["report_md"] := run_state["run_dir"] + "/report.md"
-	}
-	if file_exists(run_state["run_dir"] + "/report.json") {
-		artifacts["report_json"] := run_state["run_dir"] + "/report.json"
-	}
+	contract := build_contract_metadata(run_state)
+	artifacts := build_artifact_paths(run_state)
 	if json_output {
 		print(to_json({
 			"command": "show",
@@ -824,28 +864,8 @@ func run_inspect(command_args) {
 	run_state := loaded["run_state"]
 	topic := dict_get_or(dict_get_or(run_state, "input", {}), "topic", "")
 	summary := summarize_run(run_state)
-	contract := {
-		"artifact_contract_version": dict_get_or(run_state, "artifact_contract_version", 0),
-		"state": {
-			"schema_name": dict_get_or(run_state, "schema_name", ""),
-			"schema_version": dict_get_or(run_state, "schema_version", 0)
-		},
-		"trace": {
-			"schema_name": dict_get_or(dict_get_or(run_state, "trace", {}), "schema_name", ""),
-			"schema_version": dict_get_or(dict_get_or(run_state, "trace", {}), "schema_version", 0)
-		}
-	}
-	artifacts := {
-		"state": run_state["run_dir"] + "/state.json",
-		"trace_json": run_state["run_dir"] + "/trace.json",
-		"trace_markdown": run_state["run_dir"] + "/trace.md"
-	}
-	if file_exists(run_state["run_dir"] + "/report.md") {
-		artifacts["report_md"] := run_state["run_dir"] + "/report.md"
-	}
-	if file_exists(run_state["run_dir"] + "/report.json") {
-		artifacts["report_json"] := run_state["run_dir"] + "/report.json"
-	}
+	contract := build_contract_metadata(run_state)
+	artifacts := build_artifact_paths(run_state)
 	if json_output {
 		print(to_json({
 			"command": "inspect",
@@ -877,16 +897,7 @@ func run_inspect(command_args) {
 	}
 	print("Step Status Counts: " + to_json(run_state["health"]["step_status_counts"]))
 	print("Approvals: " + to_string(len(run_state["approvals"])) + " | Handoffs: " + to_string(len(run_state["handoffs"])) + " | Errors: " + to_string(len(run_state["errors"])))
-	print("Artifacts:")
-	print("- state: " + run_state["run_dir"] + "/state.json")
-	print("- trace json: " + run_state["run_dir"] + "/trace.json")
-	print("- trace md: " + run_state["run_dir"] + "/trace.md")
-	if file_exists(run_state["run_dir"] + "/report.md") {
-		print("- report md: " + run_state["run_dir"] + "/report.md")
-	}
-	if file_exists(run_state["run_dir"] + "/report.json") {
-		print("- report json: " + run_state["run_dir"] + "/report.json")
-	}
+	print_artifact_summary(run_state)
 	print("")
 	print("Steps:")
 	step_index := 0
@@ -1019,9 +1030,7 @@ func run_resume(command_args) {
 		"trace_max_payload_chars": trace_max_payload_chars
 	})
 	final_state := result["run_state"]
-	print("Run ID: " + final_state["run_id"])
-	print("Status: " + final_state["status"])
-	print("Run Directory: " + final_state["run_dir"])
+	print_run_completion(final_state)
 	if result["paused"] {
 		print("Workflow still paused.")
 	}

@@ -73,64 +73,66 @@ func build_report_payload(run_state) {
 	return payload
 }
 
+func append_blank(lines) {
+	return push(lines, "")
+}
+
+func append_section(lines, title) {
+	lines := push(lines, "## " + title)
+	return append_blank(lines)
+}
+
+func append_bullets(lines, values) {
+	for value in values {
+		lines := push(lines, "- " + to_string(value))
+	}
+	return lines
+}
+
 func render_markdown_report(report_payload) {
 	lines := []
 	lines := push(lines, "# " + report_payload["title"])
-	lines := push(lines, "")
-	lines := push(lines, "- Topic: " + report_payload["topic"])
-	lines := push(lines, "- Generated: " + report_payload["generated_timestamp"])
-	lines := push(lines, "- Run ID: " + report_payload["run_id"])
-	lines := push(lines, "- Run Status: " + report_payload["run_status"])
-	lines := push(lines, "- Steps Completed: " + to_string(report_payload["completed_steps"]) + "/" + to_string(report_payload["total_steps"]))
-	lines := push(lines, "")
-	lines := push(lines, "## Summary")
-	lines := push(lines, "")
+	lines := append_blank(lines)
+	lines := append_bullets(lines, [
+		"Topic: " + report_payload["topic"],
+		"Generated: " + report_payload["generated_timestamp"],
+		"Run ID: " + report_payload["run_id"],
+		"Run Status: " + report_payload["run_status"],
+		"Steps Completed: " + to_string(report_payload["completed_steps"]) + "/" + to_string(report_payload["total_steps"])
+	])
+	lines := append_blank(lines)
+	lines := append_section(lines, "Summary")
 	lines := push(lines, report_payload["summary"])
-	lines := push(lines, "")
-	lines := push(lines, "## Key Findings")
-	lines := push(lines, "")
-	for finding in report_payload["key_findings"] {
-		lines := push(lines, "- " + to_string(finding))
-	}
-	lines := push(lines, "")
-	lines := push(lines, "## Claims")
-	lines := push(lines, "")
+	lines := append_blank(lines)
+	lines := append_section(lines, "Key Findings")
+	lines := append_bullets(lines, report_payload["key_findings"])
+	lines := append_blank(lines)
+	lines := append_section(lines, "Claims")
 	for claim in report_payload["claims"] {
 		claim_text := dict_get_or(claim, "claim", to_string(claim))
 		claim_status := dict_get_or(claim, "status", "unclassified")
 		lines := push(lines, "- " + claim_text + " (`" + claim_status + "`)")
 	}
-	lines := push(lines, "")
-	lines := push(lines, "## Evidence")
-	lines := push(lines, "")
+	lines := append_blank(lines)
+	lines := append_section(lines, "Evidence")
 	for evidence in report_payload["evidence"] {
 		source_id := dict_get_or(evidence, "source_id", "source")
 		snippet := dict_get_or(evidence, "snippet", to_string(evidence))
 		lines := push(lines, "- **" + source_id + "**: " + snippet)
 	}
-	lines := push(lines, "")
-	lines := push(lines, "## Citations")
-	lines := push(lines, "")
-	for citation in report_payload["citations"] {
-		lines := push(lines, "- " + to_string(citation))
-	}
-	lines := push(lines, "")
-	lines := push(lines, "## Confidence Notes")
-	lines := push(lines, "")
-	for note in report_payload["confidence_notes"] {
-		lines := push(lines, "- " + to_string(note))
-	}
-	lines := push(lines, "")
-	lines := push(lines, "## Limitations")
-	lines := push(lines, "")
-	for limitation in report_payload["limitations"] {
-		lines := push(lines, "- " + to_string(limitation))
-	}
-	lines := push(lines, "")
-	lines := push(lines, "## Trace")
-	lines := push(lines, "")
+	lines := append_blank(lines)
+	lines := append_section(lines, "Citations")
+	lines := append_bullets(lines, report_payload["citations"])
+	lines := append_blank(lines)
+	lines := append_section(lines, "Confidence Notes")
+	lines := append_bullets(lines, report_payload["confidence_notes"])
+	lines := append_blank(lines)
+	lines := append_section(lines, "Limitations")
+	lines := append_bullets(lines, report_payload["limitations"])
+	lines := append_blank(lines)
+	lines := append_section(lines, "Trace")
 	lines := push(lines, "Trace and state artifacts are saved alongside this report as JSON and Markdown.")
-	lines := push(lines, "")
+	lines := append_blank(lines)
 
 	return join(lines, "\n")
 }
