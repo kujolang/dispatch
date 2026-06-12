@@ -83,20 +83,32 @@ This keeps SDK behavior centralized in one repository (`ai-sdk`) while allowing 
 
 ## Prerequisites
 
-- Kujo CLI/runtime installed
-- Local clone of `ai-sdk`
+- Kujo CLI/runtime installed for local fixture runs
+- Local clone of `ai-sdk` only for live SDK integration
 - `dispatch` checked out locally
 
 ## Quick Start
 
+The default path is offline and fixture-backed, so it is safe to run without provider credentials:
+
 ```bash
 cd /path/to/kujo-dispatch
 
-export KUJO_BIN=/path/to/kujo/target/release/kujo
-export AI_SDK_PATH=/path/to/ai-sdk
-
-kujo run --interpreter dispatch.kujo demo "How do AI agent workflows differ from chatbots?" --yes
+kujo run --interpreter dispatch.kujo demo "How do AI agent workflows differ from chatbots?" --yes --non-interactive
 ```
+
+Expected output shape:
+
+```text
+Run ID: run-...
+Status: completed
+Run Directory: outputs/run-...
+Report: outputs/run-.../report.md
+State: outputs/run-.../state.json
+Trace: outputs/run-.../trace.json
+```
+
+Set `KUJO_BIN` when Dispatch child bridge calls should use a specific Kujo binary, and set `AI_SDK_PATH` only when validating live SDK behavior.
 
 ## Configuration
 
@@ -321,6 +333,16 @@ Track prioritized hardening, architecture cleanup, extensibility work, and testi
 `docs/dispatch-next-session-checklist-v2.md` is now complete and serves as an implementation audit trail for enterprise hardening milestones.
 
 `docs/dispatch-next-session-checklist.md` is kept as historical context from the earlier backlog phase.
+
+## Agent And Contributor Guidance
+
+For AI-agent and contributor search hygiene, canonical example labels, generated-path exclusions, and cleanup preferences, see:
+
+- `AGENTS.md`
+
+Prioritize copyable examples over tests: examples should model the most token-efficient idioms we want agents to imitate.
+
+Exclude generated/bulk paths from the main sweep unless the task explicitly targets them; document the search exclusions you used.
 
 ## Release Process
 
