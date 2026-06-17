@@ -1,6 +1,10 @@
 from src.core.utils import dict_get_or, to_bool
 from src.core.decision import normalize_decision
 
+func print_kv(label, value) {
+	print(label + ": " + to_string(value))
+}
+
 func create_approval_request(step_id, reason, summary, review_data) {
 	return {
 		"id": "approval-" + step_id + "-" + to_string(current_timestamp()),
@@ -64,9 +68,9 @@ func resolve_approval(request_obj, options) {
 	}
 
 	print("Approval Required")
-	print("Reason: " + request_obj["reason"])
-	print("Summary: " + request_obj["summary"])
-	print("Data Preview: " + to_json(request_obj["data"]))
+	print_kv("Reason", request_obj["reason"])
+	print_kv("Summary", request_obj["summary"])
+	print_kv("Data Preview", to_json(request_obj["data"]))
 	decision_raw := to_lower(trim(input("Decision (approve/reject/changes): ")))
 	note := input("Reviewer note (optional): ")
 

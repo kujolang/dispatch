@@ -17,6 +17,29 @@ func print_kv(label, value) {
 	print(label + ": " + to_string(value))
 }
 
+func print_error(message) {
+	print("Error: " + to_string(message))
+}
+
+func exit_error(message) {
+	print_error(message)
+	exit(1)
+}
+
+func print_item(message) {
+	print("- " + to_string(message))
+}
+
+func print_nested_item(message) {
+	print("  - " + to_string(message))
+}
+
+func print_report_path_if_present(run_state) {
+	if file_exists(run_state["run_dir"] + "/report.md") {
+		print("Report: " + run_state["run_dir"] + "/report.md")
+	}
+}
+
 func print_help() {
 	print_lines([
 		"Dispatch",
@@ -74,16 +97,19 @@ func print_run_completion(final_state) {
 
 func print_artifact_summary(run_state) {
 	run_dir := run_state["run_dir"]
-	print("Artifacts:")
-	print("- state: " + run_dir + "/state.json")
-	print("- trace json: " + run_dir + "/trace.json")
-	print("- trace md: " + run_dir + "/trace.md")
+	lines := [
+		"Artifacts:",
+		"- state: " + run_dir + "/state.json",
+		"- trace json: " + run_dir + "/trace.json",
+		"- trace md: " + run_dir + "/trace.md"
+	]
 	if file_exists(run_dir + "/report.md") {
-		print("- report md: " + run_dir + "/report.md")
+		lines := push(lines, "- report md: " + run_dir + "/report.md")
 	}
 	if file_exists(run_dir + "/report.json") {
-		print("- report json: " + run_dir + "/report.json")
+		lines := push(lines, "- report json: " + run_dir + "/report.json")
 	}
+	print_lines(lines)
 }
 
 	func key_exists(map_obj, key_name) {
@@ -435,8 +461,7 @@ func filter_runs_by_tags(run_items, tags_query) {
 	func resolve_output_root_or_exit(raw_output_root) {
 		validation := normalize_output_root(raw_output_root)
 		if validation["ok"] == false {
-			print("Error: " + validation["error"]["message"])
-			exit(1)
+			exit_error(validation["error"]["message"])
 		}
 		return validation["output_root"]
 	}
@@ -457,8 +482,7 @@ func filter_runs_by_tags(run_items, tags_query) {
 			"cancelled": true
 		}
 		if has_key(allowed_statuses, value) == 0 {
-			print("Error: Invalid value for " + flag_name + ": " + value + ". Allowed values: running, paused, needs_changes, interrupted, completed, failed, rejected, cancelled")
-			exit(1)
+			exit_error("Invalid value for " + flag_name + ": " + value + ". Allowed values: running, paused, needs_changes, interrupted, completed, failed, rejected, cancelled")
 		}
 		return value
 	}
@@ -661,8 +685,7 @@ func enforce_mutation_guard_or_exit(parsed, command_name, mutation_flag) {
 	if mutation_confirmation_enabled(parsed) {
 		return
 	}
-	print("Error: Strict mutation mode blocked " + command_name + " " + mutation_flag + ". Re-run with --confirm-mutation or set DISPATCH_MUTATION_CONFIRM=true.")
-	exit(1)
+	exit_error("Strict mutation mode blocked " + command_name + " " + mutation_flag + ". Re-run with --confirm-mutation or set DISPATCH_MUTATION_CONFIRM=true.")
 }
 
 func run_demo(command_args) {
@@ -685,13 +708,11 @@ func run_demo(command_args) {
 		}
 	})
 	if parsed["ok"] == false {
-		print("Error: " + parsed["error"]["message"])
-		exit(1)
+		exit_error(parsed["error"]["message"])
 	}
 	config_result := load_command_config(parsed_flag_value(parsed, "--config", ""))
 	if config_result["ok"] == false {
-		print("Error: " + config_result["message"])
-		exit(1)
+		exit_error(config_result["message"])
 	}
 	config := config_result["config"]
 
@@ -703,8 +724,7 @@ func run_demo(command_args) {
 		topic = to_string(config_get_any(config, ["topic"], ""))
 	}
 	if trim(topic) == "" {
-		print("Error: topic is required for demo command.")
-		exit(1)
+		exit_error("topic is required for demo command.")
 	}
 	auto_approve := dispatch_resolve_bool_flag(parsed, command_args, "--yes", config, ["yes", "auto_approve"], false)
 	non_interactive := dispatch_resolve_bool_flag(parsed, command_args, "--non-interactive", config, ["non_interactive", "non-interactive"], false)
@@ -718,19 +738,16 @@ func run_demo(command_args) {
 	trace_max_events_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-events", config, ["trace_max_events", "trace-max-events"], "400"), "--trace-max-events", 400)
 	trace_max_payload_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-payload-chars", config, ["trace_max_payload_chars", "trace-max-payload-chars"], "2400"), "--trace-max-payload-chars", 2400)
 	if trace_max_events_result["ok"] == false {
-		print("Error: " + trace_max_events_result["message"])
-		exit(1)
+		exit_error(trace_max_events_result["message"])
 	}
 	if trace_max_payload_result["ok"] == false {
-		print("Error: " + trace_max_payload_result["message"])
-		exit(1)
+		exit_error(trace_max_payload_result["message"])
 	}
 	trace_max_events := trace_max_events_result["value"]
 	trace_max_payload_chars := trace_max_payload_result["value"]
 	tool_policy_settings := dispatch_resolve_tool_policy_settings(parsed, command_args, config)
 	if dict_get_or(tool_policy_settings, "ok", true) == false {
-		print("Error: " + dict_get_or(tool_policy_settings, "message", "Invalid tool policy profile configuration."))
-		exit(1)
+		exit_error(dict_get_or(tool_policy_settings, "message", "Invalid tool policy profile configuration."))
 	}
 	if trace_max_events <= 0 {
 		trace_max_events = 400
@@ -741,15 +758,13 @@ func run_demo(command_args) {
 
 	validation := validate_demo_inputs(topic, sources_dir, simulated_decision)
 	if validation["ok"] == false {
-		print("Error: " + validation["message"])
-		exit(1)
+		exit_error(validation["message"])
 	}
 	simulated_decision := validation["normalized_decision"]
 
 	workflow_result := create_workflow_by_template(workflow_template_id, topic, auto_approve)
 	if workflow_result["ok"] == false {
-		print("Error: " + workflow_result["error"]["message"])
-		exit(1)
+		exit_error(workflow_result["error"]["message"])
 	}
 	workflow := workflow_result["workflow"]
 	run_state := create_run_state(workflow, {"topic": topic}, output_root, {
@@ -776,15 +791,12 @@ func run_demo(command_args) {
 
 	final_state := result["run_state"]
 	print_run_completion(final_state)
-	if file_exists(final_state["run_dir"] + "/report.md") {
-		print("Report: " + final_state["run_dir"] + "/report.md")
-	}
-	print("State: " + final_state["run_dir"] + "/state.json")
-	print("Trace: " + final_state["run_dir"] + "/trace.json")
+	print_report_path_if_present(final_state)
+	print_kv("State", final_state["run_dir"] + "/state.json")
+	print_kv("Trace", final_state["run_dir"] + "/trace.json")
 
 	if result["ok"] == false {
-		print("Error: " + to_json(result["error"]))
-		exit(1)
+		exit_error(to_json(result["error"]))
 	}
 	if result["paused"] {
 		print("Workflow paused. Resume with: kujo run --interpreter dispatch.kujo resume " + final_state["run_id"])
@@ -799,21 +811,18 @@ func run_show(command_args) {
 		}
 	})
 	if parsed["ok"] == false {
-		print("Error: " + parsed["error"]["message"])
-		exit(1)
+		exit_error(parsed["error"]["message"])
 	}
 	positionals := parsed_positionals_or_empty(parsed)
 	if len(positionals) < 1 {
-		print("Error: run-id is required for show command.")
-		exit(1)
+		exit_error("run-id is required for show command.")
 	}
 	run_id := positionals[0]
 	json_output := parsed_has_flag(parsed, "--json")
 	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
 	loaded := load_run_state(output_root, run_id)
 	if loaded["ok"] == false {
-		print("Error: " + loaded["error"]["message"])
-		exit(1)
+		exit_error(loaded["error"]["message"])
 	}
 	run_state := loaded["run_state"]
 	summary := summarize_run(run_state)
@@ -832,9 +841,7 @@ func run_show(command_args) {
 		return
 	}
 	print(to_json(summary))
-	if file_exists(run_state["run_dir"] + "/report.md") {
-		print("Report: " + run_state["run_dir"] + "/report.md")
-	}
+	print_report_path_if_present(run_state)
 }
 
 func run_inspect(command_args) {
@@ -845,21 +852,18 @@ func run_inspect(command_args) {
 		}
 	})
 	if parsed["ok"] == false {
-		print("Error: " + parsed["error"]["message"])
-		exit(1)
+		exit_error(parsed["error"]["message"])
 	}
 	positionals := parsed_positionals_or_empty(parsed)
 	if len(positionals) < 1 {
-		print("Error: run-id is required for inspect command.")
-		exit(1)
+		exit_error("run-id is required for inspect command.")
 	}
 	run_id := positionals[0]
 	json_output := parsed_has_flag(parsed, "--json")
 	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
 	loaded := load_run_state(output_root, run_id)
 	if loaded["ok"] == false {
-		print("Error: " + loaded["error"]["message"])
-		exit(1)
+		exit_error(loaded["error"]["message"])
 	}
 	run_state := loaded["run_state"]
 	topic := dict_get_or(dict_get_or(run_state, "input", {}), "topic", "")
@@ -884,26 +888,26 @@ func run_inspect(command_args) {
 		}))
 		return
 	}
-	print("Run: " + run_state["run_id"])
-	print("Status: " + run_state["status"])
-	print("Workflow: " + run_state["workflow_name"])
-	print("Topic: " + to_string(topic))
-	print("Step Index: " + to_string(run_state["current_step_index"]) + "/" + to_string(len(run_state["steps"])))
-	print("Health Issues: " + to_string(len(run_state["health"]["issues"])))
+	print_kv("Run", run_state["run_id"])
+	print_kv("Status", run_state["status"])
+	print_kv("Workflow", run_state["workflow_name"])
+	print_kv("Topic", topic)
+	print_kv("Step Index", to_string(run_state["current_step_index"]) + "/" + to_string(len(run_state["steps"])))
+	print_kv("Health Issues", len(run_state["health"]["issues"]))
 	issue_index := 0
 	while issue_index < len(run_state["health"]["issues"]) {
-		print("- issue: " + run_state["health"]["issues"][issue_index])
+		print_item("issue: " + run_state["health"]["issues"][issue_index])
 		issue_index := issue_index + 1
 	}
-	print("Step Status Counts: " + to_json(run_state["health"]["step_status_counts"]))
-	print("Approvals: " + to_string(len(run_state["approvals"])) + " | Handoffs: " + to_string(len(run_state["handoffs"])) + " | Errors: " + to_string(len(run_state["errors"])))
+	print_kv("Step Status Counts", to_json(run_state["health"]["step_status_counts"]))
+	print_kv("Approvals", to_string(len(run_state["approvals"])) + " | Handoffs: " + to_string(len(run_state["handoffs"])) + " | Errors: " + to_string(len(run_state["errors"])))
 	print_artifact_summary(run_state)
 	print("")
 	print("Steps:")
 	step_index := 0
 	while step_index < len(run_state["steps"]) {
 		step := run_state["steps"][step_index]
-		print("- " + step["id"] + " | " + step["type"] + " | status=" + step["status"] + " | attempts=" + to_string(dict_get_or(step, "attempts", 0)))
+		print_item(step["id"] + " | " + step["type"] + " | status=" + step["status"] + " | attempts=" + to_string(dict_get_or(step, "attempts", 0)))
 		step_index := step_index + 1
 	}
 }
@@ -927,20 +931,17 @@ func run_resume(command_args) {
 		}
 	})
 	if parsed["ok"] == false {
-		print("Error: " + parsed["error"]["message"])
-		exit(1)
+		exit_error(parsed["error"]["message"])
 	}
 	config_result := load_command_config(parsed_flag_value(parsed, "--config", ""))
 	if config_result["ok"] == false {
-		print("Error: " + config_result["message"])
-		exit(1)
+		exit_error(config_result["message"])
 	}
 	config := config_result["config"]
 
 	positionals := parsed_positionals_or_empty(parsed)
 	if len(positionals) < 1 {
-		print("Error: run-id is required for resume command.")
-		exit(1)
+		exit_error("run-id is required for resume command.")
 	}
 	run_id := positionals[0]
 	auto_approve := dispatch_resolve_bool_flag(parsed, command_args, "--yes", config, ["yes", "auto_approve"], false)
@@ -954,19 +955,16 @@ func run_resume(command_args) {
 	trace_max_events_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-events", config, ["trace_max_events", "trace-max-events"], "400"), "--trace-max-events", 400)
 	trace_max_payload_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-payload-chars", config, ["trace_max_payload_chars", "trace-max-payload-chars"], "2400"), "--trace-max-payload-chars", 2400)
 	if trace_max_events_result["ok"] == false {
-		print("Error: " + trace_max_events_result["message"])
-		exit(1)
+		exit_error(trace_max_events_result["message"])
 	}
 	if trace_max_payload_result["ok"] == false {
-		print("Error: " + trace_max_payload_result["message"])
-		exit(1)
+		exit_error(trace_max_payload_result["message"])
 	}
 	trace_max_events := trace_max_events_result["value"]
 	trace_max_payload_chars := trace_max_payload_result["value"]
 	tool_policy_settings := dispatch_resolve_tool_policy_settings(parsed, command_args, config)
 	if dict_get_or(tool_policy_settings, "ok", true) == false {
-		print("Error: " + dict_get_or(tool_policy_settings, "message", "Invalid tool policy profile configuration."))
-		exit(1)
+		exit_error(dict_get_or(tool_policy_settings, "message", "Invalid tool policy profile configuration."))
 	}
 	if trace_max_events <= 0 {
 		trace_max_events = 400
@@ -976,15 +974,13 @@ func run_resume(command_args) {
 	}
 	validation := validate_demo_inputs("resume", sources_dir, simulated_decision)
 	if validation["ok"] == false {
-		print("Error: " + validation["message"])
-		exit(1)
+		exit_error(validation["message"])
 	}
 	simulated_decision := validation["normalized_decision"]
 
 	loaded := load_run_state(output_root, run_id)
 	if loaded["ok"] == false {
-		print("Error: " + loaded["error"]["message"])
-		exit(1)
+		exit_error(loaded["error"]["message"])
 	}
 	run_state := loaded["run_state"]
 	if run_state["status"] == "completed" {
@@ -1014,8 +1010,7 @@ func run_resume(command_args) {
 	}
 	workflow_result := create_workflow_by_template(workflow_template_id, topic, auto_approve)
 	if workflow_result["ok"] == false {
-		print("Error: " + workflow_result["error"]["message"])
-		exit(1)
+		exit_error(workflow_result["error"]["message"])
 	}
 	workflow := workflow_result["workflow"]
 	tool_registry := register_default_tools(sources_dir)
@@ -1035,8 +1030,7 @@ func run_resume(command_args) {
 		print("Workflow still paused.")
 	}
 	if result["ok"] == false {
-		print("Error: " + to_json(result["error"]))
-		exit(1)
+		exit_error(to_json(result["error"]))
 	}
 }
 
@@ -1056,8 +1050,7 @@ func run_runs(command_args) {
 		}
 	})
 	if parsed["ok"] == false {
-		print("Error: " + parsed["error"]["message"])
-		exit(1)
+		exit_error(parsed["error"]["message"])
 	}
 	output_root_raw := parsed_flag_value(parsed, "--output-root", "outputs")
 	output_root := resolve_output_root_or_exit(output_root_raw)
@@ -1068,13 +1061,11 @@ func run_runs(command_args) {
 	issues_only := parsed_has_flag(parsed, "--issues-only")
 	limit_result := parse_non_negative_number(parsed_flag_value(parsed, "--limit", "50"), "--limit", 50)
 	if limit_result["ok"] == false {
-		print("Error: " + limit_result["message"])
-		exit(1)
+		exit_error(limit_result["message"])
 	}
 	offset_result := parse_non_negative_number(parsed_flag_value(parsed, "--offset", "0"), "--offset", 0)
 	if offset_result["ok"] == false {
-		print("Error: " + offset_result["message"])
-		exit(1)
+		exit_error(offset_result["message"])
 	}
 	limit := limit_result["value"]
 	offset := offset_result["value"]
@@ -1125,10 +1116,10 @@ func run_runs(command_args) {
 
 	print("Runs: " + to_string(page_catalog["total_runs"]) + " (showing " + to_string(len(paged)) + " of " + to_string(filtered_total) + ") | resumable=" + to_string(page_catalog["resumable_runs"]) + " | issues_total=" + to_string(page_catalog["issues_total"]))
 	if diagnostics_mode {
-		print("Diagnostics: " + to_json(diagnostics))
+		print_kv("Diagnostics", to_json(diagnostics))
 	}
-	print("Status counts (page): " + to_json(page_catalog["status_counts"]))
-	print("Status counts (filtered): " + to_json(filtered_catalog["status_counts"]))
+	print_kv("Status counts (page)", to_json(page_catalog["status_counts"]))
+	print_kv("Status counts (filtered)", to_json(filtered_catalog["status_counts"]))
 	print("")
 
 	run_index := 0
@@ -1148,8 +1139,7 @@ func run_templates(command_args) {
 		}
 	})
 	if parsed["ok"] == false {
-		print("Error: " + parsed["error"]["message"])
-		exit(1)
+		exit_error(parsed["error"]["message"])
 	}
 	json_output := parsed_has_flag(parsed, "--json")
 	templates := list_workflow_templates()
@@ -1161,7 +1151,7 @@ func run_templates(command_args) {
 	}
 	print("Workflow Templates")
 	for template in templates {
-		print("- " + dict_get_or(template, "template_id", "") + " | " + dict_get_or(template, "name", "") + " | steps=" + to_string(dict_get_or(template, "step_count", 0)) + " | approvals=" + to_string(dict_get_or(template, "approval_step_count", 0)) + " | tools=" + to_string(dict_get_or(template, "tool_count", 0)))
+		print_item(dict_get_or(template, "template_id", "") + " | " + dict_get_or(template, "name", "") + " | steps=" + to_string(dict_get_or(template, "step_count", 0)) + " | approvals=" + to_string(dict_get_or(template, "approval_step_count", 0)) + " | tools=" + to_string(dict_get_or(template, "tool_count", 0)))
 	}
 }
 
@@ -1204,8 +1194,7 @@ func run_doctor(command_args) {
 		}
 	})
 	if parsed["ok"] == false {
-		print("Error: " + parsed["error"]["message"])
-		exit(1)
+		exit_error(parsed["error"]["message"])
 	}
 	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
 	write_changes := parsed_has_flag(parsed, "--write")
@@ -1213,8 +1202,7 @@ func run_doctor(command_args) {
 	json_output := parsed_has_flag(parsed, "--json")
 	recent_count_result := parse_non_negative_number(parsed_flag_value(parsed, "--recent-count", "0"), "--recent-count", 0)
 	if recent_count_result["ok"] == false {
-		print("Error: " + recent_count_result["message"])
-		exit(1)
+		exit_error(recent_count_result["message"])
 	}
 	recent_count := recent_count_result["value"]
 	if write_changes {
@@ -1246,12 +1234,12 @@ func run_doctor(command_args) {
 	}
 
 	print("Dispatch Doctor")
-	print("Write mode: " + to_string(write_changes))
+	print_kv("Write mode", write_changes)
 	if trim(to_string(run_ids)) != "" {
-		print("Scoped run_ids: " + to_string(run_ids))
+		print_kv("Scoped run_ids", run_ids)
 	}
 	if recent_count > 0 {
-		print("Recent count: " + to_string(recent_count))
+		print_kv("Recent count", recent_count)
 	}
 	print("")
 
@@ -1259,14 +1247,14 @@ func run_doctor(command_args) {
 	while run_index < len(run_diagnostics) {
 		item := run_diagnostics[run_index]
 		if dict_get_or(item, "load_ok", false) == false {
-			print("- " + item["run_id"] + " | load failed")
+			print_item(item["run_id"] + " | load failed")
 			run_index := run_index + 1
 			continue
 		}
-		print("- " + item["run_id"] + " | status=" + item["status"] + " | issues(before)=" + to_string(item["issues_before"]) + " | repaired=" + to_string(item["repaired"]) + " | notes=" + to_string(len(item["notes"])) + " | issues(after)=" + to_string(item["issues_after"]))
+		print_item(item["run_id"] + " | status=" + item["status"] + " | issues(before)=" + to_string(item["issues_before"]) + " | repaired=" + to_string(item["repaired"]) + " | notes=" + to_string(len(item["notes"])) + " | issues(after)=" + to_string(item["issues_after"]))
 		note_index := 0
 		while note_index < len(item["notes"]) {
-			print("  - " + item["notes"][note_index])
+			print_nested_item(item["notes"][note_index])
 			note_index := note_index + 1
 		}
 		run_index := run_index + 1
@@ -1276,7 +1264,7 @@ func run_doctor(command_args) {
 		audit_path := mutation_audit_path(output_root)
 		if file_exists(audit_path) {
 			print("")
-			print("Audit: " + audit_path)
+			print_kv("Audit", audit_path)
 		}
 	}
 }
@@ -1295,20 +1283,17 @@ func run_cleanup(command_args) {
 		}
 	})
 	if parsed["ok"] == false {
-		print("Error: " + parsed["error"]["message"])
-		exit(1)
+		exit_error(parsed["error"]["message"])
 	}
 	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
 	status_filter := validate_status_filter_or_exit(parsed_flag_value(parsed, "--status", ""), "--status")
 	older_result := parse_non_negative_number(parsed_flag_value(parsed, "--older-than-hours", "0"), "--older-than-hours", 0)
 	if older_result["ok"] == false {
-		print("Error: " + older_result["message"])
-		exit(1)
+		exit_error(older_result["message"])
 	}
 	count_result := parse_non_negative_number(parsed_flag_value(parsed, "--max-count", "0"), "--max-count", 0)
 	if count_result["ok"] == false {
-		print("Error: " + count_result["message"])
-		exit(1)
+		exit_error(count_result["message"])
 	}
 	older_than_hours := older_result["value"]
 	max_count := count_result["value"]
@@ -1329,14 +1314,14 @@ func run_cleanup(command_args) {
 		mode_label = "apply"
 	}
 	print("Dispatch Cleanup (" + mode_label + ")")
-	print("Candidates: " + to_string(cleanup["candidate_count"]))
-	print("Pruned: " + to_string(cleanup["pruned_count"]))
+	print_kv("Candidates", cleanup["candidate_count"])
+	print_kv("Pruned", cleanup["pruned_count"])
 	if dry_run {
 		print("Use --apply to persist prune markers.")
 	} else {
 		audit_path := dict_get_or(cleanup, "audit_path", "")
 		if audit_path != "" {
-			print("Audit: " + audit_path)
+			print_kv("Audit", audit_path)
 		}
 	}
 }
@@ -1351,13 +1336,11 @@ func run_export_run(command_args) {
 		}
 	})
 	if parsed["ok"] == false {
-		print("Error: " + parsed["error"]["message"])
-		exit(1)
+		exit_error(parsed["error"]["message"])
 	}
 	positionals := parsed_positionals_or_empty(parsed)
 	if len(positionals) < 1 {
-		print("Error: run-id is required for export-run command.")
-		exit(1)
+		exit_error("run-id is required for export-run command.")
 	}
 	run_id := positionals[0]
 	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
@@ -1368,10 +1351,9 @@ func run_export_run(command_args) {
 		"signing_key": resolve_signing_key(parsed, "--signing-key")
 	})
 	if result["ok"] == false {
-		print("Error: " + result["error"]["message"])
-		exit(1)
+		exit_error(result["error"]["message"])
 	}
-	print("Exported run bundle: " + result["bundle_path"])
+	print_kv("Exported run bundle", result["bundle_path"])
 }
 
 func run_import_run(command_args) {
@@ -1386,8 +1368,7 @@ func run_import_run(command_args) {
 		}
 	})
 	if parsed["ok"] == false {
-		print("Error: " + parsed["error"]["message"])
-		exit(1)
+		exit_error(parsed["error"]["message"])
 	}
 	enforce_mutation_guard_or_exit(parsed, "import-run", "--bundle-path")
 	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
@@ -1398,11 +1379,10 @@ func run_import_run(command_args) {
 		"signing_key": resolve_signing_key(parsed, "--signing-key")
 	})
 	if result["ok"] == false {
-		print("Error: " + result["error"]["message"])
-		exit(1)
+		exit_error(result["error"]["message"])
 	}
-	print("Imported run: " + result["run_id"])
-	print("Run Directory: " + result["run_dir"])
+	print_kv("Imported run", result["run_id"])
+	print_kv("Run Directory", result["run_dir"])
 }
 
 raw_args := args()
