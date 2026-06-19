@@ -135,7 +135,7 @@ Dispatch reads the following environment variables:
 | `DISPATCH_MUTATION_AUDIT_ROTATE_DAILY` | No | `false` | Enables daily rollover for mutation audit logs |
 | `DISPATCH_TRACE_MAX_EVENTS` | No | `400` | Global default maximum number of trace events retained per run |
 | `DISPATCH_TRACE_MAX_PAYLOAD_CHARS` | No | `2400` | Global default maximum payload characters retained per trace event |
-| `DISPATCH_SDK_DEBUG_OUTPUT` | No | `false` | Includes raw bridge stdout/stderr in parse-error details when set to `true` |
+| `DISPATCH_SDK_DEBUG_OUTPUT` | No | `false` | Includes raw bridge stdout/stderr in bridge parse and execution error details when set to `true` |
 
 By default, Dispatch only allows fixture sources under `examples/research-report/sources` for demo/resume runs.
 
@@ -328,7 +328,10 @@ $KUJO_BIN test-run tests/dispatch_tests.kujo -v
 
 Track prioritized hardening, architecture cleanup, extensibility work, and testing backlog in:
 
+- `docs/dispatch-next-session-checklist-v3.md`
 - `docs/dispatch-next-session-checklist-v2.md`
+
+`docs/dispatch-next-session-checklist-v3.md` is the active next-session backlog for flagship enterprise readiness, scale, and presentation work.
 
 `docs/dispatch-next-session-checklist-v2.md` is now complete and serves as an implementation audit trail for enterprise hardening milestones.
 
@@ -417,7 +420,7 @@ Set `AI_SDK_PATH` to a directory that contains both `ai_sdk.kujo` and `providers
 - Verify `KUJO_BIN` points to a valid Kujo binary.
 - Verify `DISPATCH_SDK_BRIDGE_SCRIPT` (if set) points to a valid file.
 - Run with `--interpreter` during development.
-- Bridge parse failures redact raw stdout/stderr by default; set `DISPATCH_SDK_DEBUG_OUTPUT=true` only for local debugging.
+- Bridge parse and execution failures redact raw stdout/stderr by default; set `DISPATCH_SDK_DEBUG_OUTPUT=true` only for local debugging.
 
 ### Sources validation errors in demo mode
 
