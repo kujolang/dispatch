@@ -91,6 +91,14 @@ func build_bridge_parse_error_details(process_result, options) {
 	}
 }
 
+func build_bridge_exec_error_message(process_result, options) {
+	stderr_value := to_string(dict_get_or(process_result, "stderr", ""))
+	if bridge_debug_output_enabled(options) {
+		return "Bridge execution failed: " + trim(stderr_value)
+	}
+	return "Bridge execution failed. Stderr redacted by default (" + to_string(len(stderr_value)) + " bytes). Set DISPATCH_SDK_DEBUG_OUTPUT=true to include raw bridge output details for local debugging."
+}
+
 func resolve_bridge_paths() {
 	ai_sdk_path := env_or("AI_SDK_PATH", "../ai-sdk")
 	kujo_bin := env_or("KUJO_BIN", "kujo")
@@ -187,7 +195,7 @@ func call_agent_model(agent, user_prompt, options) {
 			"ok": false,
 			"error": {
 				"code": "sdk_bridge_exec_error",
-				"message": "Bridge execution failed: " + trim(to_string(process_result.stderr)),
+				"message": build_bridge_exec_error_message(process_result, options),
 				"retryable": false
 			}
 		}
@@ -207,4 +215,5 @@ func call_agent_model(agent, user_prompt, options) {
 export call_agent_model := call_agent_model
 export parse_json_from_output := parse_json_from_output
 export build_bridge_parse_error_details := build_bridge_parse_error_details
+export build_bridge_exec_error_message := build_bridge_exec_error_message
 export build_bridge_spawn_command := build_bridge_spawn_command

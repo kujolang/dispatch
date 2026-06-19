@@ -1,5 +1,5 @@
 {
-	"step_count": 70,
-	"trace_max_events": 80,
+	"step_count": 24,
+	"trace_max_events": 20,
 	"trace_max_payload_chars": 180
 }

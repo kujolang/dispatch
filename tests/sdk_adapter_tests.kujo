@@ -1,5 +1,5 @@
 test_setup {
-	from sdk_adapter import parse_json_from_output, build_bridge_parse_error_details, build_bridge_spawn_command
+	from sdk_adapter import parse_json_from_output, build_bridge_parse_error_details, build_bridge_exec_error_message, build_bridge_spawn_command
 }
 
 test "parse json from output supports trailing json line" {
@@ -32,6 +32,24 @@ test "parse error details include raw output when debug enabled" {
 	assert_equal(details["debug_bridge_output"], true)
 	assert_equal(details["stdout"], "hello")
 	assert_equal(details["stderr"], "world")
+}
+
+test "execution error message redacts stderr by default" {
+	message := build_bridge_exec_error_message({
+		"stderr": "token=secret-error"
+	}, {})
+	assert_equal(contains(message, "secret-error"), 0)
+	assert_equal(contains(message, "redacted by default"), 1)
+	assert_equal(contains(message, "bytes"), 1)
+}
+
+test "execution error message includes stderr when debug enabled" {
+	message := build_bridge_exec_error_message({
+		"stderr": "bridge failed"
+	}, {
+		"debug_bridge_output": true
+	})
+	assert_equal(contains(message, "bridge failed"), 1)
 }
 
 test "bridge spawn command is direct argv without shell wrapper" {
