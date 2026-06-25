@@ -529,6 +529,11 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 		step_started_ms := current_timestamp()
 
 		input_validation := validate_step_schema(step["id"], "input", dict_get_or(step, "input_schema", null), step_input)
+		idempotency_key := to_string(dict_get_or(step, "idempotency_key", ""))
+		idempotency_store := dict_get_or(run_state, "idempotency", {})
+		if type(idempotency_store) != "dict" {
+			idempotency_store = {}
+		}
 		executed := {}
 		if input_validation["ok"] == false {
 			executed := {
@@ -537,8 +542,25 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 				"attempts": 1,
 				"attempt_records": []
 			}
+		} else if idempotency_key != "" && has_key(idempotency_store, idempotency_key) == 1 {
+			# Replay-safe: a prior run already produced this keyed result, so
+			# return the cached output instead of re-executing the side effect.
+			executed := {
+				"ok": true,
+				"data": idempotency_store[idempotency_key],
+				"attempts": 1,
+				"attempt_records": [],
+				"idempotent_hit": true
+			}
+			run_state["trace"] := append_trace(run_state["trace"], "step_idempotent_hit", step["id"], "Reused cached output for idempotency key: " + idempotency_key, {
+				"idempotency_key": idempotency_key
+			})
 		} else {
 			executed := execute_step(step, workflow, step_input, run_state, tool_registry, options)
+			if dict_get_or(executed, "ok", false) && idempotency_key != "" {
+				idempotency_store[idempotency_key] := dict_get_or(executed, "data", null)
+				run_state["idempotency"] := idempotency_store
+			}
 			if dict_get_or(executed, "ok", false) {
 				output_validation := validate_step_schema(step["id"], "output", dict_get_or(step, "output_schema", null), dict_get_or(executed, "data", null))
 				if output_validation["ok"] == false {

@@ -18,6 +18,7 @@ func create_step(step_id, name, step_type, config) {
 		"approval_required": dict_get_or(config, "approval_required", false),
 		"approval_gate": dict_get_or(config, "approval_gate", {}),
 		"optional": dict_get_or(config, "optional", false),
+		"idempotency_key": dict_get_or(config, "idempotency_key", ""),
 		"handoff": dict_get_or(config, "handoff", {}),
 		"config": clone_dict(config),
 		"input": null,
