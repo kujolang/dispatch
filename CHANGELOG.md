@@ -29,6 +29,12 @@ Each release section should include only shipped changes and use these headings 
 ## [Unreleased]
 
 ### Added
+- Added a declarative workflow loader: `demo --workflow-file <spec.json>` builds and runs a user-authored workflow from JSON (`src/workflows/loader.kujo`), with an example at `examples/workflows/custom-review.json`.
+- Added per-template report builders: the `crud-reliability` report now renders purpose-built Contract/Migration/Auth/Error-Budget sections.
+- Added structured run input via `demo --input-json '{...}'`, merged into the run input alongside `topic`.
+- Added CLI plugin injection (`--plugin <name>`) backed by a built-in plugin registry (`src/plugins/builtin_plugins.kujo`); the `sample` plugin contributes a tool, an agent handler, and a lifecycle `event_hook`.
+- Added a public custom-trace API: tool/agent handlers may return `trace_events` that the runner appends to the run trace.
+- Added a reproducible offline throughput benchmark (`tests/benchmarks/run_throughput.kujo`, `docs/benchmarks.md`) and a quickstart walkthrough (`examples/quickstart-walkthrough.md`).
 - Added crash-safe, torn-write-safe atomic artifact writes (stage to a temp file, then `rename`) for state, trace, report, run index, mutation audit, and exported bundles.
 - Added bundle signing key rotation: signatures record a `key_id` (`DISPATCH_BUNDLE_SIGNING_KEY_ID`/`--signing-key-id`) and verification can trust a key set (`DISPATCH_BUNDLE_SIGNING_KEYS`) so keys rotate without invalidating in-flight bundles.
 - Added a `--webhook-sink` path guard (absolute/traversal paths blocked unless `DISPATCH_ALLOW_ANY_WEBHOOK_SINK=true`) and a `--webhook-url` best-effort HTTP lifecycle sink.
@@ -42,6 +48,9 @@ Each release section should include only shipped changes and use these headings 
 - Added the `--webhook-sink <path.jsonl>` flag to `demo` and `resume` to append lifecycle events to a local JSONL sink.
 
 ### Changed
+- Removed the no-op `parallel_execution` runner branch and reframed the README scheduling claim: steps execute sequentially in a single process with `depends_on` gating order (no concurrent execution).
+- Bounded run-index write amplification: per-step `running` status updates no longer rewrite the full catalog index; it is refreshed at run creation and on each non-`running` status transition.
+- Extracted the CLI output/version/contract helper cluster from `dispatch.kujo` into `src/cli/output.kujo`.
 - Documented and adopted the default bytecode VM run path (`kujo run dispatch.kujo ...`) as canonical; it executes with no diagnostic output. The `--interpreter` (tree-walking) mode remains supported for debugging but emits `[RUFRUN001]` type-checker warnings. README, docs, help text, and the test subprocess calls now use the VM path.
 - Moved the domain tool handlers (`source_lookup`, `content_processing`, `reliability_tools`) from the root `tools/` directory into `src/tools/` so all implementation modules live under `src/`. Root-level scripts are now limited to the runtime entry points `dispatch.kujo`, `sdk_adapter.kujo`, and `bridge_chat.kujo`.
 - Replaced the bundle signature scheme with a cryptographic keyed SHA-256 MAC (`dispatch-signature-v2`): each artifact is hashed with `sha256`, digests are bound to the run id, and the value is signed with a nested keyed hash so the secret key is never persisted. Bundles signed with the previous non-cryptographic `dispatch-signature-v1` scheme must be re-exported.

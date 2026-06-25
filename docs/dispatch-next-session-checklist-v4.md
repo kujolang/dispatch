@@ -25,6 +25,33 @@ In this Kujo build, reassigning a whole variable with `=` to a function's return
 
 This document is the prioritized list to work through next. Earlier backlogs (`dispatch-next-session-checklist-v2.md`, `-v3.md`) remain as history.
 
+## Completion status (2026-06-25 final pass)
+
+All v4 backlog items have been worked through:
+
+| Item | Status | Notes |
+|---|---|---|
+| A1 Declarative template loader | ✅ Done | `src/workflows/loader.kujo` + `demo --workflow-file`; example at `examples/workflows/custom-review.json` |
+| A2 Per-template report builders | ✅ Done | report builder registry; `crud-reliability` emits Contract/Migration/Auth/Error-Budget sections |
+| A3 Multi-field run input | ✅ Done | `demo --input-json '{...}'` merges structured fields into run input |
+| B1 CLI plugin injection | ✅ Done | `--plugin <name>` applies built-in plugins (`src/plugins/builtin_plugins.kujo`); sample adds a tool + agent handler |
+| B2 event_hook callback | ✅ Done | plugins carry an `event_hook`; `emit_hook_event` supports an `event_hooks` array wired via `--plugin` |
+| B3 Custom trace events from handlers | ✅ Done | handlers may return `trace_events: [{type,message,payload}]`; runner appends them |
+| C1 Cancellation + honest timeout docs | ✅ Done | `--cancel-after-step` cooperative cancel; docs state the per-step timeout is post-hoc |
+| C2 Idempotency keys | ✅ Done | per-step `idempotency_key` cached in run state |
+| C3 Concurrency claim | ✅ Done | removed the `parallel_execution` no-op branch; README reframed to sequential dependency-ordered scheduling |
+| D1 Webhook sink path guard | ✅ Done | `DISPATCH_ALLOW_ANY_WEBHOOK_SINK` opt-out |
+| D2 Bundle key rotation | ✅ Done | `key_id` + `DISPATCH_BUNDLE_SIGNING_KEYS` trusted set |
+| D3 Threat model doc | ✅ Done | enterprise-deployment.md threat model + concurrency sections |
+| E1 Index write amplification | ✅ Done | per-step `running` index churn skipped; index refreshed at creation + non-running transitions; bounded per-run writes |
+| E2 Benchmark harness | ✅ Done | `tests/benchmarks/run_throughput.kujo` + `docs/benchmarks.md` |
+| F1 Warning-free run path | ✅ Done | default VM path; `--interpreter` is debug-only |
+| F2 Quickstart walkthrough | ✅ Done | `examples/quickstart-walkthrough.md` (offline, end-to-end) |
+| F3 Split the entrypoint | ◑ Partial | output/version/contract helper cluster extracted to `src/cli/output.kujo`; full per-command module split remains a tracked low-priority cleanup (tight handler↔helper coupling, high regression risk for cosmetic gain) |
+| F4 kujo.toml/kennel.toml | ✅ Done | CI enforces version parity; README documents the two manifests |
+
+The only item not fully closed is F3 (entrypoint decomposition), reduced to a partial extraction by design to avoid regressions in the heavily-tested CLI; the remaining split is a cosmetic follow-up.
+
 ## How to read this
 
 - **Priority:** P0 (blocks "production-ready" claim), P1 (high value), P2 (polish).

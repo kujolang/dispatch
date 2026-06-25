@@ -29,7 +29,7 @@ Single-step chat calls are rarely enough when work needs to be repeated, reviewe
 - Per-step timeout handling and cancellation lifecycle state
 - Lifecycle event hooks via callback and webhook sink outputs (`--webhook-sink`)
 - Approval decisions (approved, rejected, request_changes)
-- DAG-style step dependencies (`depends_on`) with parallel-ready scheduling support
+- DAG-style step dependencies (`depends_on`) with dependency-ordered scheduling (steps execute sequentially in a single process; `depends_on` gates ordering)
 - Agent-to-agent handoff events
 - Run cataloging and filtering (`runs --status`, `--topic`, `--issues-only`, `--json`)
 - Output retention cleanup with safe dry-run/apply modes (`cleanup`)
@@ -49,6 +49,9 @@ Core modules:
 - `dispatch.kujo`: CLI entrypoint and command routing
 - `src/cli/cli_args.kujo`: schema-driven CLI argument parsing
 - `src/workflows/workflow.kujo`: workflow templates and template registry
+- `src/workflows/loader.kujo`: declarative JSON workflow spec loader (`--workflow-file`)
+- `src/plugins/builtin_plugins.kujo`: built-in plugin registry applied via `--plugin`
+- `src/cli/output.kujo`: CLI output, version, and contract-metadata helpers
 - `src/core/runner.kujo`: orchestration engine entrypoint
 - `src/agents/agent.kujo`: agent execution entrypoint and handler registry mapping
 - `src/tools/tool.kujo`: tool registry, payload adapters, and tool invocation entrypoint
@@ -113,6 +116,8 @@ Trace: outputs/run-.../trace.json
 
 Set `KUJO_BIN` when Dispatch child bridge calls should use a specific Kujo binary, and set `AI_SDK_PATH` only when validating live SDK behavior.
 
+For a full offline tour (approval gate, resume, signed bundle export/import, a user-authored workflow, plugins, and event sinks), see `examples/quickstart-walkthrough.md`. Performance harnesses live in `docs/benchmarks.md`.
+
 ## Configuration
 
 Dispatch reads the following environment variables:
@@ -154,7 +159,7 @@ By default, Dispatch restricts `--config` to safe relative paths and enforces a 
 ## CLI Reference
 
 ```bash
-kujo run dispatch.kujo demo "Research topic" [--config config.json] [--workflow research-report] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs] [--allow-tools timestamp_tool,citation_formatter] [--deny-tools flaky_reliability_tool] [--webhook-sink path.jsonl] [--webhook-url https-url] [--cancel-after-step step-id] [--trace-max-events 400] [--trace-max-payload-chars 2400]
+kujo run dispatch.kujo demo "Research topic" [--config config.json] [--workflow research-report] [--workflow-file my-workflow.json] [--input-json '{"repo":"x"}'] [--plugin sample] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs] [--allow-tools timestamp_tool,citation_formatter] [--deny-tools flaky_reliability_tool] [--webhook-sink path.jsonl] [--webhook-url https-url] [--cancel-after-step step-id] [--trace-max-events 400] [--trace-max-payload-chars 2400]
 kujo run dispatch.kujo show <run-id> [--output-root outputs] [--json]
 kujo run dispatch.kujo inspect <run-id> [--output-root outputs] [--json]
 kujo run dispatch.kujo resume <run-id> [--config config.json] [--workflow research-report] [--policy-profile staging] [--yes] [--non-interactive] [--output-root outputs] [--allow-tools timestamp_tool,citation_formatter] [--deny-tools flaky_reliability_tool] [--webhook-sink path.jsonl] [--webhook-url https-url] [--cancel-after-step step-id] [--trace-max-events 400] [--trace-max-payload-chars 2400]
