@@ -1,0 +1,142 @@
+from src.core.step import create_step
+from src.core.utils import dict_get_or, safe_read_file
+from src.workflows.workflow import create_workflow, create_research_report_workflow
+
+func loader_error(message) {
+	return {
+		"ok": false,
+		"error": {
+			"code": "invalid_workflow_spec",
+			"message": message,
+			"retryable": false
+		}
+	}
+}
+
+func valid_step_type(step_type) {
+	allowed := ["agent", "tool", "approval", "handoff", "report"]
+	for candidate in allowed {
+		if candidate == step_type {
+			return true
+		}
+	}
+	return false
+}
+
+func build_steps_from_spec(raw_steps) {
+	steps := []
+	index := 0
+	while index < len(raw_steps) {
+		raw_step := raw_steps[index]
+		if type(raw_step) != "dict" {
+			return loader_error("steps[" + to_string(index) + "] must be an object")
+		}
+		step_id := to_string(dict_get_or(raw_step, "id", ""))
+		step_name := to_string(dict_get_or(raw_step, "name", step_id))
+		step_type := to_string(dict_get_or(raw_step, "type", ""))
+		if step_id == "" {
+			return loader_error("steps[" + to_string(index) + "] is missing a non-empty id")
+		}
+		if valid_step_type(step_type) == false {
+			return loader_error("step \"" + step_id + "\" has unsupported type: " + step_type)
+		}
+		config := {
+			"agent_id": dict_get_or(raw_step, "agent_id", ""),
+			"tool_name": dict_get_or(raw_step, "tool_name", ""),
+			"input_from": dict_get_or(raw_step, "input_from", []),
+			"depends_on": dict_get_or(raw_step, "depends_on", []),
+			"output_key": dict_get_or(raw_step, "output_key", ""),
+			"input_schema": dict_get_or(raw_step, "input_schema", null),
+			"output_schema": dict_get_or(raw_step, "output_schema", null),
+			"timeout_ms": dict_get_or(raw_step, "timeout_ms", 0),
+			"retry_policy": dict_get_or(raw_step, "retry_policy", null),
+			"approval_required": dict_get_or(raw_step, "approval_required", false),
+			"approval_gate": dict_get_or(raw_step, "approval_gate", {}),
+			"optional": dict_get_or(raw_step, "optional", false),
+			"idempotency_key": dict_get_or(raw_step, "idempotency_key", ""),
+			"handoff": dict_get_or(raw_step, "handoff", {})
+		}
+		steps := push(steps, create_step(step_id, step_name, step_type, config))
+		index := index + 1
+	}
+	return {
+		"ok": true,
+		"steps": steps
+	}
+}
+
+func load_workflow_from_spec(spec) {
+	if type(spec) != "dict" {
+		return loader_error("Workflow spec must be a JSON object")
+	}
+	workflow_id := to_string(dict_get_or(spec, "id", ""))
+	workflow_name := to_string(dict_get_or(spec, "name", ""))
+	if workflow_id == "" {
+		return loader_error("Workflow spec is missing a non-empty \"id\"")
+	}
+	if workflow_name == "" {
+		return loader_error("Workflow spec is missing a non-empty \"name\"")
+	}
+	raw_steps := dict_get_or(spec, "steps", [])
+	if type(raw_steps) != "array" || len(raw_steps) == 0 {
+		return loader_error("Workflow spec must include a non-empty \"steps\" array")
+	}
+	steps_result := build_steps_from_spec(raw_steps)
+	if dict_get_or(steps_result, "ok", false) == false {
+		return steps_result
+	}
+
+	# Default to the built-in research agent roster so specs can compose the
+	# stock planner/research/verification/writer handlers without redefining them.
+	default_agents := create_research_report_workflow("spec", true)["agents"]
+	agents := dict_get_or(spec, "agents", default_agents)
+	if type(agents) != "dict" {
+		agents = default_agents
+	}
+
+	workflow := create_workflow({
+		"id": workflow_id,
+		"name": workflow_name,
+		"description": to_string(dict_get_or(spec, "description", "User-defined Dispatch workflow.")),
+		"input_schema": dict_get_or(spec, "input_schema", {"type": "dict"}),
+		"agents": agents,
+		"tools": dict_get_or(spec, "tools", []),
+		"steps": steps_result["steps"],
+		"memory_config": dict_get_or(spec, "memory_config", {
+			"workflow_memory": true,
+			"agent_notes": true,
+			"step_output_memory": true,
+			"history_lookup": true
+		}),
+		"default_retry_policy": dict_get_or(spec, "default_retry_policy", {
+			"max_attempts": 1,
+			"base_delay_ms": 0,
+			"max_delay_ms": 0,
+			"strategy": "none",
+			"retry_on_codes": []
+		}),
+		"approval_config": dict_get_or(spec, "approval_config", {"auto_approve": false}),
+		"output_schema": dict_get_or(spec, "output_schema", {"type": "dict"})
+	})
+	return {
+		"ok": true,
+		"workflow": workflow
+	}
+}
+
+func load_workflow_from_file(path) {
+	body := safe_read_file(path, "")
+	if trim(body) == "" {
+		return loader_error("Workflow file is empty or unreadable: " + to_string(path))
+	}
+	parsed := null
+	try {
+		parsed = parse_json(body)
+	} except err {
+		return loader_error("Workflow file is not valid JSON: " + to_string(path))
+	}
+	return load_workflow_from_spec(parsed)
+}
+
+export load_workflow_from_spec := load_workflow_from_spec
+export load_workflow_from_file := load_workflow_from_file
