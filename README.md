@@ -52,9 +52,9 @@ Core modules:
 - `src/core/runner.kujo`: orchestration engine entrypoint
 - `src/agents/agent.kujo`: agent execution entrypoint and handler registry mapping
 - `src/tools/tool.kujo`: tool registry, payload adapters, and tool invocation entrypoint
-- `tools/source_lookup.kujo`: source search and lookup handlers
-- `tools/content_processing.kujo`: claim/citation/report/timestamp handlers
-- `tools/reliability_tools.kujo`: reliability simulation handlers
+- `src/tools/source_lookup.kujo`: source search and lookup handlers
+- `src/tools/content_processing.kujo`: claim/citation/report/timestamp handlers
+- `src/tools/reliability_tools.kujo`: reliability simulation handlers
 - `src/core/approval.kujo`: approval request/decision handling
 - `src/core/retry.kujo`: retry policies and attempt tracking
 - `src/core/state.kujo`: run persistence, summaries, filtering, diagnostics
@@ -68,8 +68,8 @@ Core modules:
 
 Module layout:
 
-- Core implementation modules now live under `src/`.
-- Root-level runtime entry scripts are limited to `dispatch.kujo`, `sdk_adapter.kujo`, and `bridge_chat.kujo`.
+- All implementation modules live under `src/`, including the tool handler layer (`src/tools/`).
+- Root-level runtime entry scripts are limited to `dispatch.kujo` (CLI entrypoint), `sdk_adapter.kujo` (imported bridge invoker), and `bridge_chat.kujo` (spawned from `AI_SDK_PATH`).
 - New development should target `src/` modules directly.
 
 ## External AI SDK Integration (AI Chat Style)
@@ -246,6 +246,8 @@ kujo run --interpreter dispatch.kujo import-run --bundle-path bundles/run.json -
 
 When signature mode is enabled, Dispatch writes `signature` metadata into the bundle and verifies it during import. Verification failures return deterministic `invalid_bundle_signature` errors.
 
+Signatures use a keyed SHA-256 MAC (`dispatch-signature-v2`): each artifact is hashed with `sha256`, the per-artifact digests are bound to the run id, and the combined value is signed with a nested keyed hash so the secret key never appears in the persisted bundle and any artifact tampering invalidates the signature. The signing key is required for both signing and verification.
+
 `--signing-key` can be passed directly, but using `DISPATCH_BUNDLE_SIGNING_KEY` is recommended for non-interactive and managed environments.
 
 ## Demo Workflow Included
@@ -334,14 +336,17 @@ $KUJO_BIN test-run tests/dispatch_tests.kujo -v
 
 Track prioritized hardening, architecture cleanup, extensibility work, and testing backlog in:
 
+- `docs/dispatch-next-session-checklist-v4.md`
 - `docs/dispatch-next-session-checklist-v3.md`
 - `docs/dispatch-next-session-checklist-v2.md`
 
-`docs/dispatch-next-session-checklist-v3.md` is the active next-session backlog for flagship enterprise readiness, scale, and presentation work.
+`docs/dispatch-next-session-checklist-v4.md` is the active next-session backlog for workflow-authoring, extensibility wiring, reliability, and presentation work.
 
-`docs/dispatch-next-session-checklist-v2.md` is now complete and serves as an implementation audit trail for enterprise hardening milestones.
+`docs/dispatch-next-session-checklist-v3.md` and `-v2.md` are retained as implementation audit trails for the enterprise hardening milestones.
 
-`docs/dispatch-next-session-checklist.md` is kept as historical context from the earlier backlog phase.
+`docs/dispatch-next-session-checklist.md` is kept as historical context from the earliest backlog phase.
+
+A deeper external review and a workflow-builder guide live under `review/`.
 
 ## Agent And Contributor Guidance
 
@@ -409,7 +414,7 @@ For environment hardening rationale and rollout policy, use the full deployment 
 Dispatch is designed to be extended safely and incrementally:
 
 - Add new workflow templates in `src/workflows/workflow.kujo`
-- Add new tools in `src/tools/tool.kujo` with per-tool payload adapters instead of runner-specific branching
+- Add new tool handlers in `src/tools/` and register them in `src/tools/tool.kujo` with per-tool payload adapters instead of runner-specific branching
 - Register project-specific plugins via `src/core/plugins.kujo` to inject tools and agents without core edits
 - Extend decision policies in `src/core/approval.kujo` and `src/core/retry.kujo`
 - Add reporting outputs in `src/core/report.kujo`
@@ -452,6 +457,9 @@ dispatch/
       agent.kujo
     tools/
       tool.kujo
+      source_lookup.kujo
+      content_processing.kujo
+      reliability_tools.kujo
     core/
       approval.kujo
       decision.kujo
@@ -465,10 +473,6 @@ dispatch/
       step.kujo
       trace.kujo
   dispatch.kujo
-  tools/
-    source_lookup.kujo
-    content_processing.kujo
-    reliability_tools.kujo
   sdk_adapter.kujo
   bridge_chat.kujo
   examples/

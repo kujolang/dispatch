@@ -34,6 +34,15 @@ Each release section should include only shipped changes and use these headings 
 - Added the `version` / `--version` command, sourced from `kennel.toml`.
 - Added the `--webhook-sink <path.jsonl>` flag to `demo` and `resume` to append lifecycle events to a local JSONL sink.
 
+### Changed
+- Moved the domain tool handlers (`source_lookup`, `content_processing`, `reliability_tools`) from the root `tools/` directory into `src/tools/` so all implementation modules live under `src/`. Root-level scripts are now limited to the runtime entry points `dispatch.kujo`, `sdk_adapter.kujo`, and `bridge_chat.kujo`.
+- Replaced the bundle signature scheme with a cryptographic keyed SHA-256 MAC (`dispatch-signature-v2`): each artifact is hashed with `sha256`, digests are bound to the run id, and the value is signed with a nested keyed hash so the secret key is never persisted. Bundles signed with the previous non-cryptographic `dispatch-signature-v1` scheme must be re-exported.
+- Report titles are now derived from the workflow name instead of a hardcoded research-report label.
+- Optimized the per-step state writer to an O(1) in-place update (was an O(n) array rebuild per step mutation).
+
+### Security
+- Bundle signing now uses a real keyed cryptographic MAC, replacing the prior character-count fingerprint that embedded the key material in the comparison string.
+
 ### Fixed
 - Fixed the built-in `research-report` and `crud-reliability` templates failing under the `staging`/`production` policy profiles by marking the reliability probe step optional.
 
