@@ -719,6 +719,9 @@ func create_run_state(workflow, input_payload, output_root, options) {
 	contract_result := ensure_run_state_contract_fields(state)
 	state = contract_result["run_state"]
 	persist_run_state(state)
+	# Register the run in the catalog index once at creation, even though its
+	# status is "running" (per-step running updates are intentionally skipped).
+	upsert_run_index_entry(state)
 	return state
 }
 
@@ -735,7 +738,14 @@ func persist_run_state(run_state) {
 	atomic_write_file(run_state["run_dir"] + "/state.json", to_json(redacted_state))
 	atomic_write_file(run_state["run_dir"] + "/trace.json", to_json(redacted_trace))
 	atomic_write_file(run_state["run_dir"] + "/trace.md", render_trace_markdown(redacted_trace))
-	upsert_run_index_entry(run_state)
+	# Bound index write amplification: skip the full-catalog index rewrite for
+	# the per-step "running" churn. The run is registered once at creation and
+	# the index is refreshed on every non-running status transition (paused,
+	# completed, failed, cancelled, ...). The per-run state.json scan remains the
+	# self-healing source of truth for listings.
+	if dict_get_or(run_state, "status", "") != "running" {
+		upsert_run_index_entry(run_state)
+	}
 	return run_state
 }
 
