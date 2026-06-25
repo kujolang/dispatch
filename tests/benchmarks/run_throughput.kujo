@@ -1,0 +1,74 @@
+from src.workflows.workflow import create_research_report_workflow
+from src.tools.tool import register_default_tools
+from src.core.state import create_run_state
+from src.core.runner import run_workflow
+from src.core.utils import dict_get_or
+
+# Reproducible, offline throughput benchmark for Dispatch workflow execution.
+#
+# Usage:
+#   DISPATCH_OFFLINE_FIXTURE=true kujo run tests/benchmarks/run_throughput.kujo [iterations]
+#
+# Prints total wall time, average per-run latency, and runs/sec for the
+# fixture-backed research-report workflow (9 steps, 1 approval, retries).
+
+func parse_iterations(raw_args) {
+	if type(raw_args) == "array" && len(raw_args) >= 1 {
+		try {
+			value := to_int(to_string(raw_args[0]))
+			if value > 0 {
+				return value
+			}
+		} except err {
+			return 10
+		}
+	}
+	return 10
+}
+
+func run_one(index, output_root) {
+	workflow := create_research_report_workflow("Benchmark run " + to_string(index), true)
+	tool_registry := register_default_tools("examples/research-report/sources")
+	run_state := create_run_state(workflow, {"topic": "Benchmark run " + to_string(index)}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	result := run_workflow(workflow, run_state, tool_registry, {
+		"auto_approve": true,
+		"interactive": false,
+		"command_name": "benchmark"
+	})
+	return dict_get_or(result, "ok", false)
+}
+
+iterations := parse_iterations(args())
+output_root := "tests/tmp/benchmark-throughput"
+
+print("Dispatch throughput benchmark")
+print("Workflow: research-report (offline fixture)")
+print("Iterations: " + to_string(iterations))
+
+started_ms := current_timestamp()
+ok_count := 0
+i := 0
+while i < iterations {
+	if run_one(i, output_root) {
+		ok_count = ok_count + 1
+	}
+	i = i + 1
+}
+elapsed_ms := current_timestamp() - started_ms
+
+avg_ms := 0
+if iterations > 0 {
+	avg_ms = elapsed_ms / iterations
+}
+runs_per_sec := 0.0
+if elapsed_ms > 0 {
+	runs_per_sec = (to_float(iterations) * 1000.0) / to_float(elapsed_ms)
+}
+
+print("Completed: " + to_string(ok_count) + "/" + to_string(iterations))
+print("Total wall time (ms): " + to_string(elapsed_ms))
+print("Average per-run latency (ms): " + to_string(avg_ms))
+print("Throughput (runs/sec): " + to_string(runs_per_sec))
