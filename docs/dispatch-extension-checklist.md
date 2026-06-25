@@ -159,7 +159,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Add decision normalization test matrix.
 Done notes:
-- Done notes: 2026-05-21 | GPT-5.3-Codex | Added shared decision normalization module and refactored CLI + approval engine to use one source of truth with matrix tests | kujo test-run tests/dispatch_tests.kujo -v; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/arch001-smoke --json
+- Done notes: 2026-05-21 | GPT-5.3-Codex | Added shared decision normalization module and refactored CLI + approval engine to use one source of truth with matrix tests | kujo test-run tests/dispatch_tests.kujo -v; kujo run dispatch.kujo runs --output-root tests/tmp/arch001-smoke --json
 
 ### [x] ARCH-002: Introduce reusable CLI argument parser utility
 Priority: High
@@ -174,7 +174,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Add parser-focused tests for edge cases.
 Done notes:
-- Done notes: 2026-05-21 | GPT-5.3-Codex | Added schema-driven CLI arg parser module with unknown/missing/required flag errors and refactored dispatch command handlers to use it | kujo test-run tests/dispatch_tests.kujo -v; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/arch002-smoke --json
+- Done notes: 2026-05-21 | GPT-5.3-Codex | Added schema-driven CLI arg parser module with unknown/missing/required flag errors and refactored dispatch command handlers to use it | kujo test-run tests/dispatch_tests.kujo -v; kujo run dispatch.kujo runs --output-root tests/tmp/arch002-smoke --json
 
 ### [x] ARCH-003: Split tool handlers into modular files
 Priority: Medium
@@ -189,7 +189,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Existing tests pass; add at least one module-level tool test.
 Done notes:
-- Done notes: 2026-05-22 | GPT-5.3-Codex | Split tool handlers into dedicated tools modules while keeping registry wiring in tool.kujo, added module-level handler coverage, and updated architecture docs | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/arch003-smoke --json
+- Done notes: 2026-05-22 | GPT-5.3-Codex | Split tool handlers into dedicated tools modules while keeping registry wiring in tool.kujo, added module-level handler coverage, and updated architecture docs | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run dispatch.kujo runs --output-root tests/tmp/arch003-smoke --json
 
 ### [x] ARCH-004: Replace hardcoded agent dispatch with registry mapping
 Priority: Medium
@@ -203,7 +203,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Add tests for unknown handler and mapped handler execution.
 Done notes:
-- Done notes: 2026-05-22 | GPT-5.3-Codex | Replaced run_agent if-chain with registry-based handler mapping, added optional custom handler injection support, and added mapped/unknown handler tests | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/arch004-smoke --json
+- Done notes: 2026-05-22 | GPT-5.3-Codex | Replaced run_agent if-chain with registry-based handler mapping, added optional custom handler injection support, and added mapped/unknown handler tests | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run dispatch.kujo runs --output-root tests/tmp/arch004-smoke --json
 
 ### [x] ARCH-005: Replace hardcoded tool payload branching with adapter strategy
 Priority: Medium
@@ -217,7 +217,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Add tests for custom tool payload mapping.
 Done notes:
-- Done notes: 2026-05-22 | GPT-5.3-Codex | Moved tool payload shaping into per-tool payload adapters in tool registry, removed runner-specific tool-name branching, and added custom adapter mapping test coverage | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/arch005-smoke --json
+- Done notes: 2026-05-22 | GPT-5.3-Codex | Moved tool payload shaping into per-tool payload adapters in tool registry, removed runner-specific tool-name branching, and added custom adapter mapping test coverage | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run dispatch.kujo runs --output-root tests/tmp/arch005-smoke --json
 
 ### [x] ARCH-006: Support workflow templates by ID
 Priority: Medium
@@ -231,7 +231,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Add tests for selecting workflow by ID.
 Done notes:
-- Done notes: 2026-05-22 | GPT-5.3-Codex | Added workflow template registry and create_workflow_by_template selector, wired demo/resume --workflow flag handling, and added known/unknown template tests | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/arch006-smoke --json
+- Done notes: 2026-05-22 | GPT-5.3-Codex | Added workflow template registry and create_workflow_by_template selector, wired demo/resume --workflow flag handling, and added known/unknown template tests | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run dispatch.kujo runs --output-root tests/tmp/arch006-smoke --json
 
 ### [x] ARCH-007: Restructure repository layout for maintainability
 Priority: Medium
@@ -253,7 +253,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Full test run after move + import path validation.
 Done notes:
-- Done notes: 2026-05-22 | GPT-5.3-Codex | Added src-based module layout (core/cli/agents/tools/workflows) with compatibility wrappers, switched CLI/tests to the new import paths, and updated repository structure docs | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/arch007-smoke --json
+- Done notes: 2026-05-22 | GPT-5.3-Codex | Added src-based module layout (core/cli/agents/tools/workflows) with compatibility wrappers, switched CLI/tests to the new import paths, and updated repository structure docs | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run dispatch.kujo runs --output-root tests/tmp/arch007-smoke --json
 
 ## Tier 2 - Extensibility and Developer Utility
 
@@ -268,7 +268,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Add integration test with sample plugin.
 Done notes:
-- Done notes: 2026-05-22 | GPT-5.3-Codex | Added src/core/plugins runtime plugin registry/merge helpers to inject external tools and agent handlers, and added integration test coverage for custom plugin tool+agent injection | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/feat001-smoke --json
+- Done notes: 2026-05-22 | GPT-5.3-Codex | Added src/core/plugins runtime plugin registry/merge helpers to inject external tools and agent handlers, and added integration test coverage for custom plugin tool+agent injection | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run dispatch.kujo runs --output-root tests/tmp/feat001-smoke --json
 
 ### [x] FEAT-002: Add schema validation for step inputs and outputs
 Priority: High
@@ -281,7 +281,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Add tests for schema pass/fail paths.
 Done notes:
-- Done notes: 2026-05-22 | GPT-5.3-Codex | Added runner-level schema validation for step input/output contracts with actionable error codes and added pass/fail validation tests for required fields and typed outputs | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/feat002-smoke --json
+- Done notes: 2026-05-22 | GPT-5.3-Codex | Added runner-level schema validation for step input/output contracts with actionable error codes and added pass/fail validation tests for required fields and typed outputs | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run dispatch.kujo runs --output-root tests/tmp/feat002-smoke --json
 
 ### [x] FEAT-003: Add per-step timeout and cancellation support
 Priority: Medium
@@ -294,7 +294,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Add tests for timeout behavior.
 Done notes:
-- Done notes: 2026-05-22 | GPT-5.3-Codex | Added per-step timeout_ms enforcement and workflow cancellation state handling (including cancel_after_step_id option), plus lifecycle tests for timeout and cancellation transitions | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/feat003-smoke --json
+- Done notes: 2026-05-22 | GPT-5.3-Codex | Added per-step timeout_ms enforcement and workflow cancellation state handling (including cancel_after_step_id option), plus lifecycle tests for timeout and cancellation transitions | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run dispatch.kujo runs --output-root tests/tmp/feat003-smoke --json
 
 ### [x] FEAT-004: Add lifecycle event hooks/webhook outputs
 Priority: Medium
@@ -307,7 +307,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Add tests for hook payload format and invocation count.
 Done notes:
-- Done notes: 2026-05-22 | GPT-5.3-Codex | Added normalized lifecycle hook events with callback and webhook-sink emission paths, integrated hook emission across runner lifecycle events, and added hook payload/invocation tests | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/feat004-smoke --json
+- Done notes: 2026-05-22 | GPT-5.3-Codex | Added normalized lifecycle hook events with callback and webhook-sink emission paths, integrated hook emission across runner lifecycle events, and added hook payload/invocation tests | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run dispatch.kujo runs --output-root tests/tmp/feat004-smoke --json
 
 ### [x] FEAT-005: Add workflow template for CRUD API reliability review
 Priority: Medium
@@ -320,7 +320,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Add integration test using fixture CRUD input.
 Done notes:
-- Done notes: 2026-05-22 | GPT-5.3-Codex | Added `crud-reliability` workflow template with CRUD-focused planning/verification/writer guidance and registered it in template selection with end-to-end execution tests | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/feat005-smoke --json
+- Done notes: 2026-05-22 | GPT-5.3-Codex | Added `crud-reliability` workflow template with CRUD-focused planning/verification/writer guidance and registered it in template selection with end-to-end execution tests | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run dispatch.kujo runs --output-root tests/tmp/feat005-smoke --json
 
 ### [x] FEAT-006: Add output retention and cleanup command
 Priority: Low
@@ -333,7 +333,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Add tests for dry-run and apply modes.
 Done notes:
-- Done notes: 2026-05-22 | GPT-5.3-Codex | Added `cleanup` command with dry-run/apply modes plus status/max-count/age filters, implemented prune markers in state listings, and added dry-run/apply cleanup tests | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run --interpreter dispatch.kujo cleanup --output-root tests/tmp/feat006-smoke --max-count 1 --json
+- Done notes: 2026-05-22 | GPT-5.3-Codex | Added `cleanup` command with dry-run/apply modes plus status/max-count/age filters, implemented prune markers in state listings, and added dry-run/apply cleanup tests | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run dispatch.kujo cleanup --output-root tests/tmp/feat006-smoke --max-count 1 --json
 
 ## Tier 3 - Advanced Runtime and Scale
 
@@ -349,7 +349,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Add benchmark-oriented regression test or large fixture test.
 Done notes:
-- Done notes: 2026-05-22 | GPT-5.3-Codex | Added run-list pagination (`--limit`/`--offset`) with `paginate_runs` support and large-catalog pagination test coverage for scalable listings | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/scale001-smoke --limit 5 --offset 0 --json
+- Done notes: 2026-05-22 | GPT-5.3-Codex | Added run-list pagination (`--limit`/`--offset`) with `paginate_runs` support and large-catalog pagination test coverage for scalable listings | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run dispatch.kujo runs --output-root tests/tmp/scale001-smoke --limit 5 --offset 0 --json
 
 ### [x] SCALE-002: Add jitter to retry policy
 Priority: Low
@@ -362,7 +362,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Add deterministic tests with seeded jitter.
 Done notes:
-- Done notes: 2026-05-22 | GPT-5.3-Codex | Added retry jitter support (`deterministic` and `random` modes with jitter_ms/jitter_seed) and deterministic backoff tests for stable verification | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/scale002-smoke --limit 3 --json
+- Done notes: 2026-05-22 | GPT-5.3-Codex | Added retry jitter support (`deterministic` and `random` modes with jitter_ms/jitter_seed) and deterministic backoff tests for stable verification | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run dispatch.kujo runs --output-root tests/tmp/scale002-smoke --limit 3 --json
 
 ### [x] SCALE-003: Add DAG step dependencies and optional parallel execution
 Priority: Low
@@ -375,7 +375,7 @@ Acceptance criteria:
 Validation/testing expectations:
 - Add integration tests for dependency ordering and artifact consistency.
 Done notes:
-- Done notes: 2026-05-22 | GPT-5.3-Codex | Added `depends_on` step dependencies, dependency-aware scheduler with deadlock detection, and parallel-ready execution mode support with DAG integration tests | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/scale003-smoke --limit 5 --json
+- Done notes: 2026-05-22 | GPT-5.3-Codex | Added `depends_on` step dependencies, dependency-aware scheduler with deadlock detection, and parallel-ready execution mode support with DAG integration tests | kujo test-run tests/dispatch_tests.kujo -v; NO_SCRIPTS_RUN_TESTS; kujo run dispatch.kujo runs --output-root tests/tmp/scale003-smoke --limit 5 --json
 
 ## Testing Backlog Focus (Cross-Cutting)
 

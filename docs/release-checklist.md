@@ -37,7 +37,7 @@ $KUJO_BIN test-run tests/dispatch_tests.kujo -v
 Run a command-surface smoke check:
 
 ```bash
-$KUJO_BIN run --interpreter dispatch.kujo --help
+$KUJO_BIN run dispatch.kujo --help
 popd
 ```
 
@@ -46,7 +46,7 @@ popd
 Run a fixture-mode demo and check artifacts:
 
 ```bash
-$KUJO_BIN run --interpreter dispatch.kujo demo "Release checklist smoke" --yes --non-interactive --decision approve --output-root tests/tmp/release-smoke-outputs
+$KUJO_BIN run dispatch.kujo demo "Release checklist smoke" --yes --non-interactive --decision approve --output-root tests/tmp/release-smoke-outputs
 ```
 
 Confirm expected outputs exist for the generated run:
@@ -66,9 +66,9 @@ Confirm persisted artifact contract metadata exists in machine-readable artifact
 Confirm machine-readable command surfaces are stable:
 
 ```bash
-$KUJO_BIN run --interpreter dispatch.kujo show <run-id> --output-root tests/tmp/release-smoke-outputs --json
-$KUJO_BIN run --interpreter dispatch.kujo inspect <run-id> --output-root tests/tmp/release-smoke-outputs --json
-$KUJO_BIN run --interpreter dispatch.kujo doctor --output-root tests/tmp/release-smoke-outputs --json
+$KUJO_BIN run dispatch.kujo show <run-id> --output-root tests/tmp/release-smoke-outputs --json
+$KUJO_BIN run dispatch.kujo inspect <run-id> --output-root tests/tmp/release-smoke-outputs --json
+$KUJO_BIN run dispatch.kujo doctor --output-root tests/tmp/release-smoke-outputs --json
 ```
 
 ## 4. Cut Release

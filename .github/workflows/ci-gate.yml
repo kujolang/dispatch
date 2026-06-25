@@ -23,6 +23,10 @@ jobs:
     timeout-minutes: 45
     env:
       DISPATCH_OFFLINE_FIXTURE: "true"
+      # Pin the Kujo runtime to a specific commit SHA or tag for reproducible
+      # builds. Defaults to `main` (tracks latest). Bump deliberately and record
+      # the dispatch<->kujo compatibility in CHANGELOG when changing this.
+      KUJO_RUNTIME_REF: "main"
 
     steps:
       - name: Checkout dispatch repository
@@ -32,8 +36,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: kujolang/kujo
+          ref: ${{ env.KUJO_RUNTIME_REF }}
           path: .ci/kujo
           fetch-depth: 1
+
+      - name: Verify package version consistency
+        run: |
+          kennel_version="$(grep -E '^version' kennel.toml | head -1 | sed -E 's/.*"(.*)".*/\1/')"
+          kujo_version="$(grep -E '^version' kujo.toml | head -1 | sed -E 's/.*"(.*)".*/\1/')"
+          echo "kennel.toml=$kennel_version kujo.toml=$kujo_version"
+          if [ "$kennel_version" != "$kujo_version" ]; then
+            echo "Version mismatch between kennel.toml and kujo.toml" >&2
+            exit 1
+          fi
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -52,6 +67,17 @@ jobs:
       - name: Verify runtime supports Kujo script execution
         run: |
           "$KUJO_BIN" --help | grep -q "run"
+
+      - name: Verify default run path is warning-free
+        run: |
+          set -euo pipefail
+          err="$("$KUJO_BIN" run dispatch.kujo demo "CI warning-free smoke" --yes --non-interactive --output-root tests/tmp/ci-smoke 2>&1 >/dev/null || true)"
+          if [ -n "$err" ]; then
+            echo "Default VM run path emitted stderr output:" >&2
+            echo "$err" >&2
+            exit 1
+          fi
+          rm -rf tests/tmp/ci-smoke
 
       - name: Run sdk adapter tests
         timeout-minutes: 10

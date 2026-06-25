@@ -1,8 +1,27 @@
 # Dispatch Next-Session Checklist v4
 
-Active backlog after the 2026-06-25 robustness/presentation pass.
+Active backlog after the 2026-06-25 robustness/security/presentation passes.
 
-This pass shipped: source-handler consolidation into `src/tools/`, a cryptographic (keyed SHA-256 MAC) bundle signing scheme (`dispatch-signature-v2`), workflow-aware report titles, an O(1) in-place step writer, and README/architecture doc alignment. All 77 `dispatch_tests` plus the `sdk_adapter` and `policy_precedence` suites pass.
+An earlier pass shipped: source-handler consolidation into `src/tools/`, a cryptographic (keyed SHA-256 MAC) bundle signing scheme (`dispatch-signature-v2`), workflow-aware report titles, and an O(1) in-place step writer.
+
+A follow-up enterprise-hardening pass then shipped (and closed several items below):
+
+- **F1 DONE** — the default bytecode VM run path is now canonical and warning-free; `--interpreter` remains for debugging. Docs/help/tests updated.
+- **Atomic writes** — all artifacts (state, trace, report, index, audit, bundles) are written via temp-file + `rename`, fixing torn/partial files on crash or concurrent read.
+- **D1 DONE** — `--webhook-sink` path guard (`DISPATCH_ALLOW_ANY_WEBHOOK_SINK` opt-out).
+- **D2 DONE** — bundle signing key rotation (`key_id` + `DISPATCH_BUNDLE_SIGNING_KEYS` trusted set).
+- **C2 DONE** — per-step `idempotency_key` (replay-safe resume).
+- **Partial C1** — `--cancel-after-step` cooperative cancellation wired; preemptive timeout is still post-hoc.
+- **Observability** — `--webhook-url` HTTP sink added; `event_hook` callback still library-only.
+- **CI** — version-consistency, pinned-runtime mechanism, and a warning-free smoke added.
+- **SDK** — bridge timeout is now `DISPATCH_SDK_TIMEOUT_MS`-configurable.
+- **Diagnostics** — `doctor` flags oversized `state.json` (`DISPATCH_STATE_MAX_BYTES`).
+
+All `dispatch_tests`, `sdk_adapter`, and `policy_precedence` suites pass after the pass.
+
+### Known runtime quirk (record for future work)
+
+In this Kujo build, reassigning a whole variable with `=` to a function's return value **inside an `if` block** in a module function did not always propagate to the enclosing scope (observed in `resolve_bundle_verification_key`), whereas element assignment (`d[k] := v`) inside the same block does. Prefer building dicts/arrays via element assignment in conditional blocks until this is confirmed fixed upstream.
 
 This document is the prioritized list to work through next. Earlier backlogs (`dispatch-next-session-checklist-v2.md`, `-v3.md`) remain as history.
 

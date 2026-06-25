@@ -29,12 +29,20 @@ Each release section should include only shipped changes and use these headings 
 ## [Unreleased]
 
 ### Added
+- Added crash-safe, torn-write-safe atomic artifact writes (stage to a temp file, then `rename`) for state, trace, report, run index, mutation audit, and exported bundles.
+- Added bundle signing key rotation: signatures record a `key_id` (`DISPATCH_BUNDLE_SIGNING_KEY_ID`/`--signing-key-id`) and verification can trust a key set (`DISPATCH_BUNDLE_SIGNING_KEYS`) so keys rotate without invalidating in-flight bundles.
+- Added a `--webhook-sink` path guard (absolute/traversal paths blocked unless `DISPATCH_ALLOW_ANY_WEBHOOK_SINK=true`) and a `--webhook-url` best-effort HTTP lifecycle sink.
+- Added `--cancel-after-step <step-id>` cooperative cancellation to `demo`/`resume`.
+- Added per-step `idempotency_key` support: keyed results are cached in run state and reused on resume instead of re-executing side effects.
+- Added a configurable SDK bridge timeout (`DISPATCH_SDK_TIMEOUT_MS`) and a `state.json` size-budget diagnostic (`DISPATCH_STATE_MAX_BYTES`, surfaced by `doctor`).
+- Added CI guards: package version consistency (`kennel.toml`/`kujo.toml`), a pinned Kujo runtime ref, and a warning-free default-run smoke.
 - Added optional steps: a step marked `optional` that fails or is denied by tool policy now emits a `step_skipped` trace event and the run continues instead of failing.
 - Added the `approval-handoff` workflow template, a minimal human-in-the-loop flow that avoids the flaky reliability tool and completes under the `staging`/`production` policy profiles.
 - Added the `version` / `--version` command, sourced from `kennel.toml`.
 - Added the `--webhook-sink <path.jsonl>` flag to `demo` and `resume` to append lifecycle events to a local JSONL sink.
 
 ### Changed
+- Documented and adopted the default bytecode VM run path (`kujo run dispatch.kujo ...`) as canonical; it executes with no diagnostic output. The `--interpreter` (tree-walking) mode remains supported for debugging but emits `[RUFRUN001]` type-checker warnings. README, docs, help text, and the test subprocess calls now use the VM path.
 - Moved the domain tool handlers (`source_lookup`, `content_processing`, `reliability_tools`) from the root `tools/` directory into `src/tools/` so all implementation modules live under `src/`. Root-level scripts are now limited to the runtime entry points `dispatch.kujo`, `sdk_adapter.kujo`, and `bridge_chat.kujo`.
 - Replaced the bundle signature scheme with a cryptographic keyed SHA-256 MAC (`dispatch-signature-v2`): each artifact is hashed with `sha256`, digests are bound to the run id, and the value is signed with a nested keyed hash so the secret key is never persisted. Bundles signed with the previous non-cryptographic `dispatch-signature-v1` scheme must be re-exported.
 - Report titles are now derived from the workflow name instead of a hardcoded research-report label.
@@ -42,6 +50,9 @@ Each release section should include only shipped changes and use these headings 
 
 ### Security
 - Bundle signing now uses a real keyed cryptographic MAC, replacing the prior character-count fingerprint that embedded the key material in the comparison string.
+- Bundle signing supports key rotation via a trusted key set, and documentation recommends supplying the signing key by environment variable rather than the `--signing-key` flag to keep it out of process arguments.
+- `--webhook-sink` paths are constrained to safe relative locations by default, preventing arbitrary file writes outside the workspace.
+- Atomic artifact writes prevent torn/partial files from crashes or concurrent readers; a threat model and concurrency guidance were added to the enterprise deployment guide.
 
 ### Fixed
 - Fixed the built-in `research-report` and `crud-reliability` templates failing under the `staging`/`production` policy profiles by marking the reliability probe step optional.

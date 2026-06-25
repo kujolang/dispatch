@@ -25,8 +25,24 @@ This guide describes production assumptions, hardening controls, and operational
 - Restrict who can execute mutation commands (`doctor --write`, `cleanup --apply`, `import-run`).
 - Treat report and trace artifacts as potentially sensitive operational metadata.
 
+## Threat Model and Trust Boundaries
+
+- **Run output root**: treated as trusted local storage. Artifacts are written atomically (temp file + `rename`) so crashes or concurrent readers never observe partial files. Restrict filesystem permissions to the service account.
+- **Bundles** (`export-run`/`import-run`): treated as data that may cross trust boundaries. Always sign with `--sign-bundle` and verify with `--verify-bundle-signature` when moving bundles between environments. Signatures are a keyed SHA-256 MAC (`dispatch-signature-v2`); the key authenticates the artifacts but is a shared secret, so distribute it only through a managed secret store. Rotate keys with `DISPATCH_BUNDLE_SIGNING_KEY_ID` and a `DISPATCH_BUNDLE_SIGNING_KEYS` verification set.
+- **Signing key handling**: prefer `DISPATCH_BUNDLE_SIGNING_KEY` over `--signing-key`; CLI flags can leak via process listings and shell history.
+- **Webhook sinks/URLs**: `--webhook-sink` is constrained to safe relative paths by default (`DISPATCH_ALLOW_ANY_WEBHOOK_SINK=true` to opt out). `--webhook-url` performs best-effort outbound POSTs and should target trusted internal collectors only; delivery is fire-and-forget and never blocks or fails a run.
+- **Sources and config**: `--sources-dir` and `--config` are path-constrained by default; keep `DISPATCH_ALLOW_ANY_*` flags `false` in production.
+- **Tool execution**: tools run trusted in-process handler code. Use tool authorization policy (allow/deny, profiles) for least privilege and treat any custom tool/plugin as part of the trusted computing base.
+
+## Concurrency and Durability
+
+- Artifact writes are atomic; the run index (`.dispatch-run-index.json`) is a cache that is rebuildable from per-run `state.json` files, and `runs`/`doctor` fall back to scanning state when it is missing or malformed.
+- Dispatch does not take cross-process file locks. For concurrent execution, give each worker/service a dedicated `--output-root` so two processes never update the same index or run directory simultaneously. Within a shared root, the index is last-writer-wins and self-heals on the next scan/`doctor` pass, but per-run artifacts should not be targeted by two writers at once.
+- `doctor` flags runs whose `state.json` exceeds `DISPATCH_STATE_MAX_BYTES`; alert on these to catch runs accumulating oversized step outputs.
+
 ## Observability and Monitoring
 
+- Stream lifecycle events live with `--webhook-sink <path.jsonl>` (local JSONL) or `--webhook-url <endpoint>` (HTTP POST) for real-time monitoring.
 - Collect run lifecycle status, failure counts, and approval outcomes from trace artifacts.
 - Track mutation operations from `dispatch-mutations.jsonl`.
 - Track `policy_deny` audit events from `dispatch-mutations.jsonl` and alert on unexpected deny spikes.
@@ -61,7 +77,7 @@ export DISPATCH_ALLOW_ANY_SOURCES_DIR=false
 ```
 
 ```bash
-kujo run --interpreter dispatch.kujo demo "Development profile smoke" --policy-profile development --yes --non-interactive --decision approve --output-root tests/tmp/profile-dev-outputs
+kujo run dispatch.kujo demo "Development profile smoke" --policy-profile development --yes --non-interactive --decision approve --output-root tests/tmp/profile-dev-outputs
 ```
 
 ### Staging profile
@@ -75,7 +91,7 @@ export DISPATCH_ALLOW_ANY_SOURCES_DIR=false
 ```
 
 ```bash
-kujo run --interpreter dispatch.kujo runs --output-root tests/tmp/profile-staging-outputs --json --diagnostics
+kujo run dispatch.kujo runs --output-root tests/tmp/profile-staging-outputs --json --diagnostics
 ```
 
 ### Production profile
@@ -89,7 +105,7 @@ export DISPATCH_ALLOW_ANY_SOURCES_DIR=false
 ```
 
 ```bash
-kujo run --interpreter dispatch.kujo doctor --output-root tests/tmp/profile-prod-outputs --strict-mutations --confirm-mutation
+kujo run dispatch.kujo doctor --output-root tests/tmp/profile-prod-outputs --strict-mutations --confirm-mutation
 ```
 
 ## Operational Playbooks
