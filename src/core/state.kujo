@@ -1122,60 +1122,15 @@ func read_artifact_or_empty(path) {
 	return safe_read_file(path, "")
 }
 
-func count_token_occurrences(text_value, token) {
-	text := to_string(text_value)
-	needle := to_string(token)
-	if needle == "" {
-		return 0
-	}
-	parts := split(text, needle)
-	if len(parts) == 0 {
-		return 0
-	}
-	return len(parts) - 1
-}
-
-func slice_prefix(text_value, max_len) {
-	text := to_string(text_value)
-	limit := max_len
-	if limit < 0 {
-		limit = 0
-	}
-	if len(text) <= limit {
-		return text
-	}
-	return substring(text, 0, limit)
-}
-
-func slice_suffix(text_value, max_len) {
-	text := to_string(text_value)
-	limit := max_len
-	if limit < 0 {
-		limit = 0
-	}
-	text_len := len(text)
-	if text_len <= limit {
-		return text
-	}
-	return substring(text, text_len - limit, text_len)
-}
-
-func build_signature_fragment(content) {
-	text := to_string(content)
-	return join([
-		to_string(len(text)),
-		to_string(len(split(text, "\n"))),
-		to_string(count_token_occurrences(text, " ")),
-		to_string(count_token_occurrences(text, ":")),
-		to_string(count_token_occurrences(text, ",")),
-		to_string(count_token_occurrences(text, "{")),
-		to_string(count_token_occurrences(text, "}")),
-		to_string(count_token_occurrences(text, "[")),
-		to_string(count_token_occurrences(text, "]")),
-		to_string(count_token_occurrences(text, "\"")),
-		slice_prefix(text, 32),
-		slice_suffix(text, 32)
-	], "|")
+func bundle_keyed_mac(signing_key, message) {
+	# Nested keyed SHA-256 MAC (NMAC/HMAC-style): the message is hashed first,
+	# then the secret key is prepended to that fixed-length digest and hashed
+	# again. This keeps the key out of the persisted output, binds the digest
+	# to the secret, and resists length-extension because the outer input is
+	# key + a fixed-size inner digest rather than key + attacker-controlled data.
+	key_text := to_string(signing_key)
+	inner := sha256(key_text + "::dispatch-mac-inner::" + to_string(message))
+	return sha256(key_text + "::dispatch-mac-outer::" + inner)
 }
 
 func resolve_bundle_signing_key(options) {
@@ -1188,14 +1143,20 @@ func resolve_bundle_signing_key(options) {
 	return trim(to_string(env("DISPATCH_BUNDLE_SIGNING_KEY")))
 }
 
+func bundle_signature_algorithm() {
+	return "dispatch-signature-v2"
+}
+
 func build_bundle_signature_value(run_id, artifacts, signing_key) {
 	artifact_keys := ["state_json", "trace_json", "trace_md", "report_json", "report_md"]
-	parts := ["dispatch-signature-v1", to_string(run_id), to_string(signing_key)]
+	parts := [bundle_signature_algorithm(), to_string(run_id)]
 	for artifact_key in artifact_keys {
+		content := to_string(dict_get_or(artifacts, artifact_key, ""))
 		parts := push(parts, artifact_key)
-		parts := push(parts, build_signature_fragment(dict_get_or(artifacts, artifact_key, "")))
+		parts := push(parts, to_string(len(content)))
+		parts := push(parts, sha256(content))
 	}
-	return join(parts, "::")
+	return bundle_keyed_mac(signing_key, join(parts, "::"))
 }
 
 func bundle_signature_error(message) {
@@ -1241,7 +1202,7 @@ func export_run_bundle(output_root, run_id, bundle_path, options) {
 	}
 	if include_signature {
 		bundle["signature"] := {
-			"algorithm": "dispatch-signature-v1",
+			"algorithm": bundle_signature_algorithm(),
 			"signed_at": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
 			"value": build_bundle_signature_value(run_id, artifacts, signing_key)
 		}
@@ -1326,7 +1287,7 @@ func import_run_bundle(output_root, bundle_path, options) {
 			return bundle_signature_error("Bundle run_id is required when signature verification is enabled.")
 		}
 		algorithm := to_string(dict_get_or(signature, "algorithm", ""))
-		if algorithm != "dispatch-signature-v1" {
+		if algorithm != bundle_signature_algorithm() {
 			return bundle_signature_error("Unsupported bundle signature algorithm: " + algorithm)
 		}
 		expected_signature := build_bundle_signature_value(source_run_id, artifacts, signing_key)
