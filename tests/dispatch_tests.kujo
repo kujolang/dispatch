@@ -2745,3 +2745,75 @@ test "webhook sink option appends lifecycle events as jsonl" {
 	assert_equal(contains(contents, "run_completed"), 1)
 	assert_equal(contains(contents, "step_completed"), 1)
 }
+
+test "report title reflects the workflow name" {
+	research_payload := build_report_payload({
+		"workflow_name": "Research Report Workflow",
+		"input": {"topic": "Title topic"},
+		"data": {},
+		"run_id": "run-title-research",
+		"status": "completed",
+		"steps": [],
+		"trace": {"events": []}
+	})
+	assert_equal(research_payload["title"], "Research Report Workflow Output")
+
+	crud_payload := build_report_payload({
+		"workflow_name": "CRUD Reliability Workflow",
+		"input": {"topic": "Title topic"},
+		"data": {},
+		"run_id": "run-title-crud",
+		"status": "completed",
+		"steps": [],
+		"trace": {"events": []}
+	})
+	assert_equal(crud_payload["title"], "CRUD Reliability Workflow Output")
+
+	fallback_payload := build_report_payload({
+		"input": {"topic": "Title topic"},
+		"data": {},
+		"run_id": "run-title-fallback",
+		"status": "completed",
+		"steps": [],
+		"trace": {"events": []}
+	})
+	assert_equal(fallback_payload["title"], "Workflow Report")
+}
+
+test "signed bundle uses a cryptographic sha256 mac and rejects wrong keys" {
+	output_root := "tests/tmp/crypto-sign-source"
+	workflow := create_research_report_workflow("Crypto Signing Topic", true)
+	run_state := create_run_state(workflow, {"topic": "Crypto Signing Topic"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_state["status"] := "completed"
+	run_state := persist_run_state(run_state)
+
+	bundle_path := "tests/tmp/run-bundles/crypto-export-bundle.json"
+	exported := export_run_bundle(output_root, run_state["run_id"], bundle_path, {
+		"include_signature": true,
+		"signing_key": "primary-key"
+	})
+	assert_true(exported["ok"])
+
+	bundle_payload := parse_json(read_file(bundle_path))
+	signature := dict_get_or(bundle_payload, "signature", {})
+	assert_equal(dict_get_or(signature, "algorithm", ""), "dispatch-signature-v2")
+	signature_value := to_string(dict_get_or(signature, "value", ""))
+	assert_equal(len(signature_value), 64)
+	assert_equal(contains(signature_value, "primary-key"), 0)
+
+	verified := import_run_bundle("tests/tmp/crypto-sign-target", bundle_path, {
+		"verify_signature": true,
+		"signing_key": "primary-key"
+	})
+	assert_true(verified["ok"])
+
+	wrong_key := import_run_bundle("tests/tmp/crypto-sign-target", bundle_path, {
+		"verify_signature": true,
+		"signing_key": "attacker-key"
+	})
+	assert_false(wrong_key["ok"])
+	assert_equal(wrong_key["error"]["code"], "invalid_bundle_signature")
+}
