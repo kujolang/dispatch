@@ -28,6 +28,15 @@ Each release section should include only shipped changes and use these headings 
 
 ## [Unreleased]
 
+### Added
+- Added optional steps: a step marked `optional` that fails or is denied by tool policy now emits a `step_skipped` trace event and the run continues instead of failing.
+- Added the `approval-handoff` workflow template, a minimal human-in-the-loop flow that avoids the flaky reliability tool and completes under the `staging`/`production` policy profiles.
+- Added the `version` / `--version` command, sourced from `kennel.toml`.
+- Added the `--webhook-sink <path.jsonl>` flag to `demo` and `resume` to append lifecycle events to a local JSONL sink.
+
+### Fixed
+- Fixed the built-in `research-report` and `crud-reliability` templates failing under the `staging`/`production` policy profiles by marking the reliability probe step optional.
+
 ## [1.0.0] - 2026-06-10
 
 ### Added

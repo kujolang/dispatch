@@ -23,10 +23,11 @@ Single-step chat calls are rarely enough when work needs to be repeated, reviewe
 ## Key Capabilities
 
 - Workflow schema with typed step metadata
-- Step lifecycle tracking (pending, running, paused, completed, failed)
+- Step lifecycle tracking (pending, running, paused, completed, failed, skipped)
+- Optional steps that skip-and-continue on failure or policy denial
 - Step input/output schema validation with actionable errors
 - Per-step timeout handling and cancellation lifecycle state
-- Lifecycle event hooks via callback and webhook sink outputs
+- Lifecycle event hooks via callback and webhook sink outputs (`--webhook-sink`)
 - Approval decisions (approved, rejected, request_changes)
 - DAG-style step dependencies (`depends_on`) with parallel-ready scheduling support
 - Agent-to-agent handoff events
@@ -170,7 +171,11 @@ When strict mutation mode is enabled (`--strict-mutations` or `DISPATCH_STRICT_M
 
 Dispatch is template-driven: `demo` and `resume` select workflows by template ID through `--workflow <template-id>`. Direct Spec-file ingestion is not part of the verified command surface in this repository.
 
-Dispatch currently supports `help` and `--help`. `version` and `--version` are not implemented and return `Unknown command`.
+Dispatch supports `help`/`--help` and `version`/`--version`. The version is sourced from `kennel.toml` (`[package].version`).
+
+Steps can be marked `optional` in a workflow template. When an optional step fails (including a tool blocked by policy), Dispatch records a `step_skipped` trace event and continues the run instead of failing it. The built-in `retry_probe` step is optional, so the `research-report` and `crud-reliability` templates complete even when `flaky_reliability_tool` is denied (for example under the `staging`/`production` policy profiles).
+
+`demo` and `resume` accept `--webhook-sink <path.jsonl>` to append lifecycle events (one JSON object per line) to a local sink file as the run progresses.
 
 ## Common Usage Flows
 
@@ -249,6 +254,7 @@ Built-in workflow templates:
 
 - `research-report`: General evidence-backed research report workflow
 - `crud-reliability`: CRUD API reliability review focused on contract checks, migration safety, auth checks, and error-budget notes
+- `approval-handoff`: Minimal human-in-the-loop workflow (gather, pause at an approval gate, finalize); avoids the flaky reliability tool so it runs cleanly under the `staging` and `production` policy profiles
 
 The baseline execution lifecycle demonstrates:
 
