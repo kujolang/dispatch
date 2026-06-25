@@ -15,7 +15,7 @@ test_setup {
 	from src.core.step import create_step
 	from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_policy, build_tool_authorization_policy_with_profile
 	from src.tools.source_lookup import mock_web_search_handler, canonicalize_path, path_is_within_root
-	from src.core.utils import dict_get_or
+	from src.core.utils import dict_get_or, atomic_write_file, ensure_dir
 }
 
 test "workflow creation includes required sections" {
@@ -71,7 +71,6 @@ test "templates command supports text and json output" {
 	text_result := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"templates"
 	], {
@@ -87,7 +86,6 @@ test "templates command supports text and json output" {
 	json_result := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"templates",
 		"--json"
@@ -718,7 +716,6 @@ test "dispatch runs rejects invalid numeric flags" {
 	process_result := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"runs",
 		"--output-root",
@@ -1376,7 +1373,6 @@ test "dispatch blocks unsafe output roots without opt in" {
 	blocked := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"runs",
 		"--output-root",
@@ -1399,7 +1395,6 @@ test "dispatch blocks unsafe config paths without opt in" {
 	blocked := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"demo",
 		"Config path policy",
@@ -1436,7 +1431,6 @@ test "dispatch blocks oversized config files" {
 	result := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"demo",
 		"Large Config Topic",
@@ -1500,7 +1494,6 @@ test "strict mutation mode blocks destructive commands unless confirmed" {
 	doctor_blocked := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"doctor",
 		"--output-root",
@@ -1519,7 +1512,6 @@ test "strict mutation mode blocks destructive commands unless confirmed" {
 	doctor_allowed := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"doctor",
 		"--output-root",
@@ -1539,7 +1531,6 @@ test "strict mutation mode blocks destructive commands unless confirmed" {
 	cleanup_blocked := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"cleanup",
 		"--output-root",
@@ -1558,7 +1549,6 @@ test "strict mutation mode blocks destructive commands unless confirmed" {
 	cleanup_allowed := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"cleanup",
 		"--output-root",
@@ -1578,7 +1568,6 @@ test "strict mutation mode blocks destructive commands unless confirmed" {
 	import_blocked := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"import-run",
 		"--bundle-path",
@@ -1596,7 +1585,6 @@ test "strict mutation mode blocks destructive commands unless confirmed" {
 	import_allowed := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"import-run",
 		"--bundle-path",
@@ -1870,7 +1858,6 @@ test "dispatch runs json exposes filtered and page catalogs" {
 	process_result := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"runs",
 		"--output-root",
@@ -1915,7 +1902,6 @@ test "workflow config file supports parsing and cli override precedence" {
 	invalid_result := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"demo",
 		"--config",
@@ -1932,7 +1918,6 @@ test "workflow config file supports parsing and cli override precedence" {
 	override_result := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"demo",
 		"--config",
@@ -2022,7 +2007,6 @@ test "policy profile aliases work via config and cli override" {
 	config_result := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"demo",
 		"--config",
@@ -2062,7 +2046,6 @@ test "dispatch runs supports workflow filter" {
 	result := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"runs",
 		"--output-root",
@@ -2103,7 +2086,6 @@ test "show inspect and doctor json envelopes are consistent" {
 	show_result := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"show",
 		run_state["run_id"],
@@ -2132,7 +2114,6 @@ test "show inspect and doctor json envelopes are consistent" {
 	inspect_result := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"inspect",
 		run_state["run_id"],
@@ -2163,7 +2144,6 @@ test "show inspect and doctor json envelopes are consistent" {
 	doctor_result := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"doctor",
 		"--output-root",
@@ -2221,7 +2201,6 @@ test "dispatch run tags persist and runs supports tags filter" {
 	result := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"runs",
 		"--output-root",
@@ -2428,7 +2407,7 @@ test "cli negative path matrix returns deterministic errors" {
 	]
 
 	for case_item in cases {
-		process_args := [kujo_bin, "run", "--interpreter", "dispatch.kujo"]
+		process_args := [kujo_bin, "run", "dispatch.kujo"]
 		for extra in dict_get_or(case_item, "args", []) {
 			process_args := push(process_args, extra)
 		}
@@ -2455,22 +2434,22 @@ test "dispatch help usage snapshot remains compatible" {
 		["--", "-h"]
 	]
 	usage_snapshot := [
-		"kujo run --interpreter dispatch.kujo demo \"Research topic\" [--workflow research-report] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs]",
-		"kujo run --interpreter dispatch.kujo show <run-id> [--output-root outputs] [--json]",
-		"kujo run --interpreter dispatch.kujo inspect <run-id> [--output-root outputs] [--json]",
-		"kujo run --interpreter dispatch.kujo resume <run-id> [--workflow research-report] [--policy-profile staging] [--yes] [--non-interactive] [--output-root outputs]",
-		"kujo run --interpreter dispatch.kujo templates [--json]",
-		"kujo run --interpreter dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]",
-		"kujo run --interpreter dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
-		"kujo run --interpreter dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]",
-		"kujo run --interpreter dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]",
-		"kujo run --interpreter dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]",
-		"kujo run --interpreter dispatch.kujo version"
+		"kujo run dispatch.kujo demo \"Research topic\" [--workflow research-report] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs]",
+		"kujo run dispatch.kujo show <run-id> [--output-root outputs] [--json]",
+		"kujo run dispatch.kujo inspect <run-id> [--output-root outputs] [--json]",
+		"kujo run dispatch.kujo resume <run-id> [--workflow research-report] [--policy-profile staging] [--yes] [--non-interactive] [--output-root outputs]",
+		"kujo run dispatch.kujo templates [--json]",
+		"kujo run dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]",
+		"kujo run dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
+		"kujo run dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]",
+		"kujo run dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]",
+		"kujo run dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]",
+		"kujo run dispatch.kujo version"
 	]
 
 	invocation_index := 0
 	while invocation_index < len(invocations) {
-		process_args := [kujo_bin, "run", "--interpreter", "dispatch.kujo"]
+		process_args := [kujo_bin, "run", "dispatch.kujo"]
 		command_tokens := invocations[invocation_index]
 		token_index := 0
 		while token_index < len(command_tokens) {
@@ -2493,7 +2472,7 @@ test "dispatch help usage snapshot remains compatible" {
 		line_index := 0
 		while line_index < len(lines) {
 			line_text := trim(to_string(lines[line_index]))
-			if starts_with(line_text, "kujo run --interpreter dispatch.kujo ") {
+			if starts_with(line_text, "kujo run dispatch.kujo ") {
 				usage_lines = push(usage_lines, line_text)
 			}
 			line_index = line_index + 1
@@ -2519,7 +2498,6 @@ test "dispatch unknown command prints usage snapshot" {
 	unknown := spawn_process([
 		kujo_bin,
 		"run",
-		"--interpreter",
 		"dispatch.kujo",
 		"unknown-command"
 	], {
@@ -2816,4 +2794,123 @@ test "signed bundle uses a cryptographic sha256 mac and rejects wrong keys" {
 	})
 	assert_false(wrong_key["ok"])
 	assert_equal(wrong_key["error"]["code"], "invalid_bundle_signature")
+}
+
+test "atomic_write_file writes content and leaves no temp residue" {
+	dir := "tests/tmp/atomic-write"
+	ensure_dir(dir)
+	target := dir + "/data.json"
+	atomic_write_file(target, "{\"a\":1}")
+	assert_true(file_exists(target))
+	assert_equal(read_file(target), "{\"a\":1}")
+	atomic_write_file(target, "{\"a\":2}")
+	assert_equal(read_file(target), "{\"a\":2}")
+}
+
+test "signed bundle supports key id rotation via a trusted key set" {
+	output_root := "tests/tmp/rotation-source"
+	workflow := create_research_report_workflow("Rotation Topic", true)
+	run_state := create_run_state(workflow, {"topic": "Rotation Topic"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_state["status"] := "completed"
+	run_state := persist_run_state(run_state)
+
+	bundle_path := "tests/tmp/run-bundles/rotation-bundle.json"
+	exported := export_run_bundle(output_root, run_state["run_id"], bundle_path, {
+		"include_signature": true,
+		"signing_key": "key-2025",
+		"signing_key_id": "k2025"
+	})
+	assert_true(exported["ok"])
+
+	signature := dict_get_or(parse_json(read_file(bundle_path)), "signature", {})
+	assert_equal(dict_get_or(signature, "key_id", ""), "k2025")
+
+	# Verifies using a rotation set that contains the bundle's key id alongside an older key.
+	rotated := import_run_bundle("tests/tmp/rotation-target", bundle_path, {
+		"verify_signature": true,
+		"signing_keys": "k2024=old-key,k2025=key-2025"
+	})
+	assert_true(rotated["ok"])
+
+	# A set missing the bundle's key id falls back to the single key, which is absent here.
+	missing := import_run_bundle("tests/tmp/rotation-target", bundle_path, {
+		"verify_signature": true,
+		"signing_keys": "k2024=old-key"
+	})
+	assert_false(missing["ok"])
+	assert_equal(missing["error"]["code"], "invalid_bundle_signature")
+}
+
+test "idempotency key reuses cached output instead of re-executing" {
+	registry := create_tool_registry()
+	registry := register_tool(registry, create_tool(
+		"marker_tool",
+		"Returns a live marker so a cache hit is observable.",
+		{"type": "dict"},
+		{"type": "dict"},
+		func(params, context) {
+			return {"ok": true, "data": {"source": "live"}}
+		},
+		func(step_input) { return {} }
+	))
+
+	workflow := create_workflow({
+		"id": "idempotency_workflow",
+		"name": "Idempotency Workflow",
+		"description": "Single step with an idempotency key.",
+		"input_schema": {"type": "dict"},
+		"agents": {},
+		"tools": ["marker_tool"],
+		"steps": [
+			create_step("produce", "Produce", "tool", {
+				"tool_name": "marker_tool", "input_from": ["input"], "output_key": "out",
+				"idempotency_key": "k1"
+			})
+		],
+		"memory_config": {},
+		"default_retry_policy": {"max_attempts": 1, "base_delay_ms": 0, "max_delay_ms": 0, "strategy": "none", "retry_on_codes": []},
+		"approval_config": {"auto_approve": true},
+		"output_schema": {"type": "dict"}
+	})
+
+	run_state := create_run_state(workflow, {"topic": "idem"}, "tests/tmp/idempotency-outputs", {
+		"auto_approve": true, "interactive": false
+	})
+	# Simulate a prior run having already produced this keyed result.
+	run_state["idempotency"] := {"k1": {"source": "cache"}}
+	result := run_workflow(workflow, run_state, registry, {
+		"auto_approve": true, "interactive": false, "command_name": "test"
+	})
+	final_state := result["run_state"]
+	assert_true(dict_get_or(result, "ok", false))
+	assert_equal(final_state["status"], "completed")
+	# Cache hit: the cached output is used and the live tool is bypassed.
+	assert_equal(final_state["data"]["out"]["source"], "cache")
+}
+
+test "dispatch blocks unsafe webhook sink paths and supports cancel-after-step" {
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+
+	blocked := spawn_process([
+		kujo_bin, "run", "dispatch.kujo",
+		"demo", "Sink guard", "--yes", "--non-interactive",
+		"--output-root", "tests/tmp/sink-guard", "--webhook-sink", "/tmp/evil.jsonl"
+	], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
+	assert_false(blocked.success)
+	combined := to_string(blocked.stdout) + "\n" + to_string(blocked.stderr)
+	assert_equal(contains(combined, "Absolute --webhook-sink paths are blocked"), 1)
+
+	cancelled := spawn_process([
+		kujo_bin, "run", "dispatch.kujo",
+		"demo", "Cancel run", "--yes", "--non-interactive",
+		"--output-root", "tests/tmp/cancel-run", "--cancel-after-step", "plan"
+	], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
+	cancel_combined := to_string(cancelled.stdout) + "\n" + to_string(cancelled.stderr)
+	assert_equal(contains(cancel_combined, "workflow_cancelled"), 1)
 }

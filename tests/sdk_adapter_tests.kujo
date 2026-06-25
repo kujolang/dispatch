@@ -1,5 +1,5 @@
 test_setup {
-	from sdk_adapter import parse_json_from_output, build_bridge_parse_error_details, build_bridge_exec_error_message, build_bridge_spawn_command
+	from sdk_adapter import parse_json_from_output, build_bridge_parse_error_details, build_bridge_exec_error_message, build_bridge_spawn_command, resolve_bridge_timeout_ms
 }
 
 test "parse json from output supports trailing json line" {
@@ -65,4 +65,11 @@ test "bridge spawn command is direct argv without shell wrapper" {
 	assert_equal(cmd[4], "run")
 	assert_equal(cmd[5], "/tmp/bridge_chat.kujo")
 	assert_equal(cmd[6], "--interpreter")
+}
+
+test "bridge timeout is configurable with a safe default" {
+	assert_equal(resolve_bridge_timeout_ms({"timeout_ms": 1000}), 1000)
+	assert_equal(resolve_bridge_timeout_ms({"timeout_ms": "abc"}), 240000)
+	assert_equal(resolve_bridge_timeout_ms({"timeout_ms": 0}), 240000)
+	assert_equal(resolve_bridge_timeout_ms({}), 240000)
 }
