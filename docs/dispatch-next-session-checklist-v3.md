@@ -16,7 +16,7 @@ Root layout audit:
 - Keep `dispatch.kujo` at the root as the CLI/runtime entrypoint.
 - Keep `sdk_adapter.kujo` and `bridge_chat.kujo` at the root while live SDK bridge invocation and compatibility tests import those entry scripts directly.
 - Core implementation should continue to live under `src/`.
-- Top-level `tools/` remains the reusable domain handler layer imported by `src/tools/tool.kujo`; move it only in a deliberate compatibility-breaking migration with tests and docs.
+- The domain handler layer was migrated from top-level `tools/` into `src/tools/` (with tests and docs updated) in the 2026-06-25 pass; all implementation modules now live under `src/`.
 
 Current-session hardening already completed before this checklist:
 
@@ -58,7 +58,7 @@ Blocked format:
 ### [ ] SEC-014: Centralize safe path validation policies
 Priority: High
 Complexity: M
-Files: `src/core/utils.kujo`, `src/core/state.kujo`, `tools/source_lookup.kujo`, `dispatch.kujo`, tests
+Files: `src/core/utils.kujo`, `src/core/state.kujo`, `src/tools/source_lookup.kujo`, `dispatch.kujo`, tests
 Implementation expectations:
 - Consolidate repeated path guardrail logic for output roots, config files, sources directories, and future sink paths.
 - Preserve current error messages unless intentionally updating a documented command surface.

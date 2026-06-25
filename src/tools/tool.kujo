@@ -1,8 +1,8 @@
 from src.core.errors import missing_tool_error
 from src.core.utils import dict_get_or
-from tools.source_lookup import mock_web_search_handler, local_source_lookup_handler, normalize_sources_dir
-from tools.content_processing import claim_extraction_handler, citation_formatter_handler, markdown_report_writer_handler, timestamp_tool_handler
-from tools.reliability_tools import flaky_reliability_handler
+from src.tools.source_lookup import mock_web_search_handler, local_source_lookup_handler, normalize_sources_dir
+from src.tools.content_processing import claim_extraction_handler, citation_formatter_handler, markdown_report_writer_handler, timestamp_tool_handler
+from src.tools.reliability_tools import flaky_reliability_handler
 
 func create_tool(name, description, input_schema, output_schema, handler, payload_adapter) {
 	return {

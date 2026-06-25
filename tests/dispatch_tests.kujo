@@ -14,7 +14,7 @@ test_setup {
 	from src.core.plugins import create_plugin, create_plugin_registry, register_plugin, apply_plugins_to_runtime
 	from src.core.step import create_step
 	from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_policy, build_tool_authorization_policy_with_profile
-	from tools.source_lookup import mock_web_search_handler, canonicalize_path, path_is_within_root
+	from src.tools.source_lookup import mock_web_search_handler, canonicalize_path, path_is_within_root
 	from src.core.utils import dict_get_or
 }
 
