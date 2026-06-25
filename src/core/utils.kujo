@@ -93,6 +93,39 @@ func ensure_dir(path) {
 	}
 }
 
+func atomic_write_file(path, content) {
+	# Crash-safe, torn-write-safe write: stage to a unique temp file in the
+	# same directory, then rename() over the destination. POSIX rename is
+	# atomic, so a reader (or a crash) never observes a partially written file.
+	tmp_path := to_string(path) + ".tmp-" + to_string(current_timestamp()) + "-" + to_string(random_int(100000, 999999))
+	wrote_tmp := false
+	try {
+		write_file(tmp_path, content, true)
+		wrote_tmp = true
+	} except err {
+		# Staging failed; fall back to a direct write below.
+	}
+	if wrote_tmp {
+		renamed := false
+		try {
+			rename_file(tmp_path, path)
+			renamed = true
+		} except err {
+			renamed = false
+		}
+		if renamed {
+			return path
+		}
+		try {
+			delete_file(tmp_path)
+		} except cleanup_err {
+			# Best effort temp cleanup.
+		}
+	}
+	write_file(path, content, true)
+	return path
+}
+
 func safe_read_file(path, default_value) {
 	if !file_exists(path) {
 		return default_value
@@ -118,7 +151,7 @@ func read_json_or(path, default_value) {
 }
 
 func write_json(path, value) {
-	write_file(path, to_json(value))
+	atomic_write_file(path, to_json(value))
 }
 
 func is_sensitive_key_name(key_name) {
@@ -309,6 +342,7 @@ export to_bool := to_bool
 export now_human := now_human
 export sanitize_slug := sanitize_slug
 export ensure_dir := ensure_dir
+export atomic_write_file := atomic_write_file
 export safe_read_file := safe_read_file
 export read_json_or := read_json_or
 export write_json := write_json

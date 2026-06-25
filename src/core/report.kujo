@@ -1,4 +1,4 @@
-from src.core.utils import dict_get_or, redact_sensitive_data
+from src.core.utils import dict_get_or, redact_sensitive_data, atomic_write_file
 
 func report_schema_version() {
 	return 1
@@ -149,8 +149,8 @@ func write_report_artifacts(run_state, report_payload) {
 	redacted_payload := redact_sensitive_data(report_payload)
 	redacted_payload = ensure_report_contract_fields(redacted_payload)
 	report_md := render_markdown_report(redacted_payload)
-	write_file(run_dir + "/report.md", report_md, true)
-	write_file(run_dir + "/report.json", to_json(redacted_payload), true)
+	atomic_write_file(run_dir + "/report.md", report_md)
+	atomic_write_file(run_dir + "/report.json", to_json(redacted_payload))
 	return {
 		"report_md_path": run_dir + "/report.md",
 		"report_json_path": run_dir + "/report.json",
