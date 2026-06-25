@@ -12,6 +12,8 @@ test_setup {
 	from src.core.runner import run_workflow
 	from src.agents.agent import run_agent
 	from src.core.plugins import create_plugin, create_plugin_registry, register_plugin, apply_plugins_to_runtime
+	from src.plugins.builtin_plugins import resolve_builtin_plugins, collect_plugin_event_hooks, reset_plugin_event_state, get_plugin_event_state
+	from src.workflows.loader import load_workflow_from_spec
 	from src.core.step import create_step
 	from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_policy, build_tool_authorization_policy_with_profile
 	from src.tools.source_lookup import mock_web_search_handler, canonicalize_path, path_is_within_root
@@ -2913,4 +2915,160 @@ test "dispatch blocks unsafe webhook sink paths and supports cancel-after-step" 
 	], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
 	cancel_combined := to_string(cancelled.stdout) + "\n" + to_string(cancelled.stderr)
 	assert_equal(contains(cancel_combined, "workflow_cancelled"), 1)
+}
+
+test "crud reliability report includes purpose-built reliability sections" {
+	run_state := {
+		"workflow_id": "crud_reliability_workflow",
+		"workflow_name": "CRUD Reliability Workflow",
+		"input": {"topic": "Orders API"},
+		"run_id": "run-crud-report",
+		"status": "completed",
+		"steps": [],
+		"trace": {"events": []},
+		"data": {
+			"claims": {"claims": [
+				{"claim": "API contract drift detected in v2 schema", "status": "supported", "evidence": "schema endpoint changed"},
+				{"claim": "Migration rollback path is missing", "status": "weakly_supported", "evidence": "no rollback for migration"},
+				{"claim": "Auth token scope is too broad", "status": "conflicting", "evidence": "permission and token issue"},
+				{"claim": "Error budget exceeded under load", "status": "supported", "evidence": "latency error budget breached"}
+			]}
+		}
+	}
+	payload := build_report_payload(run_state)
+	sections := dict_get_or(payload, "reliability_sections", [])
+	assert_equal(len(sections), 4)
+	markdown := render_markdown_report(payload)
+	assert_equal(contains(markdown, "Reliability Review"), 1)
+	assert_equal(contains(markdown, "Contract Checks"), 1)
+	assert_equal(contains(markdown, "Migration Safety"), 1)
+	assert_equal(contains(markdown, "Error Budget"), 1)
+}
+
+test "declarative workflow loader validates and builds workflows from a spec" {
+	missing_id := load_workflow_from_spec({"name": "No Id", "steps": [{"id": "a", "name": "A", "type": "report"}]})
+	assert_false(missing_id["ok"])
+	assert_equal(missing_id["error"]["code"], "invalid_workflow_spec")
+
+	bad_step := load_workflow_from_spec({"id": "w", "name": "W", "steps": [{"id": "a", "name": "A", "type": "bogus"}]})
+	assert_false(bad_step["ok"])
+
+	ok_spec := load_workflow_from_spec({
+		"id": "spec_workflow",
+		"name": "Spec Workflow",
+		"tools": ["timestamp_tool"],
+		"steps": [
+			{"id": "plan", "name": "Plan", "type": "agent", "agent_id": "planner", "input_from": ["input"], "output_key": "plan"},
+			{"id": "finalize", "name": "Finalize", "type": "report", "input_from": ["plan"], "output_key": "final_output"}
+		]
+	})
+	assert_true(ok_spec["ok"])
+	assert_equal(ok_spec["workflow"]["id"], "spec_workflow")
+	assert_equal(len(ok_spec["workflow"]["steps"]), 2)
+}
+
+test "built-in sample plugin injects a tool and agent handler and observes events" {
+	reset_plugin_event_state()
+	resolution := resolve_builtin_plugins(["sample"])
+	assert_equal(len(resolution["plugins"]), 1)
+	assert_equal(len(resolution["unknown"]), 0)
+
+	unknown := resolve_builtin_plugins(["does-not-exist"])
+	assert_equal(len(unknown["plugins"]), 0)
+	assert_equal(len(unknown["unknown"]), 1)
+
+	workflow := create_workflow({
+		"id": "plugin_workflow", "name": "Plugin Workflow", "description": "uses plugin tool+agent",
+		"input_schema": {"type": "dict"}, "agents": {}, "tools": [],
+		"steps": [
+			create_step("echo_step", "Echo", "agent", {"agent_id": "echo_agent", "input_from": ["input"], "output_key": "echoed"}),
+			create_step("tool_step", "Tool", "tool", {"tool_name": "echo_tool", "input_from": ["input"], "output_key": "tooled"})
+		],
+		"memory_config": {}, "default_retry_policy": {"max_attempts": 1, "base_delay_ms": 0, "max_delay_ms": 0, "strategy": "none", "retry_on_codes": []},
+		"approval_config": {"auto_approve": true}, "output_schema": {"type": "dict"}
+	})
+	tool_registry := register_default_tools("examples/research-report/sources")
+	plugin_registry := create_plugin_registry()
+	for plugin in resolution["plugins"] {
+		plugin_registry = register_plugin(plugin_registry, plugin)
+	}
+	applied := apply_plugins_to_runtime(workflow, tool_registry, plugin_registry)
+
+	run_state := create_run_state(applied["workflow"], {"topic": "plugin topic"}, "tests/tmp/plugin-outputs", {"auto_approve": true, "interactive": false})
+	result := run_workflow(applied["workflow"], run_state, applied["tool_registry"], {
+		"auto_approve": true, "interactive": false, "command_name": "test",
+		"event_hooks": collect_plugin_event_hooks(resolution["plugins"])
+	})
+	final_state := result["run_state"]
+	assert_true(dict_get_or(result, "ok", false))
+	assert_equal(final_state["data"]["echoed"]["echoed"], "plugin topic")
+	assert_equal(final_state["data"]["tooled"]["echo"], "plugin topic")
+	# B2: the sample plugin contributes a lifecycle event_hook that is wired in.
+	assert_equal(len(collect_plugin_event_hooks(resolution["plugins"])), 1)
+	# B3: the echo agent emitted a custom trace event that reached the run trace.
+	event_types := collect_event_type_counts(final_state["trace"])
+	assert_true(dict_get_or(event_types, "plugin_echo", 0) >= 1)
+}
+
+test "engine invokes a registered event hook for lifecycle events" {
+	workflow := create_research_report_workflow("Event hook run", true)
+	tool_registry := register_default_tools("examples/research-report/sources")
+	run_state := create_run_state(workflow, {"topic": "Event hook run"}, "tests/tmp/event-hook-outputs", {"auto_approve": true, "interactive": false})
+	sink := run_state["run_dir"] + "/observed-events.txt"
+	result := run_workflow(workflow, run_state, tool_registry, {
+		"auto_approve": true, "interactive": false, "command_name": "test",
+		"event_hook": func(event) {
+			existing := ""
+			if file_exists(sink) {
+				existing = read_file(sink)
+			}
+			write_file(sink, existing + to_string(dict_get_or(event, "event_type", "")) + "\n", true)
+			return {"ok": true}
+		}
+	})
+	assert_true(dict_get_or(result, "ok", false))
+	assert_equal(contains(read_file(sink), "run_completed"), 1)
+}
+
+test "newly created run is registered in the catalog index while running" {
+	workflow := create_research_report_workflow("Index Registration", true)
+	run_state := create_run_state(workflow, {"topic": "Index Registration"}, "tests/tmp/index-reg-outputs", {"auto_approve": true, "interactive": false})
+	runs := list_runs("tests/tmp/index-reg-outputs")
+	found := false
+	for run_item in runs {
+		if dict_get_or(run_item, "run_id", "") == run_state["run_id"] {
+			found = true
+		}
+	}
+	assert_true(found)
+}
+
+test "dispatch CLI supports structured input, workflow-file, and plugin flags" {
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+
+	input_run := spawn_process([
+		kujo_bin, "run", "dispatch.kujo",
+		"demo", "structured", "--yes", "--non-interactive",
+		"--output-root", "tests/tmp/cli-input", "--input-json", "{\"repo\":\"dispatch\",\"area\":\"core\"}"
+	], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
+	assert_true(input_run.success)
+
+	file_run := spawn_process([
+		kujo_bin, "run", "dispatch.kujo",
+		"demo", "from file", "--yes", "--non-interactive",
+		"--output-root", "tests/tmp/cli-wf", "--workflow-file", "examples/workflows/custom-review.json"
+	], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
+	assert_true(file_run.success)
+
+	unknown_plugin := spawn_process([
+		kujo_bin, "run", "dispatch.kujo",
+		"demo", "plugin", "--yes", "--non-interactive",
+		"--output-root", "tests/tmp/cli-plug", "--plugin", "missing-plugin"
+	], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
+	assert_false(unknown_plugin.success)
+	plugin_combined := to_string(unknown_plugin.stdout) + "\n" + to_string(unknown_plugin.stderr)
+	assert_equal(contains(plugin_combined, "Unknown plugin"), 1)
 }
