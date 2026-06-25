@@ -170,6 +170,21 @@ func build_bridge_payload(agent, user_prompt, options) {
 	return payload
 }
 
+func resolve_bridge_timeout_ms(options) {
+	default_ms := 240000
+	raw := dict_get_or(options, "timeout_ms", env_or("DISPATCH_SDK_TIMEOUT_MS", to_string(default_ms)))
+	parsed := default_ms
+	try {
+		parsed = to_int(trim(to_string(raw)))
+	} except err {
+		return default_ms
+	}
+	if parsed <= 0 {
+		return default_ms
+	}
+	return parsed
+}
+
 func call_agent_model(agent, user_prompt, options) {
 	paths := resolve_bridge_paths()
 	payload := build_bridge_payload(agent, user_prompt, options)
@@ -181,7 +196,7 @@ func call_agent_model(agent, user_prompt, options) {
 		"env": {
 			"DISPATCH_BRIDGE_PAYLOAD": payload_json
 		},
-		"timeout_ms": 240000,
+		"timeout_ms": resolve_bridge_timeout_ms(options),
 		"max_output_bytes": 1024 * 1024 * 8
 	})
 
@@ -217,3 +232,4 @@ export parse_json_from_output := parse_json_from_output
 export build_bridge_parse_error_details := build_bridge_parse_error_details
 export build_bridge_exec_error_message := build_bridge_exec_error_message
 export build_bridge_spawn_command := build_bridge_spawn_command
+export resolve_bridge_timeout_ms := resolve_bridge_timeout_ms

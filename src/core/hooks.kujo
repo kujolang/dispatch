@@ -34,6 +34,16 @@ func emit_hook_event(options, event_payload) {
 		}
 		write_file(webhook_sink, line, true)
 	}
+	webhook_url := to_string(dict_get_or(options, "webhook_url", ""))
+	if trim(webhook_url) != "" {
+		# Best-effort outbound delivery: observability must never fail a run,
+		# so any transport error is swallowed.
+		try {
+			http_post(webhook_url, to_json(event_payload))
+		} except err {
+			# Swallow delivery errors; the local sink/trace remain the source of truth.
+		}
+	}
 	return {
 		"ok": true
 	}
