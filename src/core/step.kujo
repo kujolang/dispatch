@@ -17,6 +17,7 @@ func create_step(step_id, name, step_type, config) {
 		"retry_policy": dict_get_or(config, "retry_policy", null),
 		"approval_required": dict_get_or(config, "approval_required", false),
 		"approval_gate": dict_get_or(config, "approval_gate", {}),
+		"optional": dict_get_or(config, "optional", false),
 		"handoff": dict_get_or(config, "handoff", {}),
 		"config": clone_dict(config),
 		"input": null,
@@ -59,8 +60,18 @@ func mark_step_paused(step, output_value) {
 	return step
 }
 
+func mark_step_skipped(step, error_value, attempts) {
+	step["status"] := "skipped"
+	step["output"] := null
+	step["error"] := error_value
+	step["attempts"] := attempts
+	step["finished_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
+	return step
+}
+
 export create_step := create_step
 export mark_step_started := mark_step_started
 export mark_step_succeeded := mark_step_succeeded
 export mark_step_failed := mark_step_failed
 export mark_step_paused := mark_step_paused
+export mark_step_skipped := mark_step_skipped

@@ -7,7 +7,7 @@ from src.core.memory import add_agent_note, add_step_output
 from src.core.trace import append_trace, finalize_trace
 from src.core.report import build_report_payload, write_report_artifacts
 from src.core.state import persist_run_state, append_policy_deny_audit_record
-from src.core.step import mark_step_started, mark_step_succeeded, mark_step_failed, mark_step_paused
+from src.core.step import mark_step_started, mark_step_succeeded, mark_step_failed, mark_step_paused, mark_step_skipped
 from src.tools.tool import call_tool, build_tool_payload
 from src.agents.agent import run_agent
 from src.core.hooks import create_lifecycle_event, emit_hook_event
@@ -194,10 +194,11 @@ func cancellation_requested(step, options, run_state, after_step) {
 	}
 }
 
-func step_status_is_completed(steps, target_step_id) {
+func step_status_is_satisfied(steps, target_step_id) {
 	for item in steps {
 		if dict_get_or(item, "id", "") == target_step_id {
-			return dict_get_or(item, "status", "pending") == "completed"
+			status := dict_get_or(item, "status", "pending")
+			return status == "completed" || status == "skipped"
 		}
 	}
 	return false
@@ -206,7 +207,7 @@ func step_status_is_completed(steps, target_step_id) {
 func step_dependencies_satisfied(steps, step) {
 	depends_on := dict_get_or(step, "depends_on", [])
 	for dependency_id in depends_on {
-		if step_status_is_completed(steps, dependency_id) == false {
+		if step_status_is_satisfied(steps, dependency_id) == false {
 			return false
 		}
 	}
@@ -215,7 +216,8 @@ func step_dependencies_satisfied(steps, step) {
 
 func all_steps_completed(steps) {
 	for step in steps {
-		if dict_get_or(step, "status", "pending") != "completed" {
+		status := dict_get_or(step, "status", "pending")
+		if status != "completed" && status != "skipped" {
 			return false
 		}
 	}
@@ -512,7 +514,8 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 			index := index + 1
 			continue
 		}
-		if dict_get_or(step, "status", "pending") == "completed" {
+		existing_status := dict_get_or(step, "status", "pending")
+		if existing_status == "completed" || existing_status == "skipped" {
 			index := index + 1
 			run_state["current_step_index"] := index
 			continue
@@ -619,6 +622,23 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 					"error": policy_deny_error,
 					"audit_path": audit_path
 				})
+			}
+			if dict_get_or(step, "optional", false) {
+				skip_error := dict_get_or(executed, "error", {"code": "step_failure", "message": "Unknown error", "retryable": false})
+				step := mark_step_skipped(step, skip_error, dict_get_or(executed, "attempts", 1))
+				run_state["steps"] := replace_step(run_state["steps"], index, step)
+				run_state["trace"] := append_trace(run_state["trace"], "step_skipped", step["id"], "Optional step skipped after failure: " + step["name"], {
+					"error": step["error"],
+					"attempts": step["attempts"]
+				})
+				emit_lifecycle_event(run_state, options, "step_skipped", step["id"], "Optional step skipped after failure: " + step["name"], {
+					"error": step["error"]
+				})
+				index := index + 1
+				cycle_progress = true
+				run_state["current_step_index"] := index
+				run_state := persist_run_state(run_state)
+				continue
 			}
 			step := mark_step_failed(step, dict_get_or(executed, "error", {"code": "step_failure", "message": "Unknown error", "retryable": false}), dict_get_or(executed, "attempts", 1))
 			run_state["steps"] := replace_step(run_state["steps"], index, step)
