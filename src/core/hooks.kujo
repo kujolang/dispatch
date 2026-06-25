@@ -18,6 +18,14 @@ func emit_hook_event(options, event_payload) {
 	if type(callback) != "null" {
 		callback(event_payload)
 	}
+	callbacks := dict_get_or(options, "event_hooks", [])
+	if type(callbacks) == "array" {
+		for hook_callback in callbacks {
+			if type(hook_callback) != "null" {
+				hook_callback(event_payload)
+			}
+		}
+	}
 	webhook_sink := dict_get_or(options, "webhook_sink", "")
 	if webhook_sink != "" {
 		dir_path := dirname(webhook_sink)

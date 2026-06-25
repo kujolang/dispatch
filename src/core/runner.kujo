@@ -227,6 +227,7 @@ func execute_agent_step(step, workflow, step_input, run_state, tool_registry) {
 		return {
 			"ok": true,
 			"data": wrapped["result"]["data"],
+			"trace_events": dict_get_or(wrapped["result"], "trace_events", []),
 			"attempts": wrapped["attempts"],
 			"attempt_records": wrapped["attempt_records"]
 		}
@@ -344,6 +345,7 @@ func execute_tool_step(step, workflow, step_input, run_state, tool_registry, opt
 		return {
 			"ok": true,
 			"data": wrapped["result"]["data"],
+			"trace_events": dict_get_or(wrapped["result"], "trace_events", []),
 			"attempts": wrapped["attempts"],
 			"attempt_records": wrapped["attempt_records"]
 		}
@@ -461,8 +463,7 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 	run_state["status"] := "running"
 	total_steps := len(run_state["steps"])
 	index := run_state["current_step_index"]
-        cycle_progress := false
-        parallel_execution := dict_get_or(options, "parallel_execution", false)
+	cycle_progress := false
 
 	while true {
 		if index >= total_steps {
@@ -710,6 +711,23 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 			run_state["trace"] := append_trace(run_state["trace"], "handoff", step["id"], summarize_handoff(output_value), output_value)
 		}
 
+		# Public custom-trace API: handlers may return a "trace_events" array of
+		# {type, message, payload} objects, which are appended to the run trace.
+		handler_trace_events := dict_get_or(executed, "trace_events", [])
+		if type(handler_trace_events) == "array" {
+			for handler_event in handler_trace_events {
+				if type(handler_event) == "dict" {
+					run_state["trace"] := append_trace(
+						run_state["trace"],
+						to_string(dict_get_or(handler_event, "type", "custom")),
+						step["id"],
+						to_string(dict_get_or(handler_event, "message", "Custom trace event")),
+						dict_get_or(handler_event, "payload", {})
+					)
+				}
+			}
+		}
+
 		run_state["trace"] := append_trace(run_state["trace"], "step_completed", step["id"], "Step completed: " + step["name"], {
 			"attempts": attempts,
 			"output_summary": summarize_value(output_value, 220),
@@ -727,11 +745,7 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 
 		index := index + 1
 		cycle_progress = true
-		if parallel_execution == false {
-			run_state["current_step_index"] := index
-		} else {
-			run_state["current_step_index"] := index
-		}
+		run_state["current_step_index"] := index
 		run_state := persist_run_state(run_state)
 	}
 
