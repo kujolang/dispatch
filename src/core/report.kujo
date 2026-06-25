@@ -41,8 +41,14 @@ func build_report_payload(run_state) {
 		]
 	}
 
+	workflow_name := to_string(dict_get_or(run_state, "workflow_name", ""))
+	report_title := "Workflow Report"
+	if workflow_name != "" {
+		report_title = workflow_name + " Output"
+	}
+
 	payload := {
-		"title": "Research Report Workflow Output",
+		"title": report_title,
 		"topic": topic,
 		"summary": dict_get_or(report, "summary", "Dispatch generated this report through a multi-step workflow."),
 		"key_findings": key_findings,
