@@ -2464,7 +2464,8 @@ test "dispatch help usage snapshot remains compatible" {
 		"kujo run --interpreter dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
 		"kujo run --interpreter dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]",
 		"kujo run --interpreter dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]",
-		"kujo run --interpreter dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]"
+		"kujo run --interpreter dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]",
+		"kujo run --interpreter dispatch.kujo version"
 	]
 
 	invocation_index := 0
@@ -2651,4 +2652,96 @@ test "corruption matrix covers malformed and missing artifact scenarios" {
 		}
 	}
 	assert_true(has_issueful_run)
+}
+
+test "optional tool step is skipped instead of failing the run when denied by policy" {
+	workflow := create_research_report_workflow("Optional skip topic", true)
+	run_state := create_run_state(workflow, {"topic": "Optional skip topic"}, "tests/tmp/optional-skip-outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	tool_registry := register_default_tools("examples/research-report/sources")
+	policy_settings := build_tool_authorization_policy([], ["flaky_reliability_tool"])
+	result := run_workflow(workflow, run_state, tool_registry, {
+		"auto_approve": true,
+		"interactive": false,
+		"command_name": "test",
+		"tool_authorization_policy": dict_get_or(policy_settings, "policy", null)
+	})
+	final_state := result["run_state"]
+	assert_true(dict_get_or(result, "ok", false))
+	assert_equal(final_state["status"], "completed")
+
+	probe_status := ""
+	for step in final_state["steps"] {
+		if dict_get_or(step, "id", "") == "retry_probe" {
+			probe_status = dict_get_or(step, "status", "")
+		}
+	}
+	assert_equal(probe_status, "skipped")
+}
+
+test "approval handoff template completes offline and avoids the flaky tool" {
+	selected := create_workflow_by_template("approval-handoff", "Approval handoff topic", true)
+	assert_true(dict_get_or(selected, "ok", false))
+	workflow := selected["workflow"]
+	assert_equal(workflow["id"], "approval_handoff_workflow")
+
+	uses_flaky := false
+	for tool_name in dict_get_or(workflow, "tools", []) {
+		if tool_name == "flaky_reliability_tool" {
+			uses_flaky = true
+		}
+	}
+	assert_false(uses_flaky)
+
+	run_state := create_run_state(workflow, {"topic": "Approval handoff topic"}, "tests/tmp/approval-handoff-outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	tool_registry := register_default_tools("examples/research-report/sources")
+	result := run_workflow(workflow, run_state, tool_registry, {
+		"auto_approve": true,
+		"interactive": false,
+		"command_name": "test"
+	})
+	final_state := result["run_state"]
+	assert_true(dict_get_or(result, "ok", false))
+	assert_equal(final_state["status"], "completed")
+}
+
+test "workflow template registry exposes the approval handoff template" {
+	templates := list_workflow_templates()
+	found := false
+	for template in templates {
+		if dict_get_or(template, "template_id", "") == "approval-handoff" {
+			found = true
+			assert_true(dict_get_or(template, "approval_step_count", 0) >= 1)
+		}
+	}
+	assert_true(found)
+}
+
+test "webhook sink option appends lifecycle events as jsonl" {
+	sink_path := "tests/tmp/webhook-sink-events.jsonl"
+	if file_exists(sink_path) {
+		write_file(sink_path, "", true)
+	}
+	workflow := create_workflow_by_template("approval-handoff", "Webhook sink topic", true)["workflow"]
+	run_state := create_run_state(workflow, {"topic": "Webhook sink topic"}, "tests/tmp/webhook-sink-outputs", {
+		"auto_approve": true,
+		"interactive": false
+	})
+	tool_registry := register_default_tools("examples/research-report/sources")
+	result := run_workflow(workflow, run_state, tool_registry, {
+		"auto_approve": true,
+		"interactive": false,
+		"command_name": "test",
+		"webhook_sink": sink_path
+	})
+	assert_true(dict_get_or(result, "ok", false))
+	assert_true(file_exists(sink_path))
+	contents := read_file(sink_path)
+	assert_equal(contains(contents, "run_completed"), 1)
+	assert_equal(contains(contents, "step_completed"), 1)
 }
