@@ -1,4 +1,4 @@
-from src.core.utils import dict_get_or, ensure_dir, read_json_or, redact_sensitive_data, to_bool, safe_read_file
+from src.core.utils import dict_get_or, ensure_dir, atomic_write_file, read_json_or, redact_sensitive_data, to_bool, safe_read_file
 from src.core.memory import create_memory
 from src.core.trace import create_trace, render_trace_markdown, apply_trace_limits
 
@@ -160,7 +160,7 @@ func load_run_index(output_root) {
 func persist_run_index(output_root, index_payload) {
 	ensure_dir(output_root)
 	index_payload["updated_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
-	write_file(run_index_path(output_root), to_json(index_payload), true)
+	atomic_write_file(run_index_path(output_root), to_json(index_payload))
 }
 func normalize_run_tags(raw_tags) {
 	normalized := []
@@ -266,13 +266,13 @@ func append_mutation_audit_record(output_root, operation_name, mutations, metada
 	}
 	if should_rotate && trim(existing) != "" {
 		backup_path := mutation_audit_backup_path(output_root, max_backups)
-		write_file(backup_path, existing, true)
+		atomic_write_file(backup_path, existing)
 		existing = ""
 	}
 	if trim(existing) == "" {
-		write_file(audit_path, line, true)
+		atomic_write_file(audit_path, line)
 	} else {
-		write_file(audit_path, existing + "\n" + line, true)
+		atomic_write_file(audit_path, existing + "\n" + line)
 	}
 	return audit_path
 }
@@ -471,6 +471,22 @@ func detect_run_issues(run_state) {
 			}
 			if !file_exists(run_dir + "/trace.json") {
 				issues := push(issues, "completed run missing trace.json")
+			}
+		}
+	}
+
+	if run_dir != "" {
+		state_path := run_dir + "/state.json"
+		if file_exists(state_path) {
+			max_state_bytes := parse_positive_number(env("DISPATCH_STATE_MAX_BYTES"), 5242880)
+			actual_state_bytes := 0
+			try {
+				actual_state_bytes = file_size(state_path)
+			} except err {
+				actual_state_bytes = 0
+			}
+			if actual_state_bytes > max_state_bytes {
+				issues := push(issues, "state.json exceeds size budget (" + to_string(actual_state_bytes) + " > " + to_string(max_state_bytes) + " bytes)")
 			}
 		}
 	}
@@ -690,6 +706,7 @@ func create_run_state(workflow, input_payload, output_root, options) {
 			"input": input_payload
 		},
 		"retry_counts": {},
+		"idempotency": {},
 		"errors": [],
 		"final_output": null,
 		"trace": trace_state,
@@ -715,9 +732,9 @@ func persist_run_state(run_state) {
 	redacted_trace := redact_sensitive_data(run_state["trace"])
 	trace_contract_result := ensure_trace_contract_fields(redacted_trace)
 	redacted_trace = trace_contract_result["trace_state"]
-	write_file(run_state["run_dir"] + "/state.json", to_json(redacted_state), true)
-	write_file(run_state["run_dir"] + "/trace.json", to_json(redacted_trace), true)
-	write_file(run_state["run_dir"] + "/trace.md", render_trace_markdown(redacted_trace), true)
+	atomic_write_file(run_state["run_dir"] + "/state.json", to_json(redacted_state))
+	atomic_write_file(run_state["run_dir"] + "/trace.json", to_json(redacted_trace))
+	atomic_write_file(run_state["run_dir"] + "/trace.md", render_trace_markdown(redacted_trace))
 	upsert_run_index_entry(run_state)
 	return run_state
 }
@@ -1143,6 +1160,68 @@ func resolve_bundle_signing_key(options) {
 	return trim(to_string(env("DISPATCH_BUNDLE_SIGNING_KEY")))
 }
 
+func resolve_bundle_signing_key_id(options) {
+	if type(options) == "dict" && has_key(options, "signing_key_id") == 1 {
+		key_id := trim(to_string(options["signing_key_id"]))
+		if key_id != "" {
+			return key_id
+		}
+	}
+	env_key_id := trim(to_string(env("DISPATCH_BUNDLE_SIGNING_KEY_ID")))
+	if env_key_id != "" {
+		return env_key_id
+	}
+	return "default"
+}
+
+func parse_signing_key_set(raw_value) {
+	# Parse "id1=keyA,id2=keyB" (also accepts "id:key") into {id: key} for
+	# rotation: new bundles are signed with the current key id while older key
+	# ids remain trusted for verification during the rollover window.
+	key_set := {}
+	text := replace(to_string(raw_value), "\n", ",")
+	for pair in split(text, ",") {
+		entry := trim(pair)
+		if entry == "" {
+			continue
+		}
+		separator := "="
+		if contains(entry, "=") == 0 && contains(entry, ":") == 1 {
+			separator = ":"
+		}
+		sep_index := index_of(entry, separator)
+		if sep_index < 0 {
+			continue
+		}
+		key_id := trim(substring(entry, 0, sep_index))
+		key_value := trim(substring(entry, sep_index + 1, len(entry)))
+		if key_id != "" && key_value != "" {
+			key_set[key_id] := key_value
+		}
+	}
+	return key_set
+}
+
+func resolve_bundle_verification_key(options, key_id) {
+	key_set := {}
+	# Lower priority: environment-provided key set.
+	env_key_set := parse_signing_key_set(env("DISPATCH_BUNDLE_SIGNING_KEYS"))
+	for env_key_id in keys(env_key_set) {
+		key_set[env_key_id] := env_key_set[env_key_id]
+	}
+	# Higher priority: explicit options key set overrides matching ids.
+	if type(options) == "dict" && has_key(options, "signing_keys") == 1 {
+		option_key_set := parse_signing_key_set(options["signing_keys"])
+		for option_key_id in keys(option_key_set) {
+			key_set[option_key_id] := option_key_set[option_key_id]
+		}
+	}
+	if has_key(key_set, key_id) == 1 {
+		return trim(to_string(key_set[key_id]))
+	}
+	return resolve_bundle_signing_key(options)
+}
+
 func bundle_signature_algorithm() {
 	return "dispatch-signature-v2"
 }
@@ -1203,6 +1282,7 @@ func export_run_bundle(output_root, run_id, bundle_path, options) {
 	if include_signature {
 		bundle["signature"] := {
 			"algorithm": bundle_signature_algorithm(),
+			"key_id": resolve_bundle_signing_key_id(options),
 			"signed_at": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
 			"value": build_bundle_signature_value(run_id, artifacts, signing_key)
 		}
@@ -1211,7 +1291,7 @@ func export_run_bundle(output_root, run_id, bundle_path, options) {
 	if bundle_dir != "" && bundle_dir != "." {
 		ensure_dir(bundle_dir)
 	}
-	write_file(bundle_path, to_json(bundle), true)
+	atomic_write_file(bundle_path, to_json(bundle))
 	return {
 		"ok": true,
 		"bundle_path": bundle_path,
@@ -1275,10 +1355,6 @@ func import_run_bundle(output_root, bundle_path, options) {
 		}
 	}
 	if verify_signature {
-		signing_key := resolve_bundle_signing_key(options)
-		if signing_key == "" {
-			return bundle_signature_error("Bundle verification requires a signing key.")
-		}
 		signature := dict_get_or(bundle, "signature", null)
 		if type(signature) != "dict" {
 			return bundle_signature_error("Bundle signature metadata is missing.")
@@ -1289,6 +1365,14 @@ func import_run_bundle(output_root, bundle_path, options) {
 		algorithm := to_string(dict_get_or(signature, "algorithm", ""))
 		if algorithm != bundle_signature_algorithm() {
 			return bundle_signature_error("Unsupported bundle signature algorithm: " + algorithm)
+		}
+		signature_key_id := trim(to_string(dict_get_or(signature, "key_id", "default")))
+		if signature_key_id == "" {
+			signature_key_id = "default"
+		}
+		signing_key := resolve_bundle_verification_key(options, signature_key_id)
+		if signing_key == "" {
+			return bundle_signature_error("Bundle verification requires a signing key for key id: " + signature_key_id)
 		}
 		expected_signature := build_bundle_signature_value(source_run_id, artifacts, signing_key)
 		actual_signature := to_string(dict_get_or(signature, "value", ""))
@@ -1318,7 +1402,7 @@ func import_run_bundle(output_root, bundle_path, options) {
 			continue
 		}
 		file_name := replace(artifact_key, "_", ".")
-		write_file(run_dir + "/" + file_name, content, true)
+		atomic_write_file(run_dir + "/" + file_name, content)
 		imported_artifacts := push(imported_artifacts, file_name)
 	}
 
@@ -1329,7 +1413,7 @@ func import_run_bundle(output_root, bundle_path, options) {
 		state_obj["run_dir"] := run_dir
 		state_obj["output_root"] := output_root
 		state_obj["updated_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
-		write_file(state_path, to_json(redact_sensitive_data(state_obj)), true)
+		atomic_write_file(state_path, to_json(redact_sensitive_data(state_obj)))
 		upsert_run_index_entry(state_obj)
 	}
 
