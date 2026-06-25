@@ -55,8 +55,35 @@ func print_help() {
 		"  kujo run --interpreter dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
 		"  kujo run --interpreter dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]",
 		"  kujo run --interpreter dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]",
-		"  kujo run --interpreter dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]"
+		"  kujo run --interpreter dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]",
+		"  kujo run --interpreter dispatch.kujo version",
+		"",
+		"  demo/resume also accept [--webhook-sink path.jsonl] to append lifecycle events to a local JSONL sink."
 	])
+}
+
+func read_package_version() {
+	path := "kennel.toml"
+	if file_exists(path) == false {
+		return "unknown"
+	}
+	content := read_file(path)
+	for line in split(content, "\n") {
+		parts := split(trim(line), "=")
+		if len(parts) >= 2 {
+			key := trim(parts[0])
+			if key == "version" {
+				value := trim(parts[1])
+				value := replace(value, "\"", "")
+				return trim(value)
+			}
+		}
+	}
+	return "unknown"
+}
+
+func run_version() {
+	print("Dispatch " + read_package_version())
 }
 
 func build_contract_metadata(run_state) {
@@ -703,6 +730,7 @@ func run_demo(command_args) {
 			"--deny-tools": {"takes_value": true, "default": ""},
 			"--decision": {"takes_value": true, "default": ""},
 			"--note": {"takes_value": true, "default": ""},
+			"--webhook-sink": {"takes_value": true, "default": ""},
 			"--trace-max-events": {"takes_value": true, "default": "400"},
 			"--trace-max-payload-chars": {"takes_value": true, "default": "2400"}
 		}
@@ -735,6 +763,7 @@ func run_demo(command_args) {
 	sources_dir := dispatch_resolve_string_flag(parsed, command_args, "--sources-dir", config, ["sources_dir", "sources-dir"], "examples/research-report/sources")
 	simulated_decision := dispatch_resolve_string_flag(parsed, command_args, "--decision", config, ["decision"], "")
 	simulated_note := dispatch_resolve_string_flag(parsed, command_args, "--note", config, ["note"], "")
+	webhook_sink := dispatch_resolve_string_flag(parsed, command_args, "--webhook-sink", config, ["webhook_sink", "webhook-sink"], "")
 	trace_max_events_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-events", config, ["trace_max_events", "trace-max-events"], "400"), "--trace-max-events", 400)
 	trace_max_payload_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-payload-chars", config, ["trace_max_payload_chars", "trace-max-payload-chars"], "2400"), "--trace-max-payload-chars", 2400)
 	if trace_max_events_result["ok"] == false {
@@ -786,7 +815,8 @@ func run_demo(command_args) {
 		"command_name": "demo",
 		"tool_authorization_policy": dict_get_or(tool_policy_settings, "policy", null),
 		"simulated_decision": simulated_decision,
-		"simulated_note": simulated_note
+		"simulated_note": simulated_note,
+		"webhook_sink": webhook_sink
 	})
 
 	final_state := result["run_state"]
@@ -926,6 +956,7 @@ func run_resume(command_args) {
 			"--deny-tools": {"takes_value": true, "default": ""},
 			"--decision": {"takes_value": true, "default": ""},
 			"--note": {"takes_value": true, "default": ""},
+			"--webhook-sink": {"takes_value": true, "default": ""},
 			"--trace-max-events": {"takes_value": true, "default": "400"},
 			"--trace-max-payload-chars": {"takes_value": true, "default": "2400"}
 		}
@@ -952,6 +983,7 @@ func run_resume(command_args) {
 	sources_dir := dispatch_resolve_string_flag(parsed, command_args, "--sources-dir", config, ["sources_dir", "sources-dir"], "examples/research-report/sources")
 	simulated_decision := dispatch_resolve_string_flag(parsed, command_args, "--decision", config, ["decision"], "")
 	simulated_note := dispatch_resolve_string_flag(parsed, command_args, "--note", config, ["note"], "")
+	webhook_sink := dispatch_resolve_string_flag(parsed, command_args, "--webhook-sink", config, ["webhook_sink", "webhook-sink"], "")
 	trace_max_events_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-events", config, ["trace_max_events", "trace-max-events"], "400"), "--trace-max-events", 400)
 	trace_max_payload_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-payload-chars", config, ["trace_max_payload_chars", "trace-max-payload-chars"], "2400"), "--trace-max-payload-chars", 2400)
 	if trace_max_events_result["ok"] == false {
@@ -1021,6 +1053,7 @@ func run_resume(command_args) {
 		"tool_authorization_policy": dict_get_or(tool_policy_settings, "policy", null),
 		"simulated_decision": simulated_decision,
 		"simulated_note": simulated_note,
+		"webhook_sink": webhook_sink,
 		"trace_max_events": trace_max_events,
 		"trace_max_payload_chars": trace_max_payload_chars
 	})
@@ -1437,6 +1470,10 @@ if command == "export-run" {
 }
 if command == "import-run" {
 	run_import_run(command_args)
+	return
+}
+if command == "version" || command == "--version" || command == "-v" {
+	run_version()
 	return
 }
 if command == "help" || command == "--help" || command == "-h" {
