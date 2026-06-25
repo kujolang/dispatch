@@ -82,6 +82,7 @@ func create_research_report_workflow(topic, auto_approve) {
 			"tool_name": "flaky_reliability_tool",
 			"input_from": ["input"],
 			"output_key": "reliability_probe",
+			"optional": true,
 			"retry_policy": {
 				"max_attempts": 3,
 				"base_delay_ms": 10,
@@ -209,6 +210,57 @@ func create_crud_reliability_workflow(topic, auto_approve) {
 	return workflow
 }
 
+func create_approval_handoff_workflow(topic, auto_approve) {
+	workflow := create_research_report_workflow(topic, auto_approve)
+	workflow["id"] := "approval_handoff_workflow"
+	workflow["name"] := "Approval Handoff Workflow"
+	workflow["description"] := "Minimal human-in-the-loop workflow: gather evidence, pause at an approval gate, then finalize."
+	workflow["tools"] := [
+		"mock_web_search",
+		"local_source_lookup",
+		"claim_extraction",
+		"citation_formatter",
+		"markdown_report_writer",
+		"timestamp_tool"
+	]
+	workflow["steps"] := [
+		create_step("plan", "Plan Research", "agent", {
+			"agent_id": "planner",
+			"input_from": ["input"],
+			"output_key": "plan"
+		}),
+		create_step("gather_sources", "Gather Sources", "agent", {
+			"agent_id": "research",
+			"input_from": ["input", "plan"],
+			"output_key": "sources"
+		}),
+		create_step("extract_claims", "Extract Claims", "tool", {
+			"tool_name": "claim_extraction",
+			"input_from": ["sources"],
+			"output_key": "claims"
+		}),
+		create_step("verify_claims", "Verify Claims", "agent", {
+			"agent_id": "verification",
+			"input_from": ["input", "sources", "claims"],
+			"output_key": "verification"
+		}),
+		create_step("approval_gate", "Human Approval Gate", "approval", {
+			"approval_required": true,
+			"approval_gate": {
+				"reason": "Confirm findings before finalizing.",
+				"summary": "Review verified claims before the report is written."
+			},
+			"input_from": ["verification"],
+			"output_key": "approval"
+		}),
+		create_step("finalize", "Finalize Outputs", "report", {
+			"input_from": ["verification", "claims", "sources"],
+			"output_key": "final_output"
+		})
+	]
+	return workflow
+}
+
 func create_workflow_templates() {
 	return {
 		"research-report": func(topic, auto_approve) {
@@ -216,6 +268,9 @@ func create_workflow_templates() {
 		},
 		"crud-reliability": func(topic, auto_approve) {
 			return create_crud_reliability_workflow(topic, auto_approve)
+		},
+		"approval-handoff": func(topic, auto_approve) {
+			return create_approval_handoff_workflow(topic, auto_approve)
 		}
 	}
 }
@@ -244,7 +299,7 @@ func count_approval_steps(steps) {
 
 func list_workflow_templates() {
 	workflow_templates := create_workflow_templates()
-	template_order := ["research-report", "crud-reliability"]
+	template_order := ["research-report", "crud-reliability", "approval-handoff"]
 	templates := []
 	for template_id in template_order {
 		if has_key(workflow_templates, template_id) == 0 {
@@ -271,6 +326,7 @@ func list_workflow_templates() {
 export create_workflow := create_workflow
 export create_research_report_workflow := create_research_report_workflow
 export create_crud_reliability_workflow := create_crud_reliability_workflow
+export create_approval_handoff_workflow := create_approval_handoff_workflow
 export create_workflow_templates := create_workflow_templates
 export create_workflow_by_template := create_workflow_by_template
 export list_workflow_templates := list_workflow_templates
