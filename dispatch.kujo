@@ -2,43 +2,14 @@ from src.core.utils import dict_get_or
 from src.core.decision import normalize_decision
 from src.cli.cli_args import parse_cli_args, parsed_has_flag, parsed_flag_value
 from src.workflows.workflow import create_workflow_by_template, list_workflow_templates
+from src.workflows.loader import load_workflow_from_file
 from src.tools.tool import register_default_tools, normalize_sources_dir
 from src.core.state import create_run_state, load_run_state, list_runs, list_runs_with_diagnostics, summarize_run, filter_runs, paginate_runs, build_run_catalog, prune_runs, doctor_runs, normalize_output_root, mutation_audit_path, export_run_bundle, import_run_bundle
 from src.core.runner import run_workflow
 from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_policy_with_profile
-
-func print_lines(lines) {
-	for line in lines {
-		print(line)
-	}
-}
-
-func print_kv(label, value) {
-	print(label + ": " + to_string(value))
-}
-
-func print_error(message) {
-	print("Error: " + to_string(message))
-}
-
-func exit_error(message) {
-	print_error(message)
-	exit(1)
-}
-
-func print_item(message) {
-	print("- " + to_string(message))
-}
-
-func print_nested_item(message) {
-	print("  - " + to_string(message))
-}
-
-func print_report_path_if_present(run_state) {
-	if file_exists(run_state["run_dir"] + "/report.md") {
-		print("Report: " + run_state["run_dir"] + "/report.md")
-	}
-}
+from src.cli.output import print_lines, print_kv, print_error, exit_error, print_item, print_nested_item, print_report_path_if_present, read_package_version, run_version, build_contract_metadata, build_artifact_paths, print_run_completion, print_artifact_summary
+from src.core.plugins import create_plugin_registry, register_plugin, apply_plugins_to_runtime
+from src.plugins.builtin_plugins import resolve_builtin_plugins, collect_plugin_event_hooks
 
 func print_help() {
 	print_lines([
@@ -58,88 +29,12 @@ func print_help() {
 		"  kujo run dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]",
 		"  kujo run dispatch.kujo version",
 		"",
-		"  demo/resume also accept [--webhook-sink path.jsonl] to append lifecycle events to a local JSONL sink."
+		"  demo also accepts [--workflow-file spec.json] [--input-json '{...}'] [--plugin sample].",
+		"  demo/resume also accept [--webhook-sink path.jsonl] [--webhook-url https-url] [--cancel-after-step step-id]."
 	])
 }
 
-func read_package_version() {
-	path := "kennel.toml"
-	if file_exists(path) == false {
-		return "unknown"
-	}
-	content := read_file(path)
-	for line in split(content, "\n") {
-		parts := split(trim(line), "=")
-		if len(parts) >= 2 {
-			key := trim(parts[0])
-			if key == "version" {
-				value := trim(parts[1])
-				value := replace(value, "\"", "")
-				return trim(value)
-			}
-		}
-	}
-	return "unknown"
-}
-
-func run_version() {
-	print("Dispatch " + read_package_version())
-}
-
-func build_contract_metadata(run_state) {
-	return {
-		"artifact_contract_version": dict_get_or(run_state, "artifact_contract_version", 0),
-		"state": {
-			"schema_name": dict_get_or(run_state, "schema_name", ""),
-			"schema_version": dict_get_or(run_state, "schema_version", 0)
-		},
-		"trace": {
-			"schema_name": dict_get_or(dict_get_or(run_state, "trace", {}), "schema_name", ""),
-			"schema_version": dict_get_or(dict_get_or(run_state, "trace", {}), "schema_version", 0)
-		}
-	}
-}
-
-func build_artifact_paths(run_state) {
-	run_dir := run_state["run_dir"]
-	artifacts := {
-		"state": run_dir + "/state.json",
-		"trace_json": run_dir + "/trace.json",
-		"trace_markdown": run_dir + "/trace.md"
-	}
-	if file_exists(run_dir + "/report.md") {
-		artifacts["report_md"] := run_dir + "/report.md"
-	}
-	if file_exists(run_dir + "/report.json") {
-		artifacts["report_json"] := run_dir + "/report.json"
-	}
-	return artifacts
-}
-
-func print_run_completion(final_state) {
-	print_kv("Run ID", final_state["run_id"])
-	print_kv("Status", final_state["status"])
-	print_kv("Run Directory", final_state["run_dir"])
-}
-
-func print_artifact_summary(run_state) {
-	run_dir := run_state["run_dir"]
-	lines := [
-		"Artifacts:",
-		"- state: " + run_dir + "/state.json",
-		"- trace json: " + run_dir + "/trace.json",
-		"- trace md: " + run_dir + "/trace.md"
-	]
-	if file_exists(run_dir + "/report.md") {
-		lines := push(lines, "- report md: " + run_dir + "/report.md")
-	}
-	if file_exists(run_dir + "/report.json") {
-		lines := push(lines, "- report json: " + run_dir + "/report.json")
-	}
-	print_lines(lines)
-}
-
-	func key_exists(map_obj, key_name) {
+func key_exists(map_obj, key_name) {
 		if type(map_obj) != "dict" {
 			return false
 		}
@@ -751,6 +646,61 @@ func enforce_mutation_guard_or_exit(parsed, command_name, mutation_flag) {
 	exit_error("Strict mutation mode blocked " + command_name + " " + mutation_flag + ". Re-run with --confirm-mutation or set DISPATCH_MUTATION_CONFIRM=true.")
 }
 
+func dispatch_resolve_workflow(workflow_file, workflow_template_id, topic, auto_approve) {
+	if workflow_file != "" {
+		workflow_file_path := normalize_config_path(workflow_file)
+		if workflow_file_path["ok"] == false {
+			exit_error(workflow_file_path["message"])
+		}
+		loaded_workflow := load_workflow_from_file(workflow_file_path["config_path"])
+		if loaded_workflow["ok"] == false {
+			exit_error(loaded_workflow["error"]["message"])
+		}
+		return loaded_workflow["workflow"]
+	}
+	workflow_result := create_workflow_by_template(workflow_template_id, topic, auto_approve)
+	if workflow_result["ok"] == false {
+		exit_error(workflow_result["error"]["message"])
+	}
+	return workflow_result["workflow"]
+}
+
+func dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, config) {
+	plugin_names := parse_tool_name_list(dispatch_resolve_string_flag(parsed, command_args, "--plugin", config, ["plugin", "plugins"], ""))
+	if len(plugin_names) == 0 {
+		return {
+			"workflow": workflow,
+			"tool_registry": tool_registry,
+			"event_hook": null
+		}
+	}
+	resolution := resolve_builtin_plugins(plugin_names)
+	if len(resolution["unknown"]) > 0 {
+		exit_error("Unknown plugin(s): " + join(resolution["unknown"], ", ") + ". Available built-in plugins: sample")
+	}
+	plugins := resolution["plugins"]
+	plugin_registry := create_plugin_registry()
+	for plugin in plugins {
+		plugin_registry = register_plugin(plugin_registry, plugin)
+	}
+	applied := apply_plugins_to_runtime(workflow, tool_registry, plugin_registry)
+	plugin_hooks := collect_plugin_event_hooks(plugins)
+	combined_event_hook := null
+	if len(plugin_hooks) > 0 {
+		combined_event_hook = func(event) {
+			for plugin_hook in plugin_hooks {
+				plugin_hook(event)
+			}
+			return {"ok": true}
+		}
+	}
+	return {
+		"workflow": applied["workflow"],
+		"tool_registry": applied["tool_registry"],
+		"event_hook": combined_event_hook
+	}
+}
+
 func run_demo(command_args) {
 	parsed := parse_cli_args(command_args, {
 		"flags": {
@@ -766,6 +716,9 @@ func run_demo(command_args) {
 			"--deny-tools": {"takes_value": true, "default": ""},
 			"--decision": {"takes_value": true, "default": ""},
 			"--note": {"takes_value": true, "default": ""},
+			"--input-json": {"takes_value": true, "default": ""},
+			"--workflow-file": {"takes_value": true, "default": ""},
+			"--plugin": {"takes_value": true, "default": ""},
 			"--webhook-sink": {"takes_value": true, "default": ""},
 			"--webhook-url": {"takes_value": true, "default": ""},
 			"--cancel-after-step": {"takes_value": true, "default": ""},
@@ -831,12 +784,32 @@ func run_demo(command_args) {
 	}
 	simulated_decision := validation["normalized_decision"]
 
-	workflow_result := create_workflow_by_template(workflow_template_id, topic, auto_approve)
-	if workflow_result["ok"] == false {
-		exit_error(workflow_result["error"]["message"])
+	run_input := {"topic": topic}
+	input_json_raw := trim(dispatch_resolve_string_flag(parsed, command_args, "--input-json", config, ["input_json", "input-json"], ""))
+	if input_json_raw != "" {
+		parsed_input := null
+		try {
+			parsed_input = parse_json(input_json_raw)
+		} except err {
+			exit_error("Invalid --input-json: expected a JSON object.")
+		}
+		if type(parsed_input) != "dict" {
+			exit_error("Invalid --input-json: expected a JSON object.")
+		}
+		for input_key in keys(parsed_input) {
+			run_input[input_key] := parsed_input[input_key]
+		}
+		if has_key(run_input, "topic") == 0 {
+			run_input["topic"] := topic
+		}
 	}
-	workflow := workflow_result["workflow"]
-	run_state := create_run_state(workflow, {"topic": topic}, output_root, {
+
+	workflow_file := trim(dispatch_resolve_string_flag(parsed, command_args, "--workflow-file", config, ["workflow_file", "workflow-file"], ""))
+	workflow := dispatch_resolve_workflow(workflow_file, workflow_template_id, topic, auto_approve)
+	if workflow_file != "" {
+		workflow_template_id = dict_get_or(workflow, "id", workflow_template_id)
+	}
+	run_state := create_run_state(workflow, run_input, output_root, {
 		"auto_approve": auto_approve,
 		"interactive": interactive,
 		"sources_dir": sources_dir,
@@ -848,6 +821,9 @@ func run_demo(command_args) {
 		"trace_max_payload_chars": trace_max_payload_chars
 	})
 	tool_registry := register_default_tools(sources_dir)
+	plugin_runtime := dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, config)
+	workflow = plugin_runtime["workflow"]
+	tool_registry = plugin_runtime["tool_registry"]
 
 	result := run_workflow(workflow, run_state, tool_registry, {
 		"auto_approve": auto_approve,
@@ -858,7 +834,8 @@ func run_demo(command_args) {
 		"simulated_note": simulated_note,
 		"webhook_sink": webhook_sink,
 		"webhook_url": webhook_url,
-		"cancel_after_step_id": cancel_after_step
+		"cancel_after_step_id": cancel_after_step,
+		"event_hook": plugin_runtime["event_hook"]
 	})
 
 	final_state := result["run_state"]
@@ -998,6 +975,7 @@ func run_resume(command_args) {
 			"--deny-tools": {"takes_value": true, "default": ""},
 			"--decision": {"takes_value": true, "default": ""},
 			"--note": {"takes_value": true, "default": ""},
+			"--plugin": {"takes_value": true, "default": ""},
 			"--webhook-sink": {"takes_value": true, "default": ""},
 			"--webhook-url": {"takes_value": true, "default": ""},
 			"--cancel-after-step": {"takes_value": true, "default": ""},
@@ -1092,6 +1070,9 @@ func run_resume(command_args) {
 	}
 	workflow := workflow_result["workflow"]
 	tool_registry := register_default_tools(sources_dir)
+	plugin_runtime := dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, config)
+	workflow = plugin_runtime["workflow"]
+	tool_registry = plugin_runtime["tool_registry"]
 	result := run_workflow(workflow, run_state, tool_registry, {
 		"auto_approve": auto_approve,
 		"interactive": interactive,
@@ -1102,6 +1083,7 @@ func run_resume(command_args) {
 		"webhook_sink": webhook_sink,
 		"webhook_url": webhook_url,
 		"cancel_after_step_id": cancel_after_step,
+		"event_hook": plugin_runtime["event_hook"],
 		"trace_max_events": trace_max_events,
 		"trace_max_payload_chars": trace_max_payload_chars
 	})
