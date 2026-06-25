@@ -46,17 +46,17 @@ func print_help() {
 		"Kujo agent workflow engine for reliable AI workflows.",
 		"",
 		"Usage:",
-		"  kujo run --interpreter dispatch.kujo demo \"Research topic\" [--workflow research-report] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs]",
-		"  kujo run --interpreter dispatch.kujo show <run-id> [--output-root outputs] [--json]",
-		"  kujo run --interpreter dispatch.kujo inspect <run-id> [--output-root outputs] [--json]",
-		"  kujo run --interpreter dispatch.kujo resume <run-id> [--workflow research-report] [--policy-profile staging] [--yes] [--non-interactive] [--output-root outputs]",
-		"  kujo run --interpreter dispatch.kujo templates [--json]",
-		"  kujo run --interpreter dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]",
-		"  kujo run --interpreter dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
-		"  kujo run --interpreter dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]",
-		"  kujo run --interpreter dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]",
-		"  kujo run --interpreter dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]",
-		"  kujo run --interpreter dispatch.kujo version",
+		"  kujo run dispatch.kujo demo \"Research topic\" [--workflow research-report] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs]",
+		"  kujo run dispatch.kujo show <run-id> [--output-root outputs] [--json]",
+		"  kujo run dispatch.kujo inspect <run-id> [--output-root outputs] [--json]",
+		"  kujo run dispatch.kujo resume <run-id> [--workflow research-report] [--policy-profile staging] [--yes] [--non-interactive] [--output-root outputs]",
+		"  kujo run dispatch.kujo templates [--json]",
+		"  kujo run dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]",
+		"  kujo run dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
+		"  kujo run dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]",
+		"  kujo run dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]",
+		"  kujo run dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]",
+		"  kujo run dispatch.kujo version",
 		"",
 		"  demo/resume also accept [--webhook-sink path.jsonl] to append lifecycle events to a local JSONL sink."
 	])
@@ -493,6 +493,42 @@ func filter_runs_by_tags(run_items, tags_query) {
 		return validation["output_root"]
 	}
 
+	func normalize_webhook_sink_path(raw_sink_path) {
+		path := trim(to_string(raw_sink_path))
+		if path == "" {
+			return {"ok": true, "webhook_sink": ""}
+		}
+		path = replace(path, "\\", "/")
+
+		allow_any := to_lower(trim(to_string(env("DISPATCH_ALLOW_ANY_WEBHOOK_SINK"))))
+		if allow_any == "true" || allow_any == "1" || allow_any == "yes" || allow_any == "on" {
+			return {"ok": true, "webhook_sink": path}
+		}
+
+		if starts_with(path, "/") || starts_with(path, "~/") {
+			return {"ok": false, "message": "Absolute --webhook-sink paths are blocked by default. Set DISPATCH_ALLOW_ANY_WEBHOOK_SINK=true for explicit opt-in."}
+		}
+		lower := to_lower(path)
+		if contains(lower, "..") || contains(lower, "%2f") || contains(lower, "%5c") {
+			return {"ok": false, "message": "Path traversal patterns are not allowed in --webhook-sink path."}
+		}
+		for segment in split(path, "/") {
+			clean_segment := trim(segment)
+			if clean_segment == ".." {
+				return {"ok": false, "message": "Webhook sink path contains invalid path segments."}
+			}
+		}
+		return {"ok": true, "webhook_sink": path}
+	}
+
+	func resolve_webhook_sink_or_exit(raw_sink_path) {
+		validation := normalize_webhook_sink_path(raw_sink_path)
+		if validation["ok"] == false {
+			exit_error(validation["message"])
+		}
+		return validation["webhook_sink"]
+	}
+
 	func validate_status_filter_or_exit(status_filter, flag_name) {
 		value := to_lower(trim(to_string(status_filter)))
 		if value == "" {
@@ -731,6 +767,8 @@ func run_demo(command_args) {
 			"--decision": {"takes_value": true, "default": ""},
 			"--note": {"takes_value": true, "default": ""},
 			"--webhook-sink": {"takes_value": true, "default": ""},
+			"--webhook-url": {"takes_value": true, "default": ""},
+			"--cancel-after-step": {"takes_value": true, "default": ""},
 			"--trace-max-events": {"takes_value": true, "default": "400"},
 			"--trace-max-payload-chars": {"takes_value": true, "default": "2400"}
 		}
@@ -763,7 +801,9 @@ func run_demo(command_args) {
 	sources_dir := dispatch_resolve_string_flag(parsed, command_args, "--sources-dir", config, ["sources_dir", "sources-dir"], "examples/research-report/sources")
 	simulated_decision := dispatch_resolve_string_flag(parsed, command_args, "--decision", config, ["decision"], "")
 	simulated_note := dispatch_resolve_string_flag(parsed, command_args, "--note", config, ["note"], "")
-	webhook_sink := dispatch_resolve_string_flag(parsed, command_args, "--webhook-sink", config, ["webhook_sink", "webhook-sink"], "")
+	webhook_sink := resolve_webhook_sink_or_exit(dispatch_resolve_string_flag(parsed, command_args, "--webhook-sink", config, ["webhook_sink", "webhook-sink"], ""))
+	webhook_url := trim(dispatch_resolve_string_flag(parsed, command_args, "--webhook-url", config, ["webhook_url", "webhook-url"], ""))
+	cancel_after_step := trim(dispatch_resolve_string_flag(parsed, command_args, "--cancel-after-step", config, ["cancel_after_step", "cancel-after-step"], ""))
 	trace_max_events_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-events", config, ["trace_max_events", "trace-max-events"], "400"), "--trace-max-events", 400)
 	trace_max_payload_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-payload-chars", config, ["trace_max_payload_chars", "trace-max-payload-chars"], "2400"), "--trace-max-payload-chars", 2400)
 	if trace_max_events_result["ok"] == false {
@@ -816,7 +856,9 @@ func run_demo(command_args) {
 		"tool_authorization_policy": dict_get_or(tool_policy_settings, "policy", null),
 		"simulated_decision": simulated_decision,
 		"simulated_note": simulated_note,
-		"webhook_sink": webhook_sink
+		"webhook_sink": webhook_sink,
+		"webhook_url": webhook_url,
+		"cancel_after_step_id": cancel_after_step
 	})
 
 	final_state := result["run_state"]
@@ -829,7 +871,7 @@ func run_demo(command_args) {
 		exit_error(to_json(result["error"]))
 	}
 	if result["paused"] {
-		print("Workflow paused. Resume with: kujo run --interpreter dispatch.kujo resume " + final_state["run_id"])
+		print("Workflow paused. Resume with: kujo run dispatch.kujo resume " + final_state["run_id"])
 	}
 }
 
@@ -957,6 +999,8 @@ func run_resume(command_args) {
 			"--decision": {"takes_value": true, "default": ""},
 			"--note": {"takes_value": true, "default": ""},
 			"--webhook-sink": {"takes_value": true, "default": ""},
+			"--webhook-url": {"takes_value": true, "default": ""},
+			"--cancel-after-step": {"takes_value": true, "default": ""},
 			"--trace-max-events": {"takes_value": true, "default": "400"},
 			"--trace-max-payload-chars": {"takes_value": true, "default": "2400"}
 		}
@@ -983,7 +1027,9 @@ func run_resume(command_args) {
 	sources_dir := dispatch_resolve_string_flag(parsed, command_args, "--sources-dir", config, ["sources_dir", "sources-dir"], "examples/research-report/sources")
 	simulated_decision := dispatch_resolve_string_flag(parsed, command_args, "--decision", config, ["decision"], "")
 	simulated_note := dispatch_resolve_string_flag(parsed, command_args, "--note", config, ["note"], "")
-	webhook_sink := dispatch_resolve_string_flag(parsed, command_args, "--webhook-sink", config, ["webhook_sink", "webhook-sink"], "")
+	webhook_sink := resolve_webhook_sink_or_exit(dispatch_resolve_string_flag(parsed, command_args, "--webhook-sink", config, ["webhook_sink", "webhook-sink"], ""))
+	webhook_url := trim(dispatch_resolve_string_flag(parsed, command_args, "--webhook-url", config, ["webhook_url", "webhook-url"], ""))
+	cancel_after_step := trim(dispatch_resolve_string_flag(parsed, command_args, "--cancel-after-step", config, ["cancel_after_step", "cancel-after-step"], ""))
 	trace_max_events_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-events", config, ["trace_max_events", "trace-max-events"], "400"), "--trace-max-events", 400)
 	trace_max_payload_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-payload-chars", config, ["trace_max_payload_chars", "trace-max-payload-chars"], "2400"), "--trace-max-payload-chars", 2400)
 	if trace_max_events_result["ok"] == false {
@@ -1054,6 +1100,8 @@ func run_resume(command_args) {
 		"simulated_decision": simulated_decision,
 		"simulated_note": simulated_note,
 		"webhook_sink": webhook_sink,
+		"webhook_url": webhook_url,
+		"cancel_after_step_id": cancel_after_step,
 		"trace_max_events": trace_max_events,
 		"trace_max_payload_chars": trace_max_payload_chars
 	})
