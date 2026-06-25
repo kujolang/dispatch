@@ -13,17 +13,10 @@ from src.agents.agent import run_agent
 from src.core.hooks import create_lifecycle_event, emit_hook_event
 
 func replace_step(steps, target_index, replacement_step) {
-	updated := []
-	i := 0
-	while i < len(steps) {
-		if i == target_index {
-			updated := push(updated, replacement_step)
-		} else {
-			updated := push(updated, steps[i])
-		}
-		i := i + 1
+	if target_index >= 0 && target_index < len(steps) {
+		steps[target_index] := replacement_step
 	}
-	return updated
+	return steps
 }
 
 func resolve_retry_policy(step, workflow) {
