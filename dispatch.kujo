@@ -878,7 +878,7 @@ func run_show(command_args) {
 	contract := build_contract_metadata(run_state)
 	artifacts := build_artifact_paths(run_state)
 	if json_output {
-		print(to_json({
+		payload := {
 			"command": "show",
 			"ok": true,
 			"run_id": run_state["run_id"],
@@ -886,7 +886,8 @@ func run_show(command_args) {
 			"contract": contract,
 			"summary": summary,
 			"artifacts": artifacts
-		}))
+		}
+		print(to_json(payload))
 		return
 	}
 	print(to_json(summary))
@@ -920,7 +921,7 @@ func run_inspect(command_args) {
 	contract := build_contract_metadata(run_state)
 	artifacts := build_artifact_paths(run_state)
 	if json_output {
-		print(to_json({
+		payload := {
 			"command": "inspect",
 			"ok": true,
 			"run_id": run_state["run_id"],
@@ -934,7 +935,8 @@ func run_inspect(command_args) {
 			"handoffs": dict_get_or(run_state, "handoffs", []),
 			"errors": dict_get_or(run_state, "errors", []),
 			"artifacts": artifacts
-		}))
+		}
+		print(to_json(payload))
 		return
 	}
 	print_kv("Run", run_state["run_id"])
@@ -1172,12 +1174,16 @@ func run_runs(command_args) {
 	if len(paged) == 0 {
 		print("No runs found in " + output_root)
 		if status_filter != "" || workflow_filter != "" || topic_filter != "" || trim(to_string(tags_filter)) != "" || issues_only {
-			print("Filters: status=" + status_filter + " workflow=" + workflow_filter + " topic=" + topic_filter + " tags=" + to_json(parse_tool_name_list(tags_filter)) + " issues_only=" + to_string(issues_only))
+			filters_line := "Filters: status=" + status_filter + " workflow=" + workflow_filter + " topic=" + topic_filter
+			filters_line = filters_line + " tags=" + to_json(parse_tool_name_list(tags_filter)) + " issues_only=" + to_string(issues_only)
+			print(filters_line)
 		}
 		return
 	}
 
-	print("Runs: " + to_string(page_catalog["total_runs"]) + " (showing " + to_string(len(paged)) + " of " + to_string(filtered_total) + ") | resumable=" + to_string(page_catalog["resumable_runs"]) + " | issues_total=" + to_string(page_catalog["issues_total"]))
+	runs_line := "Runs: " + to_string(page_catalog["total_runs"]) + " (showing " + to_string(len(paged)) + " of " + to_string(filtered_total) + ")"
+	runs_line = runs_line + " | resumable=" + to_string(page_catalog["resumable_runs"]) + " | issues_total=" + to_string(page_catalog["issues_total"])
+	print(runs_line)
 	if diagnostics_mode {
 		print_kv("Diagnostics", to_json(diagnostics))
 	}
@@ -1190,7 +1196,10 @@ func run_runs(command_args) {
 		run_item := paged[run_index]
 		artifacts := dict_get_or(run_item, "artifacts", {})
 		report_ready := dict_get_or(artifacts, "report_md", false) && dict_get_or(artifacts, "report_json", false)
-		print(run_item["run_id"] + " | " + run_item["status"] + " | " + run_item["updated_at"] + " | topic=" + run_item["topic"] + " | issues=" + to_string(run_item["issues_count"]) + " | step=" + to_string(run_item["current_step_index"]) + "/" + to_string(run_item["total_steps"]) + " | report_ready=" + to_string(report_ready))
+		run_line := run_item["run_id"] + " | " + run_item["status"] + " | " + run_item["updated_at"] + " | topic=" + run_item["topic"]
+		run_line = run_line + " | issues=" + to_string(run_item["issues_count"]) + " | step=" + to_string(run_item["current_step_index"]) + "/" + to_string(run_item["total_steps"])
+		run_line = run_line + " | report_ready=" + to_string(report_ready)
+		print(run_line)
 		run_index := run_index + 1
 	}
 }
@@ -1207,9 +1216,10 @@ func run_templates(command_args) {
 	json_output := parsed_has_flag(parsed, "--json")
 	templates := list_workflow_templates()
 	if json_output {
-		print(to_json({
+		payload := {
 			"templates": templates
-		}))
+		}
+		print(to_json(payload))
 		return
 	}
 	print("Workflow Templates")

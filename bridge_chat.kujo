@@ -93,7 +93,7 @@ func normalize_messages(raw_messages) {
 }
 
 func emit_error(code, message, status_code) {
-	print(to_json({
+	payload := {
 		"ok": false,
 		"provider": "dispatch-bridge",
 		"error": {
@@ -104,7 +104,8 @@ func emit_error(code, message, status_code) {
 		"status_code": status_code,
 		"normalized_at": current_timestamp(),
 		"raw": null
-	}))
+	}
+	print(to_json(payload))
 }
 
 raw_args := args()
