@@ -302,7 +302,7 @@ What's good:
 - Strong env-var configuration surface and safe-by-default path constraints.
 
 What's rough:
-- **Type-checker noise:** every run prints a wall of `[RUFRUN001]` type warnings to stderr before real output. The README tells you to ignore them, but it badly hurts first-run confidence. (Functional output is correct; exit codes are reliable.)
+- **Type-checker noise:** every run prints a wall of `[KUJORUN001]` type warnings to stderr before real output. The README tells you to ignore them, but it badly hurts first-run confidence. (Functional output is correct; exit codes are reliable.)
 - **No config-driven authoring:** new workflows require editing Kujo source and re-interpreting.
 - **Report shape is hardcoded** to research-report; other workflows get mislabeled output.
 - **Headline features unreachable:** hooks/webhooks/plugins/parallel/cancel are not exposed by the CLI.
@@ -362,7 +362,7 @@ Each design in the guide lists purpose, user, trigger/input, steps, agents, tool
 | 6 | Security | Bundle "signature" is a non-crypto checksum with key in plaintext scheme | Misleading authenticity guarantee | Replace with real HMAC (if Kujo exposes one) or rename to "integrity checksum" and document non-authenticity | **P1** | low–medium |
 | 7 | Concurrency | `parallel_execution` branch is a no-op | Advertised parallelism doesn't exist | Either implement real concurrency or remove the claim and the dead branch | **P2** | high (impl) / low (doc) |
 | 8 | Agents | Verification status assigned by `index % 4`; model output ignored offline | Reviewers may mistake synthetic output for analysis | Clearly label outputs as synthetic in offline mode; gate real logic behind live SDK | **P1** | low |
-| 9 | DX | `[RUFRUN001]` type warnings flood stderr every run | Erodes trust, noisy automation logs | Fix the underlying type issues or suppress benign warnings in the entrypoint | **P2** | medium |
+| 9 | DX | `[KUJORUN001]` type warnings flood stderr every run | Erodes trust, noisy automation logs | Fix the underlying type issues or suppress benign warnings in the entrypoint | **P2** | medium |
 | 10 | CLI | No `version`/`--version` | Breaks tooling expectations | Implement from `kennel.toml` version | **P2** | low |
 | 11 | Templates | `crud-reliability` is a prompt skin of research | Implies more variety than exists | Build at least one structurally distinct template | **P2** | medium |
 | 12 | Testing | No CLI-level e2e harness for prod-profile run | Profile/template mismatch (gap 1) slipped through | Add an e2e test that runs each template under each profile | **P1** | low |

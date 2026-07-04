@@ -256,7 +256,7 @@ export DISPATCH_OFFLINE_FIXTURE=true
 "$KUJO_BIN" run --interpreter dispatch.kujo doctor --output-root tests/tmp/smoke --json
 ```
 
-> Type-checker `[RUFRUN001]` warnings on stderr are expected and benign; judge success by exit code + functional output. Always use an isolated `--output-root` under `tests/tmp/` and clean it up after.
+> Type-checker `[KUJORUN001]` warnings on stderr are expected and benign; judge success by exit code + functional output. Always use an isolated `--output-root` under `tests/tmp/` and clean it up after.
 
 ---
 

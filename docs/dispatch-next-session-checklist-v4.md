@@ -103,7 +103,7 @@ The only item not fully closed is F3 (entrypoint decomposition), reduced to a pa
 
 | # | Item | Priority | Difficulty | Files | Acceptance |
 |---|---|---|---|---|---|
-| F1 | Silence the `[RUFRUN001]` type-checker warnings flooding stderr on every run (fix root causes or scope a suppression in the entrypoint). | P1 | medium | `dispatch.kujo`, `src/**` | a normal `demo` run prints no type warnings |
+| F1 | Silence the `[KUJORUN001]` type-checker warnings flooding stderr on every run (fix root causes or scope a suppression in the entrypoint). | P1 | medium | `dispatch.kujo`, `src/**` | a normal `demo` run prints no type warnings |
 | F2 | A `quickstart`/`examples` walkthrough that runs end-to-end in under a minute and showcases approval + resume + signed export, as a language showcase. | P1 | low | `README.md`, `examples/` | copy-paste walkthrough verified offline |
 | F3 | Split the ~1.5k-line `dispatch.kujo` entrypoint into command modules under `src/cli/commands/` for readability. | P2 | medium | `dispatch.kujo`, `src/cli/` | each command lives in its own module |
 | F4 | Consolidate `kujo.toml` and `kennel.toml` (or document why both exist) to remove version-drift risk. | P2 | low | `kujo.toml`, `kennel.toml`, docs | single source of version truth, documented |

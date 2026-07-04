@@ -465,7 +465,7 @@ If you intentionally need a different sources directory, set `DISPATCH_ALLOW_ANY
 
 ### Type-checker warnings on stderr
 
-The default VM run path (`kujo run dispatch.kujo ...`) is warning-free. The optional `--interpreter` (tree-walking) mode runs a best-effort type checker that prints `[RUFRUN001]` warnings to stderr while still executing correctly; these are diagnostics from the interpreter, not Dispatch failures. Prefer the default VM path for clean output, and treat command exit status and functional output as the primary success signal when using `--interpreter`.
+The default VM run path (`kujo run dispatch.kujo ...`) is warning-free. The optional `--interpreter` (tree-walking) mode runs a best-effort type checker that prints `[KUJORUN001]` warnings to stderr while still executing correctly; these are diagnostics from the interpreter, not Dispatch failures. Prefer the default VM path for clean output, and treat command exit status and functional output as the primary success signal when using `--interpreter`.
 
 ## Repository Layout
 
