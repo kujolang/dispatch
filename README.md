@@ -1,5 +1,9 @@
 # Dispatch
 
+[![Version](https://img.shields.io/badge/version-1.0.0-black)](https://github.com/kujolang/dispatch)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
+[![built with Kujo](https://img.shields.io/badge/built%20with-Kujo-white.svg)](https://github.com/kujolang/kujo)
+
 Dispatch is a workflow orchestration engine for reliable AI systems built in Kujo.
 
 It routes structured work through repeatable workflow templates and produces reviewable run state, traces, reports, and handoff bundles.
