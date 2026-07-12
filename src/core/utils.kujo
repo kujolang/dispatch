@@ -94,35 +94,7 @@ func ensure_dir(path) {
 }
 
 func atomic_write_file(path, content) {
-	# Crash-safe, torn-write-safe write: stage to a unique temp file in the
-	# same directory, then rename() over the destination. POSIX rename is
-	# atomic, so a reader (or a crash) never observes a partially written file.
-	tmp_path := to_string(path) + ".tmp-" + to_string(current_timestamp()) + "-" + to_string(random_int(100000, 999999))
-	wrote_tmp := false
-	try {
-		write_file(tmp_path, content, true)
-		wrote_tmp = true
-	} except err {
-		# Staging failed; fall back to a direct write below.
-	}
-	if wrote_tmp {
-		renamed := false
-		try {
-			rename_file(tmp_path, path)
-			renamed = true
-		} except err {
-			renamed = false
-		}
-		if renamed {
-			return path
-		}
-		try {
-			delete_file(tmp_path)
-		} except cleanup_err {
-			# Best effort temp cleanup.
-		}
-	}
-	write_file(path, content, true)
+	write_file_atomic(path, content, true)
 	return path
 }
 
