@@ -1,0 +1,12 @@
+diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+index 78d184d..b64eafa 100644
+--- a/.loop-engineering/iterations/001/context.md
++++ b/.loop-engineering/iterations/001/context.md
+@@ -1,6 +1,6 @@
+ # Context
+ 
+ - objective: Use Kujo-native write_file_atomic for Dispatch state/report writes and preserve existing directory, redaction, and recovery behavior.
+-- git_head: 9fb17b6
++- git_head: c5934cc
+ - changed_files:
+   - none

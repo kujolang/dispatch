@@ -10,7 +10,7 @@ success
 
 ## Verification
 
-- passed: kujo_checks, cli_smoke, diff_check, diff_check
+- passed: kujo_checks, cli_smoke, diff_check
 - blocked: none
 - failed: none
 
