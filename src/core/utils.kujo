@@ -93,11 +93,6 @@ func ensure_dir(path) {
 	}
 }
 
-func atomic_write_file(path, content) {
-	write_file_atomic(path, content, true)
-	return path
-}
-
 func safe_read_file(path, default_value) {
 	if !file_exists(path) {
 		return default_value
@@ -120,10 +115,6 @@ func read_json_or(path, default_value) {
 	} except err {
 		return default_value
 	}
-}
-
-func write_json(path, value) {
-	atomic_write_file(path, to_json(value))
 }
 
 func is_sensitive_key_name(key_name) {
@@ -314,9 +305,7 @@ export to_bool := to_bool
 export now_human := now_human
 export sanitize_slug := sanitize_slug
 export ensure_dir := ensure_dir
-export atomic_write_file := atomic_write_file
 export safe_read_file := safe_read_file
 export read_json_or := read_json_or
-export write_json := write_json
 export redact_sensitive_data := redact_sensitive_data
 export summarize_value := summarize_value

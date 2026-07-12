@@ -1,4 +1,4 @@
-from src.core.utils import dict_get_or, ensure_dir, atomic_write_file, read_json_or, redact_sensitive_data, to_bool, safe_read_file
+from src.core.utils import dict_get_or, ensure_dir, read_json_or, redact_sensitive_data, to_bool, safe_read_file
 from src.core.memory import create_memory
 from src.core.trace import create_trace, render_trace_markdown, apply_trace_limits
 
@@ -160,7 +160,7 @@ func load_run_index(output_root) {
 func persist_run_index(output_root, index_payload) {
 	ensure_dir(output_root)
 	index_payload["updated_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
-	atomic_write_file(run_index_path(output_root), to_json(index_payload))
+	write_file_atomic(run_index_path(output_root), to_json(index_payload), true)
 }
 func normalize_run_tags(raw_tags) {
 	normalized := []
@@ -266,13 +266,13 @@ func append_mutation_audit_record(output_root, operation_name, mutations, metada
 	}
 	if should_rotate && trim(existing) != "" {
 		backup_path := mutation_audit_backup_path(output_root, max_backups)
-		atomic_write_file(backup_path, existing)
+		write_file_atomic(backup_path, existing, true)
 		existing = ""
 	}
 	if trim(existing) == "" {
-		atomic_write_file(audit_path, line)
+		write_file_atomic(audit_path, line, true)
 	} else {
-		atomic_write_file(audit_path, existing + "\n" + line)
+		write_file_atomic(audit_path, existing + "\n" + line, true)
 	}
 	return audit_path
 }
@@ -735,9 +735,9 @@ func persist_run_state(run_state) {
 	redacted_trace := redact_sensitive_data(run_state["trace"])
 	trace_contract_result := ensure_trace_contract_fields(redacted_trace)
 	redacted_trace = trace_contract_result["trace_state"]
-	atomic_write_file(run_state["run_dir"] + "/state.json", to_json(redacted_state))
-	atomic_write_file(run_state["run_dir"] + "/trace.json", to_json(redacted_trace))
-	atomic_write_file(run_state["run_dir"] + "/trace.md", render_trace_markdown(redacted_trace))
+	write_file_atomic(run_state["run_dir"] + "/state.json", to_json(redacted_state), true)
+	write_file_atomic(run_state["run_dir"] + "/trace.json", to_json(redacted_trace), true)
+	write_file_atomic(run_state["run_dir"] + "/trace.md", render_trace_markdown(redacted_trace), true)
 	# Bound index write amplification: skip the full-catalog index rewrite for
 	# the per-step "running" churn. The run is registered once at creation and
 	# the index is refreshed on every non-running status transition (paused,
@@ -1301,7 +1301,7 @@ func export_run_bundle(output_root, run_id, bundle_path, options) {
 	if bundle_dir != "" && bundle_dir != "." {
 		ensure_dir(bundle_dir)
 	}
-	atomic_write_file(bundle_path, to_json(bundle))
+	write_file_atomic(bundle_path, to_json(bundle), true)
 	return {
 		"ok": true,
 		"bundle_path": bundle_path,
@@ -1412,7 +1412,7 @@ func import_run_bundle(output_root, bundle_path, options) {
 			continue
 		}
 		file_name := replace(artifact_key, "_", ".")
-		atomic_write_file(run_dir + "/" + file_name, content)
+		write_file_atomic(run_dir + "/" + file_name, content, true)
 		imported_artifacts := push(imported_artifacts, file_name)
 	}
 
@@ -1423,7 +1423,7 @@ func import_run_bundle(output_root, bundle_path, options) {
 		state_obj["run_dir"] := run_dir
 		state_obj["output_root"] := output_root
 		state_obj["updated_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
-		atomic_write_file(state_path, to_json(redact_sensitive_data(state_obj)))
+		write_file_atomic(state_path, to_json(redact_sensitive_data(state_obj)), true)
 		upsert_run_index_entry(state_obj)
 	}
 

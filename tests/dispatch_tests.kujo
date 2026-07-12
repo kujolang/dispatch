@@ -17,7 +17,7 @@ test_setup {
 	from src.core.step import create_step
 	from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_policy, build_tool_authorization_policy_with_profile
 	from src.tools.source_lookup import mock_web_search_handler, canonicalize_path, path_is_within_root
-	from src.core.utils import dict_get_or, atomic_write_file, ensure_dir
+	from src.core.utils import dict_get_or, ensure_dir
 }
 
 test "workflow creation includes required sections" {
@@ -2798,14 +2798,14 @@ test "signed bundle uses a cryptographic sha256 mac and rejects wrong keys" {
 	assert_equal(wrong_key["error"]["code"], "invalid_bundle_signature")
 }
 
-test "atomic_write_file writes content and leaves no temp residue" {
+test "native atomic file writes content and leaves no temp residue" {
 	dir := "tests/tmp/atomic-write"
 	ensure_dir(dir)
 	target := dir + "/data.json"
-	atomic_write_file(target, "{\"a\":1}")
+	write_file_atomic(target, "{\"a\":1}", true)
 	assert_true(file_exists(target))
 	assert_equal(read_file(target), "{\"a\":1}")
-	atomic_write_file(target, "{\"a\":2}")
+	write_file_atomic(target, "{\"a\":2}", true)
 	assert_equal(read_file(target), "{\"a\":2}")
 }
 
