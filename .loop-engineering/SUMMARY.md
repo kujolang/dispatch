@@ -6,13 +6,13 @@ success
 
 ## Completed
 
-- configured loop run completed through iteration 1
+- configured loop run completed through iteration 2
 
 ## Verification
 
-- passed: kujo_checks, cli_smoke, diff_check
+- passed: diff_check, diff_check, kujo_checks, cli_smoke, diff_check
 - blocked: none
-- failed: none
+- failed: kujo_checks, regression_tests
 
 ## Commits
 
