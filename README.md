@@ -41,6 +41,7 @@ Single-step chat calls are rarely enough when work needs to be repeated, reviewe
 - Health diagnostics and repair (`doctor`, `doctor --write`)
 - Report generation (`report.md`, `report.json`)
 - Trace generation (`trace.json`, `trace.md`)
+- Provider-neutral human-intervention events for Leash ChatOps routing
 
 ## Architecture Overview
 
