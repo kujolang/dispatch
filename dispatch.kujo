@@ -30,7 +30,7 @@ func print_help() {
 		"  kujo run dispatch.kujo version",
 		"",
 		"  demo also accepts [--workflow-file spec.json] [--input-json '{...}'] [--plugin sample].",
-		"  demo/resume also accept [--webhook-sink path.jsonl] [--webhook-url https-url] [--cancel-after-step step-id]."
+		"  demo/resume also accept [--webhook-sink path.jsonl] [--webhook-url https-url] [--leash-url https-url] [--cancel-after-step step-id]."
 	])
 }
 
@@ -721,6 +721,7 @@ func run_demo(command_args) {
 			"--plugin": {"takes_value": true, "default": ""},
 			"--webhook-sink": {"takes_value": true, "default": ""},
 			"--webhook-url": {"takes_value": true, "default": ""},
+			"--leash-url": {"takes_value": true, "default": ""},
 			"--cancel-after-step": {"takes_value": true, "default": ""},
 			"--trace-max-events": {"takes_value": true, "default": "400"},
 			"--trace-max-payload-chars": {"takes_value": true, "default": "2400"}
@@ -756,6 +757,7 @@ func run_demo(command_args) {
 	simulated_note := dispatch_resolve_string_flag(parsed, command_args, "--note", config, ["note"], "")
 	webhook_sink := resolve_webhook_sink_or_exit(dispatch_resolve_string_flag(parsed, command_args, "--webhook-sink", config, ["webhook_sink", "webhook-sink"], ""))
 	webhook_url := trim(dispatch_resolve_string_flag(parsed, command_args, "--webhook-url", config, ["webhook_url", "webhook-url"], ""))
+	leash_url := trim(dispatch_resolve_string_flag(parsed, command_args, "--leash-url", config, ["leash_url", "leash-url"], ""))
 	cancel_after_step := trim(dispatch_resolve_string_flag(parsed, command_args, "--cancel-after-step", config, ["cancel_after_step", "cancel-after-step"], ""))
 	trace_max_events_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-events", config, ["trace_max_events", "trace-max-events"], "400"), "--trace-max-events", 400)
 	trace_max_payload_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-payload-chars", config, ["trace_max_payload_chars", "trace-max-payload-chars"], "2400"), "--trace-max-payload-chars", 2400)
@@ -834,6 +836,8 @@ func run_demo(command_args) {
 		"simulated_note": simulated_note,
 		"webhook_sink": webhook_sink,
 		"webhook_url": webhook_url,
+		"leash_url": leash_url,
+		"leash_callback_url": leash_url,
 		"cancel_after_step_id": cancel_after_step,
 		"event_hook": plugin_runtime["event_hook"]
 	})
@@ -980,6 +984,7 @@ func run_resume(command_args) {
 			"--plugin": {"takes_value": true, "default": ""},
 			"--webhook-sink": {"takes_value": true, "default": ""},
 			"--webhook-url": {"takes_value": true, "default": ""},
+			"--leash-url": {"takes_value": true, "default": ""},
 			"--cancel-after-step": {"takes_value": true, "default": ""},
 			"--trace-max-events": {"takes_value": true, "default": "400"},
 			"--trace-max-payload-chars": {"takes_value": true, "default": "2400"}
@@ -1009,6 +1014,7 @@ func run_resume(command_args) {
 	simulated_note := dispatch_resolve_string_flag(parsed, command_args, "--note", config, ["note"], "")
 	webhook_sink := resolve_webhook_sink_or_exit(dispatch_resolve_string_flag(parsed, command_args, "--webhook-sink", config, ["webhook_sink", "webhook-sink"], ""))
 	webhook_url := trim(dispatch_resolve_string_flag(parsed, command_args, "--webhook-url", config, ["webhook_url", "webhook-url"], ""))
+	leash_url := trim(dispatch_resolve_string_flag(parsed, command_args, "--leash-url", config, ["leash_url", "leash-url"], ""))
 	cancel_after_step := trim(dispatch_resolve_string_flag(parsed, command_args, "--cancel-after-step", config, ["cancel_after_step", "cancel-after-step"], ""))
 	trace_max_events_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-events", config, ["trace_max_events", "trace-max-events"], "400"), "--trace-max-events", 400)
 	trace_max_payload_result := parse_non_negative_number(dispatch_resolve_string_flag(parsed, command_args, "--trace-max-payload-chars", config, ["trace_max_payload_chars", "trace-max-payload-chars"], "2400"), "--trace-max-payload-chars", 2400)
@@ -1084,6 +1090,8 @@ func run_resume(command_args) {
 		"simulated_note": simulated_note,
 		"webhook_sink": webhook_sink,
 		"webhook_url": webhook_url,
+		"leash_url": leash_url,
+		"leash_callback_url": leash_url,
 		"cancel_after_step_id": cancel_after_step,
 		"event_hook": plugin_runtime["event_hook"],
 		"trace_max_events": trace_max_events,

@@ -10,7 +10,7 @@ from src.core.state import persist_run_state, append_policy_deny_audit_record
 from src.core.step import mark_step_started, mark_step_succeeded, mark_step_failed, mark_step_paused, mark_step_skipped
 from src.tools.tool import call_tool, build_tool_payload
 from src.agents.agent import run_agent
-from src.core.hooks import create_lifecycle_event, emit_hook_event
+from src.core.hooks import create_lifecycle_event, create_human_intervention_event, emit_hook_event
 
 func replace_step(steps, target_index, replacement_step) {
 	if target_index >= 0 && target_index < len(steps) {
@@ -604,13 +604,20 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 			if step["type"] == "approval" {
 				run_state["approvals"] := push(run_state["approvals"], dict_get_or(executed, "data", {}))
 			}
+			if step["type"] == "approval" {
+				human_event := create_human_intervention_event(run_state, step, dict_get_or(executed, "data", {}), options)
+				run_state["human_intervention"] := human_event
+			}
 			run_state["trace"] := append_trace(run_state["trace"], "step_paused", step["id"], "Workflow paused at approval gate.", {
 				"decision": dict_get_or(dict_get_or(executed, "data", {}), "decision", "pending")
 			})
+			run_state := persist_run_state(run_state)
 			emit_lifecycle_event(run_state, options, "step_paused", step["id"], "Workflow paused at approval gate.", {
 				"decision": dict_get_or(dict_get_or(executed, "data", {}), "decision", "pending")
 			})
-			run_state := persist_run_state(run_state)
+			if step["type"] == "approval" {
+				emit_hook_event(options, dict_get_or(run_state, "human_intervention", {}))
+			}
 			return {
 				"ok": true,
 				"paused": true,

@@ -9,6 +9,15 @@ func normalize_decision(raw_value, empty_fallback) {
 	if normalized == "changes" || normalized == "request_changes" || normalized == "c" {
 		return "request_changes"
 	}
+	if normalized == "reply" || normalized == "input" || normalized == "instruction" {
+		return "reply"
+	}
+	if normalized == "cancel" || normalized == "cancelled" {
+		return "cancel"
+	}
+	if normalized == "acknowledge" || normalized == "ack" {
+		return "acknowledge"
+	}
 	if normalized == "pending" || normalized == "" {
 		return empty_fallback
 	}

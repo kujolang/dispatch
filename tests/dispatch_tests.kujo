@@ -1260,6 +1260,10 @@ test "request changes pause can be resumed to completion" {
 	assert_true(first["paused"])
 	paused_state := first["run_state"]
 	assert_equal(paused_state["status"], "needs_changes")
+	assert_equal(paused_state["human_intervention"]["event_type"], "human_intervention_required")
+	assert_equal(paused_state["human_intervention"]["run"]["run_id"], paused_state["run_id"])
+	assert_equal(paused_state["human_intervention"]["run"]["step_id"], "approval_gate")
+	assert_equal(paused_state["human_intervention"]["security"]["decision_id"], paused_state["approvals"][0]["id"])
 
 	second := run_workflow(workflow, paused_state, tool_registry, {
 		"auto_approve": true,
