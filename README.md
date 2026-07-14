@@ -41,7 +41,8 @@ Single-step chat calls are rarely enough when work needs to be repeated, reviewe
 - Health diagnostics and repair (`doctor`, `doctor --write`)
 - Report generation (`report.md`, `report.json`)
 - Trace generation (`trace.json`, `trace.md`)
-- Provider-neutral human-intervention events for Leash ChatOps routing
+- Provider-neutral human-intervention events and validated `resume-decision`
+  bridge handoff for Leash ChatOps routing
 
 ## Architecture Overview
 
@@ -218,6 +219,7 @@ kujo run dispatch.kujo demo "How do AI workflows improve reliability?" --non-int
 
 ```bash
 kujo run dispatch.kujo resume <run-id> --yes
+kujo run dispatch.kujo resume-decision decision.json --output-root outputs --non-interactive
 ```
 
 ### 4. Inspect runs and diagnostics
