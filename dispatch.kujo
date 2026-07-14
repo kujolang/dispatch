@@ -1,10 +1,10 @@
-from src.core.utils import dict_get_or
+from src.core.utils import dict_get_or, read_json_or
 from src.core.decision import normalize_decision
 from src.cli.cli_args import parse_cli_args, parsed_has_flag, parsed_flag_value
 from src.workflows.workflow import create_workflow_by_template, list_workflow_templates
 from src.workflows.loader import load_workflow_from_file
 from src.tools.tool import register_default_tools, normalize_sources_dir
-from src.core.state import create_run_state, load_run_state, list_runs, list_runs_with_diagnostics, summarize_run, filter_runs, paginate_runs, build_run_catalog, prune_runs, doctor_runs, normalize_output_root, mutation_audit_path, export_run_bundle, import_run_bundle
+from src.core.state import create_run_state, persist_run_state, load_run_state, list_runs, list_runs_with_diagnostics, summarize_run, filter_runs, paginate_runs, build_run_catalog, prune_runs, doctor_runs, normalize_output_root, mutation_audit_path, export_run_bundle, import_run_bundle
 from src.core.runner import run_workflow
 from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_policy_with_profile
 from src.cli.output import print_lines, print_kv, print_error, exit_error, print_item, print_nested_item, print_report_path_if_present, read_package_version, run_version, build_contract_metadata, build_artifact_paths, print_run_completion, print_artifact_summary
@@ -21,6 +21,7 @@ func print_help() {
 		"  kujo run dispatch.kujo show <run-id> [--output-root outputs] [--json]",
 		"  kujo run dispatch.kujo inspect <run-id> [--output-root outputs] [--json]",
 		"  kujo run dispatch.kujo resume <run-id> [--workflow research-report] [--policy-profile staging] [--yes] [--non-interactive] [--output-root outputs]",
+		"  kujo run dispatch.kujo resume-decision <decision.json> [--output-root outputs] [--non-interactive]",
 		"  kujo run dispatch.kujo templates [--json]",
 		"  kujo run dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]",
 		"  kujo run dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
@@ -1107,6 +1108,130 @@ func run_resume(command_args) {
 	}
 }
 
+func resume_decision_error(code, message) {
+	return {
+		"ok": false,
+		"error": {
+			"code": code,
+			"message": message,
+			"retryable": false
+		}
+	}
+}
+
+func run_resume_decision(command_args) {
+	parsed := parse_cli_args(command_args, {
+		"flags": {
+			"--config": {"takes_value": true, "default": ""},
+			"--output-root": {"takes_value": true, "default": "outputs"},
+			"--sources-dir": {"takes_value": true, "default": "examples/research-report/sources"},
+			"--non-interactive": {"takes_value": false, "default": false},
+			"--leash-url": {"takes_value": true, "default": ""},
+			"--webhook-sink": {"takes_value": true, "default": ""},
+			"--webhook-url": {"takes_value": true, "default": ""}
+		}
+	})
+	if parsed["ok"] == false {
+		exit_error(parsed["error"]["message"])
+	}
+	positionals := parsed_positionals_or_empty(parsed)
+	if len(positionals) < 1 {
+		exit_error("decision JSON path is required for resume-decision command.")
+	}
+	decision_path := to_string(positionals[0])
+	decision := read_json_or(decision_path, null)
+	if type(decision) != "dict" {
+		exit_error("Decision payload could not be read as JSON.")
+	}
+	run_id := trim(to_string(dict_get_or(decision, "run_id", "")))
+	step_id := trim(to_string(dict_get_or(decision, "step_id", "")))
+	event_id := trim(to_string(dict_get_or(decision, "event_id", "")))
+	decision_id := trim(to_string(dict_get_or(decision, "decision_id", "")))
+	decision_value := to_lower(trim(to_string(dict_get_or(decision, "decision", ""))))
+	if run_id == "" || step_id == "" || event_id == "" || decision_id == "" {
+		exit_error(resume_decision_error("invalid_resume_request", "Decision must contain decision_id, event_id, run_id, and step_id.")["error"]["message"])
+	}
+	decision_map := {
+		"approve": "approve",
+		"approved": "approve",
+		"reject": "reject",
+		"rejected": "reject",
+		"request_changes": "changes",
+		"changes": "changes",
+		"reply": "reply",
+		"cancel": "cancel"
+	}
+	if has_key(decision_map, decision_value) == 0 {
+		exit_error("Unsupported decision value: " + decision_value)
+	}
+	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
+	loaded := load_run_state(output_root, run_id)
+	if loaded["ok"] == false {
+		exit_error(loaded["error"]["message"])
+	}
+	run_state := loaded["run_state"]
+	human_event := dict_get_or(run_state, "human_intervention", {})
+	if dict_get_or(human_event, "event_id", "") != event_id || dict_get_or(dict_get_or(human_event, "run", {}), "step_id", "") != step_id {
+		exit_error("Resume request does not match the currently suspended event and step.")
+	}
+	if dict_get_or(dict_get_or(human_event, "run", {}), "run_id", "") != run_id {
+		exit_error("Resume request is bound to a different run.")
+	}
+	decision_history := dict_get_or(run_state, "human_decisions", {})
+	if type(decision_history) != "dict" {
+		decision_history := {}
+	}
+	if has_key(decision_history, decision_id) == 1 {
+		print(to_json({"status": "already_applied", "run_id": run_id, "decision_id": decision_id}))
+		return
+	}
+	if dict_get_or(run_state, "status", "") != "paused" && dict_get_or(run_state, "status", "") != "needs_changes" {
+		print(to_json({"status": "already_terminal", "run_id": run_id, "decision_id": decision_id, "run_status": dict_get_or(run_state, "status", "")}))
+		return
+	}
+	decision_history[decision_id] := {
+		"event_id": event_id,
+		"step_id": step_id,
+		"decision": decision_value,
+		"status": "claimed",
+		"claimed_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
+	}
+	run_state["human_decisions"] := decision_history
+	run_state["last_human_decision"] := decision
+	run_state := persist_run_state(run_state)
+	topic := dict_get_or(dict_get_or(run_state, "input", {}), "topic", "")
+	workflow_template_id := dict_get_or(dict_get_or(run_state, "options", {}), "workflow_template_id", "research-report")
+	workflow_result := create_workflow_by_template(workflow_template_id, topic, false)
+	if workflow_result["ok"] == false {
+		exit_error(workflow_result["error"]["message"])
+	}
+	workflow := workflow_result["workflow"]
+	sources_dir := parsed_flag_value(parsed, "--sources-dir", "examples/research-report/sources")
+	tool_registry := register_default_tools(sources_dir)
+	options := {
+		"auto_approve": false,
+		"interactive": false,
+		"command_name": "resume-decision",
+		"simulated_decision": decision_map[decision_value],
+		"simulated_note": dict_get_or(decision, "response", ""),
+		"webhook_sink": resolve_webhook_sink_or_exit(parsed_flag_value(parsed, "--webhook-sink", "")),
+		"webhook_url": trim(parsed_flag_value(parsed, "--webhook-url", "")),
+		"leash_url": trim(parsed_flag_value(parsed, "--leash-url", "")),
+		"leash_callback_url": trim(parsed_flag_value(parsed, "--leash-url", ""))
+	}
+	result := run_workflow(workflow, run_state, tool_registry, options)
+	final_state := result["run_state"]
+	print_run_completion(final_state)
+	resume_status := dict_get_or(final_state, "status", "unknown")
+	if result["paused"] {
+		resume_status := "paused_again"
+	}
+	print(to_json({"status": resume_status, "run_id": run_id, "decision_id": decision_id, "event_id": event_id}))
+	if result["ok"] == false {
+		exit_error(to_json(result["error"]))
+	}
+}
+
 func run_runs(command_args) {
 	parsed := parse_cli_args(command_args, {
 		"flags": {
@@ -1494,6 +1619,10 @@ if command == "inspect" {
 }
 if command == "resume" {
 	run_resume(command_args)
+	return
+}
+if command == "resume-decision" {
+	run_resume_decision(command_args)
 	return
 }
 if command == "runs" {

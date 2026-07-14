@@ -2444,6 +2444,7 @@ test "dispatch help usage snapshot remains compatible" {
 		"kujo run dispatch.kujo show <run-id> [--output-root outputs] [--json]",
 		"kujo run dispatch.kujo inspect <run-id> [--output-root outputs] [--json]",
 		"kujo run dispatch.kujo resume <run-id> [--workflow research-report] [--policy-profile staging] [--yes] [--non-interactive] [--output-root outputs]",
+		"kujo run dispatch.kujo resume-decision <decision.json> [--output-root outputs] [--non-interactive]",
 		"kujo run dispatch.kujo templates [--json]",
 		"kujo run dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]",
 		"kujo run dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
