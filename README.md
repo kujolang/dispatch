@@ -91,6 +91,8 @@ Dispatch uses the same pattern as `ai-chat`:
 
 This keeps SDK behavior centralized in one repository (`ai-sdk`) while allowing Dispatch to remain lightweight.
 
+The bridge forwards AI SDK structured-output controls (`response_format`, `structured_output_schema`, and `structured_output_retryable`) when callers provide them. This keeps JSON-mode and schema validation policy in the SDK instead of reimplementing it in Dispatch.
+
 ## Prerequisites
 
 - Kujo CLI/runtime installed for local fixture runs

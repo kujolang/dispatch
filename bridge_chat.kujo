@@ -160,6 +160,18 @@ options := {
 	"retry_delay_ms": dict_get_or(payload, "retry_delay_ms", 250)
 }
 
+# Preserve provider-neutral structured-output controls at the Dispatch bridge
+# boundary instead of silently dropping options already owned by the AI SDK.
+if has_key(payload, "response_format") {
+	options["response_format"] := payload["response_format"]
+}
+if has_key(payload, "structured_output_schema") {
+	options["structured_output_schema"] := payload["structured_output_schema"]
+}
+if has_key(payload, "structured_output_retryable") {
+	options["structured_output_retryable"] := payload["structured_output_retryable"]
+}
+
 if dict_get_or(payload, "offline_fixture", false) {
 	options["offline_fixture"] := true
 }
