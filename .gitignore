@@ -45,3 +45,4 @@ outputs/
 # Kujo dispatch transient test artifacts
 tests/tmp/*
 !tests/tmp/.gitkeep
+.loop-engineering/
