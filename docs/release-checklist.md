@@ -22,7 +22,7 @@ Set runtime environment:
 
 ```bash
 pushd "$(git rev-parse --show-toplevel)"
-export KUJO_BIN=/path/to/kujo
+export KUJO_BIN=kujo
 export DISPATCH_OFFLINE_FIXTURE=true
 ```
 

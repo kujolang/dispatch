@@ -33,7 +33,7 @@ For each task cycle:
 5. Run the local CI-equivalent gate when feasible:
 
 ```bash
-export KUJO_BIN=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/kujo
+export KUJO_BIN=kujo
 export DISPATCH_OFFLINE_FIXTURE=true
 
 $KUJO_BIN test-run tests/sdk_adapter_tests.kujo -v

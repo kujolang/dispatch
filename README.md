@@ -122,7 +122,7 @@ State: outputs/run-.../state.json
 Trace: outputs/run-.../trace.json
 ```
 
-Set `KUJO_BIN` when Dispatch child bridge calls should use a specific Kujo binary, and set `AI_SDK_PATH` only when validating live SDK behavior.
+Set `KUJO_BIN=kujo` when Dispatch child bridge calls should use the installed Kujo command, and set `AI_SDK_PATH` only when validating live SDK behavior.
 
 For a full offline tour (approval gate, resume, signed bundle export/import, a user-authored workflow, plugins, and event sinks), see `examples/quickstart-walkthrough.md`. Performance harnesses live in `docs/benchmarks.md`.
 
@@ -357,7 +357,7 @@ $KUJO_BIN test-run tests/dispatch_tests.kujo -v
 Equivalent local validation:
 
 ```bash
-export KUJO_BIN=/path/to/kujo/target/debug/kujo
+export KUJO_BIN=kujo
 export DISPATCH_OFFLINE_FIXTURE=true
 
 $KUJO_BIN test-run tests/sdk_adapter_tests.kujo -v
@@ -404,7 +404,7 @@ For v1.0 pre-release walkthroughs, prefer the repository-root invocation pattern
 
 ```bash
 pushd "$(git rev-parse --show-toplevel)"
-export KUJO_BIN=/path/to/kujo
+export KUJO_BIN=kujo
 export DISPATCH_OFFLINE_FIXTURE=true
 
 $KUJO_BIN test-run tests/sdk_adapter_tests.kujo -v
@@ -461,7 +461,7 @@ Set `AI_SDK_PATH` to a directory that contains both `ai_sdk.kujo` and `providers
 
 ### Bridge execution errors
 
-- Verify `KUJO_BIN` points to a valid Kujo binary.
+- Verify `KUJO_BIN` resolves to a valid Kujo command, usually `kujo`.
 - Verify `DISPATCH_SDK_BRIDGE_SCRIPT` (if set) points to a valid file.
 - Run with `--interpreter` during development.
 - Bridge parse and execution failures redact raw stdout/stderr by default; set `DISPATCH_SDK_DEBUG_OUTPUT=true` only for local debugging.

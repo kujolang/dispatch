@@ -45,7 +45,7 @@ Acceptance criteria:
 - Unsafe output-root values fail with clear, actionable errors.
 Validation/testing expectations:
 - Add tests for safe and rejected output-root paths.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Added output-root normalization/guardrails with explicit unsafe-path blocking and opt-in override | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Added output-root normalization/guardrails with explicit unsafe-path blocking and opt-in override | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ### [x] SEC-008: Add canonical path verification for source lookup
 Priority: High
@@ -58,7 +58,7 @@ Acceptance criteria:
 - Canonicalized path escapes are blocked.
 Validation/testing expectations:
 - Add tests for alias/symlink-like path edge cases.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Added canonical path checks and root containment enforcement for source lookup | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Added canonical path checks and root containment enforcement for source lookup | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ### [x] SEC-009: Add mutation audit artifact for doctor --write and cleanup --apply
 Priority: High
@@ -70,7 +70,7 @@ Acceptance criteria:
 - Stateful repair/cleanup operations leave an auditable trail.
 Validation/testing expectations:
 - Add tests validating audit record creation and shape.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Added dispatch mutation audit JSONL artifact for doctor/cleanup/import paths and CLI visibility | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Added dispatch mutation audit JSONL artifact for doctor/cleanup/import paths and CLI visibility | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ## Tier 1 - Performance and Scale
 
@@ -85,7 +85,7 @@ Acceptance criteria:
 - Run listing avoids full state-file scans for common queries.
 Validation/testing expectations:
 - Add tests verifying index creation, update, and fallback behavior.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Implemented .dispatch-run-index metadata path with persist/update/read fallback logic | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Implemented .dispatch-run-index metadata path with persist/update/read fallback logic | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ### [x] PERF-002: Bound trace growth and add truncation policy
 Priority: High
@@ -98,7 +98,7 @@ Acceptance criteria:
 - Very large runs do not create unbounded trace artifacts.
 Validation/testing expectations:
 - Add tests for truncation behavior and retained metadata.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Added configurable trace truncation limits and preserved truncation metadata in trace artifacts | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Added configurable trace truncation limits and preserved truncation metadata in trace artifacts | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ### [x] PERF-003: Add filtered counts independent of pagination window
 Priority: Medium
@@ -110,7 +110,7 @@ Acceptance criteria:
 - JSON output clearly distinguishes page metrics vs full filtered metrics.
 Validation/testing expectations:
 - Add tests for metric correctness across limit/offset combinations.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Exposed page and filtered catalogs independently in runs JSON output | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Exposed page and filtered catalogs independently in runs JSON output | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ## Tier 2 - Architecture and Presentation Quality
 
@@ -125,7 +125,7 @@ Acceptance criteria:
 - Codebase supports shimless mode without regressions.
 Validation/testing expectations:
 - Add import smoke tests in both compatibility and shimless modes.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Added DISPATCH_SHIMLESS_MODE guards to root compatibility wrappers to support src-only migration mode | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Added DISPATCH_SHIMLESS_MODE guards to root compatibility wrappers to support src-only migration mode | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ### [x] ARCH-009: Consolidate utilities into src/core namespace
 Priority: Medium
@@ -138,7 +138,7 @@ Acceptance criteria:
 - New modules import shared helpers from src/core paths.
 Validation/testing expectations:
 - Full suite passes after utility namespace consolidation.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Consolidated shared helpers into src/core utils/errors/memory modules and aligned imports | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Consolidated shared helpers into src/core utils/errors/memory modules and aligned imports | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ### [x] DOC-001: Add enterprise deployment guide section
 Priority: Medium
@@ -151,7 +151,7 @@ Acceptance criteria:
 - New adopters can evaluate production readiness requirements quickly.
 Validation/testing expectations:
 - Documentation review for consistency with actual CLI behavior.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Added enterprise deployment guidance doc and linked operational assumptions/non-goals in docs | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Added enterprise deployment guidance doc and linked operational assumptions/non-goals in docs | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ## Tier 3 - Functional Growth
 
@@ -166,7 +166,7 @@ Acceptance criteria:
 - Teams can run repeatable workflows from committed config files.
 Validation/testing expectations:
 - Add integration tests for config parsing and flag precedence.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Added JSON/YAML config loading with deterministic CLI-over-config precedence for demo/resume | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Added JSON/YAML config loading with deterministic CLI-over-config precedence for demo/resume | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ### [x] FEAT-008: Add pluggable authorization policy for tool execution
 Priority: Medium
@@ -178,7 +178,7 @@ Acceptance criteria:
 - Tool calls can be centrally constrained for policy/compliance needs.
 Validation/testing expectations:
 - Add tests for allow/deny policy outcomes.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Added pluggable tool authorization policy evaluation in runner tool execution pipeline | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Added pluggable tool authorization policy evaluation in runner tool execution pipeline | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ### [x] FEAT-009: Add run export/import bundle command
 Priority: Low
@@ -190,7 +190,7 @@ Acceptance criteria:
 - Portable run artifacts support migration and debugging workflows.
 Validation/testing expectations:
 - Add round-trip export/import integration tests.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Added export-run/import-run CLI commands with portable bundle serialization round trip | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Added export-run/import-run CLI commands with portable bundle serialization round trip | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ## Cross-Cutting Testing Backlog
 
@@ -202,7 +202,7 @@ Implementation expectations:
 - Add matrix tests for invalid numeric flags, invalid statuses, and malformed command combinations.
 Acceptance criteria:
 - CLI failures are deterministic and user-friendly.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Added negative-path matrix coverage for invalid flags/statuses/argument combinations | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Added negative-path matrix coverage for invalid flags/statuses/argument combinations | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ### [x] TEST-002: Add long-run stress fixture test
 Priority: Medium
@@ -212,7 +212,7 @@ Implementation expectations:
 - Add fixture generating many steps/events to validate performance and trace bounds.
 Acceptance criteria:
 - Stress paths remain stable and artifact sizes controlled.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Added long-run stress fixture and assertions for bounded traces under heavy step/event volume | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Added long-run stress fixture and assertions for bounded traces under heavy step/event volume | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ### [x] TEST-003: Add corruption-repair integration matrix
 Priority: Medium
@@ -222,7 +222,7 @@ Implementation expectations:
 - Cover malformed JSON, partial files, missing artifacts, and repair outcomes.
 Acceptance criteria:
 - Doctor/repair behavior is predictable across realistic corruption modes.
-Done notes: 2026-05-22 | GPT-5.3-Codex | Added corruption matrix coverage for malformed state and partial/missing artifact scenarios | tests run: /path/to/kujo/target/debug/kujo test-run tests/dispatch_tests.kujo -v (54/54)
+Done notes: 2026-05-22 | GPT-5.3-Codex | Added corruption matrix coverage for malformed state and partial/missing artifact scenarios | tests run: kujo test-run tests/dispatch_tests.kujo -v (54/54)
 
 ## Suggested Next Execution Order
 

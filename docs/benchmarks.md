@@ -42,7 +42,7 @@ Throughput (runs/sec): <10000/T>
 smoke checks. Use the release gate for blocking validation:
 
 ```bash
-export KUJO_BIN=/path/to/kujo
+export KUJO_BIN=kujo
 bash scripts/run_release_gate.sh
 ```
 
