@@ -29,6 +29,9 @@ Each release section should include only shipped changes and use these headings 
 ## [Unreleased]
 
 ### Added
+- Added `scripts/run_release_gate.sh`, a bounded release-validation gate that
+  runs focused integration suites and generated shards of the broad Dispatch
+  contract suite.
 - Added a declarative workflow loader: `demo --workflow-file <spec.json>` builds and runs a user-authored workflow from JSON (`src/workflows/loader.kujo`), with an example at `examples/workflows/custom-review.json`.
 - Added per-template report builders: the `crud-reliability` report now renders purpose-built Contract/Migration/Auth/Error-Budget sections.
 - Added structured run input via `demo --input-json '{...}'`, merged into the run input alongside `topic`.

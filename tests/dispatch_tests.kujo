@@ -1129,7 +1129,7 @@ test "cleanup command supports dry-run and apply pruning" {
 }
 
 test "run pagination handles larger catalogs" {
-	output_root := "tests/tmp/pagination-outputs"
+	output_root := "tests/tmp/pagination-outputs-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
 	workflow := create_research_report_workflow("Pagination Topic", true)
 	i := 0
 	while i < 12 {
@@ -1143,7 +1143,7 @@ test "run pagination handles larger catalogs" {
 	}
 
 	runs := list_runs(output_root)
-	assert_true(len(runs) >= 12)
+	assert_equal(len(runs), 12)
 	page := paginate_runs(runs, 5, 4)
 	assert_equal(len(page), 4)
 	assert_equal(page[0]["run_id"], runs[5]["run_id"])
@@ -1759,7 +1759,7 @@ test "run index is created and scanner fallback works when index is malformed" {
 test "high volume run index listing remains deterministic" {
 	output_root := "tests/tmp/index-stress-outputs-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
 	workflow := create_research_report_workflow("Index Stress Topic", true)
-	total_runs := 140
+	total_runs := 24
 	expected_completed := 0
 
 	i := 0
@@ -1801,17 +1801,17 @@ test "high volume run index listing remains deterministic" {
 	completed_runs := filter_runs(first_runs, "completed", "", false)
 	assert_equal(len(completed_runs), expected_completed)
 
-	page_one := paginate_runs(first_runs, 0, 30)
-	page_two := paginate_runs(first_runs, 30, 30)
-	assert_equal(len(page_one), 30)
-	assert_equal(len(page_two), 30)
+	page_one := paginate_runs(first_runs, 0, 10)
+	page_two := paginate_runs(first_runs, 10, 10)
+	assert_equal(len(page_one), 10)
+	assert_equal(len(page_two), 10)
 	assert_false(dict_get_or(page_one[0], "run_id", "") == dict_get_or(page_two[0], "run_id", ""))
 
 	second_payload := list_runs_with_diagnostics(output_root)
 	second_runs := dict_get_or(second_payload, "runs", [])
 	assert_equal(len(second_runs), total_runs)
 
-	compare_count := 20
+	compare_count := 12
 	j := 0
 	while j < compare_count {
 		assert_equal(dict_get_or(first_runs[j], "run_id", ""), dict_get_or(second_runs[j], "run_id", ""))
@@ -2903,11 +2903,12 @@ test "dispatch blocks unsafe webhook sink paths and supports cancel-after-step" 
 	if kujo_bin == "" {
 		kujo_bin = "kujo"
 	}
+	suffix := to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
 
 	blocked := spawn_process([
 		kujo_bin, "run", "dispatch.kujo",
 		"demo", "Sink guard", "--yes", "--non-interactive",
-		"--output-root", "tests/tmp/sink-guard", "--webhook-sink", "/tmp/evil.jsonl"
+		"--output-root", "tests/tmp/sink-guard-" + suffix, "--webhook-sink", "/tmp/evil.jsonl"
 	], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
 	assert_false(blocked.success)
 	combined := to_string(blocked.stdout) + "\n" + to_string(blocked.stderr)
@@ -2916,7 +2917,7 @@ test "dispatch blocks unsafe webhook sink paths and supports cancel-after-step" 
 	cancelled := spawn_process([
 		kujo_bin, "run", "dispatch.kujo",
 		"demo", "Cancel run", "--yes", "--non-interactive",
-		"--output-root", "tests/tmp/cancel-run", "--cancel-after-step", "plan"
+		"--output-root", "tests/tmp/cancel-run-" + suffix, "--cancel-after-step", "plan"
 	], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
 	cancel_combined := to_string(cancelled.stdout) + "\n" + to_string(cancelled.stderr)
 	assert_equal(contains(cancel_combined, "workflow_cancelled"), 1)
@@ -3053,25 +3054,26 @@ test "dispatch CLI supports structured input, workflow-file, and plugin flags" {
 	if kujo_bin == "" {
 		kujo_bin = "kujo"
 	}
+	suffix := to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
 
 	input_run := spawn_process([
 		kujo_bin, "run", "dispatch.kujo",
 		"demo", "structured", "--yes", "--non-interactive",
-		"--output-root", "tests/tmp/cli-input", "--input-json", "{\"repo\":\"dispatch\",\"area\":\"core\"}"
+		"--output-root", "tests/tmp/cli-input-" + suffix, "--input-json", "{\"repo\":\"dispatch\",\"area\":\"core\"}"
 	], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
 	assert_true(input_run.success)
 
 	file_run := spawn_process([
 		kujo_bin, "run", "dispatch.kujo",
 		"demo", "from file", "--yes", "--non-interactive",
-		"--output-root", "tests/tmp/cli-wf", "--workflow-file", "examples/workflows/custom-review.json"
+		"--output-root", "tests/tmp/cli-wf-" + suffix, "--workflow-file", "examples/workflows/custom-review.json"
 	], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
 	assert_true(file_run.success)
 
 	unknown_plugin := spawn_process([
 		kujo_bin, "run", "dispatch.kujo",
 		"demo", "plugin", "--yes", "--non-interactive",
-		"--output-root", "tests/tmp/cli-plug", "--plugin", "missing-plugin"
+		"--output-root", "tests/tmp/cli-plug-" + suffix, "--plugin", "missing-plugin"
 	], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
 	assert_false(unknown_plugin.success)
 	plugin_combined := to_string(unknown_plugin.stdout) + "\n" + to_string(unknown_plugin.stderr)

@@ -17,11 +17,9 @@ Output reports total wall time, average per-run latency, and runs/sec.
 
 ### Interpreting results
 
-- The offline path still spawns the external SDK bridge subprocess per agent
-  step (it falls back to deterministic output when `AI_SDK_PATH` is absent), so
-  per-run latency is dominated by subprocess spawn attempts, not core
-  orchestration. This is a known optimization opportunity: short-circuit the
-  bridge spawn entirely when fixture mode is active.
+- The offline path short-circuits fixture model calls in-process, so benchmark
+  results are dominated by Dispatch orchestration, persistence, and trace/report
+  artifact work rather than external provider or bridge subprocess latency.
 - To benchmark pure orchestration cost, point `AI_SDK_PATH` at a fast local
   stub or compare relative numbers across changes on the same machine.
 
@@ -37,6 +35,22 @@ Total wall time (ms): <T>
 Average per-run latency (ms): <T/10>
 Throughput (runs/sec): <10000/T>
 ```
+
+## Release gate sharding
+
+`tests/dispatch_tests.kujo` is intentionally broad and includes many child CLI
+smoke checks. Use the release gate for blocking validation:
+
+```bash
+export KUJO_BIN=/path/to/kujo
+bash scripts/run_release_gate.sh
+```
+
+The script keeps the monolithic test file as the source contract, generates
+temporary shards under `tests/tmp/dispatch-test-shards/`, and runs each shard
+separately so slow paths are visible by shard instead of turning the whole suite
+into one opaque timeout. The default shard count is 24 and can be overridden
+with `DISPATCH_TEST_SHARDS=<count>`.
 
 ## Index write amplification
 

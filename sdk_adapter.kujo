@@ -185,7 +185,44 @@ func resolve_bridge_timeout_ms(options) {
 	return parsed
 }
 
+func build_offline_fixture_model_result(agent, user_prompt, options) {
+	model_config := dict_get_or(agent, "model", {})
+	model_name := dict_get_or(model_config, "model", "")
+	provider_id := to_lower(to_string(dict_get_or(model_config, "provider", "openai")))
+	if model_name == "" {
+		model_name := "gpt-4.1-mini"
+	}
+	prompt_text := trim(to_string(user_prompt))
+	output_text := "Dispatch offline fixture response."
+	if prompt_text != "" {
+		output_text = "Dispatch offline fixture response for: " + prompt_text
+	}
+
+	return {
+		"ok": true,
+		"provider": provider_id,
+		"model": model_name,
+		"output_text": output_text,
+		"finish_reason": "stop",
+		"status_code": 200,
+		"normalized_at": current_timestamp(),
+		"usage": {
+			"input_tokens": len(prompt_text),
+			"output_tokens": len(output_text),
+			"total_tokens": len(prompt_text) + len(output_text)
+		},
+		"raw": {
+			"fixture": true,
+			"source": "dispatch-sdk-adapter"
+		}
+	}
+}
+
 func call_agent_model(agent, user_prompt, options) {
+	if model_fixture_enabled(options) {
+		return build_offline_fixture_model_result(agent, user_prompt, options)
+	}
+
 	paths := resolve_bridge_paths()
 	payload := build_bridge_payload(agent, user_prompt, options)
 	payload_json := to_json(payload)
@@ -233,3 +270,4 @@ export build_bridge_parse_error_details := build_bridge_parse_error_details
 export build_bridge_exec_error_message := build_bridge_exec_error_message
 export build_bridge_spawn_command := build_bridge_spawn_command
 export resolve_bridge_timeout_ms := resolve_bridge_timeout_ms
+export build_offline_fixture_model_result := build_offline_fixture_model_result

@@ -29,10 +29,16 @@ export DISPATCH_OFFLINE_FIXTURE=true
 Run release gate commands:
 
 ```bash
-$KUJO_BIN test-run tests/sdk_adapter_tests.kujo -v
-$KUJO_BIN test-run tests/policy_precedence_tests.kujo -v
-$KUJO_BIN test-run tests/dispatch_tests.kujo -v
+bash scripts/run_release_gate.sh
 ```
+
+The release gate shards `tests/dispatch_tests.kujo` into generated files under
+`tests/tmp/dispatch-test-shards/` before execution. The monolithic file remains
+the source test contract, but the release path stays bounded and easier to
+diagnose when a slow child CLI path regresses.
+
+Set `DISPATCH_TEST_SHARDS=<count>` to adjust shard count locally; the default is
+24 to keep slow workflow-heavy checks below the old monolithic timeout window.
 
 Run a command-surface smoke check:
 
