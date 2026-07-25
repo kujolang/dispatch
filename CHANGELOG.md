@@ -29,6 +29,7 @@ Each release section should include only shipped changes and use these headings 
 ## [Unreleased]
 
 ### Added
+- Added launch-readiness Spec and Eval suite for prelaunch review, with enterprise readiness proof kept scoped to target-environment validation.
 - Added `scripts/run_release_gate.sh`, a bounded release-validation gate that
   runs focused integration suites and generated shards of the broad Dispatch
   contract suite.

@@ -1,0 +1,64 @@
+# Spec - Dispatch launch readiness review
+
+name: "Dispatch launch readiness review"
+goal: "Keep Dispatch locally release-ready as a fixture-backed workflow orchestration engine for auditable Kujo agent runs."
+version: "0.1.0"
+background: "Dispatch is part of the Kujo prelaunch ecosystem review. The verified scope is local/offline workflow orchestration with persisted artifacts, policy checks, and deterministic run evidence."
+scope: "Repository-local CLI behavior, offline fixture workflow runs, sharded release gate tests, artifact contract checks, docs/readiness wording, and launch evidence capture."
+non_goals:
+  - "Publishing packages or public releases"
+  - "Deploying hosted workflow services"
+  - "Claiming production or enterprise readiness without target-environment validation"
+relevant_systems:
+  - "Kujo runtime"
+  - "Dispatch CLI"
+  - "offline fixtures"
+  - "prelaunch launch evidence packet"
+likely_files:
+  - "README.md"
+  - "dispatch.kujo"
+  - "docs/release-checklist.md"
+  - "docs/enterprise-deployment.md"
+  - "scripts/run_release_gate.sh"
+acceptance_criteria:
+  - "Offline fixture demo runs without live provider credentials."
+  - "Release gate script passes locally."
+  - "Version/help command surfaces work from the default VM path."
+  - "Eval launch suite proves version, templates, fixture demo, and artifact directory creation."
+  - "Enterprise documentation remains scoped as deployment guidance requiring target-environment validation."
+eval_requirements:
+  - description: "Run Dispatch release gate."
+    check_type: "command"
+    params:
+      command: "KUJO_BIN=kujo DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh"
+  - description: "Run offline fixture demo."
+    check_type: "command"
+    params:
+      command: "DISPATCH_OFFLINE_FIXTURE=true kujo run dispatch.kujo demo \"Dispatch launch readiness smoke\" --yes --non-interactive --decision approve --output-root tests/tmp/launch-smoke"
+  - description: "Run command-surface smokes."
+    check_type: "command"
+    params:
+      command: "kujo run dispatch.kujo --help >/dev/null && kujo run dispatch.kujo version >/dev/null && kujo run dispatch.kujo templates --json >/dev/null"
+risks:
+  - risk: "Enterprise deployment claims can be overstated if local fixture proof is treated as production proof."
+    mitigation: "Keep enterprise guide explicit that production readiness requires target-environment validation and surrounding platform controls."
+    severity: "high"
+  - risk: "Live SDK integration needs provider credentials and a local ai-sdk checkout."
+    mitigation: "Use offline fixture mode for local gates and record live SDK proof as external target-environment work."
+    severity: "medium"
+dependencies:
+  - "kujo on PATH"
+  - "Offline fixture mode enabled for local proof"
+  - "ai-sdk checkout and live credentials only for external live-provider proof"
+review_expectations:
+  - "Review run artifacts and trace/report contract metadata before release sign-off."
+  - "Review enterprise guide wording for unsupported readiness claims."
+human_approval_points:
+  - "Before publishing packages or public releases"
+  - "Before production deployment or enterprise readiness claims"
+  - "Before live provider credential validation"
+priority: "high"
+tags:
+  - "kujo"
+  - "dispatch"
+  - "launch-readiness"

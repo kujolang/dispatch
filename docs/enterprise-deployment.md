@@ -2,7 +2,7 @@
 
 ## Scope
 
-This guide describes production assumptions, hardening controls, and operational expectations for enterprise deployments of Dispatch.
+This guide describes production assumptions, hardening controls, and operational expectations for enterprise deployments of Dispatch. It is deployment guidance, not proof that any target environment is production-ready. Production or enterprise readiness requires running the release gate, offline fixture proof, live-provider checks where applicable, and platform security validation inside the target environment.
 
 ## Production Assumptions
 
