@@ -122,7 +122,7 @@ State: outputs/run-.../state.json
 Trace: outputs/run-.../trace.json
 ```
 
-Set `KUJO_BIN=kujo` when Dispatch child bridge calls should use the installed Kujo command, and set `AI_SDK_PATH` only when validating live SDK behavior.
+Dispatch child bridge calls use the installed `kujo` command by default; set `AI_SDK_PATH` only when validating live SDK behavior.
 
 For a full offline tour (approval gate, resume, signed bundle export/import, a user-authored workflow, plugins, and event sinks), see `examples/quickstart-walkthrough.md`. Performance harnesses live in `docs/benchmarks.md`.
 
@@ -349,20 +349,19 @@ Repository CI is enforced by GitHub Actions in `.github/workflows/ci-gate.yml`.
 The gate builds Kujo from `kujolang/kujo`, exports `KUJO_BIN` for test child processes, and runs:
 
 ```bash
-$KUJO_BIN test-run tests/sdk_adapter_tests.kujo -v
-$KUJO_BIN test-run tests/policy_precedence_tests.kujo -v
-$KUJO_BIN test-run tests/dispatch_tests.kujo -v
+kujo test-run tests/sdk_adapter_tests.kujo -v
+kujo test-run tests/policy_precedence_tests.kujo -v
+kujo test-run tests/dispatch_tests.kujo -v
 ```
 
 Equivalent local validation:
 
 ```bash
-export KUJO_BIN=kujo
 export DISPATCH_OFFLINE_FIXTURE=true
 
-$KUJO_BIN test-run tests/sdk_adapter_tests.kujo -v
-$KUJO_BIN test-run tests/policy_precedence_tests.kujo -v
-$KUJO_BIN test-run tests/dispatch_tests.kujo -v
+kujo test-run tests/sdk_adapter_tests.kujo -v
+kujo test-run tests/policy_precedence_tests.kujo -v
+kujo test-run tests/dispatch_tests.kujo -v
 ```
 
 ## Improvement Checklist
@@ -404,12 +403,11 @@ For v1.0 pre-release walkthroughs, prefer the repository-root invocation pattern
 
 ```bash
 pushd "$(git rev-parse --show-toplevel)"
-export KUJO_BIN=kujo
 export DISPATCH_OFFLINE_FIXTURE=true
 
-$KUJO_BIN test-run tests/sdk_adapter_tests.kujo -v
-$KUJO_BIN test-run tests/policy_precedence_tests.kujo -v
-$KUJO_BIN test-run tests/dispatch_tests.kujo -v
+kujo test-run tests/sdk_adapter_tests.kujo -v
+kujo test-run tests/policy_precedence_tests.kujo -v
+kujo test-run tests/dispatch_tests.kujo -v
 popd
 ```
 
