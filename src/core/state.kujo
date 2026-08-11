@@ -56,6 +56,37 @@ func normalize_output_root(raw_output_root) {
 	}
 }
 
+func validate_run_id(raw_run_id) {
+	run_id := trim(to_string(raw_run_id))
+	if run_id == "" {
+		return {
+			"ok": false,
+			"error": {
+				"code": "invalid_run_id",
+				"message": "Run ID is required.",
+				"retryable": false
+			}
+		}
+	}
+	allowed := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+	i := 0
+	while i < len(run_id) {
+		ch := substring(run_id, i, i + 1)
+		if contains(allowed, ch) == 0 {
+			return {
+				"ok": false,
+				"error": {
+					"code": "invalid_run_id",
+					"message": "Run ID contains unsupported characters.",
+					"retryable": false
+				}
+			}
+		}
+		i = i + 1
+	}
+	return {"ok": true, "run_id": run_id}
+}
+
 func run_index_path(output_root) {
 	return output_root + "/.dispatch-run-index.json"
 }
@@ -391,6 +422,35 @@ func list_runs_by_scanning_state(output_root) {
 	return sort_runs_by_updated_desc(runs)
 }
 
+func indexed_catalog_is_complete(output_root, indexed_runs) {
+	indexed_ids := {}
+	for run_item in indexed_runs {
+		indexed_ids[dict_get_or(run_item, "run_id", "")] := true
+	}
+	entries := []
+	try {
+		entries = list_dir(output_root)
+	} except err {
+		return len(indexed_runs) == 0
+	}
+	disk_count := 0
+	for entry in entries {
+		entry_name := replace(entry, "/", "")
+		if !starts_with(entry_name, "run-") {
+			continue
+		}
+		run_dir := output_root + "/" + entry_name
+		if file_exists(run_dir + "/.dispatch-pruned") || !file_exists(run_dir + "/state.json") {
+			continue
+		}
+		disk_count = disk_count + 1
+		if has_key(indexed_ids, entry_name) == 0 {
+			return false
+		}
+	}
+	return disk_count == len(indexed_runs)
+}
+
 func status_is_terminal(status) {
 	return status == "completed" || status == "failed" || status == "rejected" || status == "cancelled"
 }
@@ -606,7 +666,14 @@ func repair_run_state(run_state) {
 
 	if status == "running" {
 		if total_steps > 0 {
-			if run_state["current_step_index"] >= total_steps {
+			all_steps_succeeded := true
+			for step in steps {
+				step_status := dict_get_or(step, "status", "pending")
+				if step_status != "completed" && step_status != "skipped" {
+					all_steps_succeeded = false
+				}
+			}
+			if run_state["current_step_index"] >= total_steps && all_steps_succeeded {
 				run_state["status"] := "completed"
 				repaired := true
 				notes := push(notes, "Converted running status to completed because all steps were processed")
@@ -674,6 +741,31 @@ func clone_steps(step_items) {
 	return result
 }
 
+func build_persistable_workflow_definition(workflow) {
+	agents := {}
+	workflow_agents := dict_get_or(workflow, "agents", {})
+	if type(workflow_agents) == "dict" {
+		for agent_id in keys(workflow_agents) {
+			if agent_id != "__agent_handlers" {
+				agents[agent_id] := workflow_agents[agent_id]
+			}
+		}
+	}
+	return {
+		"id": dict_get_or(workflow, "id", ""),
+		"name": dict_get_or(workflow, "name", ""),
+		"description": dict_get_or(workflow, "description", ""),
+		"input_schema": dict_get_or(workflow, "input_schema", {"type": "dict"}),
+		"agents": agents,
+		"tools": dict_get_or(workflow, "tools", []),
+		"steps": clone_steps(dict_get_or(workflow, "steps", [])),
+		"memory_config": dict_get_or(workflow, "memory_config", {}),
+		"default_retry_policy": dict_get_or(workflow, "default_retry_policy", {}),
+		"approval_config": dict_get_or(workflow, "approval_config", {}),
+		"output_schema": dict_get_or(workflow, "output_schema", {"type": "dict"})
+	}
+}
+
 func create_run_state(workflow, input_payload, output_root, options) {
 	output_root_validation := normalize_output_root(output_root)
 	if output_root_validation["ok"] {
@@ -694,6 +786,7 @@ func create_run_state(workflow, input_payload, output_root, options) {
 		"run_id": run_id,
 		"workflow_id": workflow["id"],
 		"workflow_name": workflow["name"],
+		"workflow_definition": build_persistable_workflow_definition(workflow),
 		"status": "running",
 		"tags": normalize_run_tags(dict_get_or(options, "tags", [])),
 		"input": input_payload,
@@ -755,6 +848,11 @@ func load_run_state(output_root, run_id) {
 		return output_root_validation
 	}
 	output_root = output_root_validation["output_root"]
+	run_id_validation := validate_run_id(run_id)
+	if run_id_validation["ok"] == false {
+		return run_id_validation
+	}
+	run_id = run_id_validation["run_id"]
 	state_path := output_root + "/" + run_id + "/state.json"
 	loaded := read_json_or(state_path, null)
 	if type(loaded) == "null" {
@@ -813,7 +911,7 @@ func list_runs_with_diagnostics(output_root) {
 
 	runs_from_index := list_runs_from_index(output_root)
 	diagnostics["index_run_count"] := len(runs_from_index)
-	if len(runs_from_index) > 0 {
+	if len(runs_from_index) > 0 && indexed_catalog_is_complete(output_root, runs_from_index) {
 		return {
 			"runs": runs_from_index,
 			"diagnostics": diagnostics
@@ -1393,8 +1491,33 @@ func import_run_bundle(output_root, bundle_path, options) {
 			return bundle_signature_error("Bundle signature verification failed.")
 		}
 	}
+	state_content := to_string(dict_get_or(artifacts, "state_json", ""))
+	state_payload := null
+	if trim(state_content) != "" {
+		try {
+			state_payload = parse_json(state_content)
+		} except err {
+			state_payload = null
+		}
+	}
+	if type(state_payload) != "dict" {
+		return {
+			"ok": false,
+			"error": {
+				"code": "invalid_bundle",
+				"message": "Bundle must include a valid state_json object.",
+				"retryable": false
+			}
+		}
+	}
 	if source_run_id == "" {
 		source_run_id = "run-imported-" + to_string(current_timestamp())
+	} else {
+		run_id_validation := validate_run_id(source_run_id)
+		if run_id_validation["ok"] == false {
+			return run_id_validation
+		}
+		source_run_id = run_id_validation["run_id"]
 	}
 	target_run_id := source_run_id
 	while file_exists(output_root + "/" + target_run_id) {
@@ -1464,3 +1587,4 @@ export append_mutation_audit_record := append_mutation_audit_record
 export append_policy_deny_audit_record := append_policy_deny_audit_record
 export export_run_bundle := export_run_bundle
 export import_run_bundle := import_run_bundle
+export validate_run_id := validate_run_id
