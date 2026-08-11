@@ -1,5 +1,5 @@
 test_setup {
-	from src.workflows.workflow import create_research_report_workflow, create_workflow_by_template, create_workflow, list_workflow_templates
+	from src.workflows.workflow import create_research_report_workflow, create_approval_handoff_workflow, create_workflow_by_template, create_workflow, list_workflow_templates
 	from src.tools.tool import register_default_tools, call_tool, create_tool_registry, create_tool, register_tool, build_tool_payload
 	from src.core.retry import run_with_retry, compute_delay
 	from src.core.approval import create_approval_request, resolve_approval
@@ -675,6 +675,12 @@ test "doctor write persists repaired state changes" {
 		"interactive": false
 	})
 	run_state["status"] := "running"
+	completed_steps := []
+	for step in run_state["steps"] {
+		step["status"] := "completed"
+		completed_steps := push(completed_steps, step)
+	}
+	run_state["steps"] := completed_steps
 	run_state["current_step_index"] := len(run_state["steps"]) + 4
 	run_state := persist_run_state(run_state)
 
@@ -798,6 +804,12 @@ test "state repair can recover inconsistent running metadata" {
 		"interactive": false
 	})
 	run_state["status"] := "running"
+	completed_steps := []
+	for step in run_state["steps"] {
+		step["status"] := "completed"
+		completed_steps := push(completed_steps, step)
+	}
+	run_state["steps"] := completed_steps
 	run_state["current_step_index"] := len(run_state["steps"]) + 3
 	issues_before := detect_run_issues(run_state)
 	assert_true(len(issues_before) > 0)
@@ -3078,4 +3090,209 @@ test "dispatch CLI supports structured input, workflow-file, and plugin flags" {
 	assert_false(unknown_plugin.success)
 	plugin_combined := to_string(unknown_plugin.stdout) + "\n" + to_string(unknown_plugin.stderr)
 	assert_equal(contains(plugin_combined, "Unknown plugin"), 1)
+}
+
+test "run identifiers cannot escape the configured output root" {
+	root := "tests/tmp/run-id-guard-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	loaded := load_run_state(root, "../outside")
+	assert_false(loaded["ok"])
+	assert_equal(loaded["error"]["code"], "invalid_run_id")
+
+	bundle_path := root + "/malicious-bundle.json"
+	ensure_dir(root)
+	write_file(bundle_path, to_json({
+		"bundle_version": 1,
+		"run_id": "../outside",
+		"artifacts": {
+			"state_json": to_json({"run_id": "../outside", "status": "completed"})
+		}
+	}), true)
+	imported := import_run_bundle(root, bundle_path, {})
+	assert_false(imported["ok"])
+	assert_equal(imported["error"]["code"], "invalid_run_id")
+}
+
+test "bundle import requires a valid state artifact" {
+	root := "tests/tmp/import-state-guard-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	ensure_dir(root)
+	missing_path := root + "/missing-state.json"
+	write_file(missing_path, to_json({
+		"bundle_version": 1,
+		"run_id": "run-missing-state",
+		"artifacts": {"trace_json": "{}"}
+	}), true)
+	missing := import_run_bundle(root, missing_path, {})
+	assert_false(missing["ok"])
+	assert_equal(missing["error"]["code"], "invalid_bundle")
+
+	malformed_path := root + "/malformed-state.json"
+	write_file(malformed_path, to_json({
+		"bundle_version": 1,
+		"run_id": "run-malformed-state",
+		"artifacts": {"state_json": "not-json"}
+	}), true)
+	malformed := import_run_bundle(root, malformed_path, {})
+	assert_false(malformed["ok"])
+	assert_equal(malformed["error"]["code"], "invalid_bundle")
+}
+
+test "partial run indexes fall back to a complete state scan" {
+	root := "tests/tmp/partial-index-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	workflow := create_research_report_workflow("Partial index", true)
+	first := create_run_state(workflow, {"topic": "first"}, root, {"auto_approve": true, "interactive": false})
+	second := create_run_state(workflow, {"topic": "second"}, root, {"auto_approve": true, "interactive": false})
+	partial_runs := {}
+	partial_runs[first["run_id"]] := {
+		"status": first["status"],
+		"workflow_id": first["workflow_id"],
+		"workflow_name": first["workflow_name"],
+		"topic": "first",
+		"updated_at": first["updated_at"]
+	}
+	write_file(root + "/.dispatch-run-index.json", to_json({
+		"version": 1,
+		"runs": partial_runs
+	}), true)
+	listed := list_runs_with_diagnostics(root)
+	assert_equal(len(listed["runs"]), 2)
+	assert_equal(listed["diagnostics"]["index_source"], "scan")
+}
+
+test "doctor does not mark pending steps completed from index alone" {
+	workflow := create_research_report_workflow("Pending repair", true)
+	run_state := create_run_state(workflow, {"topic": "Pending repair"}, "tests/tmp/pending-repair", {"auto_approve": true, "interactive": false})
+	run_state["current_step_index"] := len(run_state["steps"])
+	run_state["status"] := "running"
+	repair := repair_run_state(run_state)
+	assert_equal(repair["run_state"]["status"], "running")
+}
+
+test "truncated trace payload previews redact sensitive values" {
+	trace := create_trace("run-trace-redaction", "Trace Redaction")
+	trace := apply_trace_limits(trace, {"trace_max_events": 10, "trace_max_payload_chars": 48})
+	secret_value := "dispatch-secret-that-must-never-appear"
+	trace := append_trace(trace, "custom", "step", "payload", {
+		"api_key": secret_value,
+		"padding": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+	})
+	serialized := to_json(trace)
+	assert_equal(contains(serialized, secret_value), 0)
+	assert_equal(contains(serialized, "[REDACTED]"), 1)
+	assert_true(dict_get_or(trace["events"][0]["payload"], "truncated", false))
+}
+
+test "invalid step output is not committed to the idempotency cache" {
+	workflow := create_workflow({
+		"id": "invalid_idempotent_output",
+		"name": "Invalid Idempotent Output",
+		"description": "Regression fixture",
+		"input_schema": {"type": "dict"},
+		"agents": {},
+		"tools": ["bad_output_tool"],
+		"steps": [create_step("bad", "Bad", "tool", {
+			"tool_name": "bad_output_tool",
+			"input_from": ["input"],
+			"output_key": "bad",
+			"output_schema": {"type": "dict"},
+			"idempotency_key": "bad-output-key"
+		})],
+		"memory_config": {},
+		"default_retry_policy": {"max_attempts": 1, "base_delay_ms": 0, "max_delay_ms": 0, "strategy": "none", "retry_on_codes": []},
+		"approval_config": {"auto_approve": true},
+		"output_schema": {"type": "dict"}
+	})
+	registry := create_tool_registry()
+	registry := register_tool(registry, create_tool(
+		"bad_output_tool", "Returns the wrong type.", {"type": "dict"}, {"type": "dict"},
+		func(input_payload, context) { return {"ok": true, "data": "wrong-type"} },
+		func(step_input) { return step_input }
+	))
+	run_state := create_run_state(workflow, {"topic": "bad output"}, "tests/tmp/idempotency-validation", {"auto_approve": true, "interactive": false})
+	result := run_workflow(workflow, run_state, registry, {"auto_approve": true, "interactive": false})
+	assert_false(result["ok"])
+	assert_equal(has_key(result["run_state"]["idempotency"], "bad-output-key"), 0)
+}
+
+test "final report metadata reflects the completed run" {
+	workflow := create_research_report_workflow("Final report lifecycle", true)
+	run_state := create_run_state(workflow, {"topic": "Final report lifecycle"}, "tests/tmp/final-report-lifecycle", {"auto_approve": true, "interactive": false})
+	result := run_workflow(workflow, run_state, register_default_tools("examples/research-report/sources"), {"auto_approve": true, "interactive": false})
+	assert_true(result["ok"])
+	report := parse_json(read_file(result["run_state"]["run_dir"] + "/report.json"))
+	assert_equal(report["run_status"], "completed")
+	assert_equal(report["completed_steps"], report["total_steps"])
+}
+
+test "persisted declarative workflow definitions can resume" {
+	root := "tests/tmp/custom-resume-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	workflow := create_workflow({
+		"id": "custom_pause_resume",
+		"name": "Custom Pause Resume",
+		"description": "Regression fixture",
+		"input_schema": {"type": "dict"},
+		"agents": {},
+		"tools": [],
+		"steps": [
+			create_step("approve", "Approve", "approval", {"approval_gate": {"reason": "review", "summary": "review"}, "output_key": "approval"}),
+			create_step("report", "Report", "report", {"depends_on": ["approve"], "output_key": "final_output"})
+		],
+		"memory_config": {},
+		"default_retry_policy": {"max_attempts": 1, "base_delay_ms": 0, "max_delay_ms": 0, "strategy": "none", "retry_on_codes": []},
+		"approval_config": {"auto_approve": false},
+		"output_schema": {"type": "dict"}
+	})
+	run_state := create_run_state(workflow, {"topic": "custom"}, root, {"auto_approve": false, "interactive": false, "workflow_template_id": "custom_pause_resume"})
+	paused := run_workflow(workflow, run_state, register_default_tools("examples/research-report/sources"), {"auto_approve": false, "interactive": false})
+	assert_true(paused["paused"])
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+	resumed := spawn_process([kujo_bin, "run", "dispatch.kujo", "resume", paused["run_state"]["run_id"], "--yes", "--non-interactive", "--output-root", root], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
+	assert_true(resumed.success)
+	loaded := load_run_state(root, paused["run_state"]["run_id"])
+	assert_equal(loaded["run_state"]["status"], "completed")
+}
+
+test "resume applies requested trace limits to persisted traces" {
+	root := "tests/tmp/resume-trace-limits-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	workflow := create_approval_handoff_workflow("Trace resume", false)
+	run_state := create_run_state(workflow, {"topic": "Trace resume"}, root, {"auto_approve": false, "interactive": false, "workflow_template_id": "approval-handoff"})
+	paused := run_workflow(workflow, run_state, register_default_tools("examples/research-report/sources"), {"auto_approve": false, "interactive": false})
+	assert_true(len(paused["run_state"]["trace"]["events"]) > 2)
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+	resumed := spawn_process([kujo_bin, "run", "dispatch.kujo", "resume", paused["run_state"]["run_id"], "--yes", "--non-interactive", "--output-root", root, "--trace-max-events", "2"], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
+	assert_true(resumed.success)
+	loaded := load_run_state(root, paused["run_state"]["run_id"])
+	assert_equal(len(loaded["run_state"]["trace"]["events"]), 2)
+	assert_equal(loaded["run_state"]["trace"]["limits"]["max_events"], 2)
+}
+
+test "resume decision rejects a mismatched approval decision id" {
+	root := "tests/tmp/decision-binding-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	workflow := create_approval_handoff_workflow("Decision binding", false)
+	run_state := create_run_state(workflow, {"topic": "Decision binding"}, root, {"auto_approve": false, "interactive": false, "workflow_template_id": "approval-handoff"})
+	paused := run_workflow(workflow, run_state, register_default_tools("examples/research-report/sources"), {"auto_approve": false, "interactive": false})
+	event := paused["run_state"]["human_intervention"]
+	decision_path := root + "/wrong-decision.json"
+	write_file(decision_path, to_json({
+		"decision_id": "approval-wrong-id",
+		"event_id": event["event_id"],
+		"run_id": paused["run_state"]["run_id"],
+		"step_id": event["run"]["step_id"],
+		"decision": "approve"
+	}), true)
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" {
+		kujo_bin = "kujo"
+	}
+	decision_result := spawn_process([kujo_bin, "run", "dispatch.kujo", "resume-decision", decision_path, "--output-root", root, "--non-interactive"], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
+	assert_false(decision_result.success)
+	combined := to_string(decision_result.stdout) + "\n" + to_string(decision_result.stderr)
+	assert_equal(contains(combined, "decision_id does not match"), 1)
+	loaded := load_run_state(root, paused["run_state"]["run_id"])
+	assert_equal(has_key(dict_get_or(loaded["run_state"], "human_decisions", {}), "approval-wrong-id"), 0)
 }

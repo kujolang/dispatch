@@ -6,6 +6,7 @@ from src.workflows.loader import load_workflow_from_file
 from src.tools.tool import register_default_tools, normalize_sources_dir
 from src.core.state import create_run_state, persist_run_state, load_run_state, list_runs, list_runs_with_diagnostics, summarize_run, filter_runs, paginate_runs, build_run_catalog, prune_runs, doctor_runs, normalize_output_root, mutation_audit_path, export_run_bundle, import_run_bundle
 from src.core.runner import run_workflow
+from src.core.trace import apply_trace_limits
 from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_policy_with_profile
 from src.cli.output import print_lines, print_kv, print_error, exit_error, print_item, print_nested_item, print_report_path_if_present, read_package_version, run_version, build_contract_metadata, build_artifact_paths, print_run_completion, print_artifact_summary
 from src.core.plugins import create_plugin_registry, register_plugin, apply_plugins_to_runtime
@@ -666,6 +667,24 @@ func dispatch_resolve_workflow(workflow_file, workflow_template_id, topic, auto_
 	return workflow_result["workflow"]
 }
 
+func dispatch_resolve_resume_workflow(run_state, explicit_template_id, topic, auto_approve) {
+	if trim(to_string(explicit_template_id)) == "" {
+		persisted_workflow := dict_get_or(run_state, "workflow_definition", null)
+		if type(persisted_workflow) == "dict" && trim(to_string(dict_get_or(persisted_workflow, "id", ""))) != "" {
+			return persisted_workflow
+		}
+	}
+	template_id := explicit_template_id
+	if trim(to_string(template_id)) == "" {
+		template_id = dict_get_or(dict_get_or(run_state, "options", {}), "workflow_template_id", "research-report")
+	}
+	workflow_result := create_workflow_by_template(template_id, topic, auto_approve)
+	if workflow_result["ok"] == false {
+		exit_error(workflow_result["error"]["message"])
+	}
+	return workflow_result["workflow"]
+}
+
 func dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, config) {
 	plugin_names := parse_tool_name_list(dispatch_resolve_string_flag(parsed, command_args, "--plugin", config, ["plugin", "plugins"], ""))
 	if len(plugin_names) == 0 {
@@ -1048,6 +1067,10 @@ func run_resume(command_args) {
 		exit_error(loaded["error"]["message"])
 	}
 	run_state := loaded["run_state"]
+	run_state["trace"] = apply_trace_limits(run_state["trace"], {
+		"trace_max_events": trace_max_events,
+		"trace_max_payload_chars": trace_max_payload_chars
+	})
 	if run_state["status"] == "completed" {
 		print("Run is already completed: " + run_id)
 		return
@@ -1069,15 +1092,7 @@ func run_resume(command_args) {
 	if has_key(run_state["input"], "topic") {
 		topic := run_state["input"]["topic"]
 	}
-	workflow_template_id := workflow_template_flag
-	if workflow_template_id == "" {
-		workflow_template_id = dict_get_or(dict_get_or(run_state, "options", {}), "workflow_template_id", "research-report")
-	}
-	workflow_result := create_workflow_by_template(workflow_template_id, topic, auto_approve)
-	if workflow_result["ok"] == false {
-		exit_error(workflow_result["error"]["message"])
-	}
-	workflow := workflow_result["workflow"]
+	workflow := dispatch_resolve_resume_workflow(run_state, workflow_template_flag, topic, auto_approve)
 	tool_registry := register_default_tools(sources_dir)
 	plugin_runtime := dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, config)
 	workflow = plugin_runtime["workflow"]
@@ -1177,11 +1192,15 @@ func run_resume_decision(command_args) {
 	if dict_get_or(dict_get_or(human_event, "run", {}), "run_id", "") != run_id {
 		exit_error("Resume request is bound to a different run.")
 	}
+	expected_decision_id := trim(to_string(dict_get_or(dict_get_or(human_event, "security", {}), "decision_id", "")))
+	if expected_decision_id == "" || decision_id != expected_decision_id {
+		exit_error("Resume request decision_id does not match the current approval.")
+	}
 	decision_history := dict_get_or(run_state, "human_decisions", {})
 	if type(decision_history) != "dict" {
 		decision_history := {}
 	}
-	if has_key(decision_history, decision_id) == 1 {
+	if has_key(decision_history, decision_id) == 1 && dict_get_or(decision_history[decision_id], "status", "") == "applied" {
 		print(to_json({"status": "already_applied", "run_id": run_id, "decision_id": decision_id}))
 		return
 	}
@@ -1189,6 +1208,8 @@ func run_resume_decision(command_args) {
 		print(to_json({"status": "already_terminal", "run_id": run_id, "decision_id": decision_id, "run_status": dict_get_or(run_state, "status", "")}))
 		return
 	}
+	topic := dict_get_or(dict_get_or(run_state, "input", {}), "topic", "")
+	workflow := dispatch_resolve_resume_workflow(run_state, "", topic, false)
 	decision_history[decision_id] := {
 		"event_id": event_id,
 		"step_id": step_id,
@@ -1199,13 +1220,6 @@ func run_resume_decision(command_args) {
 	run_state["human_decisions"] := decision_history
 	run_state["last_human_decision"] := decision
 	run_state := persist_run_state(run_state)
-	topic := dict_get_or(dict_get_or(run_state, "input", {}), "topic", "")
-	workflow_template_id := dict_get_or(dict_get_or(run_state, "options", {}), "workflow_template_id", "research-report")
-	workflow_result := create_workflow_by_template(workflow_template_id, topic, false)
-	if workflow_result["ok"] == false {
-		exit_error(workflow_result["error"]["message"])
-	}
-	workflow := workflow_result["workflow"]
 	sources_dir := parsed_flag_value(parsed, "--sources-dir", "examples/research-report/sources")
 	tool_registry := register_default_tools(sources_dir)
 	options := {
@@ -1219,15 +1233,32 @@ func run_resume_decision(command_args) {
 		"leash_url": trim(parsed_flag_value(parsed, "--leash-url", "")),
 		"leash_callback_url": trim(parsed_flag_value(parsed, "--leash-url", ""))
 	}
+	if decision_value == "reply" {
+		options["simulated_decision"] := "changes"
+	}
+	if decision_value == "cancel" {
+		options["simulated_decision"] := ""
+		options["cancel_requested"] := true
+	}
 	result := run_workflow(workflow, run_state, tool_registry, options)
 	final_state := result["run_state"]
+	final_history := dict_get_or(final_state, "human_decisions", {})
+	decision_record := dict_get_or(final_history, decision_id, {})
+	decision_record["status"] := "applied"
+	if result["ok"] == false && dict_get_or(result, "cancelled", false) == false {
+		decision_record["status"] := "failed"
+	}
+	decision_record["finished_at"] := format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
+	final_history[decision_id] := decision_record
+	final_state["human_decisions"] := final_history
+	final_state := persist_run_state(final_state)
 	print_run_completion(final_state)
 	resume_status := dict_get_or(final_state, "status", "unknown")
 	if result["paused"] {
 		resume_status := "paused_again"
 	}
 	print(to_json({"status": resume_status, "run_id": run_id, "decision_id": decision_id, "event_id": event_id}))
-	if result["ok"] == false {
+	if result["ok"] == false && dict_get_or(result, "cancelled", false) == false {
 		exit_error(to_json(result["error"]))
 	}
 }
