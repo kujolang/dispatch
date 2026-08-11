@@ -1,4 +1,4 @@
-from src.core.utils import summarize_value, dict_get_or
+from src.core.utils import summarize_value, dict_get_or, redact_sensitive_data
 
 func parse_positive_number(raw_value, default_value) {
 	parsed := default_value
@@ -55,6 +55,17 @@ func apply_trace_limits(trace_state, options) {
 	limits["max_payload_chars"] := parse_positive_number(dict_get_or(options, "trace_max_payload_chars", dict_get_or(limits, "max_payload_chars", 2400)), dict_get_or(limits, "max_payload_chars", 2400))
 	trace_state["limits"] := limits
 	truncation := dict_get_or(trace_state, "truncated", {})
+	events := dict_get_or(trace_state, "events", [])
+	if type(events) == "array" && len(events) > limits["max_events"] {
+		kept_events := []
+		event_index := 0
+		while event_index < limits["max_events"] {
+			kept_events := push(kept_events, events[event_index])
+			event_index = event_index + 1
+		}
+		truncation["events_dropped"] := dict_get_or(truncation, "events_dropped", 0) + (len(events) - len(kept_events))
+		trace_state["events"] := kept_events
+	}
 	truncation["max_events"] := limits["max_events"]
 	truncation["max_payload_chars"] := limits["max_payload_chars"]
 	trace_state["truncated"] := truncation
@@ -92,9 +103,10 @@ func append_trace(trace_state, event_type, step_id, message, payload) {
 		return trace_state
 	}
 
-	payload_json := to_json(payload)
-	payload_summary := summarize_value(payload, max_payload_chars)
-	stored_payload := payload
+	redacted_payload := redact_sensitive_data(payload)
+	payload_json := to_json(redacted_payload)
+	payload_summary := summarize_value(redacted_payload, max_payload_chars)
+	stored_payload := redacted_payload
 	if len(payload_json) > max_payload_chars {
 		stored_payload := {
 			"truncated": true,
