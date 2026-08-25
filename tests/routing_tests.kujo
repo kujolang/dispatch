@@ -1,5 +1,5 @@
 test_setup {
-	from src.core.routing import routing_policy_version, execution_compatibility, resolve_route, build_effective_agent, evaluate_route_output, route_failure_action
+	from src.core.routing import routing_policy_version, execution_compatibility, resolve_route, build_effective_agent, evaluate_route_output, route_failure_action, merge_constraint_layer, validate_workflow_routing
 	from src.workflows.workflow import create_workflow
 	from src.workflows.loader import load_workflow_from_spec
 	from src.core.step import create_step
@@ -79,16 +79,16 @@ test "legacy static routing preserves requested agent model" {
 
 test "quality first routing applies capability and quality floor" {
 	writer := base_agent("writer", "writer", "write", [
-		{"provider": "p", "model": "economy"},
-		{"provider": "p", "model": "frontier"}
+		{"provider": "openai", "model": "economy"},
+		{"provider": "openai", "model": "frontier"}
 	])
 	workflow := {
 		"agents": {"writer": writer},
 		"routing": {"enabled": true, "constraints": {"required_capabilities": ["write"], "quality_floor": "standard"}}
 	}
 	models := catalog([
-		{"provider": "p", "model": "economy", "quality_tier": "economy", "enabled": true},
-		{"provider": "p", "model": "frontier", "quality_tier": "frontier", "enabled": true}
+		{"provider": "openai", "model": "economy", "quality_tier": "economy", "enabled": true},
+		{"provider": "openai", "model": "frontier", "quality_tier": "frontier", "enabled": true}
 	])
 	result := resolve_route(route_request(workflow, {"id": "write", "agent_id": "writer", "config": {}}, models))
 	assert_true(result["ok"])
@@ -98,31 +98,31 @@ test "quality first routing applies capability and quality floor" {
 
 test "provider cost latency tool and schema constraints reject incompatible routes" {
 	writer := base_agent("writer", "writer", "write", [
-		{"provider": "denied", "model": "a"},
-		{"provider": "allowed", "model": "slow"},
-		{"provider": "allowed", "model": "good"}
+		{"provider": "deepseek", "model": "a"},
+		{"provider": "openai", "model": "slow"},
+		{"provider": "openai", "model": "good"}
 	])
 	workflow := {"agents": {"writer": writer}, "routing": {"enabled": true, "constraints": {
-		"allowed_providers": ["allowed"],
+		"allowed_providers": ["openai"],
 		"max_input_cost_per_million": 5.0,
 		"max_latency_ms": 1000,
 		"requires_tools": true,
 		"requires_structured_output": true
 	}}}
 	models := catalog([
-		{"provider": "denied", "model": "a", "quality_tier": "frontier", "enabled": true, "supports_tools": true, "supports_structured_output": true, "input_cost_per_million": 1.0, "typical_latency_ms": 100},
-		{"provider": "allowed", "model": "slow", "quality_tier": "frontier", "enabled": true, "supports_tools": true, "supports_structured_output": true, "input_cost_per_million": 1.0, "typical_latency_ms": 2000},
-		{"provider": "allowed", "model": "good", "quality_tier": "standard", "enabled": true, "supports_tools": true, "supports_structured_output": true, "input_cost_per_million": 3.0, "typical_latency_ms": 500}
+		{"provider": "deepseek", "model": "a", "quality_tier": "frontier", "enabled": true, "supports_tools": true, "supports_structured_output": true, "input_cost_per_million": 1.0, "typical_latency_ms": 100},
+		{"provider": "openai", "model": "slow", "quality_tier": "frontier", "enabled": true, "supports_tools": true, "supports_structured_output": true, "input_cost_per_million": 1.0, "typical_latency_ms": 2000},
+		{"provider": "openai", "model": "good", "quality_tier": "standard", "enabled": true, "supports_tools": true, "supports_structured_output": true, "input_cost_per_million": 3.0, "typical_latency_ms": 500}
 	])
 	result := resolve_route(route_request(workflow, {"id": "write", "agent_id": "writer", "config": {}}, models))
 	assert_true(result["ok"])
-	assert_equal(result["decision"]["provider_id"], "allowed")
+	assert_equal(result["decision"]["provider_id"], "openai")
 	assert_equal(result["decision"]["model"], "good")
 }
 
 test "deterministic tie break and decision id ignore candidate declaration order" {
-	first := {"provider": "p", "model": "b", "quality_tier": "standard", "enabled": true}
-	second := {"provider": "p", "model": "a", "quality_tier": "standard", "enabled": true}
+	first := {"provider": "openai", "model": "b", "quality_tier": "standard", "enabled": true}
+	second := {"provider": "openai", "model": "a", "quality_tier": "standard", "enabled": true}
 	agent_a := base_agent("writer", "writer", "write", [first, second])
 	agent_b := base_agent("writer", "writer", "write", [second, first])
 	step := {"id": "write", "agent_id": "writer", "config": {}}
@@ -133,25 +133,25 @@ test "deterministic tie break and decision id ignore candidate declaration order
 }
 
 test "agent substitution requires execution compatibility" {
-	requested := base_agent("writer-basic", "writer-a", "write", [{"provider": "p", "model": "basic"}])
-	candidate := base_agent("writer-premium", "writer-b", "write", [{"provider": "p", "model": "premium"}])
+	requested := base_agent("writer-basic", "writer-a", "write", [{"provider": "openai", "model": "basic"}])
+	candidate := base_agent("writer-premium", "writer-b", "write", [{"provider": "openai", "model": "premium"}])
 	assert_true(execution_compatibility(requested, candidate)["compatible"])
 	workflow := {"agents": {"writer-basic": requested, "writer-premium": candidate}, "routing": {"enabled": true, "allow_agent_substitution": true}}
 	models := catalog([
-		{"provider": "p", "model": "basic", "quality_tier": "standard", "enabled": true},
-		{"provider": "p", "model": "premium", "quality_tier": "frontier", "enabled": true}
+		{"provider": "openai", "model": "basic", "quality_tier": "standard", "enabled": true},
+		{"provider": "openai", "model": "premium", "quality_tier": "frontier", "enabled": true}
 	])
 	result := resolve_route(route_request(workflow, {"id": "write", "agent_id": "writer-basic", "config": {}}, models))
 	assert_equal(result["decision"]["selected_agent_id"], "writer-premium")
 
-	incompatible := base_agent("research", "research", "research", [{"provider": "p", "model": "premium"}])
+	incompatible := base_agent("research", "research", "research", [{"provider": "openai", "model": "premium"}])
 	assert_false(execution_compatibility(requested, incompatible)["compatible"])
 }
 
 test "no route error includes candidate evaluations" {
-	agent := base_agent("writer", "writer", "write", [{"provider": "p", "model": "unknown"}])
+	agent := base_agent("writer", "writer", "write", [{"provider": "openai", "model": "unknown"}])
 	workflow := {"agents": {"writer": agent}, "routing": {"enabled": true, "constraints": {"max_latency_ms": 100}}}
-	result := resolve_route(route_request(workflow, {"id": "write", "agent_id": "writer", "config": {}}, catalog([{"provider": "p", "model": "unknown", "enabled": true}])))
+	result := resolve_route(route_request(workflow, {"id": "write", "agent_id": "writer", "config": {}}, catalog([{"provider": "openai", "model": "unknown", "enabled": true}])))
 	assert_false(result["ok"])
 	assert_equal(result["error"]["code"], "no_route_available")
 	assert_equal(result["error"]["details"]["candidate_count"], 1)
@@ -161,7 +161,7 @@ test "effective agent clone changes model without mutating source" {
 	agent := base_agent("writer", "writer", "write", [])
 	agent["model"] := {"provider": "legacy", "model": "legacy"}
 	agents := {"writer": agent}
-	decision := {"selected_agent_id": "writer", "provider_id": "p", "model": "selected"}
+	decision := {"selected_agent_id": "writer", "provider_id": "openai", "model": "selected"}
 	effective := build_effective_agent(agents, decision, true)
 	assert_true(effective["ok"])
 	assert_equal(effective["agent"]["model"]["model"], "selected")
@@ -233,13 +233,13 @@ test "runner persists route before execution and records explicit fallback" {
 }
 
 test "plugin style compatible agent participates in deterministic selection" {
-	requested := base_agent("writer", "writer", "write", [{"provider": "p", "model": "standard"}])
-	plugin_agent := base_agent("plugin-writer", "plugin-writer", "write", [{"provider": "p", "model": "frontier"}])
+	requested := base_agent("writer", "writer", "write", [{"provider": "openai", "model": "standard"}])
+	plugin_agent := base_agent("plugin-writer", "plugin-writer", "write", [{"provider": "openai", "model": "frontier"}])
 	plugin_agent["plugin"] := {"id": "sample", "version": "1"}
 	workflow := {"agents": {"writer": requested, "plugin-writer": plugin_agent}, "routing": {"enabled": true, "allow_agent_substitution": true}}
 	models := catalog([
-		{"provider": "p", "model": "standard", "quality_tier": "standard", "enabled": true},
-		{"provider": "p", "model": "frontier", "quality_tier": "frontier", "enabled": true}
+		{"provider": "openai", "model": "standard", "quality_tier": "standard", "enabled": true},
+		{"provider": "openai", "model": "frontier", "quality_tier": "frontier", "enabled": true}
 	])
 	result := resolve_route(route_request(workflow, {"id": "write", "agent_id": "writer", "config": {}}, models))
 	assert_true(result["ok"])
@@ -248,8 +248,8 @@ test "plugin style compatible agent participates in deterministic selection" {
 
 test "context reliability risk and output schema constraints are hard filters" {
 	agent := base_agent("writer", "writer", "write", [
-		{"provider": "p", "model": "unsafe"},
-		{"provider": "p", "model": "safe"}
+		{"provider": "openai", "model": "unsafe"},
+		{"provider": "openai", "model": "safe"}
 	])
 	workflow := {"agents": {"writer": agent}, "routing": {"enabled": true, "constraints": {
 		"required_context_tokens": 8000,
@@ -258,8 +258,8 @@ test "context reliability risk and output schema constraints are hard filters" {
 		"output_schema_required": true
 	}}}
 	models := catalog([
-		{"provider": "p", "model": "unsafe", "quality_tier": "frontier", "enabled": true, "context_window": 32000, "reliability_score": 0.99, "risk": "high"},
-		{"provider": "p", "model": "safe", "quality_tier": "standard", "enabled": true, "context_window": 16000, "reliability_score": 0.98, "risk": "low"}
+		{"provider": "openai", "model": "unsafe", "quality_tier": "frontier", "enabled": true, "context_window": 32000, "reliability_score": 0.99, "risk": "high"},
+		{"provider": "openai", "model": "safe", "quality_tier": "standard", "enabled": true, "context_window": 16000, "reliability_score": 0.98, "risk": "low"}
 	])
 	result := resolve_route(route_request(workflow, {"id": "write", "agent_id": "writer", "config": {}}, models))
 	assert_true(result["ok"])
@@ -267,12 +267,12 @@ test "context reliability risk and output schema constraints are hard filters" {
 }
 
 test "routing rejects unknown constrained risk incompatible schemas and unsupported policy modes" {
-	primary := base_agent("primary", "handler", "write", [{"provider": "p", "model": "unknown-risk"}])
+	primary := base_agent("primary", "handler", "write", [{"provider": "openai", "model": "unknown-risk"}])
 	primary["routing"] := {}
 	primary["output_schema"] := {"type": "dict", "required": ["title"]}
 	agents := {"primary": primary}
 	step := {"id": "write", "agent_id": "primary", "output_schema": {"type": "dict", "required": ["title", "body"]}, "routing": {"constraints": {"maximum_risk": "low"}}, "config": {}}
-	model_catalog := catalog([{"provider": "p", "model": "unknown-risk", "quality_tier": "standard", "enabled": true}])
+	model_catalog := catalog([{"provider": "openai", "model": "unknown-risk", "quality_tier": "standard", "enabled": true}])
 	workflow := {"agents": agents, "routing": {"enabled": true, "policy_version": "1.0.0", "model_catalog": model_catalog}}
 	result := resolve_route(route_request(workflow, step, model_catalog))
 	assert_false(result["ok"])
@@ -289,10 +289,10 @@ test "routing rejects unknown constrained risk incompatible schemas and unsuppor
 }
 
 test "AI SDK catalog metadata is authoritative over agent candidate claims" {
-	agent := base_agent("writer", "writer", "write", [{"provider": "p", "model": "m", "quality_tier": "frontier", "relative_quality": 1.0}])
+	agent := base_agent("writer", "writer", "write", [{"provider": "openai", "model": "m", "quality_tier": "frontier", "relative_quality": 1.0}])
 	workflow := {"agents": {"writer": agent}, "routing": {"enabled": true}}
 	step := {"id": "write", "agent_id": "writer", "routing": {"constraints": {"quality_floor": "frontier"}}, "config": {}}
-	model_catalog := catalog([{"provider": "p", "model": "m", "quality_tier": "standard", "relative_quality": 0.5, "enabled": true}])
+	model_catalog := catalog([{"provider": "openai", "model": "m", "quality_tier": "standard", "relative_quality": 0.5, "enabled": true}])
 	workflow["routing"] := {"enabled": true, "model_catalog": model_catalog}
 	result := resolve_route(route_request(workflow, step, model_catalog))
 	assert_false(result["ok"])
@@ -301,13 +301,13 @@ test "AI SDK catalog metadata is authoritative over agent candidate claims" {
 }
 
 test "upgrade and reroute overrides enforce their distinct semantics" {
-	writer := base_agent("writer", "handler", "write", [{"provider": "p", "model": "standard"}, {"provider": "p", "model": "frontier"}])
-	alternate := base_agent("alternate", "handler", "write", [{"provider": "p", "model": "standard"}])
+	writer := base_agent("writer", "handler", "write", [{"provider": "openai", "model": "standard"}, {"provider": "openai", "model": "frontier"}])
+	alternate := base_agent("alternate", "handler", "write", [{"provider": "openai", "model": "standard"}])
 	workflow := {"agents": {"writer": writer, "alternate": alternate}, "routing": {"enabled": true, "allow_agent_substitution": true}}
 	step := {"id": "write", "agent_id": "writer", "config": {}}
 	model_catalog := catalog([
-		{"provider": "p", "model": "standard", "quality_tier": "standard", "relative_quality": 0.8, "enabled": true},
-		{"provider": "p", "model": "frontier", "quality_tier": "frontier", "relative_quality": 0.9, "enabled": true}
+		{"provider": "openai", "model": "standard", "quality_tier": "standard", "relative_quality": 0.8, "enabled": true},
+		{"provider": "openai", "model": "frontier", "quality_tier": "frontier", "relative_quality": 0.9, "enabled": true}
 	])
 	workflow["routing"] := {"enabled": true, "allow_agent_substitution": true, "model_catalog": model_catalog}
 	upgrade_request := route_request(workflow, step, model_catalog)
@@ -418,13 +418,13 @@ test "persisted decision is reused and sensitive route fields are redacted" {
 test "declarative loader preserves workflow agent and step routing contracts" {
 	spec := {
 		"id": "loaded-routing", "name": "Loaded Routing",
-		"agents": {"writer": base_agent("writer", "writer", "write", [{"provider": "p", "model": "m"}])},
+		"agents": {"writer": base_agent("writer", "writer", "write", [{"provider": "openai", "model": "m"}])},
 		"steps": [{
 			"id": "write", "name": "Write", "type": "agent", "agent_id": "writer", "input_from": ["input"], "output_key": "result",
 			"routing": {"allow_agent_substitution": false, "constraints": {"required_capabilities": ["write"]}},
 			"evaluation": {"required_fields": ["summary"], "on_failure": "failed"}
 		}],
-		"routing": {"enabled": true, "policy_version": "1.0.0", "model_catalog": catalog([{"provider": "p", "model": "m", "quality_tier": "standard", "enabled": true}])}
+		"routing": {"enabled": true, "policy_version": "1.0.0", "model_catalog": catalog([{"provider": "openai", "model": "m", "quality_tier": "standard", "enabled": true}])}
 	}
 	loaded := load_workflow_from_spec(spec)
 	assert_true(loaded["ok"])
@@ -433,4 +433,53 @@ test "declarative loader preserves workflow agent and step routing contracts" {
 	assert_equal(workflow["agents"]["writer"]["handler_id"], "writer")
 	assert_equal(workflow["steps"][0]["routing"]["constraints"]["required_capabilities"][0], "write")
 	assert_equal(workflow["steps"][0]["evaluation"]["required_fields"][0], "summary")
+}
+
+test "narrower policy layers cannot weaken broader routing constraints" {
+	merged := merge_constraint_layer({"allowed_providers": ["openai", "openrouter"], "required_capabilities": ["write"], "quality_floor": "premium", "max_latency_ms": 1000}, {"allowed_providers": ["openai", "deepseek"], "required_capabilities": ["review"], "quality_floor": "economy", "max_latency_ms": 5000})
+	assert_equal(len(merged["allowed_providers"]), 1)
+	assert_equal(merged["allowed_providers"][0], "openai")
+	assert_equal(len(merged["required_capabilities"]), 2)
+	assert_equal(merged["quality_floor"], "premium")
+	assert_equal(merged["max_latency_ms"], 1000)
+	empty := merge_constraint_layer({"allowed_providers": ["openai"]}, {"allowed_providers": []})
+	assert_equal(len(empty["allowed_providers"]), 0)
+	schema := merge_constraint_layer({"required_output_schema": {"type": "dict", "required": ["summary"], "properties": {"summary": {"type": "string"}}}}, {"required_output_schema": {"type": "dict", "required": ["citations"], "properties": {"citations": {"type": "array"}}}})
+	assert_equal(len(schema["required_output_schema"]["required"]), 2)
+}
+
+test "strict routing validation rejects unknown fields and providers" {
+	agent := base_agent("writer", "writer", "write", [{"provider": "mystery", "model": "unknown"}])
+	workflow := {"agents": {"writer": agent}, "steps": [], "routing": {"enabled": true, "bogus": true, "model_catalog": catalog([])}}
+	validation := validate_workflow_routing(workflow)
+	assert_false(validation["ok"])
+	assert_true(len(validation["errors"]) >= 2)
+}
+
+test "generic model handler executes a declarative routed agent" {
+	agent := base_agent("analyst", "model", "analyze", [{"provider": "fixture", "model": "fixture-model"}])
+	agent["instructions"] := "Analyze the provided input."
+	agent["tools"] := []
+	model_catalog := catalog([{"provider": "fixture", "model": "fixture-model", "quality_tier": "fixture", "enabled": true}])
+	workflow := create_workflow({"id": "generic-model", "name": "Generic Model", "description": "generic", "input_schema": {"type": "dict"}, "agents": {"analyst": agent}, "tools": [], "steps": [create_step("analyze", "Analyze", "agent", {"agent_id": "analyst", "input_from": ["input"], "output_key": "result"})], "memory_config": {}, "default_retry_policy": {"max_attempts": 1, "base_delay_ms": 0, "max_delay_ms": 0, "strategy": "none", "retry_on_codes": []}, "routing": {"enabled": true, "model_catalog": model_catalog}, "approval_config": {"auto_approve": true}, "output_schema": {"type": "dict"}})
+	assert_true(validate_workflow_routing(workflow)["ok"])
+	state := create_run_state(workflow, {"topic": "router"}, "tests/tmp/generic-model", {"auto_approve": true, "interactive": false})
+	result := run_workflow(workflow, state, {}, {"auto_approve": true, "interactive": false})
+	assert_true(result["ok"])
+	assert_equal(result["run_state"]["status"], "completed")
+}
+
+test "route evaluation pauses for native human review and resumes stored output" {
+	agent := base_agent("reviewer", "review-handler", "review", [{"provider": "fixture", "model": "fixture-model"}])
+	agent["uses_model"] := false
+	agent["instructions"] := "Review."
+	workflow := create_workflow({"id": "human-route-review", "name": "Human Route Review", "description": "review", "input_schema": {"type": "dict"}, "agents": {"reviewer": agent, "__agent_handlers": {"review-handler": func(agent_obj, step_input, run_state, tools, context) { return {"ok": true, "data": {"draft": "candidate"}} }}}, "tools": [], "steps": [create_step("review", "Review", "agent", {"agent_id": "reviewer", "input_from": ["input"], "output_key": "result", "evaluation": {"required_fields": ["approved"], "on_failure": "request_human_review"}})], "memory_config": {}, "default_retry_policy": {"max_attempts": 1, "base_delay_ms": 0, "max_delay_ms": 0, "strategy": "none", "retry_on_codes": []}, "routing": {"enabled": true, "model_catalog": catalog([{"provider": "fixture", "model": "fixture-model", "quality_tier": "fixture", "enabled": true}])}, "approval_config": {"auto_approve": false}, "output_schema": {"type": "dict"}})
+	state := create_run_state(workflow, {"topic": "review"}, "tests/tmp/human-route-review", {"auto_approve": false, "interactive": false})
+	paused := run_workflow(workflow, state, {}, {"auto_approve": false, "interactive": false})
+	assert_true(paused["paused"])
+	assert_equal(paused["run_state"]["steps"][0]["output"]["kind"], "route_human_review")
+	resumed := run_workflow(workflow, paused["run_state"], {}, {"auto_approve": false, "interactive": false, "simulated_decision": "approve", "simulated_note": "approved"})
+	assert_true(resumed["ok"])
+	assert_equal(resumed["run_state"]["status"], "completed")
+	assert_equal(resumed["run_state"]["data"]["result"]["draft"], "candidate")
 }

@@ -1,5 +1,5 @@
-from providers import openai_provider, openrouter_provider, deepseek_provider, custom_openai_compatible_provider
-from ai_sdk import create_client, create_message, chat_completion
+from src.providers import openai_provider, openrouter_provider, deepseek_provider, custom_openai_compatible_provider
+from src.ai_sdk import create_client, create_message, chat_completion
 
 func dict_get_or(obj, key, default_value) {
 	if type(obj) != "dict" {
@@ -27,15 +27,23 @@ func parse_payload_arg(raw_args) {
 }
 
 func resolve_provider(payload) {
-	provider_id := dict_get_or(payload, "provider_id", "openai")
+	provider_id := to_lower(trim(to_string(dict_get_or(payload, "provider_id", "openai"))))
 	model := dict_get_or(payload, "model", "")
+
+	if provider_id == "openai" {
+		provider := openai_provider()
+		if model != "" {
+			provider["default_model"] := model
+		}
+		return {"ok": true, "provider": provider}
+	}
 
 	if provider_id == "openrouter" {
 		provider := openrouter_provider()
 		if model != "" {
 			provider["default_model"] := model
 		}
-		return provider
+		return {"ok": true, "provider": provider}
 	}
 
 	if provider_id == "deepseek" {
@@ -43,7 +51,7 @@ func resolve_provider(payload) {
 		if model != "" {
 			provider["default_model"] := model
 		}
-		return provider
+		return {"ok": true, "provider": provider}
 	}
 
 	if provider_id == "custom" {
@@ -56,14 +64,17 @@ func resolve_provider(payload) {
 		if default_model == "" {
 			default_model := "gpt-4.1-mini"
 		}
-		return custom_openai_compatible_provider(base_url, api_key_env, default_model)
+		return {"ok": true, "provider": custom_openai_compatible_provider(base_url, api_key_env, default_model)}
 	}
 
-	provider := openai_provider()
-	if model != "" {
-		provider["default_model"] := model
+	return {
+		"ok": false,
+		"error": {
+			"code": "unsupported_provider",
+			"message": "Unsupported provider adapter: " + provider_id,
+			"retryable": false
+		}
 	}
-	return provider
 }
 
 func normalize_messages(raw_messages) {
@@ -143,7 +154,17 @@ if type(payload) != "dict" {
 	exit(1)
 }
 
-provider := resolve_provider(payload)
+provider_result := resolve_provider(payload)
+if dict_get_or(provider_result, "ok", false) == false {
+	provider_error := dict_get_or(provider_result, "error", {})
+	emit_error(
+		dict_get_or(provider_error, "code", "unsupported_provider"),
+		dict_get_or(provider_error, "message", "Unsupported provider adapter."),
+		400
+	)
+	exit(1)
+}
+provider := provider_result["provider"]
 api_key := dict_get_or(payload, "api_key", null)
 messages := normalize_messages(dict_get_or(payload, "messages", []))
 

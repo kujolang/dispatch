@@ -10,7 +10,7 @@ from src.core.state import persist_run_state, append_policy_deny_audit_record
 from src.core.step import mark_step_started, mark_step_succeeded, mark_step_failed, mark_step_paused, mark_step_skipped
 from src.tools.tool import call_tool, build_tool_payload
 from src.agents.agent import run_agent, run_agent_with_agent
-from src.core.routing import routing_policy_version, routing_is_enabled, resolve_route, build_effective_agent, evaluate_route_output, route_failure_action
+from src.core.routing import routing_policy_version, routing_is_enabled, resolve_route, build_effective_agent, evaluate_route_output, route_failure_action, validate_workflow_routing
 from src.core.hooks import create_lifecycle_event, create_human_intervention_event, emit_hook_event
 
 func replace_step(steps, target_index, replacement_step) {
@@ -364,7 +364,27 @@ func agent_evaluation_config(step, workflow) {
 	return configured
 }
 
-func execute_agent_step(step, workflow, step_input, run_state, tool_registry) {
+func execute_agent_step(step, workflow, step_input, run_state, tool_registry, options) {
+	previous_output := dict_get_or(step, "output", null)
+	if type(previous_output) == "dict" && dict_get_or(previous_output, "kind", "") == "route_human_review" {
+		approval_result := resolve_approval(previous_output["approval"], options)
+		if dict_get_or(approval_result, "ok", false) == false {
+			return {"ok": false, "error": approval_result["error"], "attempts": 1, "attempt_records": [], "run_state": run_state}
+		}
+		approval := approval_result["approval"]
+		if dict_get_or(approval_result, "paused", false) {
+			previous_output["approval"] := approval
+			return {"ok": true, "paused": true, "data": previous_output, "attempts": 1, "attempt_records": [], "run_state": run_state}
+		}
+		decision := dict_get_or(approval, "decision", "pending")
+		if decision == "approved" {
+			return {"ok": true, "data": previous_output["candidate_output"], "route_decision": previous_output["route_decision"], "route_evaluation": previous_output["route_evaluation"], "attempts": 1, "attempt_records": [], "run_state": run_state}
+		}
+		if decision == "rejected" {
+			rejected := approval_rejected_error(dict_get_or(approval, "reviewer_note", "Route output rejected by reviewer."))
+			return {"ok": false, "error": rejected["error"], "attempts": 1, "attempt_records": [], "run_state": run_state}
+		}
+	}
 	agent_id := dict_get_or(step, "agent_id", "")
 	routing_enabled := routing_is_enabled(workflow, step)
 	initial_route := resolve_initial_route(step, workflow, run_state)
@@ -405,7 +425,9 @@ func execute_agent_step(step, workflow, step_input, run_state, tool_registry) {
 
 		policy := resolve_retry_policy(step, workflow)
 		wrapped := run_with_retry("agent:" + dict_get_or(decision, "selected_agent_id", agent_id) + ":" + dict_get_or(decision, "provider_id", "") + ":" + dict_get_or(decision, "model", ""), policy, func(attempt_number) {
-			return run_agent_with_agent(effective_agent, handler_id, workflow["agents"], step_input, run_state, tool_registry)
+			agent_options := options
+			agent_options["step_id"] := dict_get_or(step, "id", "")
+			return run_agent_with_agent(effective_agent, handler_id, workflow["agents"], step_input, run_state, tool_registry, agent_options)
 		})
 		total_attempts = total_attempts + wrapped["attempts"]
 		for attempt_record in wrapped["attempt_records"] {
@@ -470,7 +492,24 @@ func execute_agent_step(step, workflow, step_input, run_state, tool_registry) {
 				failure_error = {"code": "quality_evaluation_failed", "message": "Route output did not satisfy deterministic evaluation.", "retryable": false, "details": evaluation}
 				fallback_reason = evaluation["outcome"]
 			} else if evaluation["outcome"] == "request_human_review" {
-				return {"ok": false, "error": {"code": "route_human_review_required", "message": "Route evaluation requires human review.", "retryable": false, "details": evaluation}, "attempts": total_attempts, "attempt_records": all_attempt_records, "route_decision": decision, "run_state": run_state}
+				candidate_output := wrapped["result"]["data"]
+				approval := create_approval_request(dict_get_or(step, "id", ""), "Route output requires human review", summarize_value(candidate_output, 240), {"route_decision": decision, "route_evaluation": evaluation, "candidate_output": candidate_output})
+				approval_result := resolve_approval(approval, options)
+				if dict_get_or(approval_result, "ok", false) == false {
+					return {"ok": false, "error": approval_result["error"], "attempts": total_attempts, "attempt_records": all_attempt_records, "route_decision": decision, "run_state": run_state}
+				}
+				resolved := approval_result["approval"]
+				if dict_get_or(approval_result, "paused", false) {
+					return {"ok": true, "paused": true, "data": {"kind": "route_human_review", "approval": resolved, "candidate_output": candidate_output, "route_decision": decision, "route_evaluation": evaluation}, "attempts": total_attempts, "attempt_records": all_attempt_records, "route_decision": decision, "run_state": run_state}
+				}
+				if dict_get_or(resolved, "decision", "") == "approved" {
+					return {"ok": true, "data": candidate_output, "route_decision": decision, "route_evaluation": evaluation, "attempts": total_attempts, "attempt_records": all_attempt_records, "run_state": run_state}
+				}
+				if dict_get_or(resolved, "decision", "") == "rejected" {
+					rejected := approval_rejected_error(dict_get_or(resolved, "reviewer_note", "Route output rejected by reviewer."))
+					return {"ok": false, "error": rejected["error"], "attempts": total_attempts, "attempt_records": all_attempt_records, "route_decision": decision, "run_state": run_state}
+				}
+				continue
 			} else {
 				return {"ok": false, "error": {"code": "quality_evaluation_failed", "message": "Route output did not satisfy deterministic evaluation.", "retryable": false, "details": evaluation}, "attempts": total_attempts, "attempt_records": all_attempt_records, "route_decision": decision, "run_state": run_state}
 			}
@@ -734,7 +773,7 @@ func execute_report_step(step, step_input, run_state) {
 func execute_step(step, workflow, step_input, run_state, tool_registry, options) {
 	step_type := dict_get_or(step, "type", "")
 	if step_type == "agent" {
-		return execute_agent_step(step, workflow, step_input, run_state, tool_registry)
+		return execute_agent_step(step, workflow, step_input, run_state, tool_registry, options)
 	}
 	if step_type == "tool" {
 		return execute_tool_step(step, workflow, step_input, run_state, tool_registry, options)
@@ -752,6 +791,10 @@ func execute_step(step, workflow, step_input, run_state, tool_registry, options)
 }
 
 func run_workflow(workflow, run_state, tool_registry, options) {
+	routing_validation := validate_workflow_routing(workflow)
+	if dict_get_or(routing_validation, "ok", false) == false {
+		return {"ok": false, "paused": false, "run_state": run_state, "error": {"code": "invalid_routing_config", "message": "Workflow routing configuration is invalid.", "retryable": false, "details": dict_get_or(routing_validation, "errors", [])}}
+	}
 	run_state["status"] := "running"
 	total_steps := len(run_state["steps"])
 	index := run_state["current_step_index"]
@@ -899,17 +942,17 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 			step := mark_step_paused(step, dict_get_or(executed, "data", null))
 			run_state["steps"] := replace_step(run_state["steps"], index, step)
 			run_state["status"] := "paused"
-			if step["type"] == "approval" {
+			if step["type"] == "approval" || dict_get_or(dict_get_or(executed, "data", {}), "kind", "") == "route_human_review" {
 				decision := dict_get_or(dict_get_or(executed, "data", {}), "decision", "pending")
 				if decision == "request_changes" {
 					run_state["status"] := "needs_changes"
 				}
 			}
 			run_state["current_step_index"] := index
-			if step["type"] == "approval" {
+			if step["type"] == "approval" || dict_get_or(dict_get_or(executed, "data", {}), "kind", "") == "route_human_review" {
 				run_state["approvals"] := push(run_state["approvals"], dict_get_or(executed, "data", {}))
 			}
-			if step["type"] == "approval" {
+			if step["type"] == "approval" || dict_get_or(dict_get_or(executed, "data", {}), "kind", "") == "route_human_review" {
 				human_event := create_human_intervention_event(run_state, step, dict_get_or(executed, "data", {}), options)
 				run_state["human_intervention"] := human_event
 			}
@@ -920,7 +963,7 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 			emit_lifecycle_event(run_state, options, "step_paused", step["id"], "Workflow paused at approval gate.", {
 				"decision": dict_get_or(dict_get_or(executed, "data", {}), "decision", "pending")
 			})
-			if step["type"] == "approval" {
+			if step["type"] == "approval" || dict_get_or(dict_get_or(executed, "data", {}), "kind", "") == "route_human_review" {
 				emit_hook_event(options, dict_get_or(run_state, "human_intervention", {}))
 			}
 			return {

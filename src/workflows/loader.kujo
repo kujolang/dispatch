@@ -139,7 +139,40 @@ func load_workflow_from_file(path) {
 	} except err {
 		return loader_error("Workflow file is not valid JSON: " + to_string(path))
 	}
-	return load_workflow_from_spec(parsed)
+	loaded := load_workflow_from_spec(parsed)
+	if dict_get_or(loaded, "ok", false) == false {
+		return loaded
+	}
+	workflow := loaded["workflow"]
+	routing := dict_get_or(workflow, "routing", {})
+	catalog_file := trim(to_string(dict_get_or(routing, "model_catalog_file", "")))
+	if catalog_file != "" {
+		resolved_catalog_file := catalog_file
+		if starts_with(catalog_file, "/") == false {
+			path_parts := split(replace(to_string(path), "\\", "/"), "/")
+			if len(path_parts) > 1 {
+				path_parts = slice(path_parts, 0, len(path_parts) - 1)
+				resolved_catalog_file = join(path_parts, "/") + "/" + catalog_file
+			}
+		}
+		catalog_body := safe_read_file(resolved_catalog_file, "")
+		if trim(catalog_body) == "" {
+			return loader_error("Model catalog file is empty or unreadable: " + resolved_catalog_file)
+		}
+		catalog := null
+		try {
+			catalog = parse_json(catalog_body)
+		} except err {
+			return loader_error("Model catalog file is not valid JSON: " + resolved_catalog_file)
+		}
+		if type(catalog) != "dict" {
+			return loader_error("Model catalog file must contain a JSON object: " + resolved_catalog_file)
+		}
+		routing["model_catalog"] := catalog
+		routing["model_catalog_source"] := resolved_catalog_file
+		workflow["routing"] := routing
+	}
+	return {"ok": true, "workflow": workflow}
 }
 
 export load_workflow_from_spec := load_workflow_from_spec

@@ -203,6 +203,84 @@ func writer_output(agent, step_input, run_state, tool_registry, context) {
 	}
 }
 
+func model_agent_output(agent, step_input, run_state, tool_registry, context) {
+	tool_results := {}
+	for tool_name in dict_get_or(agent, "tools", []) {
+		policy := dict_get_or(context, "tool_authorization_policy", null)
+		if type(policy) != "null" {
+			policy_decision := null
+			try {
+				policy_decision = policy({"run_id": dict_get_or(run_state, "run_id", ""), "workflow_id": dict_get_or(run_state, "workflow_id", ""), "step_id": dict_get_or(context, "step_id", ""), "tool_name": tool_name, "step_input": step_input, "status": dict_get_or(run_state, "status", "unknown")})
+			} except err {
+				return {"ok": false, "error": {"code": "tool_authorization_error", "message": "Tool authorization policy failed: " + tool_name, "retryable": false}}
+			}
+			if type(policy_decision) == "bool" && policy_decision == false {
+				return {"ok": false, "error": {"code": "tool_execution_denied", "message": "Tool execution denied by authorization policy: " + tool_name, "retryable": false}}
+			}
+			if type(policy_decision) == "dict" && dict_get_or(policy_decision, "allow", dict_get_or(policy_decision, "ok", false)) == false {
+				return {"ok": false, "error": {"code": "tool_execution_denied", "message": "Tool execution denied by authorization policy: " + tool_name, "retryable": false}}
+			}
+		}
+		tool_result := call_tool(tool_registry, tool_name, step_input, context)
+		if dict_get_or(tool_result, "ok", false) == false {
+			return tool_result
+		}
+		tool_results[tool_name] := dict_get_or(tool_result, "data", {})
+	}
+
+	prompt_payload := {"input": step_input}
+	if len(keys(tool_results)) > 0 {
+		prompt_payload["tool_results"] := tool_results
+	}
+	model_options := {
+		"max_tokens": dict_get_or(dict_get_or(agent, "model_options", {}), "max_tokens", 700),
+		"temperature": dict_get_or(dict_get_or(agent, "model_options", {}), "temperature", 0.2)
+	}
+	output_schema := dict_get_or(agent, "output_schema", null)
+	if type(output_schema) == "dict" && len(keys(output_schema)) > 0 {
+		model_options["response_format"] := {"type": "json_object"}
+		model_options["structured_output_schema"] := output_schema
+		model_options["structured_output_retryable"] := false
+	}
+	model_result := call_agent_model(agent, to_json(prompt_payload), model_options)
+	if dict_get_or(model_result, "ok", false) == false {
+		return model_result
+	}
+
+	output_text := to_string(dict_get_or(model_result, "output_text", ""))
+	data := {
+		"text": output_text,
+		"provider": dict_get_or(model_result, "provider", dict_get_or(dict_get_or(agent, "model", {}), "provider", "")),
+		"model": dict_get_or(model_result, "model", dict_get_or(dict_get_or(agent, "model", {}), "model", "")),
+		"tool_results": tool_results
+	}
+	if type(output_schema) == "dict" && len(keys(output_schema)) > 0 {
+		try {
+			parsed_output := parse_json(output_text)
+			if type(parsed_output) == "dict" {
+				data = parsed_output
+				data["__model"] := {
+					"provider": dict_get_or(model_result, "provider", ""),
+					"model": dict_get_or(model_result, "model", "")
+				}
+			}
+		} except err {
+			# AI SDK returns structured_output_invalid for live invalid JSON. The
+			# fixture path remains text-first so offline examples stay deterministic.
+		}
+	}
+	return {
+		"ok": true,
+		"data": data,
+		"model_calls": [{
+			"ok": true,
+			"provider": dict_get_or(model_result, "provider", ""),
+			"model": dict_get_or(model_result, "model", ""),
+			"usage": dict_get_or(model_result, "usage", {})
+		}]
+	}
+}
+
 func create_agent_handler_registry() {
 	return {}
 }
@@ -226,15 +304,20 @@ func register_default_agent_handlers() {
 	handler_registry := register_agent_handler(handler_registry, "writer", func(agent, step_input, run_state, tool_registry, context) {
 		return writer_output(agent, step_input, run_state, tool_registry, context)
 	})
+	handler_registry := register_agent_handler(handler_registry, "model", func(agent, step_input, run_state, tool_registry, context) {
+		return model_agent_output(agent, step_input, run_state, tool_registry, context)
+	})
 	return handler_registry
 }
 
-func run_agent_with_agent(agent, handler_id, workflow_agents, step_input, run_state, tool_registry) {
+func run_agent_with_agent(agent, handler_id, workflow_agents, step_input, run_state, tool_registry, options) {
 	agent_id := dict_get_or(agent, "id", "")
 	context := {
 		"run_id": run_state["run_id"],
 		"input": run_state["input"],
-		"sources_dir": dict_get_or(tool_registry, "__sources_dir", "examples/research-report/sources")
+		"sources_dir": dict_get_or(tool_registry, "__sources_dir", "examples/research-report/sources"),
+		"step_id": dict_get_or(options, "step_id", ""),
+		"tool_authorization_policy": dict_get_or(options, "tool_authorization_policy", null)
 	}
 	handler_registry := register_default_agent_handlers()
 	if has_key(workflow_agents, "__agent_handlers") {
@@ -269,7 +352,7 @@ func run_agent(agent_id, workflow_agents, step_input, run_state, tool_registry) 
 	}
 	agent := workflow_agents[agent_id]
 	handler_id := dict_get_or(agent, "handler_id", agent_id)
-	return run_agent_with_agent(agent, handler_id, workflow_agents, step_input, run_state, tool_registry)
+	return run_agent_with_agent(agent, handler_id, workflow_agents, step_input, run_state, tool_registry, {})
 }
 
 export create_agent := create_agent

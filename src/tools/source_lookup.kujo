@@ -154,6 +154,13 @@ func normalize_sources_dir(sources_dir) {
 			}
 		}
 	}
+	dispatch_root := trim(to_string(env("DISPATCH_ROOT")))
+	if dispatch_root != "" {
+		allowed_install_absolute := replace(dispatch_root, "\\", "/") + "/examples/research-report/sources"
+		if raw_value == allowed_install_absolute {
+			return {"ok": true, "sources_dir": canonicalize_path(allowed_install_absolute)}
+		}
+	}
 
 	return {
 		"ok": false,

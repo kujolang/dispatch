@@ -11,6 +11,19 @@ from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_
 from src.cli.output import print_lines, print_kv, print_error, exit_error, print_item, print_nested_item, print_report_path_if_present, read_package_version, run_version, build_contract_metadata, build_artifact_paths, print_run_completion, print_artifact_summary
 from src.core.plugins import create_plugin_registry, register_plugin, apply_plugins_to_runtime
 from src.plugins.builtin_plugins import resolve_builtin_plugins, collect_plugin_event_hooks
+from src.core.routing import validate_workflow_routing, resolve_route, routing_policy_version, supported_route_provider
+
+func dispatch_root_path(relative_path) {
+	root := trim(to_string(env("DISPATCH_ROOT")))
+	if root == "" {
+		return relative_path
+	}
+	return replace(root, "\\", "/") + "/" + relative_path
+}
+
+func default_sources_dir() {
+	return dispatch_root_path("examples/research-report/sources")
+}
 
 func print_help() {
 	print_lines([
@@ -29,6 +42,8 @@ func print_help() {
 		"  kujo run dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]",
 		"  kujo run dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]",
 		"  kujo run dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]",
+		"  kujo run dispatch.kujo validate --workflow-file workflow.json [--plugin sample] [--live] [--json]",
+		"  kujo run dispatch.kujo explain-route --workflow-file workflow.json [--step-id step-id] [--plugin sample] [--json]",
 		"  kujo run dispatch.kujo version",
 		"",
 		"  demo also accepts [--workflow-file spec.json] [--input-json '{...}'] [--plugin sample].",
@@ -729,6 +744,121 @@ func dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, confi
 	}
 }
 
+func routing_environment_preflight(workflow, live_mode) {
+	errors := []
+	warnings := []
+	routing := dict_get_or(workflow, "routing", {})
+	catalog := dict_get_or(routing, "model_catalog", {})
+	providers := []
+	for model in dict_get_or(catalog, "models", []) {
+		provider := to_lower(trim(to_string(dict_get_or(model, "provider", ""))))
+		provider_seen := false
+		for existing_provider in providers { if existing_provider == provider { provider_seen = true } }
+		if provider != "" && provider_seen == false {
+			providers := push(providers, provider)
+		}
+	}
+	providers = sort(providers)
+	for provider in providers {
+		if supported_route_provider(provider) == false {
+			errors := push(errors, {"path": "routing.model_catalog", "message": "Unsupported provider adapter: " + provider})
+			continue
+		}
+		if live_mode && provider == "fixture" {
+			errors := push(errors, {"path": "routing.model_catalog", "message": "Fixture providers are offline-only and cannot pass live preflight."})
+		} else if live_mode {
+			key_env := "OPENAI_API_KEY"
+			if provider == "openrouter" { key_env = "OPENROUTER_API_KEY" }
+			if provider == "deepseek" { key_env = "DEEPSEEK_API_KEY" }
+			if provider == "custom" { key_env = "" }
+			if key_env != "" && trim(to_string(env(key_env))) == "" {
+				errors := push(errors, {"path": "environment." + key_env, "message": "Required live-provider credential is not set."})
+			}
+		}
+	}
+	if live_mode {
+		for agent_id in keys(dict_get_or(workflow, "agents", {})) {
+			agent := dict_get_or(workflow["agents"], agent_id, {})
+			model := dict_get_or(agent, "model", {})
+			if to_lower(trim(to_string(dict_get_or(model, "provider", "")))) == "custom" {
+				custom_key_env := trim(to_string(dict_get_or(model, "api_key_env", "")))
+				if custom_key_env == "" || trim(to_string(env(custom_key_env))) == "" {
+					errors := push(errors, {"path": "agents." + agent_id + ".model.api_key_env", "message": "Custom provider credential environment variable is not set."})
+				}
+			}
+		}
+	}
+	if live_mode {
+		bridge_path := trim(to_string(env("DISPATCH_SDK_BRIDGE_SCRIPT")))
+		if bridge_path == "" { bridge_path = dispatch_root_path("bridge_chat.kujo") }
+		if file_exists(bridge_path) == false {
+			errors := push(errors, {"path": "environment.DISPATCH_SDK_BRIDGE_SCRIPT", "message": "Dispatch AI SDK bridge is unavailable: " + bridge_path})
+		}
+	}
+	mode := "offline"
+	if live_mode { mode = "live" }
+	return {"ok": len(errors) == 0, "errors": errors, "warnings": warnings, "providers": providers, "mode": mode}
+}
+
+func load_routing_command_workflow(command_args, command_name) {
+	parsed := parse_cli_args(command_args, {"flags": {"--workflow-file": {"takes_value": true, "default": ""}, "--plugin": {"takes_value": true, "default": ""}, "--step-id": {"takes_value": true, "default": ""}, "--live": {"takes_value": false, "default": false}, "--json": {"takes_value": false, "default": false}}})
+	if parsed["ok"] == false { exit_error(parsed["error"]["message"]) }
+	workflow_file := trim(parsed_flag_value(parsed, "--workflow-file", ""))
+	if workflow_file == "" { exit_error("--workflow-file is required for " + command_name + ".") }
+	loaded := load_workflow_from_file(workflow_file)
+	if loaded["ok"] == false { exit_error(loaded["error"]["message"]) }
+	tool_registry := register_default_tools(default_sources_dir())
+	plugin_runtime := dispatch_apply_plugins(loaded["workflow"], tool_registry, parsed, command_args, {})
+	return {"parsed": parsed, "workflow": plugin_runtime["workflow"]}
+}
+
+func run_validate(command_args) {
+	loaded := load_routing_command_workflow(command_args, "validate")
+	parsed := loaded["parsed"]
+	workflow := loaded["workflow"]
+	validation := validate_workflow_routing(workflow)
+	preflight := routing_environment_preflight(workflow, parsed_has_flag(parsed, "--live"))
+	errors := dict_get_or(validation, "errors", [])
+	for problem in preflight["errors"] { errors := push(errors, problem) }
+	result := {"command": "validate", "ok": len(errors) == 0, "workflow_id": dict_get_or(workflow, "id", ""), "errors": errors, "warnings": dict_get_or(validation, "warnings", []), "preflight": preflight}
+	if parsed_has_flag(parsed, "--json") {
+		print(to_json(result))
+	} else if result["ok"] {
+		print("Routing validation passed for workflow: " + result["workflow_id"])
+	} else {
+		print("Routing validation failed for workflow: " + result["workflow_id"])
+		for problem in errors { print("- " + dict_get_or(problem, "field", "routing") + ": " + dict_get_or(problem, "message", "Invalid routing configuration.")) }
+	}
+	if result["ok"] == false { exit(1) }
+}
+
+func run_explain_route(command_args) {
+	loaded := load_routing_command_workflow(command_args, "explain-route")
+	parsed := loaded["parsed"]
+	workflow := loaded["workflow"]
+	validation := validate_workflow_routing(workflow)
+	if validation["ok"] == false { print(to_json({"command": "explain-route", "ok": false, "errors": validation["errors"]})); exit(1) }
+	step_id := trim(parsed_flag_value(parsed, "--step-id", ""))
+	selected_step := null
+	for step in workflow["steps"] {
+		if dict_get_or(step, "type", "") == "agent" && (step_id == "" || dict_get_or(step, "id", "") == step_id) { selected_step = step; break }
+	}
+	if type(selected_step) != "dict" { exit_error("No matching agent step was found.") }
+	routing := dict_get_or(workflow, "routing", {})
+	result := resolve_route({"workflow": workflow, "step": selected_step, "step_id": selected_step["id"], "requested_agent_id": dict_get_or(selected_step, "agent_id", ""), "model_catalog": dict_get_or(routing, "model_catalog", {}), "policy_version": dict_get_or(routing, "policy_version", routing_policy_version()), "fallback_index": 0})
+	payload := {"command": "explain-route", "ok": dict_get_or(result, "ok", false), "step_id": selected_step["id"], "decision": dict_get_or(result, "decision", null), "candidate_evaluations": dict_get_or(result, "candidate_evaluations", []), "error": dict_get_or(result, "error", null)}
+	if parsed_has_flag(parsed, "--json") {
+		print(to_json(payload))
+	} else if payload["ok"] {
+		decision := payload["decision"]
+		print("Selected route: " + dict_get_or(decision, "selected_agent_id", "") + " :: " + dict_get_or(decision, "provider_id", "") + " :: " + dict_get_or(decision, "model", ""))
+		print("Decision ID: " + dict_get_or(decision, "decision_id", ""))
+	} else {
+		print("No valid route: " + dict_get_or(dict_get_or(payload, "error", {}), "message", "No route available."))
+	}
+	if dict_get_or(result, "ok", false) == false { exit(1) }
+}
+
 func run_demo(command_args) {
 	parsed := parse_cli_args(command_args, {
 		"flags": {
@@ -739,7 +869,7 @@ func run_demo(command_args) {
 			"--yes": {"takes_value": false, "default": false},
 			"--non-interactive": {"takes_value": false, "default": false},
 			"--output-root": {"takes_value": true, "default": "outputs"},
-			"--sources-dir": {"takes_value": true, "default": "examples/research-report/sources"},
+			"--sources-dir": {"takes_value": true, "default": default_sources_dir()},
 			"--allow-tools": {"takes_value": true, "default": ""},
 			"--deny-tools": {"takes_value": true, "default": ""},
 			"--decision": {"takes_value": true, "default": ""},
@@ -780,7 +910,7 @@ func run_demo(command_args) {
 	workflow_template_id := dispatch_resolve_string_flag(parsed, command_args, "--workflow", config, ["workflow", "workflow_template_id"], "research-report")
 	tags := parse_tool_name_list(dispatch_resolve_string_flag(parsed, command_args, "--tags", config, ["tags"], ""))
 	output_root := resolve_output_root_or_exit(dispatch_resolve_string_flag(parsed, command_args, "--output-root", config, ["output_root", "output-root"], "outputs"))
-	sources_dir := dispatch_resolve_string_flag(parsed, command_args, "--sources-dir", config, ["sources_dir", "sources-dir"], "examples/research-report/sources")
+	sources_dir := dispatch_resolve_string_flag(parsed, command_args, "--sources-dir", config, ["sources_dir", "sources-dir"], default_sources_dir())
 	simulated_decision := dispatch_resolve_string_flag(parsed, command_args, "--decision", config, ["decision"], "")
 	simulated_note := dispatch_resolve_string_flag(parsed, command_args, "--note", config, ["note"], "")
 	webhook_sink := resolve_webhook_sink_or_exit(dispatch_resolve_string_flag(parsed, command_args, "--webhook-sink", config, ["webhook_sink", "webhook-sink"], ""))
@@ -1007,7 +1137,7 @@ func run_resume(command_args) {
 			"--yes": {"takes_value": false, "default": false},
 			"--non-interactive": {"takes_value": false, "default": false},
 			"--output-root": {"takes_value": true, "default": "outputs"},
-			"--sources-dir": {"takes_value": true, "default": "examples/research-report/sources"},
+			"--sources-dir": {"takes_value": true, "default": default_sources_dir()},
 			"--allow-tools": {"takes_value": true, "default": ""},
 			"--deny-tools": {"takes_value": true, "default": ""},
 			"--decision": {"takes_value": true, "default": ""},
@@ -1040,7 +1170,7 @@ func run_resume(command_args) {
 	interactive := non_interactive == false
 	workflow_template_flag := dispatch_resolve_string_flag(parsed, command_args, "--workflow", config, ["workflow", "workflow_template_id"], "")
 	output_root := resolve_output_root_or_exit(dispatch_resolve_string_flag(parsed, command_args, "--output-root", config, ["output_root", "output-root"], "outputs"))
-	sources_dir := dispatch_resolve_string_flag(parsed, command_args, "--sources-dir", config, ["sources_dir", "sources-dir"], "examples/research-report/sources")
+	sources_dir := dispatch_resolve_string_flag(parsed, command_args, "--sources-dir", config, ["sources_dir", "sources-dir"], default_sources_dir())
 	simulated_decision := dispatch_resolve_string_flag(parsed, command_args, "--decision", config, ["decision"], "")
 	simulated_note := dispatch_resolve_string_flag(parsed, command_args, "--note", config, ["note"], "")
 	webhook_sink := resolve_webhook_sink_or_exit(dispatch_resolve_string_flag(parsed, command_args, "--webhook-sink", config, ["webhook_sink", "webhook-sink"], ""))
@@ -1150,7 +1280,7 @@ func run_resume_decision(command_args) {
 		"flags": {
 			"--config": {"takes_value": true, "default": ""},
 			"--output-root": {"takes_value": true, "default": "outputs"},
-			"--sources-dir": {"takes_value": true, "default": "examples/research-report/sources"},
+			"--sources-dir": {"takes_value": true, "default": default_sources_dir()},
 			"--non-interactive": {"takes_value": false, "default": false},
 			"--leash-url": {"takes_value": true, "default": ""},
 			"--webhook-sink": {"takes_value": true, "default": ""},
@@ -1231,7 +1361,7 @@ func run_resume_decision(command_args) {
 	run_state["human_decisions"] := decision_history
 	run_state["last_human_decision"] := decision
 	run_state := persist_run_state(run_state)
-	sources_dir := parsed_flag_value(parsed, "--sources-dir", "examples/research-report/sources")
+	sources_dir := parsed_flag_value(parsed, "--sources-dir", default_sources_dir())
 	tool_registry := register_default_tools(sources_dir)
 	plugin_runtime := dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, {})
 	workflow = plugin_runtime["workflow"]
@@ -1693,6 +1823,14 @@ if command == "export-run" {
 }
 if command == "import-run" {
 	run_import_run(command_args)
+	return
+}
+if command == "validate" {
+	run_validate(command_args)
+	return
+}
+if command == "explain-route" {
+	run_explain_route(command_args)
 	return
 }
 if command == "version" || command == "--version" || command == "-v" {

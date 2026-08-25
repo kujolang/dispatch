@@ -101,13 +101,15 @@ func build_bridge_exec_error_message(process_result, options) {
 }
 
 func resolve_bridge_paths() {
-	ai_sdk_path := env_or("AI_SDK_PATH", "../ai-sdk")
-	kujo_bin := env_or("KUJO_BIN", "kujo")
-	pwd := env_or("PWD", "")
+	dispatch_root := env_or("DISPATCH_ROOT", "")
+	default_ai_sdk := "../ai-sdk"
 	default_bridge := "bridge_chat.kujo"
-	if pwd != "" {
-		default_bridge := pwd + "/bridge_chat.kujo"
+	if dispatch_root != "" {
+		default_ai_sdk = dispatch_root + "/../ai-sdk"
+		default_bridge = dispatch_root + "/bridge_chat.kujo"
 	}
+	ai_sdk_path := env_or("AI_SDK_PATH", default_ai_sdk)
+	kujo_bin := env_or("KUJO_BIN", "kujo")
 	bridge_script := env_or("DISPATCH_SDK_BRIDGE_SCRIPT", default_bridge)
 
 	return {
