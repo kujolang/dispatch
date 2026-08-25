@@ -12,6 +12,7 @@ from src.cli.output import print_lines, print_kv, print_error, exit_error, print
 from src.core.plugins import create_plugin_registry, register_plugin, apply_plugins_to_runtime
 from src.plugins.builtin_plugins import resolve_builtin_plugins, emit_builtin_plugin_events
 from src.core.routing import validate_workflow_routing, resolve_route, routing_policy_version, supported_route_provider
+from sdk_adapter import custom_provider_api_key_env_allowed
 
 func dispatch_root_path(relative_path) {
 	root := trim(to_string(env("DISPATCH_ROOT")))
@@ -789,7 +790,9 @@ func routing_environment_preflight(workflow, live_mode) {
 			model := dict_get_or(agent, "model", {})
 			if to_lower(trim(to_string(dict_get_or(model, "provider", "")))) == "custom" {
 				custom_key_env := trim(to_string(dict_get_or(model, "api_key_env", "")))
-				if custom_key_env == "" || trim(to_string(env(custom_key_env))) == "" {
+				if custom_provider_api_key_env_allowed(custom_key_env) == false {
+					errors := push(errors, {"path": "agents." + agent_id + ".model.api_key_env", "message": "Custom provider credential environment variable is not allowed. Use CUSTOM_API_KEY or explicitly allow it with DISPATCH_ALLOWED_CUSTOM_API_KEY_ENVS."})
+				} else if custom_key_env == "" || trim(to_string(env(custom_key_env))) == "" {
 					errors := push(errors, {"path": "agents." + agent_id + ".model.api_key_env", "message": "Custom provider credential environment variable is not set."})
 				}
 			}
@@ -812,7 +815,9 @@ func load_routing_command_workflow(command_args, command_name) {
 	if parsed["ok"] == false { exit_error(parsed["error"]["message"]) }
 	workflow_file := trim(parsed_flag_value(parsed, "--workflow-file", ""))
 	if workflow_file == "" { exit_error("--workflow-file is required for " + command_name + ".") }
-	loaded := load_workflow_from_file(workflow_file)
+	workflow_file_path := normalize_config_path(workflow_file)
+	if workflow_file_path["ok"] == false { exit_error(workflow_file_path["message"]) }
+	loaded := load_workflow_from_file(workflow_file_path["config_path"])
 	if loaded["ok"] == false { exit_error(loaded["error"]["message"]) }
 	tool_registry := register_default_tools(default_sources_dir())
 	plugin_runtime := dispatch_apply_plugins(loaded["workflow"], tool_registry, parsed, command_args, {})

@@ -20,6 +20,19 @@ func model_fixture_enabled(options) {
 	return to_bool(env_value, true)
 }
 
+func custom_provider_api_key_env_allowed(api_key_env) {
+	key_name := trim(to_string(api_key_env))
+	if key_name == "CUSTOM_API_KEY" {
+		return true
+	}
+	for configured_name in split(env_or("DISPATCH_ALLOWED_CUSTOM_API_KEY_ENVS", ""), ",") {
+		if trim(configured_name) == key_name && key_name != "" {
+			return true
+		}
+	}
+	return false
+}
+
 func parse_json_from_output(raw_text) {
 	text := trim(to_string(raw_text))
 	if text == "" {
@@ -259,6 +272,20 @@ func call_agent_model(agent, user_prompt, options) {
 	if model_fixture_enabled(options) {
 		return build_offline_fixture_model_result(agent, user_prompt, options)
 	}
+	model_config := dict_get_or(agent, "model", {})
+	if to_lower(trim(to_string(dict_get_or(model_config, "provider", "")))) == "custom" {
+		custom_key_env := dict_get_or(model_config, "api_key_env", "CUSTOM_API_KEY")
+		if custom_provider_api_key_env_allowed(custom_key_env) == false {
+			return {
+				"ok": false,
+				"error": {
+					"code": "credential_env_not_allowed",
+					"message": "Custom provider credential environment variable is not allowed. Use CUSTOM_API_KEY or explicitly allow the variable with DISPATCH_ALLOWED_CUSTOM_API_KEY_ENVS.",
+					"retryable": false
+				}
+			}
+		}
+	}
 
 	paths := resolve_bridge_paths()
 	payload := build_bridge_payload(agent, user_prompt, options)
@@ -313,3 +340,4 @@ export build_bridge_exec_error_message := build_bridge_exec_error_message
 export build_bridge_spawn_command := build_bridge_spawn_command
 export resolve_bridge_timeout_ms := resolve_bridge_timeout_ms
 export build_offline_fixture_model_result := build_offline_fixture_model_result
+export custom_provider_api_key_env_allowed := custom_provider_api_key_env_allowed

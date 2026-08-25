@@ -1,5 +1,14 @@
 test_setup {
-	from sdk_adapter import parse_json_from_output, build_bridge_parse_error_details, build_bridge_exec_error_message, build_bridge_spawn_command, resolve_bridge_timeout_ms, build_bridge_payload, call_agent_model
+	from sdk_adapter import parse_json_from_output, build_bridge_parse_error_details, build_bridge_exec_error_message, build_bridge_spawn_command, resolve_bridge_timeout_ms, build_bridge_payload, call_agent_model, custom_provider_api_key_env_allowed
+}
+
+test "custom providers cannot select arbitrary process secret variables" {
+	assert_true(custom_provider_api_key_env_allowed("CUSTOM_API_KEY"))
+	assert_false(custom_provider_api_key_env_allowed("PATH"))
+	agent := {"model": {"provider": "custom", "model": "example", "base_url": "https://example.invalid/v1", "api_key_env": "PATH"}}
+	result := call_agent_model(agent, "test", {"offline_fixture": false, "timeout_ms": 1})
+	assert_false(result["ok"])
+	assert_equal(result["error"]["code"], "credential_env_not_allowed")
 }
 
 test "parse json from output supports trailing json line" {

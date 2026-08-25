@@ -432,7 +432,15 @@ kujo run dispatch.kujo demo "Live routed review" \
   --non-interactive
 ```
 
-The bridge currently recognizes the built-in provider IDs `openai`, `openrouter`, and `deepseek`, plus `custom` for an OpenAI-compatible endpoint. A `custom` agent's legacy `model` configuration should include `base_url` and `api_key_env`; the selected model candidate supplies the model ID.
+The bridge currently recognizes the built-in provider IDs `openai`, `openrouter`, and `deepseek`, plus `custom` for an OpenAI-compatible endpoint. A `custom` agent's legacy `model` configuration should include `base_url` and `api_key_env`; the selected model candidate supplies the model ID. `CUSTOM_API_KEY` is the default permitted credential variable for custom endpoints. To use a different, purpose-specific variable, explicitly allow its name:
+
+```bash
+export DISPATCH_ALLOWED_CUSTOM_API_KEY_ENVS=WATCHDOG_PROXY_TOKEN
+```
+
+Use a comma-separated list for multiple approved names. Dispatch rejects arbitrary process environment variables so an untrusted workflow cannot select an unrelated secret and forward it to a custom endpoint.
+
+Workflow files are limited to 1 MiB and external model catalogs to 5 MiB by default. Controlled deployments may override these bounds with `DISPATCH_WORKFLOW_MAX_BYTES` and `DISPATCH_MODEL_CATALOG_MAX_BYTES`.
 
 Never put API-key values in a workflow, catalog, route decision, or model candidate. Use provider environment-variable names and the environment itself for secrets.
 

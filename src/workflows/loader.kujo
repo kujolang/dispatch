@@ -1,5 +1,5 @@
 from src.core.step import create_step
-from src.core.utils import dict_get_or, safe_read_file
+from src.core.utils import dict_get_or, safe_read_file, to_bool
 from src.workflows.workflow import create_workflow, create_research_report_workflow
 
 func loader_error(message) {
@@ -11,6 +11,63 @@ func loader_error(message) {
 			"retryable": false
 		}
 	}
+}
+
+func configured_file_limit(env_name, default_limit) {
+	configured_limit := default_limit
+	try {
+		configured_limit = to_int(trim(to_string(env(env_name))))
+	} except err {
+		configured_limit = default_limit
+	}
+	if configured_limit <= 0 {
+		return default_limit
+	}
+	return configured_limit
+}
+
+func file_within_limit(path, max_bytes) {
+	if file_exists(path) == false {
+		return true
+	}
+	measured_bytes := 0
+	try {
+		measured_bytes = file_size(path)
+	} except err {
+		return false
+	}
+	return measured_bytes <= max_bytes
+}
+
+func resolve_model_catalog_path(workflow_path, catalog_file) {
+	normalized_catalog_file := replace(trim(to_string(catalog_file)), "\\", "/")
+	if normalized_catalog_file == "" {
+		return loader_error("Model catalog file path is empty.")
+	}
+	if to_bool(env("DISPATCH_ALLOW_ANY_CONFIG_PATH"), false) == false {
+		lower_catalog_file := to_lower(normalized_catalog_file)
+		if starts_with(normalized_catalog_file, "/") || starts_with(normalized_catalog_file, "~/") {
+			return loader_error("Absolute model catalog paths are blocked by default. Set DISPATCH_ALLOW_ANY_CONFIG_PATH=true for explicit opt-in.")
+		}
+		if contains(lower_catalog_file, "..") || contains(lower_catalog_file, "%2f") || contains(lower_catalog_file, "%5c") {
+			return loader_error("Path traversal patterns are not allowed in model_catalog_file.")
+		}
+		for catalog_segment in split(normalized_catalog_file, "/") {
+			clean_catalog_segment := trim(catalog_segment)
+			if clean_catalog_segment == "" || clean_catalog_segment == "." || clean_catalog_segment == ".." {
+				return loader_error("model_catalog_file contains invalid path segments.")
+			}
+		}
+	}
+	if starts_with(normalized_catalog_file, "/") || starts_with(normalized_catalog_file, "~/") {
+		return {"ok": true, "path": normalized_catalog_file}
+	}
+	workflow_parts := split(replace(to_string(workflow_path), "\\", "/"), "/")
+	if len(workflow_parts) > 1 {
+		workflow_parts = slice(workflow_parts, 0, len(workflow_parts) - 1)
+		return {"ok": true, "path": join(workflow_parts, "/") + "/" + normalized_catalog_file}
+	}
+	return {"ok": true, "path": normalized_catalog_file}
 }
 
 func valid_step_type(step_type) {
@@ -129,6 +186,10 @@ func load_workflow_from_spec(spec) {
 }
 
 func load_workflow_from_file(path) {
+	workflow_limit := configured_file_limit("DISPATCH_WORKFLOW_MAX_BYTES", 1048576)
+	if file_within_limit(path, workflow_limit) == false {
+		return loader_error("Workflow file exceeds the configured maximum size of " + to_string(workflow_limit) + " bytes.")
+	}
 	body := safe_read_file(path, "")
 	if trim(body) == "" {
 		return loader_error("Workflow file is empty or unreadable: " + to_string(path))
@@ -147,13 +208,14 @@ func load_workflow_from_file(path) {
 	routing := dict_get_or(workflow, "routing", {})
 	catalog_file := trim(to_string(dict_get_or(routing, "model_catalog_file", "")))
 	if catalog_file != "" {
-		resolved_catalog_file := catalog_file
-		if starts_with(catalog_file, "/") == false {
-			path_parts := split(replace(to_string(path), "\\", "/"), "/")
-			if len(path_parts) > 1 {
-				path_parts = slice(path_parts, 0, len(path_parts) - 1)
-				resolved_catalog_file = join(path_parts, "/") + "/" + catalog_file
-			}
+		catalog_path_result := resolve_model_catalog_path(path, catalog_file)
+		if catalog_path_result["ok"] == false {
+			return catalog_path_result
+		}
+		resolved_catalog_file := catalog_path_result["path"]
+		catalog_limit := configured_file_limit("DISPATCH_MODEL_CATALOG_MAX_BYTES", 5242880)
+		if file_within_limit(resolved_catalog_file, catalog_limit) == false {
+			return loader_error("Model catalog file exceeds the configured maximum size of " + to_string(catalog_limit) + " bytes.")
 		}
 		catalog_body := safe_read_file(resolved_catalog_file, "")
 		if trim(catalog_body) == "" {

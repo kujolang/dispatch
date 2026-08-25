@@ -1,12 +1,12 @@
 test_setup {
 	from src.core.routing import routing_policy_version, execution_compatibility, resolve_route, build_effective_agent, evaluate_route_output, route_failure_action, merge_constraint_layer, validate_workflow_routing
 	from src.workflows.workflow import create_workflow
-	from src.workflows.loader import load_workflow_from_spec
+	from src.workflows.loader import load_workflow_from_spec, load_workflow_from_file
 	from src.core.step import create_step
 	from src.core.state import create_run_state, load_run_state, persist_run_state
 	from src.core.runner import run_workflow
 	from src.core.trace import collect_event_type_counts
-	from src.core.utils import dict_get_or
+	from src.core.utils import dict_get_or, ensure_dir
 
 func base_agent(agent_id, handler_id, capability, model_candidates) {
 	capabilities := {}
@@ -433,6 +433,21 @@ test "declarative loader preserves workflow agent and step routing contracts" {
 	assert_equal(workflow["agents"]["writer"]["handler_id"], "writer")
 	assert_equal(workflow["steps"][0]["routing"]["constraints"]["required_capabilities"][0], "write")
 	assert_equal(workflow["steps"][0]["evaluation"]["required_fields"][0], "summary")
+}
+
+test "model catalog references reject absolute and traversal paths by default" {
+	root := "tests/tmp/catalog-path-guard-" + to_string(current_timestamp())
+	ensure_dir(root)
+	workflow_path := root + "/workflow.json"
+	base_spec := {"id": "catalog-path-guard", "name": "Catalog Path Guard", "agents": {}, "steps": [], "routing": {"enabled": true, "model_catalog_file": "../outside.json"}}
+	write_file(workflow_path, to_json(base_spec), true)
+	traversal_result := load_workflow_from_file(workflow_path)
+	assert_false(traversal_result["ok"])
+
+	absolute_spec := {"id": "catalog-path-guard", "name": "Catalog Path Guard", "agents": {}, "steps": [], "routing": {"enabled": true, "model_catalog_file": "/tmp/outside.json"}}
+	write_file(workflow_path, to_json(absolute_spec), true)
+	absolute_result := load_workflow_from_file(workflow_path)
+	assert_false(absolute_result["ok"])
 }
 
 test "narrower policy layers cannot weaken broader routing constraints" {
