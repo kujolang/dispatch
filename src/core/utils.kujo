@@ -122,6 +122,21 @@ func is_sensitive_key_name(key_name) {
 	if name == "" {
 		return false
 	}
+	safe_token_metrics := [
+		"input_tokens",
+		"output_tokens",
+		"total_tokens",
+		"prompt_tokens",
+		"completion_tokens",
+		"required_context_tokens",
+		"max_tokens",
+		"token_efficiency"
+	]
+	for safe_metric in safe_token_metrics {
+		if name == safe_metric {
+			return false
+		}
+	}
 	sensitive_tokens := [
 		"api_key",
 		"apikey",

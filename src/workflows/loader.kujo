@@ -50,6 +50,9 @@ func build_steps_from_spec(raw_steps) {
 			"output_schema": dict_get_or(raw_step, "output_schema", null),
 			"timeout_ms": dict_get_or(raw_step, "timeout_ms", 0),
 			"retry_policy": dict_get_or(raw_step, "retry_policy", null),
+			"routing": dict_get_or(raw_step, "routing", {}),
+			"routing_constraints": dict_get_or(raw_step, "routing_constraints", {}),
+			"evaluation": dict_get_or(raw_step, "evaluation", {}),
 			"approval_required": dict_get_or(raw_step, "approval_required", false),
 			"approval_gate": dict_get_or(raw_step, "approval_gate", {}),
 			"optional": dict_get_or(raw_step, "optional", false),
@@ -115,6 +118,7 @@ func load_workflow_from_spec(spec) {
 			"strategy": "none",
 			"retry_on_codes": []
 		}),
+		"routing": dict_get_or(spec, "routing", {"enabled": false}),
 		"approval_config": dict_get_or(spec, "approval_config", {"auto_approve": false}),
 		"output_schema": dict_get_or(spec, "output_schema", {"type": "dict"})
 	})

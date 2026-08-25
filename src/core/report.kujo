@@ -67,6 +67,10 @@ func build_base_report_payload(run_state) {
 		"total_steps": len(dict_get_or(run_state, "steps", [])),
 		"completed_steps": dict_get_or(dict_get_or(run_state, "trace", {}), "events", [])
 	}
+	payload["routing"] := {
+		"decisions": dict_get_or(run_state, "route_decisions", {}),
+		"attempts": dict_get_or(run_state, "route_attempts", {})
+	}
 
 	completed_step_count := 0
 	for step in dict_get_or(run_state, "steps", []) {
@@ -199,6 +203,12 @@ func render_markdown_report(report_payload) {
 	lines := append_blank(lines)
 	lines := append_section(lines, "Limitations")
 	lines := append_bullets(lines, report_payload["limitations"])
+	lines := append_blank(lines)
+	if len(keys(dict_get_or(dict_get_or(report_payload, "routing", {}), "decisions", {}))) > 0 {
+		lines := append_section(lines, "Routing")
+		lines := push(lines, "Deterministic route decisions and attempts are included in `report.json` and `state.json`.")
+		lines := append_blank(lines)
+	}
 	lines := append_blank(lines)
 	lines := append_section(lines, "Trace")
 	lines := push(lines, "Trace and state artifacts are saved alongside this report as JSON and Markdown.")

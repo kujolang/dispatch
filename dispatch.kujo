@@ -688,6 +688,14 @@ func dispatch_resolve_resume_workflow(run_state, explicit_template_id, topic, au
 func dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, config) {
 	plugin_names := parse_tool_name_list(dispatch_resolve_string_flag(parsed, command_args, "--plugin", config, ["plugin", "plugins"], ""))
 	if len(plugin_names) == 0 {
+		for active_plugin in dict_get_or(workflow, "active_plugins", []) {
+			plugin_id := trim(to_string(dict_get_or(active_plugin, "id", "")))
+			if plugin_id != "" {
+				plugin_names := push(plugin_names, plugin_id)
+			}
+		}
+	}
+	if len(plugin_names) == 0 {
 		return {
 			"workflow": workflow,
 			"tool_registry": tool_registry,
@@ -831,6 +839,10 @@ func run_demo(command_args) {
 	if workflow_file != "" {
 		workflow_template_id = dict_get_or(workflow, "id", workflow_template_id)
 	}
+	tool_registry := register_default_tools(sources_dir)
+	plugin_runtime := dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, config)
+	workflow = plugin_runtime["workflow"]
+	tool_registry = plugin_runtime["tool_registry"]
 	run_state := create_run_state(workflow, run_input, output_root, {
 		"auto_approve": auto_approve,
 		"interactive": interactive,
@@ -842,11 +854,6 @@ func run_demo(command_args) {
 		"trace_max_events": trace_max_events,
 		"trace_max_payload_chars": trace_max_payload_chars
 	})
-	tool_registry := register_default_tools(sources_dir)
-	plugin_runtime := dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, config)
-	workflow = plugin_runtime["workflow"]
-	tool_registry = plugin_runtime["tool_registry"]
-
 	result := run_workflow(workflow, run_state, tool_registry, {
 		"auto_approve": auto_approve,
 		"interactive": interactive,
@@ -957,6 +964,10 @@ func run_inspect(command_args) {
 			"steps": dict_get_or(run_state, "steps", []),
 			"approvals": dict_get_or(run_state, "approvals", []),
 			"handoffs": dict_get_or(run_state, "handoffs", []),
+			"routing": {
+				"decisions": dict_get_or(run_state, "route_decisions", {}),
+				"attempts": dict_get_or(run_state, "route_attempts", {})
+			},
 			"errors": dict_get_or(run_state, "errors", []),
 			"artifacts": artifacts
 		}
@@ -1222,6 +1233,9 @@ func run_resume_decision(command_args) {
 	run_state := persist_run_state(run_state)
 	sources_dir := parsed_flag_value(parsed, "--sources-dir", "examples/research-report/sources")
 	tool_registry := register_default_tools(sources_dir)
+	plugin_runtime := dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, {})
+	workflow = plugin_runtime["workflow"]
+	tool_registry = plugin_runtime["tool_registry"]
 	options := {
 		"auto_approve": false,
 		"interactive": false,
@@ -1231,7 +1245,8 @@ func run_resume_decision(command_args) {
 		"webhook_sink": resolve_webhook_sink_or_exit(parsed_flag_value(parsed, "--webhook-sink", "")),
 		"webhook_url": trim(parsed_flag_value(parsed, "--webhook-url", "")),
 		"leash_url": trim(parsed_flag_value(parsed, "--leash-url", "")),
-		"leash_callback_url": trim(parsed_flag_value(parsed, "--leash-url", ""))
+		"leash_callback_url": trim(parsed_flag_value(parsed, "--leash-url", "")),
+		"event_hook": plugin_runtime["event_hook"]
 	}
 	if decision_value == "reply" {
 		options["simulated_decision"] := "changes"

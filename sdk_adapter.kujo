@@ -55,10 +55,11 @@ func parse_json_from_output(raw_text) {
 		i := i - 1
 	}
 
-	return {
+	result := {
 		"ok": false,
 		"error": "no json payload found"
 	}
+	return result
 }
 
 func bridge_debug_output_enabled(options) {
@@ -159,6 +160,34 @@ func build_bridge_payload(agent, user_prompt, options) {
 		"retry_delay_ms": dict_get_or(options, "retry_delay_ms", 100),
 		"offline_fixture": model_fixture_enabled(options)
 	}
+	for structured_key in ["response_format", "structured_output_schema", "structured_output_retryable"] {
+		if has_key(options, structured_key) {
+			payload[structured_key] := options[structured_key]
+		}
+	}
+	route_decision := dict_get_or(agent, "__route_decision", {})
+	if type(route_decision) == "dict" && len(keys(route_decision)) > 0 {
+		payload["route"] := {
+			"decision_id": dict_get_or(route_decision, "decision_id", ""),
+			"policy_version": dict_get_or(route_decision, "policy_version", ""),
+			"catalog_id": dict_get_or(route_decision, "catalog_id", ""),
+			"catalog_version": dict_get_or(route_decision, "catalog_version", ""),
+			"catalog_hash": dict_get_or(route_decision, "catalog_hash", "")
+		}
+		constraints := dict_get_or(route_decision, "constraints", {})
+		if dict_get_or(constraints, "requires_structured_output", false) {
+			if has_key(payload, "response_format") == 0 {
+				payload["response_format"] := {"type": "json_object"}
+			}
+			output_schema := dict_get_or(agent, "output_schema", null)
+			if type(output_schema) == "dict" && has_key(payload, "structured_output_schema") == 0 {
+				payload["structured_output_schema"] := output_schema
+			}
+			if has_key(payload, "structured_output_retryable") == 0 {
+				payload["structured_output_retryable"] := false
+			}
+		}
+	}
 
 	api_key_override := dict_get_or(options, "api_key", null)
 	if type(api_key_override) == "string" {
@@ -198,7 +227,7 @@ func build_offline_fixture_model_result(agent, user_prompt, options) {
 		output_text = "Dispatch offline fixture response for: " + prompt_text
 	}
 
-	return {
+	result := {
 		"ok": true,
 		"provider": provider_id,
 		"model": model_name,
@@ -209,13 +238,19 @@ func build_offline_fixture_model_result(agent, user_prompt, options) {
 		"usage": {
 			"input_tokens": len(prompt_text),
 			"output_tokens": len(output_text),
-			"total_tokens": len(prompt_text) + len(output_text)
+			"total_tokens": len(prompt_text) + len(output_text),
+			"estimated": true
 		},
 		"raw": {
 			"fixture": true,
-			"source": "dispatch-sdk-adapter"
+			"source": "dispatch-sdk-adapter",
+			"usage_estimated": true
 		}
 	}
+	if type(dict_get_or(agent, "__route_decision", null)) == "dict" {
+		result["route"] := dict_get_or(agent, "__route_decision", {})
+	}
+	return result
 }
 
 func call_agent_model(agent, user_prompt, options) {
@@ -239,7 +274,11 @@ func call_agent_model(agent, user_prompt, options) {
 
 	parsed := parse_json_from_output(process_result.stdout)
 	if parsed["ok"] {
-		return parsed["data"]
+		parsed_data := parsed["data"]
+		if type(parsed_data) == "dict" && type(dict_get_or(agent, "__route_decision", null)) == "dict" {
+			parsed_data["route"] := dict_get_or(agent, "__route_decision", {})
+		}
+		return parsed_data
 	}
 
 	if process_result.success == false {
@@ -248,7 +287,7 @@ func call_agent_model(agent, user_prompt, options) {
 			"error": {
 				"code": "sdk_bridge_exec_error",
 				"message": build_bridge_exec_error_message(process_result, options),
-				"retryable": false
+				"retryable": true
 			}
 		}
 	}
@@ -265,6 +304,7 @@ func call_agent_model(agent, user_prompt, options) {
 }
 
 export call_agent_model := call_agent_model
+export build_bridge_payload := build_bridge_payload
 export parse_json_from_output := parse_json_from_output
 export build_bridge_parse_error_details := build_bridge_parse_error_details
 export build_bridge_exec_error_message := build_bridge_exec_error_message

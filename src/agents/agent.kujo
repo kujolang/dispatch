@@ -10,6 +10,11 @@ func create_agent(agent_id, name, purpose, instructions, model_config, tools, ha
 		"purpose": purpose,
 		"instructions": instructions,
 		"model": model_config,
+		"model_candidates": [],
+		"handler_id": agent_id,
+		"execution_contract": {"id": agent_id, "version": "1"},
+		"capabilities": {},
+		"routing": {},
 		"tools": tools,
 		"handoff_targets": handoff_targets,
 		"output_schema": output_schema,
@@ -21,10 +26,12 @@ func planner_output(agent, step_input, run_state) {
 	topic := dict_get_or(dict_get_or(step_input, "input", {}), "topic", "Unknown topic")
 	prompt := "Create a concise research plan for topic: " + topic
 	model_result := call_agent_model(agent, prompt, {
-		"offline_fixture": true,
 		"max_tokens": 180,
 		"temperature": 0.1
 	})
+	if dict_get_or(model_result, "ok", false) == false && dict_get_or(agent, "__routing_enabled", false) {
+		return model_result
+	}
 
 	plan := {
 		"topic": topic,
@@ -47,7 +54,13 @@ func planner_output(agent, step_input, run_state) {
 
 	return {
 		"ok": true,
-		"data": plan
+		"data": plan,
+		"model_calls": [{
+			"ok": dict_get_or(model_result, "ok", false),
+			"provider": dict_get_or(model_result, "provider", dict_get_or(dict_get_or(agent, "model", {}), "provider", "")),
+			"model": dict_get_or(model_result, "model", dict_get_or(dict_get_or(agent, "model", {}), "model", "")),
+			"usage": dict_get_or(model_result, "usage", {})
+		}]
 	}
 }
 
@@ -169,16 +182,24 @@ func writer_output(agent, step_input, run_state, tool_registry, context) {
 	tool_payload := dict_get_or(writer_tool_result, "data", {})
 	model_prompt := "Draft a concise executive summary for this topic: " + topic
 	model_result := call_agent_model(agent, model_prompt, {
-		"offline_fixture": true,
 		"max_tokens": 220,
 		"temperature": 0.2
 	})
+	if dict_get_or(model_result, "ok", false) == false && dict_get_or(agent, "__routing_enabled", false) {
+		return model_result
+	}
 	if dict_get_or(model_result, "ok", false) {
 		tool_payload["summary"] := dict_get_or(model_result, "output_text", tool_payload["summary"])
 	}
 	return {
 		"ok": true,
-		"data": tool_payload
+		"data": tool_payload,
+		"model_calls": [{
+			"ok": dict_get_or(model_result, "ok", false),
+			"provider": dict_get_or(model_result, "provider", dict_get_or(dict_get_or(agent, "model", {}), "provider", "")),
+			"model": dict_get_or(model_result, "model", dict_get_or(dict_get_or(agent, "model", {}), "model", "")),
+			"usage": dict_get_or(model_result, "usage", {})
+		}]
 	}
 }
 
@@ -208,11 +229,8 @@ func register_default_agent_handlers() {
 	return handler_registry
 }
 
-func run_agent(agent_id, workflow_agents, step_input, run_state, tool_registry) {
-	if has_key(workflow_agents, agent_id) == 0 {
-		return missing_agent_error(agent_id)
-	}
-	agent := workflow_agents[agent_id]
+func run_agent_with_agent(agent, handler_id, workflow_agents, step_input, run_state, tool_registry) {
+	agent_id := dict_get_or(agent, "id", "")
 	context := {
 		"run_id": run_state["run_id"],
 		"input": run_state["input"],
@@ -228,11 +246,30 @@ func run_agent(agent_id, workflow_agents, step_input, run_state, tool_registry) 
 		}
 	}
 
-	if has_key(handler_registry, agent_id) == 0 {
-		return agent_execution_error(agent_id, "No implementation exists for this agent id.", false)
+	if has_key(handler_registry, handler_id) == 0 {
+		if type(dict_get_or(agent, "__route_decision", null)) == "dict" {
+			return {
+				"ok": false,
+				"error": {
+					"code": "persisted_route_unavailable",
+					"message": "Routed handler is unavailable: " + handler_id,
+					"retryable": false
+				}
+			}
+		}
+		return agent_execution_error(agent_id, "No implementation exists for handler id " + handler_id + ".", false)
 	}
-	handler := handler_registry[agent_id]
+	handler := handler_registry[handler_id]
 	return handler(agent, step_input, run_state, tool_registry, context)
+}
+
+func run_agent(agent_id, workflow_agents, step_input, run_state, tool_registry) {
+	if has_key(workflow_agents, agent_id) == 0 {
+		return missing_agent_error(agent_id)
+	}
+	agent := workflow_agents[agent_id]
+	handler_id := dict_get_or(agent, "handler_id", agent_id)
+	return run_agent_with_agent(agent, handler_id, workflow_agents, step_input, run_state, tool_registry)
 }
 
 export create_agent := create_agent
@@ -240,3 +277,4 @@ export create_agent_handler_registry := create_agent_handler_registry
 export register_agent_handler := register_agent_handler
 export register_default_agent_handlers := register_default_agent_handlers
 export run_agent := run_agent
+export run_agent_with_agent := run_agent_with_agent

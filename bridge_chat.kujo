@@ -157,7 +157,8 @@ options := {
 	"temperature": dict_get_or(payload, "temperature", 0.2),
 	"max_tokens": dict_get_or(payload, "max_tokens", 700),
 	"max_retries": dict_get_or(payload, "max_retries", 2),
-	"retry_delay_ms": dict_get_or(payload, "retry_delay_ms", 250)
+	"retry_delay_ms": dict_get_or(payload, "retry_delay_ms", 250),
+	"trace_id": dict_get_or(dict_get_or(payload, "route", {}), "decision_id", "")
 }
 
 # Preserve provider-neutral structured-output controls at the Dispatch bridge

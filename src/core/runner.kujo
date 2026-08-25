@@ -9,7 +9,8 @@ from src.core.report import build_report_payload, write_report_artifacts
 from src.core.state import persist_run_state, append_policy_deny_audit_record
 from src.core.step import mark_step_started, mark_step_succeeded, mark_step_failed, mark_step_paused, mark_step_skipped
 from src.tools.tool import call_tool, build_tool_payload
-from src.agents.agent import run_agent
+from src.agents.agent import run_agent, run_agent_with_agent
+from src.core.routing import routing_policy_version, routing_is_enabled, resolve_route, build_effective_agent, evaluate_route_output, route_failure_action
 from src.core.hooks import create_lifecycle_event, create_human_intervention_event, emit_hook_event
 
 func replace_step(steps, target_index, replacement_step) {
@@ -226,26 +227,308 @@ func completed_report_step_exists(steps) {
 	return false
 }
 
-func execute_agent_step(step, workflow, step_input, run_state, tool_registry) {
-	agent_id := dict_get_or(step, "agent_id", "")
-	policy := resolve_retry_policy(step, workflow)
-	wrapped := run_with_retry("agent:" + agent_id, policy, func(attempt_number) {
-		return run_agent(agent_id, workflow["agents"], step_input, run_state, tool_registry)
+func route_key(decision) {
+	return to_string(dict_get_or(decision, "selected_agent_id", "")) + "::" + to_string(dict_get_or(decision, "provider_id", "")) + "::" + to_string(dict_get_or(decision, "model", ""))
+}
+
+func append_route_attempt(run_state, step_id, record) {
+	store := dict_get_or(run_state, "route_attempts", {})
+	items := dict_get_or(store, step_id, [])
+	if type(items) != "array" {
+		items = []
+	}
+	items := push(items, record)
+	store[step_id] := items
+	run_state["route_attempts"] := store
+	return run_state
+}
+
+func persist_selected_route(run_state, step, decision, candidate_evaluations, reused) {
+	step_id := dict_get_or(step, "id", "")
+	decisions := dict_get_or(run_state, "route_decisions", {})
+	decisions[step_id] := decision
+	run_state["route_decisions"] := decisions
+	if reused {
+		run_state["trace"] := append_trace(run_state["trace"], "route_selected", step_id, "Persisted route reused", {
+			"decision": decision,
+			"reason_code": "persisted_route_reused"
+		})
+		return persist_run_state(run_state)
+	}
+	run_state["trace"] := append_trace(run_state["trace"], "route_requested", step_id, "Route requested", {
+		"requested_agent_id": dict_get_or(decision, "requested_agent_id", ""),
+		"policy_version": dict_get_or(decision, "policy_version", "")
 	})
-	if wrapped["ok"] {
-		return {
-			"ok": true,
-			"data": wrapped["result"]["data"],
-			"trace_events": dict_get_or(wrapped["result"], "trace_events", []),
-			"attempts": wrapped["attempts"],
-			"attempt_records": wrapped["attempt_records"]
+	run_state["trace"] := append_trace(run_state["trace"], "route_candidates_evaluated", step_id, "Route candidates evaluated", {
+		"candidate_count": dict_get_or(decision, "candidate_count", 0),
+		"candidate_evaluations": candidate_evaluations
+	})
+	for candidate_evaluation in candidate_evaluations {
+		if dict_get_or(candidate_evaluation, "eligible", false) == false {
+			run_state["trace"] := append_trace(run_state["trace"], "route_rejected", step_id, "Routing candidate rejected", candidate_evaluation)
 		}
 	}
-	return {
-		"ok": false,
-		"error": dict_get_or(wrapped["result"], "error", {"code": "agent_execution_failure", "message": "Unknown agent error", "retryable": false}),
-		"attempts": wrapped["attempts"],
-		"attempt_records": wrapped["attempt_records"]
+	run_state["trace"] := append_trace(run_state["trace"], "route_selected", step_id, "Route selected", {"decision": decision})
+	run_state := append_route_attempt(run_state, step_id, {
+		"type": "selected",
+		"decision_id": dict_get_or(decision, "decision_id", ""),
+		"route": route_key(decision),
+		"fallback_index": dict_get_or(decision, "fallback_index", 0),
+		"timestamp": format_date(now(), "YYYY-MM-DD HH:mm:ss")
+	})
+	return persist_run_state(run_state)
+}
+
+func resolve_initial_route(step, workflow, run_state) {
+	step_id := dict_get_or(step, "id", "")
+	decisions := dict_get_or(run_state, "route_decisions", {})
+	if type(decisions) == "dict" && has_key(decisions, step_id) {
+		persisted_decision := decisions[step_id]
+		selected_agent_id := dict_get_or(persisted_decision, "selected_agent_id", "")
+		if has_key(dict_get_or(workflow, "agents", {}), selected_agent_id) == 0 {
+			return {"ok": false, "error": {"code": "persisted_route_unavailable", "message": "Persisted route agent is unavailable: " + selected_agent_id, "retryable": false}}
+		}
+		selected_agent := workflow["agents"][selected_agent_id]
+		active_handler_id := dict_get_or(selected_agent, "handler_id", selected_agent_id)
+		if active_handler_id != dict_get_or(persisted_decision, "handler_id", active_handler_id) {
+			return {"ok": false, "error": {"code": "persisted_route_unavailable", "message": "Persisted route handler no longer matches the selected agent.", "retryable": false}}
+		}
+		persisted_contract := dict_get_or(persisted_decision, "execution_contract", {})
+		active_contract := dict_get_or(selected_agent, "execution_contract", {})
+		if dict_get_or(persisted_contract, "id", "") != dict_get_or(active_contract, "id", "") || dict_get_or(persisted_contract, "version", "") != dict_get_or(active_contract, "version", "") {
+			return {"ok": false, "error": {"code": "persisted_route_unavailable", "message": "Persisted route execution contract no longer matches the selected agent.", "retryable": false}}
+		}
+		workflow_routing := dict_get_or(workflow, "routing", {})
+		current_catalog := dict_get_or(workflow_routing, "model_catalog", {})
+		current_hash := dict_get_or(current_catalog, "catalog_hash", "")
+		persisted_hash := dict_get_or(persisted_decision, "catalog_hash", "")
+		if current_hash != "" && persisted_hash != "" && current_hash != persisted_hash {
+			return {"ok": false, "error": {"code": "persisted_route_unavailable", "message": "Persisted route catalog hash does not match the active catalog.", "retryable": false, "details": {"persisted_catalog_hash": persisted_hash, "active_catalog_hash": current_hash}}}
+		}
+		catalog_models := dict_get_or(current_catalog, "models", [])
+		if type(catalog_models) == "array" && len(catalog_models) > 0 {
+			model_found := false
+			for catalog_model in catalog_models {
+				if dict_get_or(catalog_model, "provider", "") == dict_get_or(persisted_decision, "provider_id", "") && dict_get_or(catalog_model, "model", "") == dict_get_or(persisted_decision, "model", "") {
+					model_found = true
+				}
+			}
+			if model_found == false {
+				return {"ok": false, "error": {"code": "persisted_route_unavailable", "message": "Persisted provider/model route is not present in the active catalog.", "retryable": false}}
+			}
+		}
+		return {"ok": true, "decision": persisted_decision, "candidate_evaluations": [], "reused": true}
+	}
+	workflow_routing := dict_get_or(workflow, "routing", {})
+	return resolve_route({
+		"workflow": workflow,
+		"step": step,
+		"step_id": step_id,
+		"requested_agent_id": dict_get_or(step, "agent_id", ""),
+		"model_catalog": dict_get_or(workflow_routing, "model_catalog", {}),
+		"policy_version": dict_get_or(workflow_routing, "policy_version", routing_policy_version()),
+		"fallback_index": 0
+	})
+}
+
+func resolve_fallback_route(step, workflow, previous_decision, excluded_routes, fallback_index, fallback_reason) {
+	workflow_routing := dict_get_or(workflow, "routing", {})
+	overrides := {"excluded_routes": excluded_routes}
+	if fallback_reason == "reroute_agent" {
+		existing_denied := dict_get_or(dict_get_or(previous_decision, "constraints", {}), "denied_agents", [])
+		overrides["denied_agents"] := push(existing_denied, dict_get_or(previous_decision, "selected_agent_id", ""))
+	}
+	if fallback_reason == "upgrade_model" {
+		overrides["upgrade_from_quality_tier"] := dict_get_or(previous_decision, "quality_tier", "unknown")
+		overrides["upgrade_from_relative_quality"] := dict_get_or(previous_decision, "relative_quality", null)
+	}
+	return resolve_route({
+		"workflow": workflow,
+		"step": step,
+		"step_id": dict_get_or(step, "id", ""),
+		"requested_agent_id": dict_get_or(step, "agent_id", ""),
+		"model_catalog": dict_get_or(workflow_routing, "model_catalog", {}),
+		"policy_version": dict_get_or(workflow_routing, "policy_version", routing_policy_version()),
+		"constraint_overrides": overrides,
+		"fallback_index": fallback_index
+	})
+}
+
+func agent_evaluation_config(step, workflow) {
+	workflow_routing := dict_get_or(workflow, "routing", {})
+	configured := dict_get_or(workflow_routing, "evaluation", {})
+	step_configured := dict_get_or(step, "evaluation", dict_get_or(dict_get_or(step, "config", {}), "evaluation", {}))
+	if type(step_configured) == "dict" && len(keys(step_configured)) > 0 {
+		return step_configured
+	}
+	return configured
+}
+
+func execute_agent_step(step, workflow, step_input, run_state, tool_registry) {
+	agent_id := dict_get_or(step, "agent_id", "")
+	routing_enabled := routing_is_enabled(workflow, step)
+	initial_route := resolve_initial_route(step, workflow, run_state)
+	if dict_get_or(initial_route, "ok", false) == false {
+		route_error := dict_get_or(initial_route, "error", {"code": "no_route_available", "message": "No route available.", "retryable": false})
+		run_state["trace"] := append_trace(run_state["trace"], "route_rejected", dict_get_or(step, "id", ""), "Route rejected", {"error": route_error})
+		run_state := persist_run_state(run_state)
+		return {"ok": false, "error": route_error, "attempts": 1, "attempt_records": [], "run_state": run_state}
+	}
+	decision := initial_route["decision"]
+	run_state := persist_selected_route(run_state, step, decision, dict_get_or(initial_route, "candidate_evaluations", []), dict_get_or(initial_route, "reused", false))
+
+	workflow_routing := dict_get_or(workflow, "routing", {})
+	fallback_config := dict_get_or(workflow_routing, "fallback", {})
+	max_fallbacks := dict_get_or(fallback_config, "max_fallbacks", 0)
+	max_evaluation_retries := dict_get_or(fallback_config, "max_evaluation_retries", 1)
+	fallback_count := dict_get_or(decision, "fallback_index", 0)
+	evaluation_retries := 0
+	excluded_routes := []
+	total_attempts := 0
+	all_attempt_records := []
+
+	while true {
+		effective_result := build_effective_agent(workflow["agents"], decision, routing_enabled)
+		if effective_result["ok"] == false {
+			return {"ok": false, "error": effective_result["error"], "attempts": total_attempts + 1, "attempt_records": all_attempt_records, "route_decision": decision, "run_state": run_state}
+		}
+		effective_agent := effective_result["agent"]
+		handler_id := dict_get_or(decision, "handler_id", dict_get_or(effective_agent, "handler_id", dict_get_or(decision, "selected_agent_id", "")))
+		if dict_get_or(effective_agent, "uses_model", false) {
+			run_state["trace"] := append_trace(run_state["trace"], "model_call_started", dict_get_or(step, "id", ""), "Model call started", {
+				"decision_id": dict_get_or(decision, "decision_id", ""),
+				"provider_id": dict_get_or(decision, "provider_id", ""),
+				"model": dict_get_or(decision, "model", "")
+			})
+			run_state := persist_run_state(run_state)
+		}
+
+		policy := resolve_retry_policy(step, workflow)
+		wrapped := run_with_retry("agent:" + dict_get_or(decision, "selected_agent_id", agent_id) + ":" + dict_get_or(decision, "provider_id", "") + ":" + dict_get_or(decision, "model", ""), policy, func(attempt_number) {
+			return run_agent_with_agent(effective_agent, handler_id, workflow["agents"], step_input, run_state, tool_registry)
+		})
+		total_attempts = total_attempts + wrapped["attempts"]
+		for attempt_record in wrapped["attempt_records"] {
+			all_attempt_records := push(all_attempt_records, attempt_record)
+		}
+		if wrapped["attempts"] > 1 {
+			run_state := append_route_attempt(run_state, dict_get_or(step, "id", ""), {
+				"type": "same_route_retry",
+				"decision_id": dict_get_or(decision, "decision_id", ""),
+				"route": route_key(decision),
+				"attempts": wrapped["attempts"],
+				"timestamp": format_date(now(), "YYYY-MM-DD HH:mm:ss")
+			})
+		}
+
+		failure_error := null
+		fallback_reason := ""
+		if wrapped["ok"] {
+			model_calls := dict_get_or(wrapped["result"], "model_calls", [])
+			if dict_get_or(effective_agent, "uses_model", false) {
+				run_state["trace"] := append_trace(run_state["trace"], "model_call_completed", dict_get_or(step, "id", ""), "Model call completed", {
+					"decision_id": dict_get_or(decision, "decision_id", ""),
+					"provider_id": dict_get_or(decision, "provider_id", ""),
+					"model": dict_get_or(decision, "model", ""),
+					"model_calls": model_calls
+				})
+			}
+			evaluation := evaluate_route_output(dict_get_or(wrapped["result"], "data", {}), agent_evaluation_config(step, workflow))
+			if evaluation["accepted"] {
+				run_state := append_route_attempt(run_state, dict_get_or(step, "id", ""), {
+					"type": "completed",
+					"decision_id": dict_get_or(decision, "decision_id", ""),
+					"route": route_key(decision),
+					"evaluation": evaluation,
+					"timestamp": format_date(now(), "YYYY-MM-DD HH:mm:ss")
+				})
+				run_state := persist_run_state(run_state)
+				return {
+					"ok": true,
+					"data": wrapped["result"]["data"],
+					"trace_events": dict_get_or(wrapped["result"], "trace_events", []),
+					"model_calls": model_calls,
+					"route_decision": decision,
+					"route_evaluation": evaluation,
+					"attempts": total_attempts,
+					"attempt_records": all_attempt_records,
+					"run_state": run_state
+				}
+			}
+			if evaluation["outcome"] == "retry_same_route" && evaluation_retries < max_evaluation_retries {
+				evaluation_retries = evaluation_retries + 1
+				run_state := append_route_attempt(run_state, dict_get_or(step, "id", ""), {
+					"type": "same_route_evaluation_retry",
+					"decision_id": dict_get_or(decision, "decision_id", ""),
+					"evaluation": evaluation,
+					"timestamp": format_date(now(), "YYYY-MM-DD HH:mm:ss")
+				})
+				run_state := persist_run_state(run_state)
+				continue
+			}
+			if evaluation["outcome"] == "upgrade_model" || evaluation["outcome"] == "reroute_agent" {
+				failure_error = {"code": "quality_evaluation_failed", "message": "Route output did not satisfy deterministic evaluation.", "retryable": false, "details": evaluation}
+				fallback_reason = evaluation["outcome"]
+			} else if evaluation["outcome"] == "request_human_review" {
+				return {"ok": false, "error": {"code": "route_human_review_required", "message": "Route evaluation requires human review.", "retryable": false, "details": evaluation}, "attempts": total_attempts, "attempt_records": all_attempt_records, "route_decision": decision, "run_state": run_state}
+			} else {
+				return {"ok": false, "error": {"code": "quality_evaluation_failed", "message": "Route output did not satisfy deterministic evaluation.", "retryable": false, "details": evaluation}, "attempts": total_attempts, "attempt_records": all_attempt_records, "route_decision": decision, "run_state": run_state}
+			}
+		} else {
+			failure_error = dict_get_or(wrapped["result"], "error", {"code": "agent_execution_failure", "message": "Unknown agent error", "retryable": false})
+			if dict_get_or(effective_agent, "uses_model", false) {
+				run_state["trace"] := append_trace(run_state["trace"], "model_call_failed", dict_get_or(step, "id", ""), "Model call failed", {
+					"decision_id": dict_get_or(decision, "decision_id", ""),
+					"provider_id": dict_get_or(decision, "provider_id", ""),
+					"model": dict_get_or(decision, "model", ""),
+					"error": failure_error
+				})
+			}
+			action := route_failure_action(failure_error, fallback_config)
+			if action["action"] != "fallback" {
+				run_state := append_route_attempt(run_state, dict_get_or(step, "id", ""), {
+					"type": "failed",
+					"decision_id": dict_get_or(decision, "decision_id", ""),
+					"route": route_key(decision),
+					"error": failure_error,
+					"timestamp": format_date(now(), "YYYY-MM-DD HH:mm:ss")
+				})
+				run_state := persist_run_state(run_state)
+				return {"ok": false, "error": failure_error, "attempts": total_attempts, "attempt_records": all_attempt_records, "route_decision": decision, "run_state": run_state}
+			}
+			fallback_reason = action["reason"]
+		}
+
+		if fallback_count >= max_fallbacks {
+			run_state := persist_run_state(run_state)
+			return {"ok": false, "error": failure_error, "attempts": total_attempts, "attempt_records": all_attempt_records, "route_decision": decision, "run_state": run_state}
+		}
+		excluded_routes := push(excluded_routes, route_key(decision))
+		next_route := resolve_fallback_route(step, workflow, decision, excluded_routes, fallback_count + 1, fallback_reason)
+		if dict_get_or(next_route, "ok", false) == false {
+			return {"ok": false, "error": dict_get_or(next_route, "error", failure_error), "attempts": total_attempts, "attempt_records": all_attempt_records, "route_decision": decision, "run_state": run_state}
+		}
+		previous_decision := decision
+		decision = next_route["decision"]
+		fallback_count = fallback_count + 1
+		transition := {
+			"fallback_from": route_key(previous_decision),
+			"fallback_reason": fallback_reason,
+			"fallback_to": route_key(decision),
+			"from_decision_id": dict_get_or(previous_decision, "decision_id", ""),
+			"to_decision_id": dict_get_or(decision, "decision_id", "")
+		}
+		run_state["trace"] := append_trace(run_state["trace"], "route_fallback", dict_get_or(step, "id", ""), "Route fallback selected", transition)
+		run_state := append_route_attempt(run_state, dict_get_or(step, "id", ""), {
+			"type": "fallback",
+			"timestamp": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
+			"fallback_from": transition["fallback_from"],
+			"fallback_reason": transition["fallback_reason"],
+			"fallback_to": transition["fallback_to"],
+			"from_decision_id": transition["from_decision_id"],
+			"to_decision_id": transition["to_decision_id"]
+		})
+		run_state := persist_selected_route(run_state, step, decision, dict_get_or(next_route, "candidate_evaluations", []), false)
 	}
 }
 
@@ -576,6 +859,10 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 			})
 		} else {
 			executed := execute_step(step, workflow, step_input, run_state, tool_registry, options)
+			executed_run_state := dict_get_or(executed, "run_state", null)
+			if type(executed_run_state) == "dict" {
+				run_state = executed_run_state
+			}
 			if dict_get_or(executed, "ok", false) {
 				output_validation := validate_step_schema(step["id"], "output", dict_get_or(step, "output_schema", null), dict_get_or(executed, "data", null))
 				if output_validation["ok"] == false {
@@ -711,6 +998,10 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 
 		output_value := dict_get_or(executed, "data", null)
 		attempts := dict_get_or(executed, "attempts", 1)
+		if step["type"] == "agent" {
+			step["route_decision"] := dict_get_or(executed, "route_decision", dict_get_or(dict_get_or(run_state, "route_decisions", {}), step["id"], null))
+			step["route_evaluation"] := dict_get_or(executed, "route_evaluation", null)
+		}
 		step := mark_step_succeeded(step, output_value, attempts)
 		run_state["steps"] := replace_step(run_state["steps"], index, step)
 		retry_counts := run_state["retry_counts"]
@@ -796,7 +1087,11 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 	return {
 		"ok": true,
 		"paused": false,
-		"run_state": run_state
+		"run_state": run_state,
+		"metadata": {
+			"route_decisions": dict_get_or(run_state, "route_decisions", {}),
+			"route_attempts": dict_get_or(run_state, "route_attempts", {})
+		}
 	}
 }
 

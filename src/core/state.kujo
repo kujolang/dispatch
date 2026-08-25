@@ -625,6 +625,14 @@ func ensure_run_state_contract_fields(run_state) {
 		run_state["schema_version"] := state_schema_version()
 		updated = true
 	}
+	if has_key(run_state, "route_decisions") == 0 || type(run_state["route_decisions"]) != "dict" {
+		run_state["route_decisions"] := {}
+		updated = true
+	}
+	if has_key(run_state, "route_attempts") == 0 || type(run_state["route_attempts"]) != "dict" {
+		run_state["route_attempts"] := {}
+		updated = true
+	}
 	trace_result := ensure_trace_contract_fields(dict_get_or(run_state, "trace", {}))
 	run_state["trace"] := trace_result["trace_state"]
 	if dict_get_or(trace_result, "updated", false) {
@@ -761,6 +769,8 @@ func build_persistable_workflow_definition(workflow) {
 		"steps": clone_steps(dict_get_or(workflow, "steps", [])),
 		"memory_config": dict_get_or(workflow, "memory_config", {}),
 		"default_retry_policy": dict_get_or(workflow, "default_retry_policy", {}),
+		"routing": dict_get_or(workflow, "routing", {}),
+		"active_plugins": dict_get_or(workflow, "active_plugins", []),
 		"approval_config": dict_get_or(workflow, "approval_config", {}),
 		"output_schema": dict_get_or(workflow, "output_schema", {"type": "dict"})
 	}
@@ -799,6 +809,8 @@ func create_run_state(workflow, input_payload, output_root, options) {
 			"input": input_payload
 		},
 		"retry_counts": {},
+		"route_decisions": {},
+		"route_attempts": {},
 		"idempotency": {},
 		"errors": [],
 		"final_output": null,
