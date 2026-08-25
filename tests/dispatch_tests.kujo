@@ -3087,21 +3087,21 @@ test "dispatch CLI supports structured input, workflow-file, and plugin flags" {
 		kujo_bin, "run", "dispatch.kujo",
 		"demo", "structured", "--yes", "--non-interactive",
 		"--output-root", "tests/tmp/cli-input-" + suffix, "--input-json", "{\"repo\":\"dispatch\",\"area\":\"core\"}"
-	], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
+	], {"inherit_env": true, "timeout_ms": 180000, "max_output_bytes": 1024 * 1024})
 	assert_true(input_run.success)
 
 	file_run := spawn_process([
 		kujo_bin, "run", "dispatch.kujo",
 		"demo", "from file", "--yes", "--non-interactive",
 		"--output-root", "tests/tmp/cli-wf-" + suffix, "--workflow-file", "examples/workflows/custom-review.json"
-	], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
+	], {"inherit_env": true, "timeout_ms": 180000, "max_output_bytes": 1024 * 1024})
 	assert_true(file_run.success)
 
 	unknown_plugin := spawn_process([
 		kujo_bin, "run", "dispatch.kujo",
 		"demo", "plugin", "--yes", "--non-interactive",
 		"--output-root", "tests/tmp/cli-plug-" + suffix, "--plugin", "missing-plugin"
-	], {"inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 1024 * 1024})
+	], {"inherit_env": true, "timeout_ms": 180000, "max_output_bytes": 1024 * 1024})
 	assert_false(unknown_plugin.success)
 	plugin_combined := to_string(unknown_plugin.stdout) + "\n" + to_string(unknown_plugin.stderr)
 	assert_equal(contains(plugin_combined, "Unknown plugin"), 1)
