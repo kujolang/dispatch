@@ -23,6 +23,7 @@ Single-step chat calls are rarely enough when work needs to be repeated, reviewe
 - Human-in-the-loop approval controls
 - Persisted, resumable run state
 - Structured report outputs and trace artifacts
+- Deterministic, policy-driven agent and model routing with persisted decisions
 
 ## Key Capabilities
 
@@ -43,6 +44,8 @@ Single-step chat calls are rarely enough when work needs to be repeated, reviewe
 - Trace generation (`trace.json`, `trace.md`)
 - Provider-neutral human-intervention events and validated `resume-decision`
   bridge handoff for Leash ChatOps routing
+- Quality-first route selection with hard policy constraints, explicit fallback limits,
+  resumable route evidence, and structured `no_route_available` failures
 
 ## Architecture Overview
 
@@ -59,6 +62,7 @@ Core modules:
 - `src/plugins/builtin_plugins.kujo`: built-in plugin registry applied via `--plugin`
 - `src/cli/output.kujo`: CLI output, version, and contract-metadata helpers
 - `src/core/runner.kujo`: orchestration engine entrypoint
+- `src/core/routing.kujo`: deterministic route filtering, ranking, evaluation, and fallback policy
 - `src/agents/agent.kujo`: agent execution entrypoint and handler registry mapping
 - `src/tools/tool.kujo`: tool registry, payload adapters, and tool invocation entrypoint
 - `src/tools/source_lookup.kujo`: source search and lookup handlers
@@ -92,6 +96,65 @@ Dispatch uses the same pattern as `ai-chat`:
 This keeps SDK behavior centralized in one repository (`ai-sdk`) while allowing Dispatch to remain lightweight.
 
 The bridge forwards AI SDK structured-output controls (`response_format`, `structured_output_schema`, and `structured_output_retryable`) when callers provide them. This keeps JSON-mode and schema validation policy in the SDK instead of reimplementing it in Dispatch.
+
+## Deterministic Agent And Model Routing
+
+Routing is opt-in. Workflows without `routing.enabled: true` retain their configured
+agent and model exactly. An enabled workflow supplies a versioned AI SDK model
+catalog, workflow defaults, and optional step constraints. Dispatch validates the
+catalog hash, rejects candidates that violate hard constraints, and applies a
+stable quality-first ordering to the remainder. It persists the complete decision,
+candidate rejections, attempts, catalog provenance, and evaluation outcome before
+the model call.
+
+Dispatch owns policy and run decisions. AI SDK owns provider/model catalog metadata.
+Agents SDK defines the compatible agent vocabulary (`handler_id`, versioned
+`execution_contract`, capabilities, model candidates, and risk metadata). Agent
+substitution is permitted only when enabled and handler-compatible or when the
+execution contracts match exactly.
+
+On resume, Dispatch reuses the persisted route. It will not silently reroute if the
+catalog, model, agent, handler, execution contract, or plugin that supplied a route
+is unavailable. Same-route retries remain distinct from bounded fallback to a new
+route. Provider failures, evaluation failures, and fallback eligibility are
+recorded as route lifecycle trace events.
+
+Run the offline example without credentials:
+
+```bash
+kujo run dispatch.kujo demo "Routing review" \
+  --workflow-file examples/workflows/routed-review.json \
+  --yes --non-interactive
+```
+
+The example is intentionally fixture-backed. `state.json`, `report.json`, the
+`inspect --json` envelope, and the runner result metadata expose `route_decisions`
+and `route_attempts`. Secrets and raw provider output remain subject to Dispatch's
+existing artifact redaction policy.
+
+Minimal workflow routing shape (the catalog fields and hash should come from AI
+SDK's `create_model_catalog`/`provider_model_catalog`, not a copied routing table):
+
+```json
+{
+  "routing": {
+    "enabled": true,
+    "policy_version": "1.0.0",
+    "objective": "quality_first",
+    "allow_agent_substitution": false,
+    "constraints": {"quality_floor": "standard"},
+    "fallback": {"max_fallbacks": 1, "max_evaluation_retries": 1},
+    "model_catalog": {"schema_name": "ai-sdk-model-catalog", "schema_version": "1.0.0", "id": "approved", "version": "1", "catalog_hash": "...", "models": []}
+  },
+  "steps": [{
+    "id": "write",
+    "type": "agent",
+    "agent_id": "writer",
+    "routing": {"constraints": {"allowed_providers": ["openai"], "max_latency_ms": 2000}},
+    "evaluation": {"required_fields": ["summary"], "on_failure": "upgrade_model"}
+  }]
+}
+```
 
 ## Prerequisites
 

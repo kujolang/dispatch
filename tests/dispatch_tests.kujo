@@ -17,7 +17,7 @@ test_setup {
 	from src.core.step import create_step
 	from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_policy, build_tool_authorization_policy_with_profile
 	from src.tools.source_lookup import mock_web_search_handler, canonicalize_path, path_is_within_root
-	from src.core.utils import dict_get_or, ensure_dir
+	from src.core.utils import dict_get_or, ensure_dir, redact_sensitive_data
 }
 
 test "workflow creation includes required sections" {
@@ -1041,6 +1041,7 @@ test "report payload and markdown include lifecycle metadata" {
 	assert_equal(payload["run_status"], "completed")
 	assert_equal(payload["total_steps"], len(final_state["steps"]))
 	assert_equal(payload["completed_steps"], len(final_state["steps"]))
+	assert_equal(type(dict_get_or(payload, "routing", {})), "dict")
 	markdown := render_markdown_report(payload)
 	assert_equal(contains(markdown, "Run Status: completed"), 1)
 	assert_equal(contains(markdown, "Steps Completed:"), 1)
@@ -1332,6 +1333,17 @@ test "persisted artifacts redact sensitive values" {
 	assert_equal(contains(trace_md_raw, "TRACE_SECRET_456"), 0)
 	assert_equal(contains(state_raw, "[REDACTED]"), 1)
 	assert_equal(contains(trace_raw, "[REDACTED]"), 1)
+}
+
+test "redaction preserves non-secret token metrics" {
+	redacted := redact_sensitive_data({
+		"required_context_tokens": 8192,
+		"input_tokens": 12,
+		"auth_token": "secret"
+	})
+	assert_equal(redacted["required_context_tokens"], 8192)
+	assert_equal(redacted["input_tokens"], 12)
+	assert_equal(redacted["auth_token"], "[REDACTED]")
 }
 
 test "report artifacts redact sensitive fields" {
@@ -2158,6 +2170,9 @@ test "show inspect and doctor json envelopes are consistent" {
 	assert_equal(dict_get_or(inspect_summary, "run_id", ""), run_state["run_id"])
 	inspect_steps := dict_get_or(inspect_payload, "steps", [])
 	assert_true(len(inspect_steps) >= 1)
+	inspect_routing := dict_get_or(inspect_payload, "routing", {})
+	assert_equal(type(dict_get_or(inspect_routing, "decisions", {})), "dict")
+	assert_equal(type(dict_get_or(inspect_routing, "attempts", {})), "dict")
 
 	doctor_result := spawn_process([
 		kujo_bin,

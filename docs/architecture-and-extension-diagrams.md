@@ -10,6 +10,10 @@ flowchart TD
 	B --> C[src/workflows/workflow.kujo]
 	C --> D[src/core/state.kujo create_run_state]
 	D --> E[src/core/runner.kujo run_workflow]
+	E --> RT[src/core/routing.kujo resolve and persist route]
+	RT --> CAT[AI SDK versioned model catalog]
+	RT --> AG[Agents SDK-compatible agent metadata]
+	RT --> H[src/agents/agent.kujo handler execution]
 	E --> F[src/core/approval.kujo]
 	E --> G[src/core/retry.kujo]
 	E --> H[src/agents/agent.kujo]
@@ -48,9 +52,15 @@ flowchart LR
 	E[Reporting And Trace Extension] --> E1[src/core/report.kujo]
 	E1 --> E2[src/core/trace.kujo]
 	E2 --> E3[Artifacts and observability outputs]
+
+	F[Routing Policy Extension] --> F1[src/core/routing.kujo]
+	F1 --> F2[Hard constraints and stable quality-first ranking]
+	F2 --> F3[Persisted decision, evaluation, and bounded fallback]
 ```
 
 ## Notes
 
 - The default execution path uses `src/` modules.
 - CLI commands in `dispatch.kujo` are the integration boundary for workflow runtime, policy controls, and artifact lifecycle.
+- Routing is opt-in and backward compatible. Dispatch owns decisions, AI SDK owns the versioned model catalog, and Agents SDK supplies the shared agent metadata vocabulary.
+- A resumed step reuses its persisted route and fails explicitly when its catalog, route, execution handler, or plugin is no longer available.

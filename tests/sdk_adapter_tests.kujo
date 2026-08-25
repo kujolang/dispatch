@@ -1,5 +1,5 @@
 test_setup {
-	from sdk_adapter import parse_json_from_output, build_bridge_parse_error_details, build_bridge_exec_error_message, build_bridge_spawn_command, resolve_bridge_timeout_ms, call_agent_model
+	from sdk_adapter import parse_json_from_output, build_bridge_parse_error_details, build_bridge_exec_error_message, build_bridge_spawn_command, resolve_bridge_timeout_ms, build_bridge_payload, call_agent_model
 }
 
 test "parse json from output supports trailing json line" {
@@ -72,6 +72,34 @@ test "bridge timeout is configurable with a safe default" {
 	assert_equal(resolve_bridge_timeout_ms({"timeout_ms": "abc"}), 240000)
 	assert_equal(resolve_bridge_timeout_ms({"timeout_ms": 0}), 240000)
 	assert_equal(resolve_bridge_timeout_ms({}), 240000)
+}
+
+test "bridge payload carries route provenance and structured output policy" {
+	payload := build_bridge_payload({
+		"instructions": "Return JSON.",
+		"model": {"provider": "fixture", "model": "frontier"},
+		"output_schema": {"type": "dict", "required": ["summary"]},
+		"__route_decision": {
+			"decision_id": "route-123",
+			"policy_version": "1.0.0",
+			"catalog_id": "catalog",
+			"catalog_version": "7",
+			"catalog_hash": "abc",
+			"constraints": {"requires_structured_output": true}
+		}
+	}, "topic", {"offline_fixture": true})
+	assert_equal(payload["route"]["decision_id"], "route-123")
+	assert_equal(payload["route"]["catalog_version"], "7")
+	assert_equal(payload["response_format"]["type"], "json_object")
+	assert_equal(payload["structured_output_schema"]["required"][0], "summary")
+	assert_false(payload["structured_output_retryable"])
+	overridden := build_bridge_payload({"instructions": "", "model": {}}, "topic", {
+		"offline_fixture": true,
+		"response_format": {"type": "json_object"},
+		"structured_output_schema": {"type": "dict"},
+		"structured_output_retryable": true
+	})
+	assert_true(overridden["structured_output_retryable"])
 }
 
 test "offline fixture model calls return in process without bridge execution" {
