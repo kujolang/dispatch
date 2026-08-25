@@ -79,14 +79,6 @@ jobs:
           fi
           rm -rf tests/tmp/ci-smoke
 
-      - name: Run sdk adapter tests
-        timeout-minutes: 10
-        run: timeout 10m "$KUJO_BIN" test-run tests/sdk_adapter_tests.kujo -v
-
-      - name: Run policy precedence matrix tests
-        timeout-minutes: 15
-        run: timeout 20m "$KUJO_BIN" test-run tests/policy_precedence_tests.kujo -v
-
-      - name: Run dispatch regression tests
-        timeout-minutes: 20
-        run: timeout 20m "$KUJO_BIN" test-run tests/dispatch_tests.kujo -v
+      - name: Run Dispatch release gate
+        timeout-minutes: 35
+        run: timeout 35m bash scripts/run_release_gate.sh
