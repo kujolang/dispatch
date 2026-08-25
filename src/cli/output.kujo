@@ -35,6 +35,10 @@ func print_report_path_if_present(run_state) {
 
 func read_package_version() {
 	path := "kennel.toml"
+	dispatch_root := trim(to_string(env("DISPATCH_ROOT")))
+	if dispatch_root != "" {
+		path = replace(dispatch_root, "\\", "/") + "/kennel.toml"
+	}
 	if file_exists(path) == false {
 		return "unknown"
 	}

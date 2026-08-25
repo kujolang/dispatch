@@ -125,9 +125,19 @@ func collect_plugin_event_hooks(plugins) {
 	return hooks
 }
 
+func emit_builtin_plugin_events(plugins, event) {
+	for plugin in plugins {
+		if dict_get_or(plugin, "id", "") == "sample" {
+			record_plugin_event(event)
+		}
+	}
+	return {"ok": true}
+}
+
 export reset_plugin_event_state := reset_plugin_event_state
 export get_plugin_event_state := get_plugin_event_state
 export create_sample_plugin := create_sample_plugin
 export create_builtin_plugin_registry := create_builtin_plugin_registry
 export resolve_builtin_plugins := resolve_builtin_plugins
 export collect_plugin_event_hooks := collect_plugin_event_hooks
+export emit_builtin_plugin_events := emit_builtin_plugin_events

@@ -227,6 +227,16 @@ func completed_report_step_exists(steps) {
 	return false
 }
 
+func paused_approval_payload(executed_data) {
+	if type(executed_data) != "dict" {
+		return {}
+	}
+	if dict_get_or(executed_data, "kind", "") == "route_human_review" {
+		return dict_get_or(executed_data, "approval", {})
+	}
+	return executed_data
+}
+
 func route_key(decision) {
 	return to_string(dict_get_or(decision, "selected_agent_id", "")) + "::" + to_string(dict_get_or(decision, "provider_id", "")) + "::" + to_string(dict_get_or(decision, "model", ""))
 }
@@ -939,31 +949,33 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 			}
 		}
 		if dict_get_or(executed, "paused", false) {
-			step := mark_step_paused(step, dict_get_or(executed, "data", null))
+			paused_data := dict_get_or(executed, "data", {})
+			approval_payload := paused_approval_payload(paused_data)
+			step := mark_step_paused(step, paused_data)
 			run_state["steps"] := replace_step(run_state["steps"], index, step)
 			run_state["status"] := "paused"
-			if step["type"] == "approval" || dict_get_or(dict_get_or(executed, "data", {}), "kind", "") == "route_human_review" {
-				decision := dict_get_or(dict_get_or(executed, "data", {}), "decision", "pending")
+			if step["type"] == "approval" || dict_get_or(paused_data, "kind", "") == "route_human_review" {
+				decision := dict_get_or(approval_payload, "decision", "pending")
 				if decision == "request_changes" {
 					run_state["status"] := "needs_changes"
 				}
 			}
 			run_state["current_step_index"] := index
-			if step["type"] == "approval" || dict_get_or(dict_get_or(executed, "data", {}), "kind", "") == "route_human_review" {
-				run_state["approvals"] := push(run_state["approvals"], dict_get_or(executed, "data", {}))
+			if step["type"] == "approval" || dict_get_or(paused_data, "kind", "") == "route_human_review" {
+				run_state["approvals"] := push(run_state["approvals"], approval_payload)
 			}
-			if step["type"] == "approval" || dict_get_or(dict_get_or(executed, "data", {}), "kind", "") == "route_human_review" {
-				human_event := create_human_intervention_event(run_state, step, dict_get_or(executed, "data", {}), options)
+			if step["type"] == "approval" || dict_get_or(paused_data, "kind", "") == "route_human_review" {
+				human_event := create_human_intervention_event(run_state, step, approval_payload, options)
 				run_state["human_intervention"] := human_event
 			}
 			run_state["trace"] := append_trace(run_state["trace"], "step_paused", step["id"], "Workflow paused at approval gate.", {
-				"decision": dict_get_or(dict_get_or(executed, "data", {}), "decision", "pending")
+				"decision": dict_get_or(approval_payload, "decision", "pending")
 			})
 			run_state := persist_run_state(run_state)
 			emit_lifecycle_event(run_state, options, "step_paused", step["id"], "Workflow paused at approval gate.", {
-				"decision": dict_get_or(dict_get_or(executed, "data", {}), "decision", "pending")
+				"decision": dict_get_or(approval_payload, "decision", "pending")
 			})
-			if step["type"] == "approval" || dict_get_or(dict_get_or(executed, "data", {}), "kind", "") == "route_human_review" {
+			if step["type"] == "approval" || dict_get_or(paused_data, "kind", "") == "route_human_review" {
 				emit_hook_event(options, dict_get_or(run_state, "human_intervention", {}))
 			}
 			return {

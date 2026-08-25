@@ -2,8 +2,7 @@ func dict_get_or(obj, key, default_value) {
 	if type(obj) != "dict" {
 		return default_value
 	}
-	key_present := has_key(obj, key)
-	if key_present == true || key_present == 1 {
+	if has_key(obj, key) {
 		return obj[key]
 	}
 	return default_value
@@ -55,12 +54,12 @@ func sanitize_slug(text) {
 	if type(text) != "string" {
 		return "item"
 	}
-	lower := to_lower(text)
+	lower_text := to_lower(text)
 	letters := "abcdefghijklmnopqrstuvwxyz0123456789"
 	result := ""
 	i := 0
-	while i < len(lower) {
-		ch := substring(lower, i, i + 1)
+	while i < len(lower_text) {
+		ch := substring(lower_text, i, i + 1)
 		if contains(letters, ch) {
 			result := result + ch
 		} else {

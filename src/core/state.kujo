@@ -31,14 +31,14 @@ func normalize_output_root(raw_output_root) {
 		}
 	}
 
-	lower := to_lower(value)
+	lower_value := to_lower(value)
 	if value == "/" || value == "." || value == ".." || value == "~" {
 		return output_root_error("Unsafe output root: " + value + ". Use a dedicated relative directory or set DISPATCH_ALLOW_ANY_OUTPUT_ROOT=true for explicit opt-in.")
 	}
 	if starts_with(value, "/") || starts_with(value, "~/") {
 		return output_root_error("Absolute output-root paths are blocked by default. Set DISPATCH_ALLOW_ANY_OUTPUT_ROOT=true for explicit opt-in.")
 	}
-	if contains(lower, "..") || contains(lower, "%2f") || contains(lower, "%5c") {
+	if contains(lower_value, "..") || contains(lower_value, "%2f") || contains(lower_value, "%5c") {
 		return output_root_error("Path traversal patterns are not allowed in output root.")
 	}
 

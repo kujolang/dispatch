@@ -10,7 +10,7 @@ from src.core.trace import apply_trace_limits
 from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_policy_with_profile
 from src.cli.output import print_lines, print_kv, print_error, exit_error, print_item, print_nested_item, print_report_path_if_present, read_package_version, run_version, build_contract_metadata, build_artifact_paths, print_run_completion, print_artifact_summary
 from src.core.plugins import create_plugin_registry, register_plugin, apply_plugins_to_runtime
-from src.plugins.builtin_plugins import resolve_builtin_plugins, collect_plugin_event_hooks
+from src.plugins.builtin_plugins import resolve_builtin_plugins, emit_builtin_plugin_events
 from src.core.routing import validate_workflow_routing, resolve_route, routing_policy_version, supported_route_provider
 
 func dispatch_root_path(relative_path) {
@@ -55,12 +55,21 @@ func key_exists(map_obj, key_name) {
 		if type(map_obj) != "dict" {
 			return false
 		}
-		exists := has_key(map_obj, key_name)
-		return exists == true || exists == 1
+		if has_key(map_obj, key_name) {
+			return true
+		}
+		return false
 	}
 
 	func parsed_flag_present(parsed_args, flag_name) {
 		return key_exists(dict_get_or(parsed_args, "present", {}), flag_name)
+	}
+
+	func text_contains(haystack, needle) {
+		if contains(haystack, needle) {
+			return true
+		}
+		return false
 	}
 
 	func parsed_positionals_or_empty(parsed_args) {
@@ -120,8 +129,8 @@ func key_exists(map_obj, key_name) {
 				"message": "Absolute config paths are blocked by default. Set DISPATCH_ALLOW_ANY_CONFIG_PATH=true for explicit opt-in."
 			}
 		}
-		lower := to_lower(path)
-		if contains(lower, "..") || contains(lower, "%2f") || contains(lower, "%5c") {
+		lower_path := to_lower(path)
+		if contains(lower_path, "..") || contains(lower_path, "%2f") || contains(lower_path, "%5c") {
 			return {
 				"ok": false,
 				"message": "Path traversal patterns are not allowed in --config path."
@@ -157,11 +166,11 @@ func key_exists(map_obj, key_name) {
 
 	func parse_yaml_scalar(raw_value) {
 		value := strip_wrapping_quotes(raw_value)
-		lower := to_lower(value)
-		if lower == "true" || lower == "yes" || lower == "on" {
+		lower_value := to_lower(value)
+		if lower_value == "true" || lower_value == "yes" || lower_value == "on" {
 			return true
 		}
-		if lower == "false" || lower == "no" || lower == "off" {
+		if lower_value == "false" || lower_value == "no" || lower_value == "off" {
 			return false
 		}
 		parsed_number := 0
@@ -181,7 +190,7 @@ func key_exists(map_obj, key_name) {
 			if trimmed == "" || starts_with(trimmed, "#") {
 				continue
 			}
-			if contains(trimmed, ":") == 0 {
+			if text_contains(trimmed, ":") == false {
 				continue
 			}
 			parts := split(trimmed, ":")
@@ -262,8 +271,8 @@ func key_exists(map_obj, key_name) {
 				"message": "Config file exceeds maximum size of " + to_string(max_config_bytes) + " bytes."
 			}
 		}
-		lower := to_lower(path)
-		if ends_with(lower, ".json") {
+		lower_path := to_lower(path)
+		if ends_with(lower_path, ".json") {
 			parsed_config := null
 			try {
 				parsed_config = parse_json(content)
@@ -284,7 +293,7 @@ func key_exists(map_obj, key_name) {
 				"config": parsed_config
 			}
 		}
-		if ends_with(lower, ".yml") || ends_with(lower, ".yaml") {
+		if ends_with(lower_path, ".yml") || ends_with(lower_path, ".yaml") {
 			return parse_simple_yaml(content)
 		}
 		return {
@@ -355,7 +364,7 @@ func key_exists(map_obj, key_name) {
 		for run_item in run_items {
 			workflow_name := to_lower(to_string(dict_get_or(run_item, "workflow_name", "")))
 			workflow_id := to_lower(to_string(dict_get_or(run_item, "workflow_id", "")))
-			if contains(workflow_name, query) == 1 || contains(workflow_id, query) == 1 {
+			if contains(workflow_name, query) || contains(workflow_id, query) {
 				filtered := push(filtered, run_item)
 			}
 		}
@@ -383,7 +392,7 @@ func filter_runs_by_tags(run_items, tags_query) {
 		required_index := 0
 		while required_index < len(required_tags) {
 			required_tag := required_tags[required_index]
-			if has_key(tag_map, required_tag) == 0 {
+			if key_exists(tag_map, required_tag) == false {
 				includes_all = false
 				break
 			}
@@ -420,8 +429,8 @@ func filter_runs_by_tags(run_items, tags_query) {
 		if starts_with(path, "/") || starts_with(path, "~/") {
 			return {"ok": false, "message": "Absolute --webhook-sink paths are blocked by default. Set DISPATCH_ALLOW_ANY_WEBHOOK_SINK=true for explicit opt-in."}
 		}
-		lower := to_lower(path)
-		if contains(lower, "..") || contains(lower, "%2f") || contains(lower, "%5c") {
+		lower_path := to_lower(path)
+		if contains(lower_path, "..") || contains(lower_path, "%2f") || contains(lower_path, "%5c") {
 			return {"ok": false, "message": "Path traversal patterns are not allowed in --webhook-sink path."}
 		}
 		for segment in split(path, "/") {
@@ -456,7 +465,7 @@ func filter_runs_by_tags(run_items, tags_query) {
 			"rejected": true,
 			"cancelled": true
 		}
-		if has_key(allowed_statuses, value) == 0 {
+		if key_exists(allowed_statuses, value) == false {
 			exit_error("Invalid value for " + flag_name + ": " + value + ". Allowed values: running, paused, needs_changes, interrupted, completed, failed, rejected, cancelled")
 		}
 		return value
@@ -545,8 +554,10 @@ func dispatch_key_exists(map_obj, key_name) {
 	if type(map_obj) != "dict" {
 		return false
 	}
-	exists := has_key(map_obj, key_name)
-	return exists == true || exists == 1
+	if has_key(map_obj, key_name) {
+		return true
+	}
+	return false
 }
 
 func dispatch_parsed_flag_present(parsed_args, flag_name) {
@@ -727,14 +738,10 @@ func dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, confi
 		plugin_registry = register_plugin(plugin_registry, plugin)
 	}
 	applied := apply_plugins_to_runtime(workflow, tool_registry, plugin_registry)
-	plugin_hooks := collect_plugin_event_hooks(plugins)
 	combined_event_hook := null
-	if len(plugin_hooks) > 0 {
+	if len(plugins) > 0 {
 		combined_event_hook = func(event) {
-			for plugin_hook in plugin_hooks {
-				plugin_hook(event)
-			}
-			return {"ok": true}
+			return emit_builtin_plugin_events(plugins, event)
 		}
 	}
 	return {
@@ -959,7 +966,7 @@ func run_demo(command_args) {
 		for input_key in keys(parsed_input) {
 			run_input[input_key] := parsed_input[input_key]
 		}
-		if has_key(run_input, "topic") == 0 {
+		if key_exists(run_input, "topic") == false {
 			run_input["topic"] := topic
 		}
 	}
@@ -1317,7 +1324,7 @@ func run_resume_decision(command_args) {
 		"reply": "reply",
 		"cancel": "cancel"
 	}
-	if has_key(decision_map, decision_value) == 0 {
+	if key_exists(decision_map, decision_value) == false {
 		exit_error("Unsupported decision value: " + decision_value)
 	}
 	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
@@ -1341,7 +1348,7 @@ func run_resume_decision(command_args) {
 	if type(decision_history) != "dict" {
 		decision_history := {}
 	}
-	if has_key(decision_history, decision_id) == 1 && dict_get_or(decision_history[decision_id], "status", "") == "applied" {
+	if has_key(decision_history, decision_id) && dict_get_or(decision_history[decision_id], "status", "") == "applied" {
 		print(to_json({"status": "already_applied", "run_id": run_id, "decision_id": decision_id}))
 		return
 	}

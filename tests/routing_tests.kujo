@@ -397,7 +397,7 @@ test "persisted decision is reused and sensitive route fields are redacted" {
 	assert_equal(result["run_state"]["data"]["result"]["model"], "saved")
 	assert_equal(result["run_state"]["route_decisions"]["write"]["decision_id"], decision["decision_id"])
 
-	changed_agent := base_agent("writer", "changed-handler", "write", [{"provider": "fixture", "model": "saved"}])
+	changed_agent := base_agent("writer", "planner", "write", [{"provider": "fixture", "model": "saved"}])
 	changed_agent["uses_model"] := false
 	changed_workflow := create_workflow({
 		"id": "persisted-route", "name": "Persisted Route", "description": "resume", "input_schema": {"type": "dict"},
@@ -478,6 +478,10 @@ test "route evaluation pauses for native human review and resumes stored output"
 	paused := run_workflow(workflow, state, {}, {"auto_approve": false, "interactive": false})
 	assert_true(paused["paused"])
 	assert_equal(paused["run_state"]["steps"][0]["output"]["kind"], "route_human_review")
+	approval_id := paused["run_state"]["steps"][0]["output"]["approval"]["id"]
+	assert_equal(paused["run_state"]["approvals"][0]["id"], approval_id)
+	assert_equal(paused["run_state"]["human_intervention"]["security"]["decision_id"], approval_id)
+	assert_equal(paused["run_state"]["human_intervention"]["metadata"]["source_approval_id"], approval_id)
 	resumed := run_workflow(workflow, paused["run_state"], {}, {"auto_approve": false, "interactive": false, "simulated_decision": "approve", "simulated_note": "approved"})
 	assert_true(resumed["ok"])
 	assert_equal(resumed["run_state"]["status"], "completed")

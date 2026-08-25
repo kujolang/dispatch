@@ -4,8 +4,10 @@ func key_exists(map_obj, key_name) {
 	if type(map_obj) != "dict" {
 		return false
 	}
-	exists := has_key(map_obj, key_name)
-	return exists == true || exists == 1
+	if has_key(map_obj, key_name) {
+		return true
+	}
+	return false
 }
 
 func make_parse_error(code, message) {
