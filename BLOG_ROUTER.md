@@ -144,7 +144,7 @@ The model catalog should be generated with AI SDK so its canonical hash is corre
     "allow_agent_substitution": false,
     "constraints": {
       "quality_floor": "standard",
-      "min_reliability": 0.98
+      "minimum_reliability": 0.98
     },
     "fallback": {
       "max_fallbacks": 1,

@@ -1,6 +1,6 @@
 # Dispatch
 
-[![Version](https://img.shields.io/badge/version-1.0.0-black)](https://github.com/kujolang/dispatch)
+[![Version](https://img.shields.io/badge/version-1.1.0-black)](https://github.com/kujolang/dispatch)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 [![built with Kujo](https://img.shields.io/badge/built%20with-Kujo-white.svg)](https://github.com/kujolang/kujo)
 
@@ -481,12 +481,16 @@ Exclude generated/bulk paths from the main sweep unless the task explicitly targ
 
 Release governance artifacts:
 
+- [Router HOWTO](HOWTO.md)
+- [Dispatch 1.1 upgrade guide](docs/UPGRADING_TO_1_1.md)
+- [Dispatch 1.1 release checklist](docs/release-checklist.md)
+
 - `CHANGELOG.md`: changelog format and versioning policy.
 - `docs/release-checklist.md`: step-by-step release gate and tagging checklist.
 
 Release versions are sourced from `kennel.toml` (`[package].version`) and should be updated together with the corresponding changelog release section. The repository also keeps a `kujo.toml` toolchain manifest; its `[package].version` must match `kennel.toml`, and CI fails the build on a mismatch.
 
-For v1.0 pre-release walkthroughs, prefer the repository-root invocation pattern to avoid shell cwd drift:
+For release walkthroughs, prefer the repository-root invocation pattern to avoid shell cwd drift:
 
 ```bash
 pushd "$(git rev-parse --show-toplevel)"

@@ -60,6 +60,7 @@ echo
 echo "Running focused integration suites..."
 "$KUJO_BIN" test-run tests/sdk_adapter_tests.kujo -v
 "$KUJO_BIN" test-run tests/policy_precedence_tests.kujo -v
+"$KUJO_BIN" test-run tests/routing_tests.kujo -v
 
 echo
 echo "Running sharded Dispatch contract suite..."
@@ -73,7 +74,26 @@ done
 
 echo
 echo "Running command-surface smoke..."
-"$KUJO_BIN" run dispatch.kujo --help >/dev/null
-"$KUJO_BIN" run dispatch.kujo version >/dev/null
+vm_stderr="$SHARD_DIR/vm-command.stderr"
+interpreter_stderr="$SHARD_DIR/interpreter-command.stderr"
+: > "$vm_stderr"
+: > "$interpreter_stderr"
+"$KUJO_BIN" run dispatch.kujo --help >/dev/null 2>"$vm_stderr"
+"$KUJO_BIN" run dispatch.kujo version >/dev/null 2>>"$vm_stderr"
+"$KUJO_BIN" run dispatch.kujo --interpreter -- --help >/dev/null 2>"$interpreter_stderr"
+"$KUJO_BIN" run dispatch.kujo --interpreter -- version >/dev/null 2>>"$interpreter_stderr"
+if [[ -s "$vm_stderr" || -s "$interpreter_stderr" ]]; then
+	echo "Dispatch command surface emitted diagnostics." >&2
+	cat "$vm_stderr" "$interpreter_stderr" >&2
+	exit 1
+fi
+
+kennel_version="$(grep -E '^version' kennel.toml | head -1 | sed -E 's/.*"(.*)".*/\1/')"
+kujo_version="$(grep -E '^version' kujo.toml | head -1 | sed -E 's/.*"(.*)".*/\1/')"
+reported_version="$(DISPATCH_ROOT="$PWD" "$KUJO_BIN" run "$PWD/dispatch.kujo" -- version)"
+if [[ "$kennel_version" != "$kujo_version" || "$reported_version" != "Dispatch $kennel_version" ]]; then
+	echo "Dispatch package version mismatch: kennel=$kennel_version kujo=$kujo_version reported=$reported_version" >&2
+	exit 1
+fi
 
 echo "Dispatch release gate passed."

@@ -44,6 +44,22 @@ kujo run dispatch.kujo inspect <run-id> \
 
 The example gives Dispatch two fixture models. Both satisfy the step's hard constraints, so the quality-first policy selects `dispatch-frontier` deterministically.
 
+If you installed the ecosystem AI profile, the same example is ready immediately:
+
+```bash
+cd "$HOME/.kujo/sources/dispatch"
+
+dispatch validate --workflow-file examples/workflows/routed-review.json --json
+dispatch explain-route --workflow-file examples/workflows/routed-review.json --json
+dispatch demo "Routing review" \
+  --workflow-file examples/workflows/routed-review.json \
+  --yes \
+  --non-interactive \
+  --output-root tests/tmp/routing-howto
+```
+
+The installer configures the `dispatch` shim with the matching Dispatch and AI SDK source paths. No additional dependency install or provider credential is required for this fixture-backed walkthrough.
+
 ## How a Route Is Selected
 
 For each routed agent step, Dispatch performs this sequence:
@@ -421,6 +437,14 @@ The bridge currently recognizes the built-in provider IDs `openai`, `openrouter`
 Never put API-key values in a workflow, catalog, route decision, or model candidate. Use provider environment-variable names and the environment itself for secrets.
 
 Before production rollout, validate every allowed provider/model route with the real credentials and deployment network policy. Offline fixture validation proves routing behavior, not external provider availability.
+
+Run the live preflight before starting a live workflow:
+
+```bash
+dispatch validate --workflow-file path/to/live-routed-workflow.json --live --json
+```
+
+For an intentionally local OpenAI-compatible endpoint over HTTP, also set `KUJO_AI_SDK_ALLOW_INSECURE_LOCALHOST=1`. This opt-in applies only to `localhost` and `127.0.0.1`; production provider endpoints should use HTTPS.
 
 ## Inspect Routing Evidence
 

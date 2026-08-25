@@ -28,7 +28,12 @@ Each release section should include only shipped changes and use these headings 
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-25
+
 ### Added
+- Added opt-in deterministic, policy-driven agent/provider/model routing with hard-constraint filtering, quality-first ranking, stable tie-breaking, persisted route decisions, explicit fallback transitions, and structured rejection reasons.
+- Added strict `validate` and `explain-route` commands, declarative model-agent execution, external AI SDK catalog files with canonical-hash validation, deterministic output evaluation, and native routed human-review pause/resume.
+- Added the routed workflow/catalog example, complete router HOWTO, introductory article, upgrade guide, and v1.1 release-readiness checklist.
 - Added launch-readiness Spec and Eval suite for prelaunch review, with enterprise readiness proof kept scoped to target-environment validation.
 - Added `scripts/run_release_gate.sh`, a bounded release-validation gate that
   runs focused integration suites and generated shards of the broad Dispatch
@@ -52,6 +57,7 @@ Each release section should include only shipped changes and use these headings 
 - Added the `--webhook-sink <path.jsonl>` flag to `demo` and `resume` to append lifecycle events to a local JSONL sink.
 
 ### Changed
+- Made both VM and interpreter CLI paths warning-free and made the installed `dispatch version` command resolve package metadata through `DISPATCH_ROOT` from any working directory.
 - Removed the no-op `parallel_execution` runner branch and reframed the README scheduling claim: steps execute sequentially in a single process with `depends_on` gating order (no concurrent execution).
 - Bounded run-index write amplification: per-step `running` status updates no longer rewrite the full catalog index; it is refreshed at run creation and on each non-`running` status transition.
 - Extracted the CLI output/version/contract helper cluster from `dispatch.kujo` into `src/cli/output.kujo`.
@@ -68,6 +74,7 @@ Each release section should include only shipped changes and use these headings 
 - Atomic artifact writes prevent torn/partial files from crashes or concurrent readers; a threat model and concurrency guidance were added to the enterprise deployment guide.
 
 ### Fixed
+- Fixed routed human-review checkpoints so their approval ID is propagated to the persisted intervention event and can be consumed exactly once by `resume-decision` after a process restart.
 - Fixed the built-in `research-report` and `crud-reliability` templates failing under the `staging`/`production` policy profiles by marking the reliability probe step optional.
 
 ## [1.0.0] - 2026-06-10
