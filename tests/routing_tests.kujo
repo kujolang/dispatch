@@ -368,6 +368,9 @@ test "runner records same-route retry separately from fallback" {
 test "persisted decision is reused and sensitive route fields are redacted" {
 	agent := base_agent("writer", "writer", "write", [{"provider": "fixture", "model": "saved"}])
 	agent["uses_model"] := false
+	agent_model := agent["model"]
+	agent_model["api_key_env"] := "CUSTOM_API_KEY"
+	agent["model"] := agent_model
 	agents := {"writer": agent}
 	agents["__agent_handlers"] := {"writer": func(effective_agent, step_input, run_state, tool_registry, context) {
 		return {"ok": true, "data": {"summary": "resumed", "model": effective_agent["model"]["model"]}}
@@ -391,7 +394,9 @@ test "persisted decision is reused and sensitive route fields are redacted" {
 	decision_store["write"] := decision
 	state["route_decisions"] := decision_store
 	state := persist_run_state(state)
-	assert_equal(contains(read_file(state["run_dir"] + "/state.json"), "ROUTE_SECRET_VALUE"), 0)
+	persisted_state_text := read_file(state["run_dir"] + "/state.json")
+	assert_equal(contains(persisted_state_text, "ROUTE_SECRET_VALUE"), 0)
+	assert_equal(contains(persisted_state_text, "CUSTOM_API_KEY"), 1)
 	result := run_workflow(workflow, state, {}, {"auto_approve": true, "interactive": false})
 	assert_true(result["ok"])
 	assert_equal(result["run_state"]["data"]["result"]["model"], "saved")

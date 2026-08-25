@@ -77,6 +77,7 @@ Each release section should include only shipped changes and use these headings 
 - Restricted custom-provider workflows to `CUSTOM_API_KEY` or an explicit `DISPATCH_ALLOWED_CUSTOM_API_KEY_ENVS` allowlist, preventing workflow-controlled selection of unrelated process secrets.
 - Applied config path policy to router validation/explanation commands and blocked absolute or traversing `model_catalog_file` references unless the existing explicit config-path opt-in is enabled.
 - Added bounded workflow and external catalog reads with explicit deployment overrides.
+- Preserved safe `api_key_env` variable-name metadata while continuing to redact credential values, allowing custom-provider runs to resume correctly after restart.
 - Fixed routed human-review checkpoints so their approval ID is propagated to the persisted intervention event and can be consumed exactly once by `resume-decision` after a process restart.
 - Fixed the built-in `research-report` and `crud-reliability` templates failing under the `staging`/`production` policy profiles by marking the reliability probe step optional.
 

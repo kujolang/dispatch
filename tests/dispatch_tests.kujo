@@ -1339,10 +1339,12 @@ test "redaction preserves non-secret token metrics" {
 	redacted := redact_sensitive_data({
 		"required_context_tokens": 8192,
 		"input_tokens": 12,
+		"api_key_env": "CUSTOM_API_KEY",
 		"auth_token": "secret"
 	})
 	assert_equal(redacted["required_context_tokens"], 8192)
 	assert_equal(redacted["input_tokens"], 12)
+	assert_equal(redacted["api_key_env"], "CUSTOM_API_KEY")
 	assert_equal(redacted["auth_token"], "[REDACTED]")
 }
 

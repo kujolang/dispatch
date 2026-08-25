@@ -121,6 +121,12 @@ func is_sensitive_key_name(key_name) {
 	if name == "" {
 		return false
 	}
+	# Environment-variable names are routing metadata, not credential values.
+	# Persisting the name is required for restart-safe provider execution; the
+	# environment remains the only source of the actual secret.
+	if name == "api_key_env" {
+		return false
+	}
 	safe_token_metrics := [
 		"input_tokens",
 		"output_tokens",
