@@ -2480,6 +2480,8 @@ test "dispatch help usage snapshot remains compatible" {
 		"kujo run dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]",
 		"kujo run dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]",
 		"kujo run dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]",
+		"kujo run dispatch.kujo validate --workflow-file workflow.json [--plugin sample] [--live] [--json]",
+		"kujo run dispatch.kujo explain-route --workflow-file workflow.json [--step-id step-id] [--plugin sample] [--json]",
 		"kujo run dispatch.kujo version"
 	]
 
