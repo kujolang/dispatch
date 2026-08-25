@@ -99,6 +99,9 @@ The bridge forwards AI SDK structured-output controls (`response_format`, `struc
 
 ## Deterministic Agent And Model Routing
 
+For a complete setup, policy, live-provider, inspection, and troubleshooting guide,
+see [`HOWTO.md`](HOWTO.md).
+
 Routing is opt-in. Workflows without `routing.enabled: true` retain their configured
 agent and model exactly. An enabled workflow supplies a versioned AI SDK model
 catalog, workflow defaults, and optional step constraints. Dispatch validates the
