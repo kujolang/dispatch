@@ -1486,7 +1486,7 @@ test "canonical source path helpers enforce root boundaries" {
 }
 
 test "doctor and cleanup persist mutation audit artifacts" {
-	output_root := "tests/tmp/audit-outputs"
+	output_root := "tests/tmp/audit-outputs-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
 	workflow := create_research_report_workflow("Audit Topic", true)
 
 	run_repair := create_run_state(workflow, {"topic": "Audit Repair"}, output_root, {
@@ -1504,6 +1504,14 @@ test "doctor and cleanup persist mutation audit artifacts" {
 	run_cleanup["status"] := "completed"
 	run_cleanup["current_step_index"] := len(run_cleanup["steps"])
 	run_cleanup := persist_run_state(run_cleanup)
+
+	run_cleanup_overflow := create_run_state(workflow, {"topic": "Audit Cleanup Overflow"}, output_root, {
+		"auto_approve": true,
+		"interactive": false
+	})
+	run_cleanup_overflow["status"] := "completed"
+	run_cleanup_overflow["current_step_index"] := len(run_cleanup_overflow["steps"])
+	run_cleanup_overflow := persist_run_state(run_cleanup_overflow)
 
 	doctor_result := doctor_runs(output_root, true, {})
 	assert_true(len(doctor_result) >= 1)

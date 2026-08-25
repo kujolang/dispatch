@@ -11,6 +11,9 @@ if [[ ! "$SHARD_COUNT" =~ ^[0-9]+$ ]] || [[ "$SHARD_COUNT" -lt 1 ]]; then
 	exit 1
 fi
 
+if [[ -d "$SHARD_DIR" ]]; then
+	find "$SHARD_DIR" -type f -delete
+fi
 mkdir -p "$SHARD_DIR"
 
 awk -v out_dir="$SHARD_DIR" -v shard_count="$SHARD_COUNT" '
