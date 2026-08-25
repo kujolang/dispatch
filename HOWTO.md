@@ -234,7 +234,42 @@ Only routing policy version `1.0.0` and objective `quality_first` are currently 
 }
 ```
 
-Step constraints override matching agent and workflow defaults. Dispatch also uses a step's declared `output_schema` as a required agent output contract.
+Step constraints may only narrow agent and workflow policy. Allowlists intersect, requirements and denylists accumulate, minimums increase, and maximums decrease. A step cannot weaken a broader constraint. Dispatch also uses a step's declared `output_schema` as a required agent output contract.
+
+## Validate and Explain Before Running
+
+```bash
+dispatch validate --workflow-file workflow.json --json
+dispatch explain-route --workflow-file workflow.json --step-id write --json
+```
+
+Add `--live` to `validate` to check the AI SDK bridge and provider credential environment variables without making a model call. Validation rejects unknown fields, unsupported providers, missing handlers, incomplete execution contracts, invalid fallback/evaluation policy, and missing model candidates.
+
+## Use a Catalog File
+
+Set `routing.model_catalog_file` to a JSON file path relative to the workflow file:
+
+```json
+{"routing": {"enabled": true, "model_catalog_file": "catalogs/production.json"}}
+```
+
+Dispatch loads and validates it before execution, then embeds the resolved catalog in persisted run state so resume does not depend on the original file. Generate it with AI SDK:
+
+```bash
+cd /path/to/ai-sdk
+kujo run scripts/generate_model_catalog.kujo --interpreter -- \
+  examples/dispatch-model-catalog.config.json --output /path/to/dispatch/catalogs/production.json
+```
+
+## Declare a Generic Model Agent
+
+Use `handler_id: "model"` for an agent that does not need custom Kujo handler code. Supply `instructions`, `model_candidates`, optional registered `tools`, `model_options`, and an optional `output_schema`. Dispatch executes tools through the configured authorization policy, sends the assembled input to the selected model, and returns text or structured output.
+
+Agents SDK users can call `convert_agent_to_dispatch(agent, options)` or `validate_dispatch_agent_conversion(agent, options)` from `src.agents.integrations.adapters` to create this definition without manually translating fields.
+
+## Human Review
+
+When deterministic evaluation returns `request_human_review`, Dispatch creates a native approval request, persists the candidate output and route decision, and pauses the run. Resume with the normal `resume` or `resume-decision` flow. Approval accepts the stored output without another model call; rejection fails the step; requested changes rerun the persisted route.
 
 ## Hard Constraints Reference
 
@@ -307,7 +342,7 @@ Supported outcomes are:
 | `retry_same_route` | Re-execute the same agent/provider/model up to `max_evaluation_retries`. |
 | `upgrade_model` | Select another eligible route that is a strict quality upgrade. |
 | `reroute_agent` | Exclude the current agent and select a compatible substitute. |
-| `request_human_review` | Return the explicit `route_human_review_required` result. It does not currently create a native approval pause. |
+| `request_human_review` | Create a native Dispatch approval request and pause with the candidate output and route persisted. |
 | `failed` | Fail with `quality_evaluation_failed`. |
 
 `accepted` is produced by the evaluator; configure one of the other values through `on_failure`.

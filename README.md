@@ -119,6 +119,11 @@ Agents SDK defines the compatible agent vocabulary (`handler_id`, versioned
 substitution is permitted only when enabled and handler-compatible or when the
 execution contracts match exactly.
 
+Broader policy cannot be weakened by an agent or step. Allowlists intersect,
+requirements and denylists accumulate, minimums increase, and maximums decrease.
+Unknown providers are rejected unless they are one of the explicit adapters:
+`fixture`, `openai`, `openrouter`, `deepseek`, or configured `custom`.
+
 On resume, Dispatch reuses the persisted route. It will not silently reroute if the
 catalog, model, agent, handler, execution contract, or plugin that supplied a route
 is unavailable. Same-route retries remain distinct from bounded fallback to a new
@@ -137,6 +142,19 @@ The example is intentionally fixture-backed. `state.json`, `report.json`, the
 `inspect --json` envelope, and the runner result metadata expose `route_decisions`
 and `route_attempts`. Secrets and raw provider output remain subject to Dispatch's
 existing artifact redaction policy.
+
+Validate configuration and explain the deterministic choice before execution:
+
+```bash
+dispatch validate --workflow-file examples/workflows/routed-review.json --json
+dispatch explain-route --workflow-file examples/workflows/routed-review.json --json
+```
+
+Catalogs may be referenced with `routing.model_catalog_file`; Dispatch resolves
+the path relative to the workflow and embeds the loaded catalog in persisted run
+state. Declarative agents can use the built-in `handler_id: "model"` rather than
+shipping custom runtime code. Evaluation outcome `request_human_review` uses the
+native Dispatch pause/resume approval lifecycle.
 
 Minimal workflow routing shape (the catalog fields and hash should come from AI
 SDK's `create_model_catalog`/`provider_model_catalog`, not a copied routing table):
@@ -165,7 +183,7 @@ SDK's `create_model_catalog`/`provider_model_catalog`, not a copied routing tabl
 ## Prerequisites
 
 - Kujo CLI/runtime installed for local fixture runs
-- Local clone of `ai-sdk` only for live SDK integration
+- AI SDK installed by the Kujo `ai` profile, or a local clone for source development
 - `dispatch` checked out locally
 
 ## Quick Start

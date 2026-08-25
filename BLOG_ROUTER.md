@@ -1,5 +1,7 @@
 # Introducing Deterministic Agent and Model Routing in Dispatch
 
+> The finished feature also includes strict `validate` and `explain-route` commands, a built-in declarative `model` agent, external catalog files, native human-review pause/resume, explicit provider rejection, live preflight, an AI SDK catalog generator, and an Agents SDK conversion helper.
+
 AI workflows usually start with a hard-coded model: one agent, one provider, one model. That is simple, but it becomes fragile as soon as a team needs different quality levels, provider restrictions, cost or latency limits, resumable runs, or a reliable fallback plan.
 
 Dispatch now has an opt-in, policy-driven router for that job. Instead of asking a model to decide which model should run next, Dispatch makes the decision itself from explicit workflow policy and a versioned model catalog. The result is deterministic, persisted, and inspectable.
@@ -196,11 +198,11 @@ The goal is not automatic model switching at any cost. The goal is predictable c
 
 Keeping catalog facts in AI SDK avoids a second provider registry. Keeping agent contracts aligned with Agents SDK avoids Dispatch-specific agent definitions. Keeping the actual decision in Dispatch makes it resumable and auditable with the workflow that used it. Keeping the router deterministic makes the outcome testable without another AI system sitting in judgment over it.
 
-This first version is intentionally bounded. Human-review evaluation produces an explicit `route_human_review_required` outcome for the caller to handle; it does not silently turn that result into a native Dispatch pause. That boundary is visible rather than implied.
+Human-review evaluation uses Dispatch's native approval lifecycle. The run pauses with the candidate output and selected route persisted, then the standard resume flow can approve, reject, or request changes without losing routing evidence.
 
 ## Try It
 
-Start with the fixture workflow, inspect the route evidence, and then replace its generated catalog and candidates with the models your organization has approved. Routing is opt-in, so it can be introduced one workflow at a time.
+Start with the fixture workflow, run `dispatch validate` and `dispatch explain-route`, inspect the route evidence, and then replace its generated catalog and candidates with the models your organization has approved. Routing is opt-in, so it can be introduced one workflow at a time.
 
 For the complete configuration and troubleshooting guide, see [HOWTO.md](HOWTO.md). For an executable starting point, see [examples/workflows/routed-review.json](examples/workflows/routed-review.json).
 
