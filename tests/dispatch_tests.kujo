@@ -538,7 +538,7 @@ test "step timeout and cancellation handling update run lifecycle" {
 		"interactive": false
 	})
 	timeout_registry := create_tool_registry()
-	timeout_registry := register_tool(timeout_registry, create_tool(
+	timeout_tool := create_tool(
 		"slow_tool",
 		"Sleeps long enough to exceed timeout",
 		{"type": "dict"},
@@ -553,7 +553,12 @@ test "step timeout and cancellation handling update run lifecycle" {
 		func(step_input) {
 			return step_input
 		}
-	))
+	)
+	// This fixture intentionally exercises the runner's post-call deadline check.
+	// Production custom tools remain untrusted/unbounded unless Dispatch reviews
+	// their implementation or they execute behind an isolation boundary.
+	timeout_tool["__dispatch_deadline_bounded"] := true
+	timeout_registry := register_tool(timeout_registry, timeout_tool)
 	timeout_result := run_workflow(timeout_workflow, timeout_state, timeout_registry, {
 		"auto_approve": true,
 		"interactive": false
