@@ -10,7 +10,7 @@ It routes structured work through repeatable workflow templates and produces rev
 
 Dispatch is strongest as a Control-layer primitive: workflow routing, run-state persistence, import/export, approval gates, and auditable orchestration evidence.
 
-The verified path in this repository uses safe local/offline fixture runs by default. Live SDK integration is optional and requires a local `ai-sdk` checkout plus environment-specific validation.
+Model execution is live and fail-closed by default. Deterministic offline fixtures are an explicit test/demo mode enabled with `DISPATCH_OFFLINE_FIXTURE=true`; live SDK integration requires AI SDK plus provider credentials.
 
 ## Why Dispatch
 
@@ -34,7 +34,7 @@ Single-step chat calls are rarely enough when work needs to be repeated, reviewe
 - Per-step timeout handling and cancellation lifecycle state
 - Lifecycle event hooks via callback and webhook sink outputs (`--webhook-sink`)
 - Approval decisions (approved, rejected, request_changes)
-- DAG-style step dependencies (`depends_on`) with dependency-ordered scheduling (steps execute sequentially in a single process; `depends_on` gates ordering)
+- DAG-style step dependencies (`depends_on`) with dependency-ordered scheduling and bounded concurrent execution for explicitly idempotent `parallel_safe` tool steps
 - Agent-to-agent handoff events
 - Run cataloging and filtering (`runs --status`, `--topic`, `--issues-only`, `--json`)
 - Output retention cleanup with safe dry-run/apply modes (`cleanup`)
@@ -133,7 +133,7 @@ recorded as route lifecycle trace events.
 Run the offline example without credentials:
 
 ```bash
-kujo run dispatch.kujo demo "Routing review" \
+DISPATCH_OFFLINE_FIXTURE=true kujo run dispatch.kujo demo "Routing review" \
   --workflow-file examples/workflows/routed-review.json \
   --yes --non-interactive
 ```
@@ -188,12 +188,12 @@ SDK's `create_model_catalog`/`provider_model_catalog`, not a copied routing tabl
 
 ## Quick Start
 
-The default path is offline and fixture-backed, so it is safe to run without provider credentials:
+The quick-start demo is explicitly fixture-backed, so it is safe to run without provider credentials:
 
 ```bash
 cd /path/to/kujo-dispatch
 
-kujo run dispatch.kujo demo "How do AI agent workflows differ from chatbots?" --yes --non-interactive
+DISPATCH_OFFLINE_FIXTURE=true kujo run dispatch.kujo demo "How do AI agent workflows differ from chatbots?" --yes --non-interactive
 ```
 
 Dispatch runs on the default Kujo bytecode VM, which executes cleanly with no diagnostic output. The `--interpreter` flag (tree-walking interpreter) is supported for debugging but prints type-checker warnings to stderr; prefer the default VM path shown above for production and automation.
@@ -221,21 +221,36 @@ Dispatch reads the following environment variables:
 |---|---|---|---|
 | `KUJO_BIN` | No | `kujo` | Kujo executable used to invoke bridge calls |
 | `AI_SDK_PATH` | Yes (for live SDK integration) | `../ai-sdk` | Directory containing `ai_sdk.kujo` and `providers.kujo` |
-| `DISPATCH_SDK_BRIDGE_SCRIPT` | No | `<PWD>/bridge_chat.kujo` | Override bridge script path |
-| `DISPATCH_OFFLINE_FIXTURE` | No | `true` | Enables fixture-mode model calls by default for the verified local/offline path |
+| `DISPATCH_SDK_BRIDGE_SCRIPT` | No | `<DISPATCH_ROOT>/bridge_chat.kujo`, or `<PWD>/bridge_chat.kujo` from source | Override bridge script path |
+| `DISPATCH_OFFLINE_FIXTURE` | No | `false` | Explicitly enables deterministic fixture-mode model calls for tests and demos; production fails closed without live configuration |
 | `DISPATCH_ALLOW_ANY_SOURCES_DIR` | No | `false` | Allows non-default `--sources-dir` paths when explicitly set to `true` |
 | `DISPATCH_ALLOW_ANY_OUTPUT_ROOT` | No | `false` | Allows unconstrained `--output-root` paths (absolute and broader targets) when explicitly set to `true` |
 | `DISPATCH_ALLOW_ANY_CONFIG_PATH` | No | `false` | Allows absolute or otherwise unrestricted `--config` paths when explicitly set to `true` |
 | `DISPATCH_CONFIG_MAX_BYTES` | No | `262144` | Maximum config file size in bytes accepted by `--config` |
+| `DISPATCH_WORKFLOW_MAX_BYTES` | No | `1048576` | Maximum workflow file size |
+| `DISPATCH_MODEL_CATALOG_MAX_BYTES` | No | `5242880` | Maximum external model-catalog size |
 | `DISPATCH_ALLOWED_TOOLS` | No | empty | Comma-separated allowlist of tool names permitted during tool steps |
 | `DISPATCH_DENIED_TOOLS` | No | empty | Comma-separated denylist of tool names blocked during tool steps |
-| `DISPATCH_POLICY_PROFILE` | No | empty | Named policy profile alias (`dev`, `development`, `staging`, `prod`, `production`) applied before explicit allow/deny overrides |
-| `DISPATCH_BUNDLE_SIGNING_KEY` | No | empty | Shared signing key used by `export-run --sign-bundle` and `import-run --verify-bundle-signature` |
+| `DISPATCH_POLICY_PROFILE` | No | `production` live; `development` fixture | Named policy profile alias (`dev`, `development`, `staging`, `prod`, `production`) applied before explicit allow/deny overrides |
+| `DISPATCH_BUNDLE_SIGNING_KEY` | Required for signed transfer | empty | Shared signing key used by `export-run --sign-bundle` and verified by default during import |
 | `DISPATCH_BUNDLE_SIGNING_KEY_ID` | No | `default` | Key id label recorded in signed bundles, enabling key rotation |
 | `DISPATCH_BUNDLE_SIGNING_KEYS` | No | empty | Trusted verification key set (`id1=key1,id2=key2`) used during signature verification for rotation windows |
+| `DISPATCH_BUNDLE_MAX_BYTES` | No | `26214400` | Maximum bundle size accepted before import parsing |
+| `DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS` | For custom live providers | empty | Exact comma-separated HTTPS base URLs allowed to receive custom-provider credentials |
+| `DISPATCH_ALLOW_INSECURE_LOCAL_CUSTOM_PROVIDER` | No | `false` | Allows an explicitly allowlisted localhost HTTP custom provider for development only |
 | `DISPATCH_ALLOW_ANY_WEBHOOK_SINK` | No | `false` | Allows absolute or otherwise unrestricted `--webhook-sink` paths when explicitly set to `true` |
 | `DISPATCH_SDK_TIMEOUT_MS` | No | `240000` | Timeout in milliseconds for live SDK bridge subprocess calls |
 | `DISPATCH_STATE_MAX_BYTES` | No | `5242880` | `state.json` size budget; `doctor` flags runs whose state exceeds it |
+| `DISPATCH_STATE_BACKEND` | No | `filesystem` | Durable state authority: `filesystem` or SQLite (`sqlite`, WAL + revision compare-and-swap) |
+| `DISPATCH_RUN_LOCK_TIMEOUT_MS` | No | `5000` | Maximum wait for the owner-bound per-run execution lock |
+| `DISPATCH_RUN_LOCK_STALE_MS` | No | `300000` | Age after which an abandoned per-run lock can be recovered |
+| `DISPATCH_WEBHOOK_OUTBOX` | No | `<output-root>/.dispatch-webhook-outbox.jsonl` | Durable webhook delivery ledger |
+| `DISPATCH_WEBHOOK_MAX_ATTEMPTS` | No | `3` | Bounded webhook attempts before dead-lettering (1–10) |
+| `DISPATCH_WEBHOOK_OUTBOX_MAX_BYTES` | No | `10485760` | Rotates the webhook outbox to one bounded backup before append |
+| `DISPATCH_ALLOWED_WEBHOOK_ORIGINS` | For network webhooks | empty | Exact comma-separated HTTPS origins allowed for webhook delivery and replay |
+| `DISPATCH_WEBHOOK_SIGNING_KEY` | For network webhooks | empty | Required HMAC-SHA256 key for webhook envelopes |
+| `DISPATCH_WEBHOOK_SIGNING_KEY_ID` | No | `default` | Webhook signing-key identifier included in the envelope |
+| `DISPATCH_ALLOW_INSECURE_LOCAL_WEBHOOK` | No | `false` | Allows an explicitly allowlisted localhost HTTP webhook for development only |
 | `DISPATCH_STRICT_MUTATION_MODE` | No | `false` | When `true`, destructive commands require explicit confirmation |
 | `DISPATCH_MUTATION_CONFIRM` | No | `false` | Global mutation confirmation guard used with strict mutation mode |
 | `DISPATCH_MUTATION_AUDIT_MAX_BYTES` | No | `1048576` | Maximum active audit log size before rolling to a backup file |
@@ -263,7 +278,7 @@ kujo run dispatch.kujo runs [--output-root outputs] [--status completed] [--work
 kujo run dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]
 kujo run dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]
 kujo run dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]
-kujo run dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]
+kujo run dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--signing-key key] [--allow-unsigned-bundle] [--strict-mutations] [--confirm-mutation]
 ```
 
 When strict mutation mode is enabled (`--strict-mutations` or `DISPATCH_STRICT_MUTATION_MODE=true`), `doctor --write`, `cleanup --apply`, and `import-run` are blocked unless `--confirm-mutation` is present or `DISPATCH_MUTATION_CONFIRM=true` is set.
@@ -285,7 +300,7 @@ Steps can be marked `optional` in a workflow template. When an optional step fai
 `demo` and `resume` accept lifecycle observability and control flags:
 
 - `--webhook-sink <path.jsonl>` appends lifecycle events (one JSON object per line) to a local sink file. Absolute/traversal paths are blocked unless `DISPATCH_ALLOW_ANY_WEBHOOK_SINK=true`.
-- `--webhook-url <https-url>` best-effort POSTs each lifecycle event to an HTTP endpoint. Delivery failures never fail the run; the local sink and trace remain the source of truth.
+- `--webhook-url <https-url>` records each signed envelope in the durable outbox before bounded delivery. Failed deliveries are dead-lettered and can be inspected or replayed with `dispatch webhooks status|replay`; webhook failure does not fail the workflow.
 - `--cancel-after-step <step-id>` cooperatively cancels the run after the named step completes, producing a `cancelled` lifecycle state.
 
 Tool and agent steps can declare an `idempotency_key`; a keyed result is cached in run state and reused on resume instead of re-executing the side effect.
@@ -355,12 +370,12 @@ kujo run dispatch.kujo demo "Policy constrained run" --yes --allow-tools timesta
 
 ```bash
 kujo run dispatch.kujo export-run <run-id> --bundle-path bundles/run.json --sign-bundle
-kujo run dispatch.kujo import-run --bundle-path bundles/run.json --output-root outputs-imported --verify-bundle-signature
+kujo run dispatch.kujo import-run --bundle-path bundles/run.json --output-root outputs-imported
 ```
 
-When signature mode is enabled, Dispatch writes `signature` metadata into the bundle and verifies it during import. Verification failures return deterministic `invalid_bundle_signature` errors.
+Dispatch verifies bundle signatures by default during import. Use `--allow-unsigned-bundle` only for an explicitly trusted local development transfer; production imports must remain authenticated. Verification failures return deterministic `invalid_bundle_signature` errors.
 
-Signatures use a keyed SHA-256 MAC (`dispatch-signature-v2`): each artifact is hashed with `sha256`, the per-artifact digests are bound to the run id, and the combined value is signed with a nested keyed hash so the secret key never appears in the persisted bundle and any artifact tampering invalidates the signature. The signing key is required for both signing and verification.
+Signatures use standard HMAC-SHA256 (`hmac-sha256-v1`): each artifact is hashed, the per-artifact digests are bound to the run id, and the canonical message is authenticated with the shared key. Verification uses Kujo's constant-time HMAC tag verification. The signing key is required for both signing and verification.
 
 Bundles record a `key_id` (default `default`, or `DISPATCH_BUNDLE_SIGNING_KEY_ID`/`--signing-key-id`). During a key rotation window, verification can trust multiple keys at once via `DISPATCH_BUNDLE_SIGNING_KEYS` (`id1=key1,id2=key2`): the verifier selects the key matching the bundle's `key_id`, falling back to the single signing key when no set entry matches.
 
@@ -423,6 +438,37 @@ Built-in policy profile aliases:
 - `staging`: deny `flaky_reliability_tool`
 - `prod` / `production`: allow `mock_web_search`, `local_source_lookup`, `claim_extraction`, `citation_formatter`, `markdown_report_writer`, `timestamp_tool`; deny `flaky_reliability_tool`
 
+## Production execution controls
+
+Workflow specifications can bound execution directly:
+
+```json
+{
+  "max_parallel_steps": 4,
+  "budgets": {
+    "max_steps": 20,
+    "max_total_tokens": 100000,
+    "max_cost_usd": 10,
+    "max_wall_time_ms": 900000
+  }
+}
+```
+
+Only tool steps marked `parallel_safe: true` are eligible for concurrent execution, and those steps must declare an `idempotency_key`. Dispatch uses `max_parallel_steps` as a hard concurrency bound and merges results in workflow order. Agent, approval, handoff, and report steps stay serialized so route persistence and human decisions remain deterministic.
+
+Set `agent.model_options.stream: true` to persist incremental model events to `stream-<step-id>.jsonl` in the run directory while the AI SDK bridge is active. The final normalized model response remains the step result.
+
+Every run is protected by an owner-bound lock. State schema v1 artifacts migrate additively to schema v2 when loaded, with the migration recorded in `state.json`. For a shared or restart-sensitive deployment, use `DISPATCH_STATE_BACKEND=sqlite`; JSON artifacts remain human-readable mirrors while SQLite is authoritative.
+
+Operational commands:
+
+```bash
+dispatch doctor --output-root outputs --json
+dispatch doctor --live --workflow-file workflow.json --output-root outputs --json
+dispatch webhooks status --output-root outputs --json
+dispatch webhooks replay --output-root outputs --url https://collector.example/events --destination lifecycle --json
+```
+
 ## Testing
 
 ```bash
@@ -433,7 +479,7 @@ kujo test-run tests/dispatch_tests.kujo
 
 Repository CI is enforced by GitHub Actions in `.github/workflows/ci-gate.yml`.
 
-The gate builds Kujo from `kujolang/kujo`, exports `KUJO_BIN` for test child processes, and runs:
+The gate builds the exact pinned Kujo revision on Linux and macOS, exports `KUJO_BIN` for test child processes, and runs the focused SDK, routing, SQLite, operational-control, policy, and sharded Dispatch suites.
 
 ```bash
 kujo test-run tests/sdk_adapter_tests.kujo -v
@@ -451,7 +497,7 @@ kujo test-run tests/policy_precedence_tests.kujo -v
 kujo test-run tests/dispatch_tests.kujo -v
 ```
 
-## Improvement Checklist
+## Historical implementation checklists
 
 Track prioritized hardening, architecture cleanup, extensibility work, and testing backlog in:
 
@@ -459,9 +505,7 @@ Track prioritized hardening, architecture cleanup, extensibility work, and testi
 - `docs/dispatch-next-session-checklist-v3.md`
 - `docs/dispatch-next-session-checklist-v2.md`
 
-`docs/dispatch-next-session-checklist-v4.md` is the active next-session backlog for workflow-authoring, extensibility wiring, reliability, and presentation work.
-
-`docs/dispatch-next-session-checklist-v3.md` and `-v2.md` are retained as implementation audit trails for the enterprise hardening milestones.
+These files are retained as implementation audit trails; the release checklist is the active release authority.
 
 `docs/dispatch-next-session-checklist.md` is kept as historical context from the earliest backlog phase.
 
@@ -561,9 +605,9 @@ Ensure your sources directory exists and includes markdown fixtures (`.md` files
 
 If you intentionally need a different sources directory, set `DISPATCH_ALLOW_ANY_SOURCES_DIR=true` explicitly.
 
-### Type-checker warnings on stderr
+### Command diagnostics
 
-The default VM run path (`kujo run dispatch.kujo ...`) is warning-free. The optional `--interpreter` (tree-walking) mode runs a best-effort type checker that prints `[KUJORUN001]` warnings to stderr while still executing correctly; these are diagnostics from the interpreter, not Dispatch failures. Prefer the default VM path for clean output, and treat command exit status and functional output as the primary success signal when using `--interpreter`.
+The supported VM and interpreter help/version paths are warning-free. Treat unexpected stderr output as a failed command-surface check and run the pinned release gate before shipping.
 
 ## Repository Layout
 

@@ -29,6 +29,10 @@ bridge that submits the normalized decision and invokes that same resume path.
 
 ```bash
 export DISPATCH_OFFLINE_FIXTURE=true
+export DISPATCH_ALLOWED_WEBHOOK_ORIGINS=http://127.0.0.1:9191
+export DISPATCH_WEBHOOK_SIGNING_KEY=local-demo-key
+export DISPATCH_ALLOW_INSECURE_LOCAL_WEBHOOK=true
+export KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS=1
 WORK=tests/tmp/leash-dispatch
 rm -rf "$WORK"
 kujo run dispatch.kujo demo "ChatOps gate" --non-interactive \
@@ -46,7 +50,7 @@ model calls and is the deterministic token-idle regression path.
 
 ## Compatibility and delivery
 
-Existing `--webhook-sink` and `--webhook-url` lifecycle behavior is unchanged.
+Existing `--webhook-sink` lifecycle behavior is unchanged. Network `--webhook-url` and `--leash-url` delivery requires an exact origin allowlist and HMAC signing key.
 `--leash-url` is additive and only sends the intervention contract. Delivery
 failure is not allowed to discard a paused state; the local sink and Dispatch
 artifacts remain the source of truth.

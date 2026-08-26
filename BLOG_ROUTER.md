@@ -17,7 +17,7 @@ For a routed agent step, Dispatch chooses a complete execution route:
 - the provider;
 - the model.
 
-The workflow supplies the allowed model candidates and policy constraints. The AI SDK supplies trustworthy metadata about those models. Dispatch combines the two, removes anything that violates a hard requirement, and ranks what remains with a stable quality-first policy.
+The workflow supplies the allowed model candidates and policy constraints. The AI SDK supplies operator-reviewed metadata about those models. Dispatch combines the two, removes anything that violates a hard requirement, and ranks what remains with a stable quality-, cost-, latency-, or balanced objective.
 
 Possible constraints include provider allowlists and denylists, minimum quality, required context size, tool or structured-output support, maximum cost, maximum latency, minimum reliability, data residency, and risk limits. Candidate declaration order does not determine the winner.
 
@@ -45,6 +45,10 @@ The router also connects to Dispatch's existing primitives:
 - **State and resume:** restores the exact persisted route and fails explicitly if that route is no longer available.
 - **Trace and reports:** expose candidate rejections, route selection, attempts, fallbacks, and model-call lifecycle events.
 - **AI SDK bridge:** performs the selected live provider/model call without duplicating provider logic inside Dispatch.
+- **Model-directed tools:** sends only declared tool schemas, executes only requested calls, reapplies authorization per call, deduplicates call IDs, and enforces hard loop bounds.
+- **Budgets and provider health:** stops work at configured step/token/cost/time limits and temporarily removes unhealthy providers from fallback.
+- **Concurrency and state:** runs explicitly idempotent independent tools in bounded parallel batches, locks each run, migrates old state, and can use SQLite as the durable authority.
+- **Delivery and observability:** persists streaming deltas, OTLP JSON spans, and signed webhook envelopes with dead-letter replay.
 
 Existing workflows are unaffected. Routing only runs when a workflow sets `routing.enabled` to `true`; otherwise the agent's existing `model` configuration remains the source of truth.
 
@@ -70,7 +74,7 @@ The sequence is deliberately straightforward:
 2. It resolves the requested agent and any compatible substitutes allowed by policy.
 3. It expands each agent's model candidates against the approved AI SDK catalog.
 4. It rejects every candidate that violates a hard constraint.
-5. It ranks the eligible candidates with the stable quality-first policy.
+5. It ranks the eligible candidates with the configured deterministic objective.
 6. It persists the decision before making the model call.
 7. It executes the selected handler with the selected provider and model.
 8. It evaluates the result when the step defines an evaluation contract.
@@ -87,28 +91,29 @@ The Kujo ecosystem installer has separate profiles. The default install is `core
 | Component | Needed for | In the default core install? | Installation notes |
 | --- | --- | --- | --- |
 | Kujo runtime | Running Dispatch and its bridge | Yes | Installed by the default profile. |
-| Dispatch | Workflow routing, persistence, retries, evaluation, and evidence | No | Included in `--group ai`; the installer adds a `dispatch` command shim. |
-| AI SDK | Catalog generation and live provider calls | No | Included in `--group ai`. Live calls also need provider credentials and `AI_SDK_PATH` when working from source checkouts. |
-| Agents SDK | Authoring portable agents with the shared routing vocabulary | No | Included in `--group ai`. It is not a runtime dependency for a plain Dispatch workflow. |
+| Dispatch | Workflow routing, persistence, retries, evaluation, and evidence | No | Included in the pinned `dispatch` package closure; the installer adds a `dispatch` command shim. |
+| AI SDK | Catalog generation and live provider calls | No | Included and revision-pinned by the Dispatch release manifest. Live calls also need provider credentials and `AI_SDK_PATH` when working from source checkouts. |
+| Agents SDK | Authoring portable agents with the shared routing vocabulary | No | Included and revision-pinned by the Dispatch release manifest. It is not a runtime dependency for a plain Dispatch workflow. |
 | Provider credentials | Calling live providers | No | Not needed for the offline fixture example. Supply keys through environment variables, never workflow JSON. |
 | `jq` | Convenient artifact inspection | No | Optional; Dispatch does not require it to route or run. |
 
-Install the complete AI profile with the ecosystem installer:
+Install the production Dispatch dependency closure. The release manifest prevents the runtime and SDK repositories from drifting independently:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/main/install.sh \
-  | bash -s -- --group ai
+curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/123542ba17a0ef0150970a6c626b518946ff0bbb/install.sh \
+  | bash -s -- --package dispatch \
+      --release-manifest https://raw.githubusercontent.com/kujolang/dispatch/v1.1.0/release/dispatch-v1.1.0.refs
 
 export PATH="$HOME/.local/bin:$PATH"
 dispatch --help
 ```
 
-The `ai` profile installs source snapshots of AI SDK, Agents SDK, Dispatch, Watchdog, MCP, RAG, and Relay under `~/.kujo/sources/`. It installs stable command shims for the CLI-bearing tools, including `dispatch`. You do not need `--with-deps` for the Dispatch router; that option is for repositories with optional Node dependencies.
+The package closure installs Kujo, AI SDK, Agents SDK, and Dispatch under `~/.kujo/sources/`, plus the `dispatch` command shim. It does not pull unrelated AI tools. You do not need `--with-deps` for the Dispatch router.
 
 If you already have the repositories checked out for development, the minimum offline setup is the Kujo runtime plus Dispatch. Run the fixture example from the Dispatch repository:
 
 ```bash
-kujo run dispatch.kujo demo "Routing review" \
+DISPATCH_OFFLINE_FIXTURE=true kujo run dispatch.kujo demo "Routing review" \
   --workflow-file examples/workflows/routed-review.json \
   --yes \
   --non-interactive
@@ -120,7 +125,7 @@ For live calls from source checkouts, point Dispatch at AI SDK and turn fixture 
 
 ```bash
 export AI_SDK_PATH=/path/to/ai-sdk
-export DISPATCH_OFFLINE_FIXTURE=false
+unset DISPATCH_OFFLINE_FIXTURE
 export OPENAI_API_KEY=...
 
 kujo run dispatch.kujo demo "Live routed review" \
@@ -179,7 +184,7 @@ The model catalog should be generated with AI SDK so its canonical hash is corre
 }
 ```
 
-Workflow-wide rules establish the default boundary. Agent and step rules can narrow that boundary, but cannot loosen it. The current router supports policy version `1.0.0` and the `quality_first` objective; unsupported versions fail explicitly.
+Workflow-wide rules establish the default boundary. Agent and step rules can narrow that boundary, but cannot loosen it. Policy version `1.0.0` supports `quality_first`, `cost_first`, `latency_first`, and `balanced`; unsupported versions and objectives fail explicitly.
 
 ## Inspecting What Happened
 
@@ -187,6 +192,8 @@ Routing evidence appears alongside the rest of a Dispatch run:
 
 - `state.json` stores route decisions, attempts, and per-step route state;
 - `trace.json` and `trace.md` show the route and model-call timeline;
+- `otel-traces.json` carries correlated OTLP JSON spans;
+- `stream-<step-id>.jsonl` records incremental model events when enabled;
 - `report.json` includes routing evidence when a report is generated;
 - `dispatch inspect <run-id> --json` exposes a routing envelope for automation.
 

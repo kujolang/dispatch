@@ -60,7 +60,7 @@ kujo run dispatch.kujo export-run "$RID" \
   --bundle-path "$WORK/bundle.json" --sign-bundle --output-root "$WORK"
 
 kujo run dispatch.kujo import-run \
-  --bundle-path "$WORK/bundle.json" --verify-bundle-signature \
+	--bundle-path "$WORK/bundle.json" \
   --output-root "$WORK/imported"
 ```
 
