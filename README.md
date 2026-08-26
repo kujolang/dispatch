@@ -31,7 +31,7 @@ Single-step chat calls are rarely enough when work needs to be repeated, reviewe
 - Step lifecycle tracking (pending, running, paused, completed, failed, skipped)
 - Optional steps that skip-and-continue on failure or policy denial
 - Step input/output schema validation with actionable errors
-- Per-step timeout handling and cancellation lifecycle state
+- Hard model/retry deadlines plus fail-closed admission for reviewed bounded in-process tools
 - Lifecycle event hooks via callback and webhook sink outputs (`--webhook-sink`)
 - Approval decisions (approved, rejected, request_changes)
 - DAG-style step dependencies (`depends_on`) with dependency-ordered scheduling and bounded concurrent execution for explicitly idempotent `parallel_safe` tool steps

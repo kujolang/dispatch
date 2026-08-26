@@ -4,11 +4,30 @@ test_setup {
 	from src.core.step import create_step
 	from src.core.state import create_run_state
 	from src.core.runner import run_workflow
+	from src.core.retry import run_with_retry
 	from src.core.hooks import webhook_outbox_status, webhook_response_success, webhook_destination_allowed, validate_webhook_options
 	from sdk_adapter import custom_provider_endpoint_allowed
 	from src.core.trace import create_trace, append_trace, render_otel_trace_json
 	from src.core.utils import ensure_dir, dict_get_or
 	from src.tools.tool import create_tool_registry, create_tool, register_tool
+}
+
+test "retry backoff fails closed when it would cross the execution deadline" {
+	policy := {"max_attempts": 3, "base_delay_ms": 100, "max_delay_ms": 100, "strategy": "none", "retry_on_codes": ["temporary"], "deadline_ms": current_timestamp() + 20}
+	result := run_with_retry("bounded-retry", policy, func(attempt) { return {"ok": false, "error": {"code": "temporary", "message": "retry", "retryable": true}} })
+	assert_false(result["ok"])
+	assert_equal(result["attempts"], 1)
+	assert_equal(result["result"]["error"]["code"], "workflow_budget_exceeded")
+}
+
+test "unbounded custom tools are rejected before hard-deadline execution" {
+	workflow := create_workflow({"id": "tool-deadline", "name": "Tool Deadline", "description": "deadline", "input_schema": {"type": "dict"}, "agents": {}, "tools": ["slow"], "steps": [create_step("slow", "Slow", "tool", {"tool_name": "slow", "input_from": ["input"], "output_key": "slow", "timeout_ms": 10000})], "memory_config": {}, "default_retry_policy": {"max_attempts": 1, "base_delay_ms": 0, "max_delay_ms": 0, "strategy": "none", "retry_on_codes": []}, "routing": {"enabled": false}, "approval_config": {"auto_approve": true}, "output_schema": {"type": "dict"}})
+	registry := create_tool_registry()
+	registry := register_tool(registry, create_tool("slow", "Slow", {"type": "dict"}, {"type": "dict"}, func(payload, context) { sleep(250); return {"ok": true, "data": {"done": true}} }, null))
+	state := create_run_state(workflow, {}, "tests/tmp/operational-tool-deadline", {"auto_approve": true, "interactive": false})
+	result := run_workflow(workflow, state, registry, {"auto_approve": true, "interactive": false})
+	assert_false(result["ok"])
+	assert_equal(result["error"]["code"], "tool_timeout_isolation_required")
 }
 
 test "webhook delivery accepts only 2xx responses" {

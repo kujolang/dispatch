@@ -7,7 +7,7 @@ test_setup {
 	from src.core.runner import run_workflow
 	from src.core.trace import collect_event_type_counts
 	from src.core.utils import dict_get_or, ensure_dir
-	from src.agents.agent import model_agent_output
+	from src.agents.agent import model_agent_output, run_agent_with_agent
 	from src.tools.tool import create_tool_registry, create_tool, register_tool
 
 func base_agent(agent_id, handler_id, capability, model_candidates) {
@@ -503,6 +503,7 @@ test "strict routing validation rejects unknown fields and providers" {
 }
 
 test "generic model handler executes a declarative routed agent" {
+	env_set("DISPATCH_OFFLINE_FIXTURE", "true")
 	agent := base_agent("analyst", "model", "analyze", [{"provider": "fixture", "model": "fixture-model"}])
 	agent["instructions"] := "Analyze the provided input."
 	agent["tools"] := []
@@ -513,6 +514,35 @@ test "generic model handler executes a declarative routed agent" {
 	result := run_workflow(workflow, state, {}, {"auto_approve": true, "interactive": false})
 	assert_true(result["ok"])
 	assert_equal(result["run_state"]["status"], "completed")
+	env_set("DISPATCH_OFFLINE_FIXTURE", "")
+}
+
+test "cost-bounded live routes reject missing authoritative pricing" {
+	agent := base_agent("analyst", "model", "analyze", [{"provider": "fixture", "model": "unpriced"}])
+	agent["uses_model"] := true
+	agent["instructions"] := "Analyze the provided input."
+	model_catalog := catalog([{"provider": "fixture", "model": "unpriced", "quality_tier": "fixture", "enabled": true}])
+	workflow := create_workflow({"id": "unpriced-model", "name": "Unpriced Model", "description": "cost", "input_schema": {"type": "dict"}, "agents": {"analyst": agent}, "tools": [], "steps": [create_step("analyze", "Analyze", "agent", {"agent_id": "analyst", "input_from": ["input"], "output_key": "result"})], "memory_config": {}, "default_retry_policy": {"max_attempts": 1, "base_delay_ms": 0, "max_delay_ms": 0, "strategy": "none", "retry_on_codes": []}, "routing": {"enabled": true, "model_catalog": model_catalog}, "budgets": {"max_cost_usd": 1}, "approval_config": {"auto_approve": true}, "output_schema": {"type": "dict"}})
+	state := create_run_state(workflow, {"topic": "cost"}, "tests/tmp/unpriced-model", {"auto_approve": true, "interactive": false})
+	result := run_workflow(workflow, state, {}, {"auto_approve": true, "interactive": false})
+	assert_false(result["ok"])
+	assert_equal(result["error"]["code"], "routing_cost_metadata_required")
+}
+
+test "cost budgets reserve growing context when output pricing is explicitly zero" {
+	env_set("DISPATCH_OFFLINE_FIXTURE", "true")
+	agent := base_agent("analyst", "model", "analyze", [{"provider": "fixture", "model": "input-paid"}])
+	agent["uses_model"] := true
+	agent["instructions"] := "Analyze the provided input."
+	agent["output_schema"] := {}
+	agent["tools"] := []
+	model_catalog := catalog([{"provider": "fixture", "model": "input-paid", "quality_tier": "fixture", "enabled": true, "input_cost_per_million": 1000, "output_cost_per_million": 0}])
+	workflow := create_workflow({"id": "input-paid-model", "name": "Input Paid Model", "description": "cost", "input_schema": {"type": "dict"}, "agents": {"analyst": agent}, "tools": [], "steps": [create_step("analyze", "Analyze", "agent", {"agent_id": "analyst", "input_from": ["input"], "output_key": "result"})], "memory_config": {}, "default_retry_policy": {"max_attempts": 1, "base_delay_ms": 0, "max_delay_ms": 0, "strategy": "none", "retry_on_codes": []}, "routing": {"enabled": true, "model_catalog": model_catalog}, "budgets": {"max_cost_usd": 0.05}, "approval_config": {"auto_approve": true}, "output_schema": {"type": "dict"}})
+	state := create_run_state(workflow, {"topic": "cost"}, "tests/tmp/input-paid-model", {"auto_approve": true, "interactive": false})
+	result := run_workflow(workflow, state, {}, {"auto_approve": true, "interactive": false})
+	assert_false(result["ok"])
+	assert_equal(result["error"]["code"], "workflow_budget_exceeded")
+	env_set("DISPATCH_OFFLINE_FIXTURE", "")
 }
 
 test "generic model handler executes only model-requested tools with bounded idempotent replay" {
@@ -549,7 +579,33 @@ test "generic model handler fails closed when tool authorization denies a reques
 	assert_equal(result["error"]["code"], "tool_execution_denied")
 }
 
+test "built-in deterministic agent handlers enforce tool authorization" {
+	registry := create_tool_registry()
+	registry := register_tool(registry, create_tool("mock_web_search", "Search", {"type": "dict"}, {"type": "dict"}, func(payload, context) { return {"ok": true, "data": {"results": []}} }, null))
+	agent := base_agent("research", "research", "gather_sources", [])
+	result := run_agent_with_agent(agent, "research", {"research": agent}, {"input": {"topic": "denied"}}, {"run_id": "run-built-in-denied", "workflow_id": "workflow-tool", "status": "running", "input": {}}, registry, {"step_id": "research", "tool_authorization_policy": func(input) { return false }})
+	assert_false(result["ok"])
+	assert_equal(result["error"]["code"], "tool_execution_denied")
+}
+
+test "generic model handler decrements the total token envelope across rounds" {
+	model_invoker := func(agent_obj, prompt, options) {
+		if len(options["messages"]) == 2 { return {"ok": true, "provider": "fixture", "model": "bounded", "output_text": "", "tool_calls": [{"id": "budget-call", "function": {"name": "safe_tool", "arguments": "{}"}}], "usage": {"total_tokens": 30}} }
+		if options["max_tokens"] >= 100 { return {"ok": false, "error": {"code": "token_envelope_not_decremented", "message": "Second model round reused the initial cap.", "retryable": false}} }
+		return {"ok": true, "provider": "fixture", "model": "bounded", "output_text": "done", "tool_calls": [], "usage": {"total_tokens": 10}}
+	}
+	registry := create_tool_registry()
+	registry := register_tool(registry, create_tool("safe_tool", "Safe", {"type": "dict"}, {"type": "dict"}, func(payload, context) { return {"ok": true, "data": {}} }, null))
+	agent := base_agent("analyst", "model", "analyze", [])
+	agent["output_schema"] := {}
+	agent["__model_invoker"] := model_invoker
+	result := model_agent_output(agent, {"input": {"topic": "bounded"}}, {"run_id": "run-bounded", "workflow_id": "workflow-bounded", "status": "running"}, registry, {"step_id": "analyze", "model_total_token_budget": 200, "model_max_tokens_cap": 100})
+	assert_true(result["ok"])
+	assert_equal(len(result["model_calls"]), 2)
+}
+
 test "generic model handler persists incremental stream events" {
+	env_set("DISPATCH_OFFLINE_FIXTURE", "true")
 	agent := base_agent("streamer", "model", "stream", [])
 	agent["tools"] := []
 	agent["output_schema"] := {}
@@ -562,6 +618,7 @@ test "generic model handler persists incremental stream events" {
 	assert_true(file_exists(stream_path))
 	assert_true(len(split(trim(read_file(stream_path)), "\n")) >= 2)
 	assert_equal(result["data"]["__stream_events_path"], stream_path)
+	env_set("DISPATCH_OFFLINE_FIXTURE", "")
 }
 
 test "route evaluation pauses for native human review and resumes stored output" {

@@ -485,7 +485,9 @@ Add workflow-level budgets. Dispatch persists cumulative use and fails with `wor
 }
 ```
 
-Cost enforcement uses only operator-supplied catalog rates and normalized AI SDK usage. Unknown cost metadata is never invented; use routing constraints to reject unknown metadata when a hard cost guarantee is required.
+`max_cost_usd` requires explicit non-negative input and output token pricing on every eligible live catalog route. Dispatch rejects missing pricing instead of treating it as free. Hard wall-time or step deadlines allow the reviewed bounded tools shipped with Dispatch; unreviewed custom/plugin handlers are rejected before execution. Put custom side-effecting tools behind a separately supervised service when you require hard preemption.
+
+Cost enforcement uses only operator-supplied catalog rates and normalized AI SDK usage. Unknown cost metadata is never invented, and a cost-bounded live route with missing pricing is rejected before model execution.
 
 ## Run Independent Tool Steps Concurrently
 

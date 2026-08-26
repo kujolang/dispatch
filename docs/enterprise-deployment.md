@@ -32,7 +32,8 @@ This guide describes production assumptions, hardening controls, and operational
 - **Signing key handling**: prefer `DISPATCH_BUNDLE_SIGNING_KEY` over `--signing-key`; CLI flags can leak via process listings and shell history.
 - **Webhook sinks/URLs**: `--webhook-sink` is constrained to safe relative paths by default (`DISPATCH_ALLOW_ANY_WEBHOOK_SINK=true` to opt out). Network envelopes require an approved HTTPS origin and HMAC key, are written to a bounded durable outbox before delivery, and reject unsigned replay. A dead-letter does not fail the workflow; monitor and replay it with `dispatch webhooks status|replay`.
 - **Sources and config**: `--sources-dir` and `--config` are path-constrained by default; keep `DISPATCH_ALLOW_ANY_*` flags `false` in production.
-- **Tool execution**: tools run trusted in-process handler code. Use tool authorization policy (allow/deny, profiles) for least privilege and treat any custom tool/plugin as part of the trusted computing base.
+- **Tool execution**: tools run trusted in-process handler code. Use tool authorization policy (allow/deny, profiles) for least privilege and treat any custom tool/plugin as part of the trusted computing base. Hard step or workflow deadlines admit only Dispatch-reviewed bounded built-ins; an unreviewed custom/plugin tool fails before execution with `tool_timeout_isolation_required`. Run custom side-effecting tools behind an independently supervised service boundary when hard preemption is required.
+- **Cost budgets**: every live route governed by `max_cost_usd` must have explicit, non-negative input and output pricing in the authoritative model catalog. Missing pricing fails closed with `routing_cost_metadata_required`; zero is accepted only when the catalog explicitly declares a free input or output rate.
 
 ## Concurrency and Durability
 

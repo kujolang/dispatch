@@ -70,6 +70,11 @@ func run_with_retry(operation_name, policy, handler) {
 	attempt := 1
 	attempt_records := []
 	while attempt <= max_attempts {
+		deadline_ms := dict_get_or(policy, "deadline_ms", 0)
+		if (type(deadline_ms) == "int" || type(deadline_ms) == "float") && deadline_ms > 0 && current_timestamp() >= deadline_ms {
+			timeout_result := {"ok": false, "error": {"code": dict_get_or(policy, "deadline_error_code", "workflow_budget_exceeded"), "message": "Execution deadline expired before retry attempt for " + operation_name + ".", "retryable": false}}
+			return {"ok": false, "operation": operation_name, "attempts": attempt - 1, "attempt_records": attempt_records, "result": timeout_result}
+		}
 		result := handler(attempt)
 		attempt_records := push(attempt_records, {
 			"attempt": attempt,
@@ -97,6 +102,14 @@ func run_with_retry(operation_name, policy, handler) {
 		}
 		if attempt < max_attempts {
 			delay_ms := compute_delay(attempt - 1, policy)
+			deadline_ms = dict_get_or(policy, "deadline_ms", 0)
+			if (type(deadline_ms) == "int" || type(deadline_ms) == "float") && deadline_ms > 0 {
+				remaining_ms := deadline_ms - current_timestamp()
+				if remaining_ms <= 0 || delay_ms >= remaining_ms {
+					timeout_result := {"ok": false, "error": {"code": dict_get_or(policy, "deadline_error_code", "workflow_budget_exceeded"), "message": "Execution deadline would expire during retry backoff for " + operation_name + ".", "retryable": false}}
+					return {"ok": false, "operation": operation_name, "attempts": attempt, "attempt_records": attempt_records, "result": timeout_result}
+				}
+			}
 			if delay_ms > 0 {
 				sleep(delay_ms)
 			}

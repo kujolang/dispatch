@@ -36,6 +36,10 @@ func call_tool(registry, tool_name, input_payload, context) {
 	if type(tool_obj) == "null" {
 		return missing_tool_error(tool_name)
 	}
+	deadline_ms := dict_get_or(context, "deadline_ms", 0)
+	if (type(deadline_ms) == "int" || type(deadline_ms) == "float") && deadline_ms > 0 && dict_get_or(tool_obj, "__dispatch_deadline_bounded", false) == false {
+		return {"ok": false, "error": {"code": "tool_timeout_isolation_required", "message": "Tool cannot run under a hard execution deadline without a Dispatch-reviewed bounded implementation: " + tool_name, "retryable": false}}
+	}
 
 	handler := tool_obj["handler"]
 	result := handler(input_payload, context)
@@ -141,6 +145,13 @@ func register_default_tools(sources_dir) {
 		flaky_reliability_handler,
 		flaky_reliability_payload_adapter
 	))
+	mock_tool := registry["mock_web_search"]; mock_tool["__dispatch_deadline_bounded"] := true; registry["mock_web_search"] := mock_tool
+	lookup_tool := registry["local_source_lookup"]; lookup_tool["__dispatch_deadline_bounded"] := true; registry["local_source_lookup"] := lookup_tool
+	claim_tool := registry["claim_extraction"]; claim_tool["__dispatch_deadline_bounded"] := true; registry["claim_extraction"] := claim_tool
+	citation_tool := registry["citation_formatter"]; citation_tool["__dispatch_deadline_bounded"] := true; registry["citation_formatter"] := citation_tool
+	writer_tool := registry["markdown_report_writer"]; writer_tool["__dispatch_deadline_bounded"] := true; registry["markdown_report_writer"] := writer_tool
+	timestamp_tool := registry["timestamp_tool"]; timestamp_tool["__dispatch_deadline_bounded"] := true; registry["timestamp_tool"] := timestamp_tool
+	flaky_tool := registry["flaky_reliability_tool"]; flaky_tool["__dispatch_deadline_bounded"] := true; registry["flaky_reliability_tool"] := flaky_tool
 
 	if normalized_sources_dir["ok"] {
 		registry["__sources_dir"] := normalized_sources_dir["sources_dir"]
