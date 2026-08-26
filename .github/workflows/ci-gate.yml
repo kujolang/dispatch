@@ -23,17 +23,16 @@ jobs:
     timeout-minutes: 45
     env:
       DISPATCH_OFFLINE_FIXTURE: "true"
-      # Pin the Kujo runtime to a specific commit SHA or tag for reproducible
-      # builds. Defaults to `main` (tracks latest). Bump deliberately and record
-      # the dispatch<->kujo compatibility in CHANGELOG when changing this.
-      KUJO_RUNTIME_REF: "main"
+      # Bump deliberately after compatibility verification and record the
+      # Dispatch-to-Kujo pairing in the release evidence.
+      KUJO_RUNTIME_REF: "fc0f8bbfc4e8a10b8a214babd7e3e7d9267ec8bf"
 
     steps:
       - name: Checkout dispatch repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
       - name: Checkout Kujo runtime repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/kujo
           ref: ${{ env.KUJO_RUNTIME_REF }}
