@@ -18,14 +18,19 @@ permissions:
 
 jobs:
   ci-gate:
-    name: Dispatch CI Gate
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+    name: Dispatch CI Gate (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     env:
       DISPATCH_OFFLINE_FIXTURE: "true"
       # Bump deliberately after compatibility verification and record the
       # Dispatch-to-Kujo pairing in the release evidence.
-      KUJO_RUNTIME_REF: "fc0f8bbfc4e8a10b8a214babd7e3e7d9267ec8bf"
+      KUJO_RUNTIME_REF: "123542ba17a0ef0150970a6c626b518946ff0bbb"
+      RUSTUP_TOOLCHAIN: "1.88.0"
 
     steps:
       - name: Checkout dispatch repository
@@ -49,8 +54,16 @@ jobs:
             exit 1
           fi
 
+      - name: Verify immutable dependency closure and installer parser
+        run: |
+          grep -qx "kujo=123542ba17a0ef0150970a6c626b518946ff0bbb" release/dispatch-v1.1.0.refs
+          grep -qx "ai-sdk=849dbbbba7a734938320dd9569d1ed7aa6240298" release/dispatch-v1.1.0.refs
+          grep -qx "agents-sdk=d3904d348754b492bda298b6c30f49c1eb24b7ea" release/dispatch-v1.1.0.refs
+          grep -qx "dispatch=v1.1.0" release/dispatch-v1.1.0.refs
+          bash .ci/kujo/tests/install_release_manifest.sh
+
       - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal
 
       - name: Cache Rust build artifacts
         uses: Swatinem/rust-cache@42dc69e1aa15d09112580998cf2ef0119e2e91ae
@@ -79,5 +92,5 @@ jobs:
           rm -rf tests/tmp/ci-smoke
 
       - name: Run Dispatch release gate
-        timeout-minutes: 35
-        run: timeout 35m bash scripts/run_release_gate.sh
+        timeout-minutes: 45
+        run: bash scripts/run_release_gate.sh

@@ -1,0 +1,7 @@
+# Immutable dependency closure for the Dispatch v1.1.0 release.
+# Every dependency is pinned to an immutable commit. Dispatch is the release
+# tag being installed and is verified by the release workflow before publish.
+kujo=123542ba17a0ef0150970a6c626b518946ff0bbb
+ai-sdk=849dbbbba7a734938320dd9569d1ed7aa6240298
+agents-sdk=d3904d348754b492bda298b6c30f49c1eb24b7ea
+dispatch=v1.1.0

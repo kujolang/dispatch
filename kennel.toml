@@ -12,16 +12,16 @@ categories = ["ai", "developer-tools"]
 readme = "README.md"
 
 [package.status]
-stage = "experimental"
-stability = "early"
-public_api = false
-notes = "Workflow contracts are stabilizing and may change before 1.0."
+stage = "production"
+stability = "stable"
+public_api = true
+notes = "The Dispatch 1.1 CLI, workflow, routing-policy, and persisted evidence contracts are public and versioned."
 
 [kujo]
-minimum_version = "0.1.0"
+minimum_version = "1.0.2"
 entry = "dispatch.kujo"
 sources = ["."]
-includes = ["README.md", "examples", "tests"]
+includes = ["README.md", "HOWTO.md", "BLOG_ROUTER.md", "CHANGELOG.md", "docs", "examples", "release", "scripts", "src", "tests", "bridge_chat.kujo", "sdk_adapter.kujo", "dispatch.kujo", "kujo.toml"]
 excludes = [".git", "kennel_packages", "dist", "build", "node_modules", "outputs"]
 
 [build]
@@ -30,16 +30,16 @@ output = "dist"
 artifacts = []
 
 [dependencies]
-ai-sdk = { source = "github:kujolang/ai-sdk", ref = "main" }
+ai-sdk = { source = "github:kujolang/ai-sdk", ref = "849dbbbba7a734938320dd9569d1ed7aa6240298" }
 
 [dev-dependencies]
 
 [scripts]
-demo = "kujo run --interpreter dispatch.kujo demo \"Research topic\" --yes"
+demo = "kujo run dispatch.kujo demo \"Research topic\" --yes --non-interactive"
 test = "kujo test-run tests/dispatch_tests.kujo"
 
 [package.exports]
-engine = "runner.kujo"
+engine = "src/core/runner.kujo"
 cli = "dispatch.kujo"
 
 [package.metadata]

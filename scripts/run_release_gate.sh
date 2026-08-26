@@ -64,6 +64,8 @@ echo "Running focused integration suites..."
 "$KUJO_BIN" test-run tests/sdk_adapter_tests.kujo -v
 "$KUJO_BIN" test-run tests/policy_precedence_tests.kujo -v
 "$KUJO_BIN" test-run tests/routing_tests.kujo -v
+DISPATCH_STATE_BACKEND=sqlite "$KUJO_BIN" test-run tests/state_store_sqlite_tests.kujo -v
+"$KUJO_BIN" test-run tests/operational_controls_tests.kujo -v
 
 echo
 echo "Running sharded Dispatch contract suite..."
@@ -98,5 +100,9 @@ if [[ "$kennel_version" != "$kujo_version" || "$reported_version" != "Dispatch $
 	echo "Dispatch package version mismatch: kennel=$kennel_version kujo=$kujo_version reported=$reported_version" >&2
 	exit 1
 fi
+
+echo
+echo "Running bounded release workload evidence..."
+DISPATCH_SOAK_RUNS="${DISPATCH_SOAK_RUNS:-3}" "$PWD/scripts/run_v1_1_evidence.sh"
 
 echo "Dispatch release gate passed."

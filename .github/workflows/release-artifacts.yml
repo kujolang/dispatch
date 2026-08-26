@@ -1,0 +1,100 @@
+name: Dispatch Release Artifacts
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: dispatch-release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    env:
+      DISPATCH_OFFLINE_FIXTURE: "true"
+      RUSTUP_TOOLCHAIN: "1.88.0"
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/kujo
+          ref: 123542ba17a0ef0150970a6c626b518946ff0bbb
+          path: .release/kujo
+      - run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal
+      - run: cargo build --release --locked --manifest-path .release/kujo/Cargo.toml
+      - name: Verify exact tagged source
+        env:
+          KUJO_BIN: ${{ github.workspace }}/.release/kujo/target/release/kujo
+        run: bash scripts/run_release_gate.sh
+
+  package:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Verify tag and package version
+        run: |
+          version="$(grep -E '^version' kennel.toml | head -1 | sed -E 's/.*"(.*)".*/\1/')"
+          test "${GITHUB_REF_NAME}" = "v${version}"
+      - name: Build source artifact and checksum
+        run: |
+          artifact="dispatch-${GITHUB_REF_NAME}.tar.gz"
+          tar --exclude=.git --exclude=outputs --exclude=tests/tmp -czf "$RUNNER_TEMP/$artifact" .
+          mv "$RUNNER_TEMP/$artifact" "$artifact"
+          sha256sum "$artifact" > "$artifact.sha256"
+          commit_sha="$(git rev-parse HEAD)"
+          artifact_sha="$(awk '{print $1}' "$artifact.sha256")"
+          printf '{"schema_version":"1.0","tag":"%s","dispatch_commit":"%s","artifact":"%s","artifact_sha256":"%s","dependency_manifest":"release/dispatch-v1.1.0.refs"}\n' \
+            "$GITHUB_REF_NAME" "$commit_sha" "$artifact" "$artifact_sha" \
+            > "dispatch-${GITHUB_REF_NAME}-provenance.json"
+      - name: Attest source artifact provenance
+        uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661
+        with:
+          subject-path: "dispatch-${{ github.ref_name }}.tar.gz"
+      - name: Publish release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --title "Dispatch $GITHUB_REF_NAME" --generate-notes
+          gh release upload "$GITHUB_REF_NAME" "dispatch-${GITHUB_REF_NAME}.tar.gz" "dispatch-${GITHUB_REF_NAME}.tar.gz.sha256" "dispatch-${GITHUB_REF_NAME}-provenance.json" --clobber
+
+  clean-install:
+    needs: package
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - name: Install pinned Dispatch closure
+        run: |
+          curl -fsSL "https://raw.githubusercontent.com/kujolang/kujo/123542ba17a0ef0150970a6c626b518946ff0bbb/install.sh" \
+            | bash -s -- --package dispatch \
+                --release-manifest "https://raw.githubusercontent.com/kujolang/dispatch/${GITHUB_REF_NAME}/release/dispatch-v1.1.0.refs"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Verify installed workload outside source tree
+        env:
+          DISPATCH_OFFLINE_FIXTURE: "true"
+        run: |
+          cd "$(mktemp -d)"
+          dispatch version
+          dispatch validate --workflow-file "$HOME/.kujo/sources/dispatch/examples/workflows/routed-review.json" --json
+          dispatch demo "Tagged release smoke" \
+            --workflow-file "$HOME/.kujo/sources/dispatch/examples/workflows/routed-review.json" \
+            --yes --non-interactive --output-root dispatch-smoke
