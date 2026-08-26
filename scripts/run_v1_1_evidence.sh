@@ -4,9 +4,15 @@ set -euo pipefail
 KUJO_BIN="${KUJO_BIN:-kujo}"
 SOAK_RUNS="${DISPATCH_SOAK_RUNS:-5}"
 EVIDENCE_DIR="${DISPATCH_EVIDENCE_DIR:-tests/tmp/v1.1-evidence}"
+AI_SDK_PATH="${AI_SDK_PATH:-../ai-sdk}"
 
 if [[ ! "$SOAK_RUNS" =~ ^[1-9][0-9]*$ ]] || [[ "$SOAK_RUNS" -gt 100 ]]; then
 	echo "DISPATCH_SOAK_RUNS must be an integer between 1 and 100." >&2
+	exit 1
+fi
+
+if [[ ! -f "$AI_SDK_PATH/scripts/generate_model_catalog.kujo" ]]; then
+	echo "Dispatch release evidence requires the pinned AI SDK catalog generator at $AI_SDK_PATH/scripts/generate_model_catalog.kujo." >&2
 	exit 1
 fi
 

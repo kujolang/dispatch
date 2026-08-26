@@ -44,6 +44,22 @@ jobs:
           path: .ci/kujo
           fetch-depth: 1
 
+      - name: Checkout AI SDK repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/ai-sdk
+          ref: 849dbbbba7a734938320dd9569d1ed7aa6240298
+          path: .ci/ai-sdk
+          fetch-depth: 1
+
+      - name: Checkout Agents SDK repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/agents-sdk
+          ref: d3904d348754b492bda298b6c30f49c1eb24b7ea
+          path: .ci/agents-sdk
+          fetch-depth: 1
+
       - name: Verify package version consistency
         run: |
           kennel_version="$(grep -E '^version' kennel.toml | head -1 | sed -E 's/.*"(.*)".*/\1/')"
@@ -60,6 +76,10 @@ jobs:
           grep -qx "ai-sdk=849dbbbba7a734938320dd9569d1ed7aa6240298" release/dispatch-v1.1.0.refs
           grep -qx "agents-sdk=d3904d348754b492bda298b6c30f49c1eb24b7ea" release/dispatch-v1.1.0.refs
           grep -qx "dispatch=v1.1.0" release/dispatch-v1.1.0.refs
+          test "$(git -C .ci/kujo rev-parse HEAD)" = "123542ba17a0ef0150970a6c626b518946ff0bbb"
+          test "$(git -C .ci/ai-sdk rev-parse HEAD)" = "849dbbbba7a734938320dd9569d1ed7aa6240298"
+          test "$(git -C .ci/agents-sdk rev-parse HEAD)" = "d3904d348754b492bda298b6c30f49c1eb24b7ea"
+          test -f .ci/ai-sdk/scripts/generate_model_catalog.kujo
           bash .ci/kujo/tests/install_release_manifest.sh
 
       - name: Setup Rust toolchain
@@ -74,7 +94,9 @@ jobs:
         run: cargo build --release --locked --manifest-path .ci/kujo/Cargo.toml
 
       - name: Export Kujo runtime path
-        run: echo "KUJO_BIN=${GITHUB_WORKSPACE}/.ci/kujo/target/release/kujo" >> "$GITHUB_ENV"
+        run: |
+          echo "KUJO_BIN=${GITHUB_WORKSPACE}/.ci/kujo/target/release/kujo" >> "$GITHUB_ENV"
+          echo "AI_SDK_PATH=${GITHUB_WORKSPACE}/.ci/ai-sdk" >> "$GITHUB_ENV"
 
       - name: Verify runtime supports Kujo script execution
         run: |
