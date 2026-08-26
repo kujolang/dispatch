@@ -1,5 +1,5 @@
 from src.providers import openai_provider, openrouter_provider, deepseek_provider, custom_openai_compatible_provider
-from src.ai_sdk import create_client, create_message, chat_completion
+from src.ai_sdk import create_client, create_message, chat_completion, chat_completion_stream
 
 func dict_get_or(obj, key, default_value) {
 	if type(obj) != "dict" {
@@ -59,6 +59,23 @@ func resolve_provider(payload) {
 		if base_url == "" {
 			base_url := "https://api.openai.com/v1"
 		}
+		normalized_base_url := trim(to_string(base_url))
+		while ends_with(normalized_base_url, "/") { normalized_base_url = substring(normalized_base_url, 0, len(normalized_base_url) - 1) }
+		allowed := false
+		lower_base_url := to_lower(normalized_base_url)
+		local_opt_in_value := to_lower(trim(to_string(env("DISPATCH_ALLOW_INSECURE_LOCAL_CUSTOM_PROVIDER"))))
+		local_opt_in := local_opt_in_value == "true" || local_opt_in_value == "1" || local_opt_in_value == "yes" || local_opt_in_value == "on"
+		local_http := starts_with(lower_base_url, "http://localhost:") || starts_with(lower_base_url, "http://127.0.0.1:") || lower_base_url == "http://localhost" || lower_base_url == "http://127.0.0.1"
+		if starts_with(lower_base_url, "https://") || (local_opt_in && local_http) {
+			for configured in split(to_string(env("DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS")), ",") {
+				normalized_configured := trim(configured)
+				while ends_with(normalized_configured, "/") { normalized_configured = substring(normalized_configured, 0, len(normalized_configured) - 1) }
+				if normalized_configured == normalized_base_url { allowed = true }
+			}
+		}
+		if allowed == false {
+			return {"ok": false, "error": {"code": "provider_endpoint_not_allowed", "message": "Custom provider base_url must be an exact HTTPS entry in DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS."}}
+		}
 		api_key_env := dict_get_or(payload, "api_key_env", "CUSTOM_API_KEY")
 		default_model := model
 		if default_model == "" {
@@ -90,10 +107,14 @@ func normalize_messages(raw_messages) {
 			role := dict_get_or(entry, "role", "")
 			content := dict_get_or(entry, "content", "")
 			if type(role) == "string" {
-				if type(content) == "string" {
-					if role != "" {
-						result := push(result, create_message(role, content))
+				if role != "" && (type(content) == "string" || type(content) == "array" || type(content) == "null") {
+					message := create_message(role, content)
+					for optional_key in ["name", "tool_call_id", "tool_calls"] {
+						if has_key(entry, optional_key) {
+							message[optional_key] := entry[optional_key]
+						}
 					}
+					result := push(result, message)
 				}
 			}
 		}
@@ -165,7 +186,11 @@ if dict_get_or(provider_result, "ok", false) == false {
 	exit(1)
 }
 provider := provider_result["provider"]
-api_key := dict_get_or(payload, "api_key", null)
+if trim(to_string(dict_get_or(payload, "api_key", ""))) != "" {
+	emit_error("inline_credential_not_allowed", "Inline model credentials are not allowed; configure the provider credential environment variable.", 400)
+	exit(1)
+}
+api_key := null
 messages := normalize_messages(dict_get_or(payload, "messages", []))
 
 if len(messages) == 0 {
@@ -193,11 +218,29 @@ if has_key(payload, "structured_output_schema") {
 if has_key(payload, "structured_output_retryable") {
 	options["structured_output_retryable"] := payload["structured_output_retryable"]
 }
+if has_key(payload, "tools") {
+	options["tools"] := payload["tools"]
+}
 
 if dict_get_or(payload, "offline_fixture", false) {
 	options["offline_fixture"] := true
 }
 
 client := create_client(provider, api_key)
-result := chat_completion(client, messages, options)
+result := null
+if dict_get_or(payload, "stream", false) {
+	stream_events_path := trim(to_string(dict_get_or(payload, "stream_events_path", "")))
+	if stream_events_path == "" {
+		emit_error("invalid_request", "stream_events_path is required when stream is enabled.", 400)
+		exit(1)
+	}
+	stream_dir := dirname(stream_events_path)
+	if stream_dir != "" && stream_dir != "." && file_exists(stream_dir) == false { create_dir(stream_dir) }
+	write_file(stream_events_path, "", true)
+	result = chat_completion_stream(client, messages, options, func(event) {
+		append_file(stream_events_path, to_json(event) + "\n")
+	})
+} else {
+	result = chat_completion(client, messages, options)
+}
 print(to_json(result))

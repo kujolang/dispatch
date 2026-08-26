@@ -1,0 +1,92 @@
+test_setup {
+	from src.workflows.loader import load_workflow_from_spec
+	from src.workflows.workflow import create_workflow
+	from src.core.step import create_step
+	from src.core.state import create_run_state
+	from src.core.runner import run_workflow
+	from src.core.hooks import webhook_outbox_status, webhook_response_success, webhook_destination_allowed, validate_webhook_options
+	from sdk_adapter import custom_provider_endpoint_allowed
+	from src.core.trace import create_trace, append_trace, render_otel_trace_json
+	from src.core.utils import ensure_dir, dict_get_or
+	from src.tools.tool import create_tool_registry, create_tool, register_tool
+}
+
+test "webhook delivery accepts only 2xx responses" {
+	assert_true(webhook_response_success({"status": 200}))
+	assert_true(webhook_response_success({"status": 299}))
+	assert_false(webhook_response_success({"status": 199}))
+	assert_false(webhook_response_success({"status": 302}))
+	assert_false(webhook_response_success({"status": 500}))
+	assert_false(webhook_response_success(null))
+}
+
+test "network callbacks require exact HTTPS allowlists and signing" {
+	env_set("DISPATCH_ALLOWED_WEBHOOK_ORIGINS", "https://collector.example")
+	env_set("DISPATCH_WEBHOOK_SIGNING_KEY", "")
+	assert_true(webhook_destination_allowed("https://collector.example/events")["ok"])
+	assert_false(webhook_destination_allowed("https://evil.example/events")["ok"])
+	assert_false(webhook_destination_allowed("http://collector.example/events")["ok"])
+	assert_false(validate_webhook_options({"webhook_url": "https://collector.example/events"})["ok"])
+	env_set("DISPATCH_WEBHOOK_SIGNING_KEY", "test-signing-key")
+	assert_true(validate_webhook_options({"webhook_url": "https://collector.example/events"})["ok"])
+
+	env_set("DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS", "https://models.example/v1")
+	assert_true(custom_provider_endpoint_allowed("https://models.example/v1/"))
+	assert_false(custom_provider_endpoint_allowed("https://evil.example/v1"))
+	assert_false(custom_provider_endpoint_allowed("http://models.example/v1"))
+	env_set("DISPATCH_ALLOWED_WEBHOOK_ORIGINS", "")
+	env_set("DISPATCH_WEBHOOK_SIGNING_KEY", "")
+	env_set("DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS", "")
+}
+
+test "workflow loader validates budgets and bounded parallel controls" {
+	base := {"id": "controls", "name": "Controls", "steps": [{"id": "work", "name": "Work", "type": "tool", "tool_name": "noop", "idempotency_key": "work"}]}
+	base["budgets"] := {"max_money": 1}
+	assert_false(load_workflow_from_spec(base)["ok"])
+	base["budgets"] := {"max_cost_usd": -1}
+	assert_false(load_workflow_from_spec(base)["ok"])
+	base["budgets"] := {"max_steps": 2}
+	base["max_parallel_steps"] := 33
+	assert_false(load_workflow_from_spec(base)["ok"])
+	base["max_parallel_steps"] := 2
+	base["steps"] := [{"id": "work", "name": "Work", "type": "tool", "tool_name": "noop", "parallel_safe": true}]
+	assert_false(load_workflow_from_spec(base)["ok"])
+	base["steps"] := [{"id": "work", "name": "Work", "type": "tool", "tool_name": "noop", "parallel_safe": true, "idempotency_key": "work"}]
+	assert_true(load_workflow_from_spec(base)["ok"])
+}
+
+test "workflow max steps budget fails closed before the next step" {
+	workflow := create_workflow({"id": "budget", "name": "Budget", "description": "budget", "input_schema": {"type": "dict"}, "agents": {}, "tools": ["noop"], "steps": [create_step("one", "One", "tool", {"tool_name": "noop", "input_from": ["input"], "output_key": "one"}), create_step("two", "Two", "tool", {"tool_name": "noop", "input_from": ["input"], "output_key": "two"})], "memory_config": {}, "default_retry_policy": {"max_attempts": 1, "base_delay_ms": 0, "max_delay_ms": 0, "strategy": "none", "retry_on_codes": []}, "routing": {"enabled": false}, "budgets": {"max_steps": 1}, "approval_config": {"auto_approve": true}, "output_schema": {"type": "dict"}})
+	registry := create_tool_registry()
+	registry := register_tool(registry, create_tool("noop", "No-op", {"type": "dict"}, {"type": "dict"}, func(payload, context) { return {"ok": true, "data": {"done": true}} }, func(step_input) { return step_input }))
+	state := create_run_state(workflow, {}, "tests/tmp/operational-budget", {"auto_approve": true, "interactive": false})
+	result := run_workflow(workflow, state, registry, {"auto_approve": true, "interactive": false})
+	assert_false(result["ok"])
+	assert_equal(result["error"]["code"], "workflow_budget_exceeded")
+	assert_equal(result["run_state"]["budget_usage"]["steps"], 1)
+}
+
+test "webhook outbox summarizes latest durable delivery state" {
+	output_root := "tests/tmp/operational-webhooks-" + to_string(current_timestamp())
+	ensure_dir(output_root)
+	path := output_root + "/.dispatch-webhook-outbox.jsonl"
+	append_file(path, to_json({"event_id": "evt-1", "destination": "lifecycle", "url_hash": "hash", "status": "pending", "envelope": {"event_id": "evt-1"}}) + "\n")
+	append_file(path, to_json({"event_id": "evt-1", "destination": "lifecycle", "status": "dead_letter"}) + "\n")
+	append_file(path, to_json({"event_id": "evt-2", "destination": "lifecycle", "url_hash": "hash", "status": "pending", "envelope": {"event_id": "evt-2"}}) + "\n")
+	append_file(path, to_json({"event_id": "evt-2", "destination": "lifecycle", "status": "delivered"}) + "\n")
+	status := webhook_outbox_status({"output_root": output_root})
+	assert_equal(status["events"], 2)
+	assert_equal(status["delivered"], 1)
+	assert_equal(status["dead_letter"], 1)
+	assert_equal(status["latest"]["evt-1"]["envelope"]["event_id"], "evt-1")
+}
+
+test "OpenTelemetry artifact is valid OTLP JSON with correlated ids" {
+	trace := create_trace("run-otel", "OTel Workflow")
+	trace := append_trace(trace, "step_started", "work", "started", {"secret": "redacted"})
+	payload := parse_json(render_otel_trace_json(trace))
+	span := payload["resourceSpans"][0]["scopeSpans"][0]["spans"][0]
+	assert_equal(len(span["traceId"]), 32)
+	assert_equal(len(span["spanId"]), 16)
+	assert_equal(span["name"], "dispatch.step_started")
+}

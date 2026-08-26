@@ -1,4 +1,4 @@
-from src.core.utils import dict_get_or, to_bool
+from src.core.utils import dict_get_or, to_bool, ensure_dir
 
 func env_or(key, fallback_value) {
 	raw := env(key)
@@ -14,10 +14,10 @@ func env_or(key, fallback_value) {
 
 func model_fixture_enabled(options) {
 	if has_key(options, "offline_fixture") {
-		return to_bool(options["offline_fixture"], true)
+		return to_bool(options["offline_fixture"], false)
 	}
-	env_value := env_or("DISPATCH_OFFLINE_FIXTURE", "true")
-	return to_bool(env_value, true)
+	env_value := env_or("DISPATCH_OFFLINE_FIXTURE", "false")
+	return to_bool(env_value, false)
 }
 
 func custom_provider_api_key_env_allowed(api_key_env) {
@@ -29,6 +29,26 @@ func custom_provider_api_key_env_allowed(api_key_env) {
 		if trim(configured_name) == key_name && key_name != "" {
 			return true
 		}
+	}
+	return false
+}
+
+func normalize_provider_endpoint(raw_value) {
+	value := trim(to_string(raw_value))
+	while ends_with(value, "/") { value = substring(value, 0, len(value) - 1) }
+	return value
+}
+
+func custom_provider_endpoint_allowed(base_url) {
+	endpoint := normalize_provider_endpoint(base_url)
+	lower_endpoint := to_lower(endpoint)
+	secure := starts_with(lower_endpoint, "https://")
+	local_opt_in_value := to_lower(trim(to_string(env("DISPATCH_ALLOW_INSECURE_LOCAL_CUSTOM_PROVIDER"))))
+	local_opt_in := local_opt_in_value == "true" || local_opt_in_value == "1" || local_opt_in_value == "yes" || local_opt_in_value == "on"
+	local_http := starts_with(lower_endpoint, "http://localhost:") || starts_with(lower_endpoint, "http://127.0.0.1:") || lower_endpoint == "http://localhost" || lower_endpoint == "http://127.0.0.1"
+	if secure == false && (local_opt_in == false || local_http == false) { return false }
+	for configured in split(to_string(env("DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS")), ",") {
+		if normalize_provider_endpoint(configured) == endpoint { return true }
 	}
 	return false
 }
@@ -115,6 +135,7 @@ func build_bridge_exec_error_message(process_result, options) {
 
 func resolve_bridge_paths() {
 	dispatch_root := env_or("DISPATCH_ROOT", "")
+	if dispatch_root == "" { dispatch_root = os_getcwd() }
 	default_ai_sdk := "../ai-sdk"
 	default_bridge := "bridge_chat.kujo"
 	if dispatch_root != "" {
@@ -175,6 +196,22 @@ func build_bridge_payload(agent, user_prompt, options) {
 		"retry_delay_ms": dict_get_or(options, "retry_delay_ms", 100),
 		"offline_fixture": model_fixture_enabled(options)
 	}
+	if has_key(options, "messages") && type(options["messages"]) == "array" {
+		payload["messages"] := options["messages"]
+	}
+	if has_key(options, "tools") && type(options["tools"]) == "array" {
+		payload["tools"] := options["tools"]
+	}
+	if dict_get_or(options, "stream", false) {
+		payload["stream"] := true
+		stream_events_path := trim(to_string(dict_get_or(options, "stream_events_path", "")))
+		if stream_events_path != "" {
+			if starts_with(stream_events_path, "/") == false {
+				stream_events_path = os_getcwd() + "/" + stream_events_path
+			}
+			payload["stream_events_path"] := stream_events_path
+		}
+	}
 	for structured_key in ["response_format", "structured_output_schema", "structured_output_retryable"] {
 		if has_key(options, structured_key) {
 			payload[structured_key] := options[structured_key]
@@ -201,13 +238,6 @@ func build_bridge_payload(agent, user_prompt, options) {
 			if has_key(payload, "structured_output_retryable") == 0 {
 				payload["structured_output_retryable"] := false
 			}
-		}
-	}
-
-	api_key_override := dict_get_or(options, "api_key", null)
-	if type(api_key_override) == "string" {
-		if trim(api_key_override) != "" {
-			payload["api_key"] := api_key_override
 		}
 	}
 
@@ -265,12 +295,27 @@ func build_offline_fixture_model_result(agent, user_prompt, options) {
 	if type(dict_get_or(agent, "__route_decision", null)) == "dict" {
 		result["route"] := dict_get_or(agent, "__route_decision", {})
 	}
+	if dict_get_or(options, "stream", false) {
+		stream_events_path := trim(to_string(dict_get_or(options, "stream_events_path", "")))
+		if stream_events_path != "" {
+			stream_dir := dirname(stream_events_path)
+			if stream_dir != "" && stream_dir != "." { ensure_dir(stream_dir) }
+			events := [{"type": "delta", "text": output_text, "index": 0}, {"type": "done", "finish_reason": "stop", "usage": result["usage"]}]
+			write_file(stream_events_path, "", true)
+			for event in events { append_file(stream_events_path, to_json(event) + "\n") }
+			result["emitted_events"] := events
+			result["stream_events_path"] := stream_events_path
+		}
+	}
 	return result
 }
 
 func call_agent_model(agent, user_prompt, options) {
 	if model_fixture_enabled(options) {
 		return build_offline_fixture_model_result(agent, user_prompt, options)
+	}
+	if trim(to_string(dict_get_or(options, "api_key", ""))) != "" {
+		return {"ok": false, "error": {"code": "inline_credential_not_allowed", "message": "Inline model credentials are not allowed; configure the provider credential environment variable.", "retryable": false}}
 	}
 	model_config := dict_get_or(agent, "model", {})
 	if to_lower(trim(to_string(dict_get_or(model_config, "provider", "")))) == "custom" {
@@ -285,6 +330,10 @@ func call_agent_model(agent, user_prompt, options) {
 				}
 			}
 		}
+		custom_base_url := dict_get_or(model_config, "base_url", "")
+		if custom_provider_endpoint_allowed(custom_base_url) == false {
+			return {"ok": false, "error": {"code": "provider_endpoint_not_allowed", "message": "Custom provider base_url must be an exact HTTPS entry in DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS.", "retryable": false}}
+		}
 	}
 
 	paths := resolve_bridge_paths()
@@ -295,7 +344,8 @@ func call_agent_model(agent, user_prompt, options) {
 	process_result := spawn_process(command, {
 		"inherit_env": true,
 		"env": {
-			"DISPATCH_BRIDGE_PAYLOAD": payload_json
+			"DISPATCH_BRIDGE_PAYLOAD": payload_json,
+			"KUJO_NET_DESTINATION_POLICY": "deny_private"
 		},
 		"timeout_ms": resolve_bridge_timeout_ms(options),
 		"max_output_bytes": 1024 * 1024 * 8
@@ -341,3 +391,4 @@ export build_bridge_spawn_command := build_bridge_spawn_command
 export resolve_bridge_timeout_ms := resolve_bridge_timeout_ms
 export build_offline_fixture_model_result := build_offline_fixture_model_result
 export custom_provider_api_key_env_allowed := custom_provider_api_key_env_allowed
+export custom_provider_endpoint_allowed := custom_provider_endpoint_allowed

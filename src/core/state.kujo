@@ -1,6 +1,8 @@
 from src.core.utils import dict_get_or, ensure_dir, read_json_or, redact_sensitive_data, to_bool, safe_read_file
 from src.core.memory import create_memory
-from src.core.trace import create_trace, render_trace_markdown, apply_trace_limits
+from src.core.trace import create_trace, render_trace_markdown, render_otel_trace_json, apply_trace_limits
+from src.core.state_store import state_store_write, state_store_load
+from src.workflows.loader import load_workflow_from_spec
 
 func output_root_error(message) {
 	return {
@@ -561,7 +563,8 @@ func build_artifact_flags(run_dir) {
 			"trace_json": false,
 			"trace_md": false,
 			"report_md": false,
-			"report_json": false
+			"report_json": false,
+			"otel_traces_json": false
 		}
 	}
 	return {
@@ -569,7 +572,8 @@ func build_artifact_flags(run_dir) {
 		"trace_json": file_exists(run_dir + "/trace.json"),
 		"trace_md": file_exists(run_dir + "/trace.md"),
 		"report_md": file_exists(run_dir + "/report.md"),
-		"report_json": file_exists(run_dir + "/report.json")
+		"report_json": file_exists(run_dir + "/report.json"),
+		"otel_traces_json": file_exists(run_dir + "/otel-traces.json")
 	}
 }
 
@@ -578,7 +582,7 @@ func artifact_contract_version() {
 }
 
 func state_schema_version() {
-	return 1
+	return 2
 }
 
 func trace_schema_version() {
@@ -602,6 +606,10 @@ func ensure_trace_contract_fields(trace_state) {
 		trace_state["schema_version"] := trace_schema_version()
 		updated = true
 	}
+	if has_key(trace_state, "trace_id") == 0 {
+		trace_state["trace_id"] := substring(sha256(dict_get_or(trace_state, "run_id", "dispatch-trace")), 0, 32)
+		updated = true
+	}
 	return {
 		"trace_state": trace_state,
 		"updated": updated
@@ -622,7 +630,41 @@ func ensure_run_state_contract_fields(run_state) {
 		updated = true
 	}
 	if has_key(run_state, "schema_version") == 0 {
-		run_state["schema_version"] := state_schema_version()
+		# Missing version metadata is the v1 legacy shape. Assign v1 first so
+		# the normal migration path records the upgrade instead of silently
+		# stamping the current version.
+		run_state["schema_version"] := 1
+		updated = true
+	}
+	if dict_get_or(run_state, "schema_version", 1) < 2 {
+		run_state["schema_version"] := 2
+		if has_key(run_state, "revision") == 0 {
+			run_state["revision"] := 0
+		}
+		if has_key(run_state, "migrations") == 0 {
+			run_state["migrations"] := []
+		}
+		run_state["migrations"] := push(run_state["migrations"], {"from": 1, "to": 2, "id": "v1-add-revision-and-migration-ledger"})
+		updated = true
+	}
+	if has_key(run_state, "revision") == 0 {
+		run_state["revision"] := 0
+		updated = true
+	}
+	if has_key(run_state, "migrations") == 0 || type(run_state["migrations"]) != "array" {
+		run_state["migrations"] := []
+		updated = true
+	}
+	if has_key(run_state, "started_at_ms") == 0 {
+		run_state["started_at_ms"] := current_timestamp()
+		updated = true
+	}
+	if has_key(run_state, "budget_usage") == 0 || type(run_state["budget_usage"]) != "dict" {
+		run_state["budget_usage"] := {"steps": 0, "input_tokens": 0, "output_tokens": 0, "total_tokens": 0, "estimated_cost_usd": 0, "elapsed_ms": 0}
+		updated = true
+	}
+	if has_key(run_state, "provider_health") == 0 || type(run_state["provider_health"]) != "dict" {
+		run_state["provider_health"] := {}
 		updated = true
 	}
 	if has_key(run_state, "route_decisions") == 0 || type(run_state["route_decisions"]) != "dict" {
@@ -770,6 +812,8 @@ func build_persistable_workflow_definition(workflow) {
 		"memory_config": dict_get_or(workflow, "memory_config", {}),
 		"default_retry_policy": dict_get_or(workflow, "default_retry_policy", {}),
 		"routing": dict_get_or(workflow, "routing", {}),
+		"budgets": dict_get_or(workflow, "budgets", {}),
+		"max_parallel_steps": dict_get_or(workflow, "max_parallel_steps", 1),
 		"active_plugins": dict_get_or(workflow, "active_plugins", []),
 		"approval_config": dict_get_or(workflow, "approval_config", {}),
 		"output_schema": dict_get_or(workflow, "output_schema", {"type": "dict"})
@@ -793,6 +837,8 @@ func create_run_state(workflow, input_payload, output_root, options) {
 		"artifact_contract_version": artifact_contract_version(),
 		"schema_name": "dispatch-run-state",
 		"schema_version": state_schema_version(),
+		"revision": 0,
+		"migrations": [],
 		"run_id": run_id,
 		"workflow_id": workflow["id"],
 		"workflow_name": workflow["name"],
@@ -818,12 +864,15 @@ func create_run_state(workflow, input_payload, output_root, options) {
 		"run_dir": run_dir,
 		"output_root": output_root,
 		"created_at": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
+		"started_at_ms": current_timestamp(),
+		"budget_usage": {"steps": 0, "input_tokens": 0, "output_tokens": 0, "total_tokens": 0, "estimated_cost_usd": 0, "elapsed_ms": 0},
+		"provider_health": {},
 		"updated_at": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
 		"options": options
 	}
 	contract_result := ensure_run_state_contract_fields(state)
 	state = contract_result["run_state"]
-	persist_run_state(state)
+	state = persist_run_state(state)
 	# Register the run in the catalog index once at creation, even though its
 	# status is "running" (per-step running updates are intentionally skipped).
 	upsert_run_index_entry(state)
@@ -834,15 +883,22 @@ func persist_run_state(run_state) {
 	contract_result := ensure_run_state_contract_fields(run_state)
 	run_state = contract_result["run_state"]
 	run_state["updated_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
+	run_state["revision"] := dict_get_or(run_state, "revision", 0) + 1
 	redacted_state := redact_sensitive_data(run_state)
 	redacted_state_result := ensure_run_state_contract_fields(redacted_state)
 	redacted_state = redacted_state_result["run_state"]
 	redacted_trace := redact_sensitive_data(run_state["trace"])
 	trace_contract_result := ensure_trace_contract_fields(redacted_trace)
 	redacted_trace = trace_contract_result["trace_state"]
+	store_result := state_store_write(run_state, to_json(redacted_state))
+	if dict_get_or(store_result, "ok", false) == false {
+		store_error := dict_get_or(store_result, "error", {"code": "state_store_write_failed", "message": "State store write failed."})
+		return error(dict_get_or(store_error, "code", "state_store_write_failed") + ": " + dict_get_or(store_error, "message", "State store write failed."))
+	}
 	write_file_atomic(run_state["run_dir"] + "/state.json", to_json(redacted_state), true)
 	write_file_atomic(run_state["run_dir"] + "/trace.json", to_json(redacted_trace), true)
 	write_file_atomic(run_state["run_dir"] + "/trace.md", render_trace_markdown(redacted_trace), true)
+	write_file_atomic(run_state["run_dir"] + "/otel-traces.json", render_otel_trace_json(redacted_trace), true)
 	# Bound index write amplification: skip the full-catalog index rewrite for
 	# the per-step "running" churn. The run is registered once at creation and
 	# the index is refreshed on every non-running status transition (paused,
@@ -852,6 +908,77 @@ func persist_run_state(run_state) {
 		upsert_run_index_entry(run_state)
 	}
 	return run_state
+}
+
+func run_lock_timeout_ms() {
+	value := 5000
+	try {
+		value = to_int(trim(to_string(env("DISPATCH_RUN_LOCK_TIMEOUT_MS"))))
+	} except err {
+		value = 5000
+	}
+	if value < 100 || value > 300000 {
+		return 5000
+	}
+	return value
+}
+
+func run_lock_stale_ms() {
+	value := 900000
+	try {
+		value = to_int(trim(to_string(env("DISPATCH_RUN_LOCK_STALE_MS"))))
+	} except err {
+		value = 900000
+	}
+	if value < 10000 || value > 86400000 {
+		return 900000
+	}
+	return value
+}
+
+func release_run_lock(lock_info) {
+	lock_path := dict_get_or(lock_info, "lock_path", "")
+	owner := dict_get_or(lock_info, "owner", "")
+	if lock_path == "" || file_exists(lock_path) == false {
+		return {"ok": true}
+	}
+	current := read_json_or(lock_path, {})
+	if dict_get_or(current, "owner", "") != owner {
+		return {"ok": false, "error": {"code": "run_lock_ownership_lost", "message": "Run lock ownership changed before release.", "retryable": false}}
+	}
+	delete_file(lock_path)
+	return {"ok": true}
+}
+
+func acquire_run_lock(run_state) {
+	run_dir := dict_get_or(run_state, "run_dir", "")
+	if run_dir == "" {
+		return {"ok": false, "error": {"code": "run_lock_unavailable", "message": "Run directory is required for concurrency control.", "retryable": false}}
+	}
+	lock_path := run_dir + "/.dispatch-run.lock"
+	owner := dict_get_or(run_state, "run_id", "run") + "-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	started_at := current_timestamp()
+	timeout_ms := run_lock_timeout_ms()
+	while current_timestamp() - started_at <= timeout_ms {
+		payload := {"owner": owner, "run_id": dict_get_or(run_state, "run_id", ""), "created_at_ms": current_timestamp()}
+		acquired := false
+		try {
+			write_file(lock_path, to_json(payload), false)
+			acquired = true
+		} except err {
+			acquired = false
+		}
+		if acquired {
+			return {"ok": true, "lock_path": lock_path, "owner": owner}
+		}
+		existing := read_json_or(lock_path, {})
+		created_at_ms := dict_get_or(existing, "created_at_ms", current_timestamp())
+		if current_timestamp() - created_at_ms > run_lock_stale_ms() {
+			release_run_lock({"lock_path": lock_path, "owner": dict_get_or(existing, "owner", "")})
+		}
+		sleep(25)
+	}
+	return {"ok": false, "error": {"code": "run_lock_timeout", "message": "Another process owns this run. Retry after the active worker completes or the lock becomes stale.", "retryable": true}}
 }
 
 func load_run_state(output_root, run_id) {
@@ -866,7 +993,14 @@ func load_run_state(output_root, run_id) {
 	}
 	run_id = run_id_validation["run_id"]
 	state_path := output_root + "/" + run_id + "/state.json"
-	loaded := read_json_or(state_path, null)
+	store_result := state_store_load(output_root, run_id)
+	if dict_get_or(store_result, "ok", false) == false {
+		return store_result
+	}
+	loaded := dict_get_or(store_result, "run_state", null)
+	if type(loaded) == "null" {
+		loaded = read_json_or(state_path, null)
+	}
 	if type(loaded) == "null" {
 		return {
 			"ok": false,
@@ -1260,14 +1394,7 @@ func read_artifact_or_empty(path) {
 }
 
 func bundle_keyed_mac(signing_key, message) {
-	# Nested keyed SHA-256 MAC (NMAC/HMAC-style): the message is hashed first,
-	# then the secret key is prepended to that fixed-length digest and hashed
-	# again. This keeps the key out of the persisted output, binds the digest
-	# to the secret, and resists length-extension because the outer input is
-	# key + a fixed-size inner digest rather than key + attacker-controlled data.
-	key_text := to_string(signing_key)
-	inner := sha256(key_text + "::dispatch-mac-inner::" + to_string(message))
-	return sha256(key_text + "::dispatch-mac-outer::" + inner)
+	return hmac_sha256(to_string(signing_key), to_string(message))
 }
 
 func resolve_bundle_signing_key(options) {
@@ -1343,11 +1470,11 @@ func resolve_bundle_verification_key(options, key_id) {
 }
 
 func bundle_signature_algorithm() {
-	return "dispatch-signature-v2"
+	return "hmac-sha256-v1"
 }
 
-func build_bundle_signature_value(run_id, artifacts, signing_key) {
-	artifact_keys := ["state_json", "trace_json", "trace_md", "report_json", "report_md"]
+func build_bundle_signature_message(run_id, artifacts) {
+	artifact_keys := ["state_json", "trace_json", "trace_md", "report_json", "report_md", "otel_traces_json"]
 	parts := [bundle_signature_algorithm(), to_string(run_id)]
 	for artifact_key in artifact_keys {
 		content := to_string(dict_get_or(artifacts, artifact_key, ""))
@@ -1355,7 +1482,11 @@ func build_bundle_signature_value(run_id, artifacts, signing_key) {
 		parts := push(parts, to_string(len(content)))
 		parts := push(parts, sha256(content))
 	}
-	return bundle_keyed_mac(signing_key, join(parts, "::"))
+	return join(parts, "::")
+}
+
+func build_bundle_signature_value(run_id, artifacts, signing_key) {
+	return bundle_keyed_mac(signing_key, build_bundle_signature_message(run_id, artifacts))
 }
 
 func bundle_signature_error(message) {
@@ -1390,10 +1521,11 @@ func export_run_bundle(output_root, run_id, bundle_path, options) {
 		"trace_json": read_artifact_or_empty(run_dir + "/trace.json"),
 		"trace_md": read_artifact_or_empty(run_dir + "/trace.md"),
 		"report_json": read_artifact_or_empty(run_dir + "/report.json"),
-		"report_md": read_artifact_or_empty(run_dir + "/report.md")
+		"report_md": read_artifact_or_empty(run_dir + "/report.md"),
+		"otel_traces_json": read_artifact_or_empty(run_dir + "/otel-traces.json")
 	}
 	bundle := {
-		"bundle_version": 1,
+		"bundle_version": 2,
 		"exported_at": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
 		"run_id": run_id,
 		"source_output_root": output_root,
@@ -1426,7 +1558,16 @@ func import_run_bundle(output_root, bundle_path, options) {
 		return output_root_validation
 	}
 	output_root = output_root_validation["output_root"]
-	verify_signature := to_bool(dict_get_or(options, "verify_signature", false), false)
+	verify_signature := to_bool(dict_get_or(options, "verify_signature", true), true)
+	bundle_max_bytes := 26214400
+	try { bundle_max_bytes = to_int(trim(to_string(env("DISPATCH_BUNDLE_MAX_BYTES")))) } except err { bundle_max_bytes = 26214400 }
+	if bundle_max_bytes <= 0 { bundle_max_bytes = 26214400 }
+	if file_exists(bundle_path) {
+		bundle_bytes := file_size(bundle_path)
+		if bundle_bytes > bundle_max_bytes {
+			return {"ok": false, "error": {"code": "bundle_too_large", "message": "Bundle exceeds DISPATCH_BUNDLE_MAX_BYTES (" + to_string(bundle_max_bytes) + ").", "retryable": false}}
+		}
+	}
 	bundle_raw := safe_read_file(bundle_path, "")
 	if trim(bundle_raw) == "" {
 		return {
@@ -1494,14 +1635,18 @@ func import_run_bundle(output_root, bundle_path, options) {
 		if signing_key == "" {
 			return bundle_signature_error("Bundle verification requires a signing key for key id: " + signature_key_id)
 		}
-		expected_signature := build_bundle_signature_value(source_run_id, artifacts, signing_key)
 		actual_signature := to_string(dict_get_or(signature, "value", ""))
 		if actual_signature == "" {
 			return bundle_signature_error("Bundle signature value is missing.")
 		}
-		if expected_signature != actual_signature {
+		if hmac_sha256_verify(signing_key, build_bundle_signature_message(source_run_id, artifacts), actual_signature) == false {
 			return bundle_signature_error("Bundle signature verification failed.")
 		}
+	}
+	if source_run_id != "" {
+		run_id_validation := validate_run_id(source_run_id)
+		if run_id_validation["ok"] == false { return run_id_validation }
+		source_run_id = run_id_validation["run_id"]
 	}
 	state_content := to_string(dict_get_or(artifacts, "state_json", ""))
 	state_payload := null
@@ -1522,14 +1667,18 @@ func import_run_bundle(output_root, bundle_path, options) {
 			}
 		}
 	}
+	persisted_workflow := dict_get_or(state_payload, "workflow_definition", null)
+	if type(persisted_workflow) != "dict" {
+		return {"ok": false, "error": {"code": "invalid_bundle", "message": "Bundle state is missing workflow_definition.", "retryable": false}}
+	}
+	workflow_validation := load_workflow_from_spec(persisted_workflow)
+	if dict_get_or(workflow_validation, "ok", false) == false {
+		return {"ok": false, "error": {"code": "invalid_bundle_workflow", "message": "Bundle workflow_definition failed current schema validation.", "retryable": false, "details": dict_get_or(dict_get_or(workflow_validation, "error", {}), "message", "")}}
+	}
+	state_payload["workflow_definition"] := workflow_validation["workflow"]
+	artifacts["state_json"] := to_json(state_payload)
 	if source_run_id == "" {
 		source_run_id = "run-imported-" + to_string(current_timestamp())
-	} else {
-		run_id_validation := validate_run_id(source_run_id)
-		if run_id_validation["ok"] == false {
-			return run_id_validation
-		}
-		source_run_id = run_id_validation["run_id"]
 	}
 	target_run_id := source_run_id
 	while file_exists(output_root + "/" + target_run_id) {
@@ -1539,7 +1688,7 @@ func import_run_bundle(output_root, bundle_path, options) {
 	ensure_dir(output_root)
 	run_dir := output_root + "/" + target_run_id
 	ensure_dir(run_dir)
-	artifact_keys := ["state_json", "trace_json", "trace_md", "report_json", "report_md"]
+	artifact_keys := ["state_json", "trace_json", "trace_md", "report_json", "report_md", "otel_traces_json"]
 	imported_artifacts := []
 	for artifact_key in artifact_keys {
 		content := to_string(dict_get_or(artifacts, artifact_key, ""))
@@ -1547,6 +1696,9 @@ func import_run_bundle(output_root, bundle_path, options) {
 			continue
 		}
 		file_name := replace(artifact_key, "_", ".")
+		if artifact_key == "otel_traces_json" {
+			file_name = "otel-traces.json"
+		}
 		write_file_atomic(run_dir + "/" + file_name, content, true)
 		imported_artifacts := push(imported_artifacts, file_name)
 	}
@@ -1581,6 +1733,8 @@ func import_run_bundle(output_root, bundle_path, options) {
 
 export create_run_state := create_run_state
 export persist_run_state := persist_run_state
+export acquire_run_lock := acquire_run_lock
+export release_run_lock := release_run_lock
 export load_run_state := load_run_state
 export list_runs := list_runs
 export list_runs_with_diagnostics := list_runs_with_diagnostics

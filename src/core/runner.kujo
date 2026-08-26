@@ -6,12 +6,12 @@ from src.core.handoff import create_handoff, summarize_handoff
 from src.core.memory import add_agent_note, add_step_output
 from src.core.trace import append_trace, finalize_trace
 from src.core.report import build_report_payload, write_report_artifacts
-from src.core.state import persist_run_state, append_policy_deny_audit_record
+from src.core.state import persist_run_state, append_policy_deny_audit_record, acquire_run_lock, release_run_lock
 from src.core.step import mark_step_started, mark_step_succeeded, mark_step_failed, mark_step_paused, mark_step_skipped
 from src.tools.tool import call_tool, build_tool_payload
 from src.agents.agent import run_agent, run_agent_with_agent
 from src.core.routing import routing_policy_version, routing_is_enabled, resolve_route, build_effective_agent, evaluate_route_output, route_failure_action, validate_workflow_routing
-from src.core.hooks import create_lifecycle_event, create_human_intervention_event, emit_hook_event
+from src.core.hooks import create_lifecycle_event, create_human_intervention_event, emit_hook_event, validate_webhook_options
 
 func replace_step(steps, target_index, replacement_step) {
 	if target_index >= 0 && target_index < len(steps) {
@@ -341,9 +341,12 @@ func resolve_initial_route(step, workflow, run_state) {
 	})
 }
 
-func resolve_fallback_route(step, workflow, previous_decision, excluded_routes, fallback_index, fallback_reason) {
+func resolve_fallback_route(step, workflow, previous_decision, excluded_routes, fallback_index, fallback_reason, denied_providers) {
 	workflow_routing := dict_get_or(workflow, "routing", {})
 	overrides := {"excluded_routes": excluded_routes}
+	if len(denied_providers) > 0 {
+		overrides["denied_providers"] := denied_providers
+	}
 	if fallback_reason == "reroute_agent" {
 		existing_denied := dict_get_or(dict_get_or(previous_decision, "constraints", {}), "denied_agents", [])
 		overrides["denied_agents"] := push(existing_denied, dict_get_or(previous_decision, "selected_agent_id", ""))
@@ -362,6 +365,42 @@ func resolve_fallback_route(step, workflow, previous_decision, excluded_routes, 
 		"constraint_overrides": overrides,
 		"fallback_index": fallback_index
 	})
+}
+
+func record_provider_success(run_state, provider_id) {
+	health := dict_get_or(run_state, "provider_health", {})
+	health[provider_id] := {"consecutive_failures": 0, "open_until_ms": 0, "status": "healthy", "last_success_at": format_date(now(), "YYYY-MM-DD HH:mm:ss")}
+	run_state["provider_health"] := health
+	return run_state
+}
+
+func record_provider_failure(run_state, workflow, provider_id, failure_error) {
+	health := dict_get_or(run_state, "provider_health", {})
+	current := dict_get_or(health, provider_id, {"consecutive_failures": 0, "open_until_ms": 0})
+	failures := dict_get_or(current, "consecutive_failures", 0) + 1
+	config := dict_get_or(dict_get_or(workflow, "routing", {}), "provider_health", {})
+	threshold := dict_get_or(config, "failure_threshold", 3)
+	cooldown_ms := dict_get_or(config, "cooldown_ms", 60000)
+	open_until_ms := 0
+	status := "degraded"
+	if failures >= threshold {
+		open_until_ms = current_timestamp() + cooldown_ms
+		status = "open"
+	}
+	health[provider_id] := {"consecutive_failures": failures, "open_until_ms": open_until_ms, "status": status, "last_error_code": dict_get_or(failure_error, "code", "unknown"), "last_failure_at": format_date(now(), "YYYY-MM-DD HH:mm:ss")}
+	run_state["provider_health"] := health
+	return run_state
+}
+
+func open_provider_ids(run_state) {
+	result := []
+	for provider_id in keys(dict_get_or(run_state, "provider_health", {})) {
+		entry := run_state["provider_health"][provider_id]
+		if dict_get_or(entry, "open_until_ms", 0) > current_timestamp() {
+			result := push(result, provider_id)
+		}
+	}
+	return result
 }
 
 func agent_evaluation_config(step, workflow) {
@@ -434,8 +473,12 @@ func execute_agent_step(step, workflow, step_input, run_state, tool_registry, op
 		}
 
 		policy := resolve_retry_policy(step, workflow)
+		bounded_options := bounded_agent_execution_options(step, workflow, step_input, run_state, decision, effective_agent, handler_id, options, policy)
+		if dict_get_or(bounded_options, "ok", false) == false {
+			return {"ok": false, "error": bounded_options["error"], "attempts": total_attempts + 1, "attempt_records": all_attempt_records, "route_decision": decision, "run_state": run_state}
+		}
 		wrapped := run_with_retry("agent:" + dict_get_or(decision, "selected_agent_id", agent_id) + ":" + dict_get_or(decision, "provider_id", "") + ":" + dict_get_or(decision, "model", ""), policy, func(attempt_number) {
-			agent_options := options
+			agent_options := bounded_options["options"]
 			agent_options["step_id"] := dict_get_or(step, "id", "")
 			return run_agent_with_agent(effective_agent, handler_id, workflow["agents"], step_input, run_state, tool_registry, agent_options)
 		})
@@ -456,6 +499,7 @@ func execute_agent_step(step, workflow, step_input, run_state, tool_registry, op
 		failure_error := null
 		fallback_reason := ""
 		if wrapped["ok"] {
+			run_state := record_provider_success(run_state, dict_get_or(decision, "provider_id", ""))
 			model_calls := dict_get_or(wrapped["result"], "model_calls", [])
 			if dict_get_or(effective_agent, "uses_model", false) {
 				run_state["trace"] := append_trace(run_state["trace"], "model_call_completed", dict_get_or(step, "id", ""), "Model call completed", {
@@ -525,6 +569,7 @@ func execute_agent_step(step, workflow, step_input, run_state, tool_registry, op
 			}
 		} else {
 			failure_error = dict_get_or(wrapped["result"], "error", {"code": "agent_execution_failure", "message": "Unknown agent error", "retryable": false})
+			run_state := record_provider_failure(run_state, workflow, dict_get_or(decision, "provider_id", ""), failure_error)
 			if dict_get_or(effective_agent, "uses_model", false) {
 				run_state["trace"] := append_trace(run_state["trace"], "model_call_failed", dict_get_or(step, "id", ""), "Model call failed", {
 					"decision_id": dict_get_or(decision, "decision_id", ""),
@@ -553,7 +598,7 @@ func execute_agent_step(step, workflow, step_input, run_state, tool_registry, op
 			return {"ok": false, "error": failure_error, "attempts": total_attempts, "attempt_records": all_attempt_records, "route_decision": decision, "run_state": run_state}
 		}
 		excluded_routes := push(excluded_routes, route_key(decision))
-		next_route := resolve_fallback_route(step, workflow, decision, excluded_routes, fallback_count + 1, fallback_reason)
+		next_route := resolve_fallback_route(step, workflow, decision, excluded_routes, fallback_count + 1, fallback_reason, open_provider_ids(run_state))
 		if dict_get_or(next_route, "ok", false) == false {
 			return {"ok": false, "error": dict_get_or(next_route, "error", failure_error), "attempts": total_attempts, "attempt_records": all_attempt_records, "route_decision": decision, "run_state": run_state}
 		}
@@ -780,6 +825,54 @@ func execute_report_step(step, step_input, run_state) {
 	}
 }
 
+func bounded_agent_execution_options(step, workflow, step_input, run_state, decision, agent, handler_id, options, retry_policy) {
+	bounded := {}
+	for option_key in keys(options) { bounded[option_key] := options[option_key] }
+	budgets := dict_get_or(workflow, "budgets", {})
+	usage := dict_get_or(run_state, "budget_usage", {})
+	call_envelope := dict_get_or(retry_policy, "max_attempts", 1)
+	fallback := dict_get_or(dict_get_or(workflow, "routing", {}), "fallback", {})
+	call_envelope = call_envelope * (dict_get_or(fallback, "max_fallbacks", 0) + 1)
+	call_envelope = call_envelope * (dict_get_or(fallback, "max_evaluation_retries", 0) + 1)
+	if handler_id == "model" { call_envelope = call_envelope * (dict_get_or(dict_get_or(agent, "model_options", {}), "max_tool_rounds", 4) + 1) }
+	if call_envelope < 1 { call_envelope = 1 }
+
+	max_total_tokens := dict_get_or(budgets, "max_total_tokens", null)
+	if type(max_total_tokens) == "int" {
+		remaining_tokens := max_total_tokens - dict_get_or(usage, "total_tokens", 0)
+		if remaining_tokens <= 0 { return {"ok": false, "error": {"code": "workflow_budget_exceeded", "message": "Workflow token budget has no remaining capacity before model execution.", "retryable": false}} }
+		bounded["model_max_tokens_cap"] := to_int(remaining_tokens / call_envelope)
+	}
+
+	max_cost := dict_get_or(budgets, "max_cost_usd", null)
+	estimated_cost := dict_get_or(decision, "estimated_cost", {})
+	output_rate := dict_get_or(estimated_cost, "output_per_million", 0)
+	input_rate := dict_get_or(estimated_cost, "input_per_million", 0)
+	if (type(max_cost) == "int" || type(max_cost) == "float") && (type(output_rate) == "int" || type(output_rate) == "float") && output_rate > 0 {
+		remaining_cost := max_cost - dict_get_or(usage, "estimated_cost_usd", 0)
+		estimated_input_tokens := to_int((len(to_json(step_input)) + len(to_string(dict_get_or(agent, "instructions", ""))) + 3) / 4)
+		remaining_cost = remaining_cost - (estimated_input_tokens * input_rate / 1000000 * call_envelope)
+		if remaining_cost <= 0 { return {"ok": false, "error": {"code": "workflow_budget_exceeded", "message": "Workflow cost budget cannot fund the bounded model-call envelope.", "retryable": false}} }
+		cost_token_cap := to_int((remaining_cost * 1000000 / output_rate) / call_envelope)
+		if cost_token_cap < 1 { return {"ok": false, "error": {"code": "workflow_budget_exceeded", "message": "Workflow cost budget leaves no output-token capacity.", "retryable": false}} }
+		if dict_get_or(bounded, "model_max_tokens_cap", cost_token_cap) > cost_token_cap { bounded["model_max_tokens_cap"] := cost_token_cap }
+	}
+	if has_key(bounded, "model_max_tokens_cap") && bounded["model_max_tokens_cap"] < 1 { return {"ok": false, "error": {"code": "workflow_budget_exceeded", "message": "Workflow budget leaves no model output-token capacity.", "retryable": false}} }
+
+	timeout_ms := dict_get_or(step, "timeout_ms", 0)
+	max_wall_ms := dict_get_or(budgets, "max_wall_time_ms", null)
+	if type(max_wall_ms) == "int" {
+		wall_remaining := max_wall_ms - (current_timestamp() - dict_get_or(run_state, "started_at_ms", current_timestamp()))
+		if wall_remaining <= 0 { return {"ok": false, "error": {"code": "workflow_budget_exceeded", "message": "Workflow wall-time budget expired before model execution.", "retryable": false}} }
+		if timeout_ms <= 0 || wall_remaining < timeout_ms { timeout_ms = wall_remaining }
+	}
+	if timeout_ms > 0 {
+		bounded["execution_timeout_ms"] := timeout_ms
+		bounded["deadline_ms"] := current_timestamp() + timeout_ms
+	}
+	return {"ok": true, "options": bounded}
+}
+
 func execute_step(step, workflow, step_input, run_state, tool_registry, options) {
 	step_type := dict_get_or(step, "type", "")
 	if step_type == "agent" {
@@ -800,7 +893,137 @@ func execute_step(step, workflow, step_input, run_state, tool_registry, options)
 	return invalid_step_error(step["id"], "Unsupported step type: " + step_type)
 }
 
-func run_workflow(workflow, run_state, tool_registry, options) {
+async func execute_parallel_tool_descriptor(descriptor) {
+	input_validation := validate_step_schema(descriptor["step"]["id"], "input", dict_get_or(descriptor["step"], "input_schema", null), descriptor["step_input"])
+	if input_validation["ok"] == false {
+		return {"step_id": descriptor["step"]["id"], "started_ms": descriptor["started_ms"], "executed": {"ok": false, "error": input_validation["error"], "attempts": 1, "attempt_records": []}}
+	}
+	executed := execute_tool_step(descriptor["step"], descriptor["workflow"], descriptor["step_input"], descriptor["run_state"], descriptor["tool_registry"], descriptor["options"])
+	return {"step_id": descriptor["step"]["id"], "started_ms": descriptor["started_ms"], "executed": executed}
+}
+
+func parallel_execution_enabled(workflow, options) {
+	max_parallel := dict_get_or(workflow, "max_parallel_steps", 1)
+	if type(max_parallel) != "int" || max_parallel <= 1 {
+		return false
+	}
+	if has_key(options, "parallel_execution") && dict_get_or(options, "parallel_execution", true) == false {
+		return false
+	}
+	return true
+}
+
+func prepare_parallel_tool_batch(workflow, run_state, tool_registry, options) {
+	if parallel_execution_enabled(workflow, options) == false {
+		return {"run_state": run_state, "results": {}}
+	}
+	max_parallel := dict_get_or(workflow, "max_parallel_steps", 1)
+	max_steps := dict_get_or(dict_get_or(workflow, "budgets", {}), "max_steps", null)
+	if type(max_steps) == "int" {
+		remaining_steps := max_steps - dict_get_or(dict_get_or(run_state, "budget_usage", {}), "steps", 0)
+		if remaining_steps < 2 { return {"run_state": run_state, "results": {}} }
+		if remaining_steps < max_parallel { max_parallel = remaining_steps }
+	}
+	candidate_indexes := []
+	step_index := 0
+	while step_index < len(run_state["steps"]) && len(candidate_indexes) < max_parallel {
+		step := run_state["steps"][step_index]
+		if dict_get_or(step, "status", "pending") == "pending" && dict_get_or(step, "type", "") == "tool" && dict_get_or(step, "parallel_safe", false) && step_dependencies_satisfied(run_state["steps"], step) {
+			idempotency_key := trim(to_string(dict_get_or(step, "idempotency_key", "")))
+			idempotency_store := dict_get_or(run_state, "idempotency", {})
+			if idempotency_key != "" && has_key(idempotency_store, idempotency_key) == 0 {
+				candidate_indexes := push(candidate_indexes, step_index)
+			}
+		}
+		step_index = step_index + 1
+	}
+	if len(candidate_indexes) < 2 {
+		return {"run_state": run_state, "results": {}}
+	}
+	descriptors := []
+	for candidate_index in candidate_indexes {
+		step := mark_step_started(run_state["steps"][candidate_index])
+		step_input := build_step_input(step, run_state)
+		step["input"] := step_input
+		run_state["steps"] := replace_step(run_state["steps"], candidate_index, step)
+		run_state["trace"] := append_trace(run_state["trace"], "step_started", step["id"], "Step started in parallel batch: " + step["name"], {"step_type": step["type"], "parallel": true, "input_summary": summarize_value(step_input, 220)})
+		emit_lifecycle_event(run_state, options, "step_started", step["id"], "Step started in parallel batch: " + step["name"], {"step_type": step["type"], "parallel": true})
+		descriptors := push(descriptors, {"step": step, "step_input": step_input, "workflow": workflow, "run_state": run_state, "tool_registry": tool_registry, "options": options, "started_ms": current_timestamp()})
+	}
+	run_state := persist_run_state(run_state)
+	mapped := promise_wait(parallel_map(descriptors, execute_parallel_tool_descriptor, max_parallel))
+	results := {}
+	for mapped_item in mapped {
+		results[mapped_item["step_id"]] := mapped_item
+	}
+	return {"run_state": run_state, "results": results}
+}
+
+func has_precomputed_results(results) {
+	for result_key in keys(results) {
+		if type(results[result_key]) == "dict" {
+			return true
+		}
+	}
+	return false
+}
+
+func update_budget_usage(run_state, executed) {
+	usage := dict_get_or(run_state, "budget_usage", {"steps": 0, "input_tokens": 0, "output_tokens": 0, "total_tokens": 0, "estimated_cost_usd": 0, "elapsed_ms": 0})
+	usage["steps"] := dict_get_or(usage, "steps", 0) + 1
+	step_input_tokens := 0
+	step_output_tokens := 0
+	for model_call in dict_get_or(executed, "model_calls", []) {
+		call_usage := dict_get_or(model_call, "usage", {})
+		step_input_tokens = step_input_tokens + dict_get_or(call_usage, "input_tokens", 0)
+		step_output_tokens = step_output_tokens + dict_get_or(call_usage, "output_tokens", 0)
+		usage["total_tokens"] := dict_get_or(usage, "total_tokens", 0) + dict_get_or(call_usage, "total_tokens", 0)
+	}
+	usage["input_tokens"] := dict_get_or(usage, "input_tokens", 0) + step_input_tokens
+	usage["output_tokens"] := dict_get_or(usage, "output_tokens", 0) + step_output_tokens
+	decision := dict_get_or(executed, "route_decision", {})
+	estimated_cost := dict_get_or(decision, "estimated_cost", {})
+	input_rate := dict_get_or(estimated_cost, "input_per_million", 0)
+	output_rate := dict_get_or(estimated_cost, "output_per_million", 0)
+	if type(input_rate) != "int" && type(input_rate) != "float" { input_rate = 0 }
+	if type(output_rate) != "int" && type(output_rate) != "float" { output_rate = 0 }
+	usage["estimated_cost_usd"] := dict_get_or(usage, "estimated_cost_usd", 0) + (step_input_tokens * input_rate / 1000000) + (step_output_tokens * output_rate / 1000000)
+	usage["elapsed_ms"] := current_timestamp() - dict_get_or(run_state, "started_at_ms", current_timestamp())
+	run_state["budget_usage"] := usage
+	return run_state
+}
+
+func budget_limit_error(workflow, run_state, include_step_limit) {
+	budgets := dict_get_or(workflow, "budgets", {})
+	if type(budgets) != "dict" {
+		return null
+	}
+	usage := dict_get_or(run_state, "budget_usage", {})
+	checks := [
+		{"field": "max_steps", "actual": dict_get_or(usage, "steps", 0)},
+		{"field": "max_total_tokens", "actual": dict_get_or(usage, "total_tokens", 0)},
+		{"field": "max_cost_usd", "actual": dict_get_or(usage, "estimated_cost_usd", 0)},
+		{"field": "max_wall_time_ms", "actual": current_timestamp() - dict_get_or(run_state, "started_at_ms", current_timestamp())}
+	]
+	for check in checks {
+		if check["field"] == "max_steps" && include_step_limit == false {
+			continue
+		}
+		limit := dict_get_or(budgets, check["field"], null)
+		if (type(limit) == "int" || type(limit) == "float") && limit >= 0 {
+			exceeded := check["actual"] > limit
+			if check["field"] == "max_steps" {
+				exceeded = check["actual"] >= limit
+			}
+			if exceeded {
+				return {"code": "workflow_budget_exceeded", "message": "Workflow budget exceeded: " + check["field"] + "=" + to_string(limit) + ", actual=" + to_string(check["actual"]), "retryable": false, "details": {"budget": check["field"], "limit": limit, "actual": check["actual"]}}
+			}
+		}
+	}
+	return null
+}
+
+func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
 	routing_validation := validate_workflow_routing(workflow)
 	if dict_get_or(routing_validation, "ok", false) == false {
 		return {"ok": false, "paused": false, "run_state": run_state, "error": {"code": "invalid_routing_config", "message": "Workflow routing configuration is invalid.", "retryable": false, "details": dict_get_or(routing_validation, "errors", [])}}
@@ -809,8 +1032,23 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 	total_steps := len(run_state["steps"])
 	index := run_state["current_step_index"]
 	cycle_progress := false
+	precomputed_results := {}
 
 	while true {
+		budget_error := budget_limit_error(workflow, run_state, true)
+		if type(budget_error) == "dict" {
+			run_state["status"] := "failed"
+			run_state["errors"] := push(run_state["errors"], {"step_id": "workflow", "error": budget_error, "timestamp": format_date(now(), "YYYY-MM-DD HH:mm:ss")})
+			run_state["trace"] := append_trace(run_state["trace"], "workflow_budget_exceeded", "workflow", budget_error["message"], budget_error["details"])
+			run_state["trace"] := finalize_trace(run_state["trace"], "failed")
+			run_state := persist_run_state(run_state)
+			return {"ok": false, "paused": false, "run_state": run_state, "error": budget_error}
+		}
+		if has_precomputed_results(precomputed_results) == false {
+			parallel_batch := prepare_parallel_tool_batch(workflow, run_state, tool_registry, options)
+			run_state = parallel_batch["run_state"]
+			precomputed_results = parallel_batch["results"]
+		}
 		if index >= total_steps {
 			if all_steps_completed(run_state["steps"]) {
 				break
@@ -860,19 +1098,25 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 			continue
 		}
 
-		step := mark_step_started(step)
+		precomputed := dict_get_or(precomputed_results, step["id"], null)
 		step_input := build_step_input(step, run_state)
-		step["input"] := step_input
-		run_state["steps"] := replace_step(run_state["steps"], index, step)
-		run_state["trace"] := append_trace(run_state["trace"], "step_started", step["id"], "Step started: " + step["name"], {
-			"step_type": step["type"],
-			"input_summary": summarize_value(step_input, 220)
-		})
-		emit_lifecycle_event(run_state, options, "step_started", step["id"], "Step started: " + step["name"], {
-			"step_type": step["type"]
-		})
-		run_state := persist_run_state(run_state)
 		step_started_ms := current_timestamp()
+		if type(precomputed) != "dict" {
+			step := mark_step_started(step)
+			step["input"] := step_input
+			run_state["steps"] := replace_step(run_state["steps"], index, step)
+			run_state["trace"] := append_trace(run_state["trace"], "step_started", step["id"], "Step started: " + step["name"], {
+				"step_type": step["type"],
+				"input_summary": summarize_value(step_input, 220)
+			})
+			emit_lifecycle_event(run_state, options, "step_started", step["id"], "Step started: " + step["name"], {
+				"step_type": step["type"]
+			})
+			run_state := persist_run_state(run_state)
+		} else {
+			step_input = dict_get_or(step, "input", step_input)
+			step_started_ms = dict_get_or(precomputed, "started_ms", step_started_ms)
+		}
 
 		input_validation := validate_step_schema(step["id"], "input", dict_get_or(step, "input_schema", null), step_input)
 		idempotency_key := to_string(dict_get_or(step, "idempotency_key", ""))
@@ -881,7 +1125,9 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 			idempotency_store = {}
 		}
 		executed := {}
-		if input_validation["ok"] == false {
+		if type(precomputed) == "dict" {
+			executed = precomputed["executed"]
+		} else if input_validation["ok"] == false {
 			executed := {
 				"ok": false,
 				"error": input_validation["error"],
@@ -947,6 +1193,11 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 				idempotency_store[idempotency_key] := dict_get_or(executed, "data", null)
 				run_state["idempotency"] := idempotency_store
 			}
+		}
+		run_state := update_budget_usage(run_state, executed)
+		post_execution_budget_error := budget_limit_error(workflow, run_state, false)
+		if dict_get_or(executed, "ok", false) && type(post_execution_budget_error) == "dict" {
+			executed := {"ok": false, "error": post_execution_budget_error, "attempts": dict_get_or(executed, "attempts", 1), "attempt_records": dict_get_or(executed, "attempt_records", []), "model_calls": dict_get_or(executed, "model_calls", [])}
 		}
 		if dict_get_or(executed, "paused", false) {
 			paused_data := dict_get_or(executed, "data", {})
@@ -1116,6 +1367,9 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 
 		index := index + 1
 		cycle_progress = true
+		if type(precomputed) == "dict" {
+			precomputed_results[step["id"]] := null
+		}
 		run_state["current_step_index"] := index
 		run_state := persist_run_state(run_state)
 	}
@@ -1148,6 +1402,37 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 			"route_attempts": dict_get_or(run_state, "route_attempts", {})
 		}
 	}
+}
+
+func run_workflow(workflow, run_state, tool_registry, options) {
+	webhook_validation := validate_webhook_options(options)
+	if dict_get_or(webhook_validation, "ok", false) == false {
+		return {"ok": false, "paused": false, "error": webhook_validation["error"], "run_state": run_state}
+	}
+	lock_result := acquire_run_lock(run_state)
+	if dict_get_or(lock_result, "ok", false) == false {
+		return {"ok": false, "paused": false, "error": lock_result["error"], "run_state": run_state}
+	}
+	result := null
+	try {
+		result = run_workflow_unlocked(workflow, run_state, tool_registry, options)
+	} except err {
+		result = {
+			"ok": false,
+			"paused": false,
+			"error": {
+				"code": "workflow_runtime_error",
+				"message": "Workflow execution failed unexpectedly.",
+				"retryable": false
+			},
+			"run_state": run_state
+		}
+	}
+	release_result := release_run_lock(lock_result)
+	if dict_get_or(release_result, "ok", false) == false {
+		result["lock_release_error"] := release_result["error"]
+	}
+	return result
 }
 
 export run_workflow := run_workflow

@@ -6,7 +6,7 @@ test_setup {
 	from src.core.decision import normalize_decision
 	from src.cli.cli_args import parse_cli_args, parsed_has_flag, parsed_flag_value
 	from src.core.handoff import create_handoff
-	from src.core.state import create_run_state, load_run_state, list_runs, list_runs_with_diagnostics, summarize_run, detect_run_issues, repair_run_state, persist_run_state, filter_runs, paginate_runs, build_run_catalog, prune_runs, doctor_runs, normalize_output_root, mutation_audit_path, append_mutation_audit_record, export_run_bundle, import_run_bundle
+	from src.core.state import create_run_state, load_run_state, list_runs, list_runs_with_diagnostics, summarize_run, detect_run_issues, repair_run_state, persist_run_state, acquire_run_lock, release_run_lock, filter_runs, paginate_runs, build_run_catalog, prune_runs, doctor_runs, normalize_output_root, mutation_audit_path, append_mutation_audit_record, export_run_bundle, import_run_bundle
 	from src.core.trace import create_trace, append_trace, finalize_trace, collect_event_type_counts, render_trace_markdown, apply_trace_limits
 	from src.core.report import build_report_payload, render_markdown_report, write_report_artifacts
 	from src.core.runner import run_workflow
@@ -751,11 +751,26 @@ test "state persistence saves and reloads run" {
 	assert_equal(loaded["run_state"]["run_id"], run_state["run_id"])
 	assert_equal(dict_get_or(loaded["run_state"], "artifact_contract_version", 0), 1)
 	assert_equal(dict_get_or(loaded["run_state"], "schema_name", ""), "dispatch-run-state")
-	assert_equal(dict_get_or(loaded["run_state"], "schema_version", 0), 1)
+	assert_equal(dict_get_or(loaded["run_state"], "schema_version", 0), 2)
+	assert_true(dict_get_or(loaded["run_state"], "revision", 0) >= 1)
+	assert_true(file_exists(run_state["run_dir"] + "/otel-traces.json"))
 	loaded_trace := dict_get_or(loaded["run_state"], "trace", {})
 	assert_equal(dict_get_or(loaded_trace, "artifact_contract_version", 0), 1)
 	assert_equal(dict_get_or(loaded_trace, "schema_name", ""), "dispatch-trace")
 	assert_equal(dict_get_or(loaded_trace, "schema_version", 0), 1)
+}
+
+test "run locks are owner-bound and stale locks recover safely" {
+	workflow := create_research_report_workflow("Lock contract", true)
+	state := create_run_state(workflow, {"topic": "lock"}, "tests/tmp/run-lock-contract-" + to_string(current_timestamp()), {"auto_approve": true, "interactive": false})
+	lock := acquire_run_lock(state)
+	assert_true(lock["ok"])
+	wrong_release := release_run_lock({"lock_path": lock["lock_path"], "owner": "wrong-owner"})
+	assert_false(wrong_release["ok"])
+	assert_true(file_exists(lock["lock_path"]))
+	released := release_run_lock(lock)
+	assert_true(released["ok"])
+	assert_false(file_exists(lock["lock_path"]))
 }
 
 test "load run state backfills missing contract schema metadata" {
@@ -790,7 +805,8 @@ test "load run state backfills missing contract schema metadata" {
 	backfilled := loaded["run_state"]
 	assert_equal(dict_get_or(backfilled, "artifact_contract_version", 0), 1)
 	assert_equal(dict_get_or(backfilled, "schema_name", ""), "dispatch-run-state")
-	assert_equal(dict_get_or(backfilled, "schema_version", 0), 1)
+	assert_equal(dict_get_or(backfilled, "schema_version", 0), 2)
+	assert_true(len(dict_get_or(backfilled, "migrations", [])) >= 1)
 	backfilled_trace := dict_get_or(backfilled, "trace", {})
 	assert_equal(dict_get_or(backfilled_trace, "artifact_contract_version", 0), 1)
 	assert_equal(dict_get_or(backfilled_trace, "schema_name", ""), "dispatch-trace")
@@ -1173,14 +1189,18 @@ test "dependency scheduling supports parallel-ready DAG steps" {
 		"retry_on_codes": []
 	}
 	step_a := create_step("dag_a", "DAG A", "tool", {
-		"tool_name": "timestamp_tool",
+		"tool_name": "parallel_probe_tool",
 		"input_from": ["input"],
-		"output_key": "a"
+		"output_key": "a",
+		"parallel_safe": true,
+		"idempotency_key": "dag-a"
 	})
 	step_b := create_step("dag_b", "DAG B", "tool", {
-		"tool_name": "timestamp_tool",
+		"tool_name": "parallel_probe_tool",
 		"input_from": ["input"],
-		"output_key": "b"
+		"output_key": "b",
+		"parallel_safe": true,
+		"idempotency_key": "dag-b"
 	})
 	step_join := create_step("dag_join", "DAG Join", "tool", {
 		"tool_name": "combine_tool",
@@ -1194,8 +1214,9 @@ test "dependency scheduling supports parallel-ready DAG steps" {
 		"description": "Dependency scheduling",
 		"input_schema": {"type": "dict"},
 		"agents": {},
-		"tools": ["timestamp_tool", "combine_tool"],
+		"tools": ["parallel_probe_tool", "combine_tool"],
 		"steps": [step_a, step_b, step_join],
+		"max_parallel_steps": 2,
 		"memory_config": {},
 		"default_retry_policy": default_retry,
 		"approval_config": {"auto_approve": true},
@@ -1207,6 +1228,18 @@ test "dependency scheduling supports parallel-ready DAG steps" {
 	})
 	dag_registry := register_default_tools("examples/research-report/sources")
 	dag_registry := register_tool(dag_registry, create_tool(
+		"parallel_probe_tool",
+		"Records start time before bounded work.",
+		{"type": "dict"},
+		{"type": "dict"},
+		func(input_payload, context) {
+			started_ms := current_timestamp()
+			sleep(250)
+			return {"ok": true, "data": {"started_ms": started_ms}}
+		},
+		func(step_input) { return step_input }
+	))
+	dag_registry := register_tool(dag_registry, create_tool(
 		"combine_tool",
 		"Combines dependency outputs.",
 		{"type": "dict"},
@@ -1216,7 +1249,8 @@ test "dependency scheduling supports parallel-ready DAG steps" {
 				"ok": true,
 				"data": {
 					"has_a": type(dict_get_or(input_payload, "a", null)) == "dict",
-					"has_b": type(dict_get_or(input_payload, "b", null)) == "dict"
+					"has_b": type(dict_get_or(input_payload, "b", null)) == "dict",
+					"start_delta_ms": abs(dict_get_or(input_payload["a"], "started_ms", 0) - dict_get_or(input_payload["b"], "started_ms", 0))
 				}
 			}
 		},
@@ -1234,6 +1268,7 @@ test "dependency scheduling supports parallel-ready DAG steps" {
 	combined := dict_get_or(dag_result["run_state"]["data"], "combined", {})
 	assert_true(dict_get_or(combined, "has_a", false))
 	assert_true(dict_get_or(combined, "has_b", false))
+	assert_true(dict_get_or(combined, "start_delta_ms", 1000) < 150)
 }
 
 test "summarize run reports artifact availability" {
@@ -2145,7 +2180,7 @@ test "show inspect and doctor json envelopes are consistent" {
 	show_contract := dict_get_or(show_payload, "contract", {})
 	assert_equal(dict_get_or(show_contract, "artifact_contract_version", 0), 1)
 	assert_equal(dict_get_or(dict_get_or(show_contract, "state", {}), "schema_name", ""), "dispatch-run-state")
-	assert_equal(dict_get_or(dict_get_or(show_contract, "state", {}), "schema_version", 0), 1)
+	assert_equal(dict_get_or(dict_get_or(show_contract, "state", {}), "schema_version", 0), 2)
 	assert_equal(dict_get_or(dict_get_or(show_contract, "trace", {}), "schema_name", ""), "dispatch-trace")
 	assert_equal(dict_get_or(dict_get_or(show_contract, "trace", {}), "schema_version", 0), 1)
 	show_summary := dict_get_or(show_payload, "summary", {})
@@ -2173,7 +2208,7 @@ test "show inspect and doctor json envelopes are consistent" {
 	inspect_contract := dict_get_or(inspect_payload, "contract", {})
 	assert_equal(dict_get_or(inspect_contract, "artifact_contract_version", 0), 1)
 	assert_equal(dict_get_or(dict_get_or(inspect_contract, "state", {}), "schema_name", ""), "dispatch-run-state")
-	assert_equal(dict_get_or(dict_get_or(inspect_contract, "state", {}), "schema_version", 0), 1)
+	assert_equal(dict_get_or(dict_get_or(inspect_contract, "state", {}), "schema_version", 0), 2)
 	assert_equal(dict_get_or(dict_get_or(inspect_contract, "trace", {}), "schema_name", ""), "dispatch-trace")
 	assert_equal(dict_get_or(dict_get_or(inspect_contract, "trace", {}), "schema_version", 0), 1)
 	inspect_summary := dict_get_or(inspect_payload, "summary", {})
@@ -2364,18 +2399,18 @@ test "run export and import support round trip bundles" {
 	run_state := persist_run_state(run_state)
 
 	bundle_path := "tests/tmp/run-bundles/export-bundle.json"
-	exported := export_run_bundle(output_root, run_state["run_id"], bundle_path, {})
+	exported := export_run_bundle(output_root, run_state["run_id"], bundle_path, {"include_signature": true, "signing_key": "round-trip-key"})
 	assert_true(exported["ok"])
 	assert_true(file_exists(bundle_path))
 
-	imported := import_run_bundle("tests/tmp/export-import-target", bundle_path, {})
+	imported := import_run_bundle("tests/tmp/export-import-target", bundle_path, {"signing_key": "round-trip-key"})
 	assert_true(imported["ok"])
 	loaded := load_run_state("tests/tmp/export-import-target", imported["run_id"])
 	assert_true(loaded["ok"])
 	assert_equal(loaded["run_state"]["run_id"], imported["run_id"])
 	assert_equal(dict_get_or(loaded["run_state"], "artifact_contract_version", 0), 1)
 	assert_equal(dict_get_or(loaded["run_state"], "schema_name", ""), "dispatch-run-state")
-	assert_equal(dict_get_or(loaded["run_state"], "schema_version", 0), 1)
+	assert_equal(dict_get_or(loaded["run_state"], "schema_version", 0), 2)
 }
 
 test "signed bundle verification supports deterministic pass and fail paths" {
@@ -2477,6 +2512,10 @@ test "dispatch help usage snapshot remains compatible" {
 		["--", "-h"]
 	]
 	usage_snapshot := [
+		"kujo run dispatch.kujo run \"Research topic\" [--workflow-file workflow.json] [--input-json '{...}'] [--output-root outputs]",
+		"kujo run dispatch.kujo init [--dir dispatch-workflow] [--force]",
+		"kujo run dispatch.kujo catalog <generate|sync> <config.json> --output model-catalog.json",
+		"kujo run dispatch.kujo webhooks <status|replay> [--output-root outputs] [--url https-url] [--destination lifecycle] [--json]",
 		"kujo run dispatch.kujo demo \"Research topic\" [--workflow research-report] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs]",
 		"kujo run dispatch.kujo show <run-id> [--output-root outputs] [--json]",
 		"kujo run dispatch.kujo inspect <run-id> [--output-root outputs] [--json]",
@@ -2484,10 +2523,10 @@ test "dispatch help usage snapshot remains compatible" {
 		"kujo run dispatch.kujo resume-decision <decision.json> [--output-root outputs] [--non-interactive]",
 		"kujo run dispatch.kujo templates [--json]",
 		"kujo run dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]",
-		"kujo run dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
+		"kujo run dispatch.kujo doctor [--output-root outputs] [--workflow-file workflow.json] [--live] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
 		"kujo run dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]",
 		"kujo run dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]",
-		"kujo run dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]",
+		"kujo run dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--signing-key key] [--allow-unsigned-bundle] [--strict-mutations] [--confirm-mutation]",
 		"kujo run dispatch.kujo validate --workflow-file workflow.json [--plugin sample] [--live] [--json]",
 		"kujo run dispatch.kujo explain-route --workflow-file workflow.json [--step-id step-id] [--plugin sample] [--json]",
 		"kujo run dispatch.kujo version"
@@ -2823,7 +2862,7 @@ test "signed bundle uses a cryptographic sha256 mac and rejects wrong keys" {
 
 	bundle_payload := parse_json(read_file(bundle_path))
 	signature := dict_get_or(bundle_payload, "signature", {})
-	assert_equal(dict_get_or(signature, "algorithm", ""), "dispatch-signature-v2")
+	assert_equal(dict_get_or(signature, "algorithm", ""), "hmac-sha256-v1")
 	signature_value := to_string(dict_get_or(signature, "value", ""))
 	assert_equal(len(signature_value), 64)
 	assert_equal(contains(signature_value, "primary-key"), 0)
@@ -3134,7 +3173,7 @@ test "run identifiers cannot escape the configured output root" {
 			"state_json": to_json({"run_id": "../outside", "status": "completed"})
 		}
 	}), true)
-	imported := import_run_bundle(root, bundle_path, {})
+	imported := import_run_bundle(root, bundle_path, {"verify_signature": false})
 	assert_false(imported["ok"])
 	assert_equal(imported["error"]["code"], "invalid_run_id")
 }
@@ -3148,7 +3187,7 @@ test "bundle import requires a valid state artifact" {
 		"run_id": "run-missing-state",
 		"artifacts": {"trace_json": "{}"}
 	}), true)
-	missing := import_run_bundle(root, missing_path, {})
+	missing := import_run_bundle(root, missing_path, {"verify_signature": false})
 	assert_false(missing["ok"])
 	assert_equal(missing["error"]["code"], "invalid_bundle")
 
@@ -3158,7 +3197,7 @@ test "bundle import requires a valid state artifact" {
 		"run_id": "run-malformed-state",
 		"artifacts": {"state_json": "not-json"}
 	}), true)
-	malformed := import_run_bundle(root, malformed_path, {})
+	malformed := import_run_bundle(root, malformed_path, {"verify_signature": false})
 	assert_false(malformed["ok"])
 	assert_equal(malformed["error"]["code"], "invalid_bundle")
 }

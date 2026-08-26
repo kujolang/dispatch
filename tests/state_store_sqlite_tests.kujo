@@ -1,0 +1,22 @@
+test_setup {
+	from src.workflows.workflow import create_research_report_workflow
+	from src.core.state import create_run_state, persist_run_state, load_run_state
+	from src.core.state_store import state_store_health
+}
+
+test "sqlite state store persists revisions and remains authoritative" {
+	output_root := "tests/tmp/sqlite-state-store-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
+	workflow := create_research_report_workflow("SQLite state", true)
+	state := create_run_state(workflow, {"topic": "sqlite"}, output_root, {"auto_approve": true, "interactive": false})
+	initial_revision := state["revision"]
+	state["status"] := "paused"
+	state := persist_run_state(state)
+	assert_true(state["revision"] > initial_revision)
+	loaded := load_run_state(output_root, state["run_id"])
+	assert_true(loaded["ok"])
+	assert_equal(loaded["run_state"]["status"], "paused")
+	assert_equal(loaded["run_state"]["revision"], state["revision"])
+	health := state_store_health(output_root)
+	assert_true(health["ok"])
+	assert_equal(health["backend"], "sqlite")
+}

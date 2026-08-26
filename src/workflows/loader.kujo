@@ -113,6 +113,7 @@ func build_steps_from_spec(raw_steps) {
 			"approval_required": dict_get_or(raw_step, "approval_required", false),
 			"approval_gate": dict_get_or(raw_step, "approval_gate", {}),
 			"optional": dict_get_or(raw_step, "optional", false),
+			"parallel_safe": dict_get_or(raw_step, "parallel_safe", false),
 			"idempotency_key": dict_get_or(raw_step, "idempotency_key", ""),
 			"handoff": dict_get_or(raw_step, "handoff", {})
 		}
@@ -140,6 +141,35 @@ func load_workflow_from_spec(spec) {
 	raw_steps := dict_get_or(spec, "steps", [])
 	if type(raw_steps) != "array" || len(raw_steps) == 0 {
 		return loader_error("Workflow spec must include a non-empty \"steps\" array")
+	}
+	budgets := dict_get_or(spec, "budgets", {})
+	if type(budgets) != "dict" {
+		return loader_error("budgets must be an object")
+	}
+	allowed_budget_keys := ["max_steps", "max_total_tokens", "max_cost_usd", "max_wall_time_ms"]
+	for budget_key in keys(budgets) {
+		if contains(to_json(allowed_budget_keys), "\"" + budget_key + "\"") == 0 {
+			return loader_error("budgets contains unsupported field: " + budget_key)
+		}
+		budget_value := budgets[budget_key]
+		if (type(budget_value) != "int" && type(budget_value) != "float") || budget_value < 0 {
+			return loader_error("budgets." + budget_key + " must be a non-negative number")
+		}
+	}
+	max_parallel_steps := dict_get_or(spec, "max_parallel_steps", 1)
+	if type(max_parallel_steps) != "int" || max_parallel_steps < 1 || max_parallel_steps > 32 {
+		return loader_error("max_parallel_steps must be an integer between 1 and 32")
+	}
+	for raw_step in raw_steps {
+		if has_key(raw_step, "parallel_safe") && type(raw_step["parallel_safe"]) != "bool" {
+			return loader_error("step parallel_safe must be a boolean")
+		}
+		if dict_get_or(raw_step, "parallel_safe", false) && dict_get_or(raw_step, "type", "") != "tool" {
+			return loader_error("parallel_safe is currently supported only for tool steps")
+		}
+		if dict_get_or(raw_step, "parallel_safe", false) && trim(to_string(dict_get_or(raw_step, "idempotency_key", ""))) == "" {
+			return loader_error("parallel_safe tool steps require a non-empty idempotency_key")
+		}
 	}
 	steps_result := build_steps_from_spec(raw_steps)
 	if dict_get_or(steps_result, "ok", false) == false {
@@ -176,6 +206,8 @@ func load_workflow_from_spec(spec) {
 			"retry_on_codes": []
 		}),
 		"routing": dict_get_or(spec, "routing", {"enabled": false}),
+		"budgets": budgets,
+		"max_parallel_steps": max_parallel_steps,
 		"approval_config": dict_get_or(spec, "approval_config", {"auto_approve": false}),
 		"output_schema": dict_get_or(spec, "output_schema", {"type": "dict"})
 	})

@@ -340,7 +340,7 @@ func validate_routing_envelope(config, path, level) {
 	}
 	allowed := ["enabled", "objective", "allow_agent_substitution", "constraints"]
 	if level == "workflow" {
-		allowed = union_arrays(allowed, ["policy_version", "fallback", "evaluation", "model_catalog", "model_catalog_file", "model_catalog_source", "allow_uncataloged_models"])
+		allowed = union_arrays(allowed, ["policy_version", "fallback", "evaluation", "provider_health", "model_catalog", "model_catalog_file", "model_catalog_source", "allow_uncataloged_models"])
 	}
 	if level == "agent" {
 		allowed = union_arrays(allowed, ["risk", "metadata"])
@@ -355,14 +355,32 @@ func validate_routing_envelope(config, path, level) {
 			envelope_errors := push(envelope_errors, validation_problem(path + "." + key, "Value must be a boolean."))
 		}
 	}
-	if has_key(config, "objective") && config["objective"] != "quality_first" {
-		envelope_errors := push(envelope_errors, validation_problem(path + ".objective", "Only quality_first is supported."))
+	if has_key(config, "objective") && array_contains(["quality_first", "cost_first", "latency_first", "balanced"], config["objective"]) == false {
+		envelope_errors := push(envelope_errors, validation_problem(path + ".objective", "Objective must be quality_first, cost_first, latency_first, or balanced."))
 	}
 	if has_key(config, "policy_version") && config["policy_version"] != routing_policy_version() {
 		envelope_errors := push(envelope_errors, validation_problem(path + ".policy_version", "Unsupported routing policy version."))
 	}
 	if has_key(config, "risk") && risk_rank(config["risk"]) == 0 {
 		envelope_errors := push(envelope_errors, validation_problem(path + ".risk", "Risk must be low, medium, high, or critical."))
+	}
+	if has_key(config, "provider_health") {
+		health_config := config["provider_health"]
+		if type(health_config) != "dict" {
+			envelope_errors := push(envelope_errors, validation_problem(path + ".provider_health", "provider_health must be an object."))
+		} else {
+			for health_key in keys(health_config) {
+				if array_contains(["failure_threshold", "cooldown_ms"], health_key) == false {
+					envelope_errors := push(envelope_errors, validation_problem(path + ".provider_health." + health_key, "Unknown provider health field."))
+				}
+			}
+			if has_key(health_config, "failure_threshold") && (type(health_config["failure_threshold"]) != "int" || health_config["failure_threshold"] < 1) {
+				envelope_errors := push(envelope_errors, validation_problem(path + ".provider_health.failure_threshold", "failure_threshold must be a positive integer."))
+			}
+			if has_key(health_config, "cooldown_ms") && (type(health_config["cooldown_ms"]) != "int" || health_config["cooldown_ms"] < 0) {
+				envelope_errors := push(envelope_errors, validation_problem(path + ".provider_health.cooldown_ms", "cooldown_ms must be a non-negative integer."))
+			}
+		}
 	}
 	if has_key(config, "constraints") {
 		for problem in validate_constraints(config["constraints"], path + ".constraints") {
@@ -893,9 +911,36 @@ func optional_score(value, unknown_value) {
 	return unknown_value
 }
 
-func candidate_better(left, right) {
+func candidate_balanced_score(candidate) {
+	model := candidate["model_metadata"]
+	quality := quality_rank(dict_get_or(model, "quality_tier", "unknown"))
+	relative := optional_score(dict_get_or(model, "relative_quality", null), 0)
+	reliability := optional_score(dict_get_or(model, "reliability_score", null), 0)
+	cost := optional_score(dict_get_or(model, "input_cost_per_million", null), 1000000) + optional_score(dict_get_or(model, "output_cost_per_million", null), 1000000)
+	latency := optional_score(dict_get_or(model, "typical_latency_ms", null), 1000000)
+	return quality * 1000000 + relative * 100000 + reliability * 100000 - cost * 100 - latency
+}
+
+func candidate_better(left, right, objective) {
 	left_model := left["model_metadata"]
 	right_model := right["model_metadata"]
+	left_cost := optional_score(dict_get_or(left_model, "input_cost_per_million", null), 1000000000) + optional_score(dict_get_or(left_model, "output_cost_per_million", null), 1000000000)
+	right_cost := optional_score(dict_get_or(right_model, "input_cost_per_million", null), 1000000000) + optional_score(dict_get_or(right_model, "output_cost_per_million", null), 1000000000)
+	left_latency := optional_score(dict_get_or(left_model, "typical_latency_ms", null), 1000000000)
+	right_latency := optional_score(dict_get_or(right_model, "typical_latency_ms", null), 1000000000)
+	if objective == "cost_first" && left_cost != right_cost {
+		return left_cost < right_cost
+	}
+	if objective == "latency_first" && left_latency != right_latency {
+		return left_latency < right_latency
+	}
+	if objective == "balanced" {
+		left_balanced := candidate_balanced_score(left)
+		right_balanced := candidate_balanced_score(right)
+		if left_balanced != right_balanced {
+			return left_balanced > right_balanced
+		}
+	}
 	left_quality := quality_rank(dict_get_or(left_model, "quality_tier", "unknown"))
 	right_quality := quality_rank(dict_get_or(right_model, "quality_tier", "unknown"))
 	if left_quality != right_quality {
@@ -911,13 +956,9 @@ func candidate_better(left, right) {
 	if left_reliability != right_reliability {
 		return left_reliability > right_reliability
 	}
-	left_cost := optional_score(dict_get_or(left_model, "input_cost_per_million", null), 1000000000) + optional_score(dict_get_or(left_model, "output_cost_per_million", null), 1000000000)
-	right_cost := optional_score(dict_get_or(right_model, "input_cost_per_million", null), 1000000000) + optional_score(dict_get_or(right_model, "output_cost_per_million", null), 1000000000)
 	if left_cost != right_cost {
 		return left_cost < right_cost
 	}
-	left_latency := optional_score(dict_get_or(left_model, "typical_latency_ms", null), 1000000000)
-	right_latency := optional_score(dict_get_or(right_model, "typical_latency_ms", null), 1000000000)
 	if left_latency != right_latency {
 		return left_latency < right_latency
 	}
@@ -935,13 +976,13 @@ func candidate_better(left, right) {
 	return ordered_keys[0] == left_key
 }
 
-func sort_candidates(candidates) {
+func sort_candidates(candidates, objective) {
 	ranked_out := []
 	for candidate in candidates {
 		inserted := false
 		next_ranked := []
 		for existing in ranked_out {
-			if inserted == false && candidate_better(candidate, existing) {
+			if inserted == false && candidate_better(candidate, existing, objective) {
 				next_ranked := push(next_ranked, candidate)
 				inserted := true
 			}
@@ -997,6 +1038,7 @@ func candidate_agents(requested_agent_id, agents, allow_substitution) {
 func decision_id_payload(decision) {
 	return {
 		"policy_version": dict_get_or(decision, "policy_version", ""),
+		"objective": dict_get_or(decision, "objective", "quality_first"),
 		"catalog_id": dict_get_or(decision, "catalog_id", ""),
 		"catalog_version": dict_get_or(decision, "catalog_version", ""),
 		"catalog_hash": dict_get_or(decision, "catalog_hash", ""),
@@ -1017,6 +1059,7 @@ func build_decision(request, candidate, constraints, candidate_count, reason_cod
 	decision := {
 		"decision_id": "",
 		"policy_version": normalize_string(dict_get_or(request, "policy_version", routing_policy_version()), routing_policy_version()),
+		"objective": normalize_string(dict_get_or(request, "objective", "quality_first"), "quality_first"),
 		"catalog_id": dict_get_or(catalog, "id", ""),
 		"catalog_version": dict_get_or(catalog, "version", ""),
 		"catalog_hash": dict_get_or(catalog, "catalog_hash", ""),
@@ -1074,9 +1117,10 @@ func resolve_route(request) {
 		return {"ok": false, "error": {"code": "unsupported_routing_policy_version", "message": "Unsupported routing policy version: " + policy_version, "retryable": false}}
 	}
 	objective := normalize_string(dict_get_or(step_routing, "objective", dict_get_or(workflow_routing, "objective", "quality_first")), "quality_first")
-	if objective != "quality_first" {
+	if array_contains(["quality_first", "cost_first", "latency_first", "balanced"], objective) == false {
 		return {"ok": false, "error": {"code": "unsupported_routing_objective", "message": "Unsupported deterministic routing objective: " + objective, "retryable": false}}
 	}
+	request["objective"] := objective
 	allow_substitution := dict_get_or(step_routing, "allow_agent_substitution", dict_get_or(workflow_routing, "allow_agent_substitution", false))
 	catalog := normalize_dict(dict_get_or(request, "model_catalog", dict_get_or(workflow_routing, "model_catalog", {})))
 	if dict_get_or(catalog, "schema_name", "") != "ai-sdk-model-catalog" || dict_get_or(catalog, "schema_version", "") != "1.0.0" || normalize_string(dict_get_or(catalog, "id", ""), "") == "" || normalize_string(dict_get_or(catalog, "version", ""), "") == "" || normalize_string(dict_get_or(catalog, "catalog_hash", ""), "") == "" || type(dict_get_or(catalog, "models", null)) != "array" {
@@ -1131,9 +1175,9 @@ func resolve_route(request) {
 			"candidate_evaluations": evaluations
 		}
 	}
-	ranked := sort_candidates(eligible)
+	ranked := sort_candidates(eligible, objective)
 	selected := ranked[0]
-	reason_codes := ["hard_constraints_satisfied", "quality_first", "deterministic_tiebreak"]
+	reason_codes := ["hard_constraints_satisfied", objective, "deterministic_tiebreak"]
 	if dict_get_or(selected, "selected_agent_id", "") != requested_agent_id {
 		reason_codes := push(reason_codes, "compatible_agent_substitution")
 	} else {

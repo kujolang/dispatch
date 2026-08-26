@@ -1,8 +1,8 @@
-from src.core.utils import dict_get_or, read_json_or
+from src.core.utils import dict_get_or, read_json_or, ensure_dir
 from src.core.decision import normalize_decision
 from src.cli.cli_args import parse_cli_args, parsed_has_flag, parsed_flag_value
 from src.workflows.workflow import create_workflow_by_template, list_workflow_templates
-from src.workflows.loader import load_workflow_from_file
+from src.workflows.loader import load_workflow_from_file, load_workflow_from_spec
 from src.tools.tool import register_default_tools, normalize_sources_dir
 from src.core.state import create_run_state, persist_run_state, load_run_state, list_runs, list_runs_with_diagnostics, summarize_run, filter_runs, paginate_runs, build_run_catalog, prune_runs, doctor_runs, normalize_output_root, mutation_audit_path, export_run_bundle, import_run_bundle
 from src.core.runner import run_workflow
@@ -12,7 +12,9 @@ from src.cli.output import print_lines, print_kv, print_error, exit_error, print
 from src.core.plugins import create_plugin_registry, register_plugin, apply_plugins_to_runtime
 from src.plugins.builtin_plugins import resolve_builtin_plugins, emit_builtin_plugin_events
 from src.core.routing import validate_workflow_routing, resolve_route, routing_policy_version, supported_route_provider
-from sdk_adapter import custom_provider_api_key_env_allowed
+from src.core.hooks import webhook_outbox_status, replay_webhook_outbox
+from sdk_adapter import custom_provider_api_key_env_allowed, custom_provider_endpoint_allowed, call_agent_model
+from src.core.state_store import state_store_health
 
 func dispatch_root_path(relative_path) {
 	root := trim(to_string(env("DISPATCH_ROOT")))
@@ -32,6 +34,10 @@ func print_help() {
 		"Kujo agent workflow engine for reliable AI workflows.",
 		"",
 		"Usage:",
+		"  kujo run dispatch.kujo run \"Research topic\" [--workflow-file workflow.json] [--input-json '{...}'] [--output-root outputs]",
+		"  kujo run dispatch.kujo init [--dir dispatch-workflow] [--force]",
+		"  kujo run dispatch.kujo catalog <generate|sync> <config.json> --output model-catalog.json",
+		"  kujo run dispatch.kujo webhooks <status|replay> [--output-root outputs] [--url https-url] [--destination lifecycle] [--json]",
 		"  kujo run dispatch.kujo demo \"Research topic\" [--workflow research-report] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs]",
 		"  kujo run dispatch.kujo show <run-id> [--output-root outputs] [--json]",
 		"  kujo run dispatch.kujo inspect <run-id> [--output-root outputs] [--json]",
@@ -39,10 +45,10 @@ func print_help() {
 		"  kujo run dispatch.kujo resume-decision <decision.json> [--output-root outputs] [--non-interactive]",
 		"  kujo run dispatch.kujo templates [--json]",
 		"  kujo run dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]",
-		"  kujo run dispatch.kujo doctor [--output-root outputs] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
+		"  kujo run dispatch.kujo doctor [--output-root outputs] [--workflow-file workflow.json] [--live] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
 		"  kujo run dispatch.kujo cleanup [--output-root outputs] [--status completed] [--older-than-hours 24] [--max-count 50] [--apply] [--json] [--strict-mutations] [--confirm-mutation]",
 		"  kujo run dispatch.kujo export-run <run-id> --bundle-path bundles/run.json [--output-root outputs] [--sign-bundle] [--signing-key key]",
-		"  kujo run dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--verify-bundle-signature] [--signing-key key] [--strict-mutations] [--confirm-mutation]",
+		"  kujo run dispatch.kujo import-run --bundle-path bundles/run.json [--output-root outputs] [--signing-key key] [--allow-unsigned-bundle] [--strict-mutations] [--confirm-mutation]",
 		"  kujo run dispatch.kujo validate --workflow-file workflow.json [--plugin sample] [--live] [--json]",
 		"  kujo run dispatch.kujo explain-route --workflow-file workflow.json [--step-id step-id] [--plugin sample] [--json]",
 		"  kujo run dispatch.kujo version",
@@ -351,6 +357,11 @@ func key_exists(map_obj, key_name) {
 
 	func resolve_tool_policy_settings(parsed_args, command_args, config) {
 		policy_profile := resolve_string_flag(parsed_args, command_args, "--policy-profile", config, ["policy_profile", "policy-profile"], to_string(env("DISPATCH_POLICY_PROFILE")))
+		if trim(policy_profile) == "" {
+			policy_profile = "production"
+			fixture_value := to_lower(trim(to_string(env("DISPATCH_OFFLINE_FIXTURE"))))
+			if fixture_value == "true" || fixture_value == "1" || fixture_value == "yes" || fixture_value == "on" { policy_profile = "development" }
+		}
 		allowed_tools := resolve_tool_name_list(parsed_args, command_args, "--allow-tools", config, ["allow_tools", "allow-tools"], "DISPATCH_ALLOWED_TOOLS")
 		denied_tools := resolve_tool_name_list(parsed_args, command_args, "--deny-tools", config, ["deny_tools", "deny-tools"], "DISPATCH_DENIED_TOOLS")
 		return build_tool_authorization_policy_with_profile(policy_profile, allowed_tools, denied_tools)
@@ -633,6 +644,11 @@ func dispatch_resolve_tool_name_list(parsed_args, command_args, flag_name, confi
 
 func dispatch_resolve_tool_policy_settings(parsed_args, command_args, config) {
 	policy_profile := dispatch_resolve_string_flag(parsed_args, command_args, "--policy-profile", config, ["policy_profile", "policy-profile"], to_string(env("DISPATCH_POLICY_PROFILE")))
+	if trim(policy_profile) == "" {
+		policy_profile = "production"
+		fixture_value := to_lower(trim(to_string(env("DISPATCH_OFFLINE_FIXTURE"))))
+		if fixture_value == "true" || fixture_value == "1" || fixture_value == "yes" || fixture_value == "on" { policy_profile = "development" }
+	}
 	allowed_tools := dispatch_resolve_tool_name_list(parsed_args, command_args, "--allow-tools", config, ["allow_tools", "allow-tools"], "DISPATCH_ALLOWED_TOOLS")
 	denied_tools := dispatch_resolve_tool_name_list(parsed_args, command_args, "--deny-tools", config, ["deny_tools", "deny-tools"], "DISPATCH_DENIED_TOOLS")
 	return build_tool_authorization_policy_with_profile(policy_profile, allowed_tools, denied_tools)
@@ -698,7 +714,11 @@ func dispatch_resolve_resume_workflow(run_state, explicit_template_id, topic, au
 	if trim(to_string(explicit_template_id)) == "" {
 		persisted_workflow := dict_get_or(run_state, "workflow_definition", null)
 		if type(persisted_workflow) == "dict" && trim(to_string(dict_get_or(persisted_workflow, "id", ""))) != "" {
-			return persisted_workflow
+			validated_workflow := load_workflow_from_spec(persisted_workflow)
+			if dict_get_or(validated_workflow, "ok", false) == false {
+				exit_error("Persisted workflow_definition failed current schema validation: " + dict_get_or(dict_get_or(validated_workflow, "error", {}), "message", "invalid workflow"))
+			}
+			return validated_workflow["workflow"]
 		}
 	}
 	template_id := explicit_template_id
@@ -790,6 +810,10 @@ func routing_environment_preflight(workflow, live_mode) {
 			model := dict_get_or(agent, "model", {})
 			if to_lower(trim(to_string(dict_get_or(model, "provider", "")))) == "custom" {
 				custom_key_env := trim(to_string(dict_get_or(model, "api_key_env", "")))
+				custom_base_url := trim(to_string(dict_get_or(model, "base_url", "")))
+				if custom_provider_endpoint_allowed(custom_base_url) == false {
+					errors := push(errors, {"path": "agents." + agent_id + ".model.base_url", "message": "Custom provider base_url must be an exact HTTPS entry in DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS."})
+				}
 				if custom_provider_api_key_env_allowed(custom_key_env) == false {
 					errors := push(errors, {"path": "agents." + agent_id + ".model.api_key_env", "message": "Custom provider credential environment variable is not allowed. Use CUSTOM_API_KEY or explicitly allow it with DISPATCH_ALLOWED_CUSTOM_API_KEY_ENVS."})
 				} else if custom_key_env == "" || trim(to_string(env(custom_key_env))) == "" {
@@ -1575,10 +1599,34 @@ func build_doctor_summary(run_diagnostics) {
 	return summary
 }
 
+func live_provider_probes(workflow) {
+	probes := []
+	seen := {}
+	catalog := dict_get_or(dict_get_or(workflow, "routing", {}), "model_catalog", {})
+	for model_entry in dict_get_or(catalog, "models", []) {
+		provider_id := trim(to_string(dict_get_or(model_entry, "provider", "")))
+		model_id := trim(to_string(dict_get_or(model_entry, "model", "")))
+		probe_key := provider_id + "::" + model_id
+		if provider_id == "" || model_id == "" || has_key(seen, probe_key) { continue }
+		seen[probe_key] := true
+		agent := {"instructions": "This is a Dispatch deployment health probe. Reply with OK.", "model": {"provider": provider_id, "model": model_id, "base_url": dict_get_or(model_entry, "base_url", ""), "api_key_env": dict_get_or(model_entry, "api_key_env", "")}}
+		result := call_agent_model(agent, "Reply with OK.", {"max_tokens": 8, "temperature": 0, "max_retries": 0, "offline_fixture": false})
+		probe := {"provider": provider_id, "model": model_id, "ok": dict_get_or(result, "ok", false), "status_code": dict_get_or(result, "status_code", 0)}
+		if probe["ok"] == false {
+			error := dict_get_or(result, "error", {})
+			probe["error"] := {"code": dict_get_or(error, "code", "provider_probe_failed"), "message": dict_get_or(error, "message", "Provider probe failed."), "retryable": dict_get_or(error, "retryable", false)}
+		}
+		probes := push(probes, probe)
+	}
+	return probes
+}
+
 func run_doctor(command_args) {
 	parsed := parse_cli_args(command_args, {
 		"flags": {
 			"--output-root": {"takes_value": true, "default": "outputs"},
+			"--workflow-file": {"takes_value": true, "default": ""},
+			"--live": {"takes_value": false, "default": false},
 			"--write": {"takes_value": false, "default": false},
 			"--run-ids": {"takes_value": true, "default": ""},
 			"--recent-count": {"takes_value": true, "default": "0"},
@@ -1606,9 +1654,25 @@ func run_doctor(command_args) {
 		"run_ids": run_ids,
 		"recent_count": recent_count
 	})
+	store_health := state_store_health(output_root)
+	live_mode := parsed_has_flag(parsed, "--live")
+	provider_probes := []
+	if live_mode {
+		workflow_file := trim(parsed_flag_value(parsed, "--workflow-file", ""))
+		if workflow_file == "" { exit_error("--workflow-file is required with doctor --live.") }
+		loaded := load_workflow_from_file(workflow_file)
+		if loaded["ok"] == false { exit_error(loaded["error"]["message"]) }
+		preflight := routing_environment_preflight(loaded["workflow"], true)
+		if preflight["ok"] == false { exit_error(to_json(preflight)) }
+		provider_probes = live_provider_probes(loaded["workflow"])
+	}
+	live_ok := true
+	for provider_probe in provider_probes { if provider_probe["ok"] == false { live_ok = false } }
+	overall_ok := dict_get_or(store_health, "ok", false)
+	if live_ok == false { overall_ok = false }
 	json_payload := {
 		"command": "doctor",
-		"ok": true,
+		"ok": overall_ok,
 		"output_root": output_root,
 		"write_mode": write_changes,
 		"scope": {
@@ -1616,19 +1680,29 @@ func run_doctor(command_args) {
 			"recent_count": recent_count
 		},
 		"summary": build_doctor_summary(run_diagnostics),
-		"runs": run_diagnostics
+		"runs": run_diagnostics,
+		"state_store": store_health,
+		"live_mode": live_mode,
+		"provider_probes": provider_probes
 	}
 	if json_output {
 		print(to_json(json_payload))
+		if json_payload["ok"] == false { exit(1) }
 		return
 	}
 	if len(run_diagnostics) == 0 {
+		print("Dispatch Doctor")
+		print_kv("State store", to_json(store_health))
+		if live_mode { print_kv("Provider probes", to_json(provider_probes)) }
 		print("No runs found in " + output_root)
+		if json_payload["ok"] == false { exit(1) }
 		return
 	}
 
 	print("Dispatch Doctor")
 	print_kv("Write mode", write_changes)
+	print_kv("State store", to_json(store_health))
+	if live_mode { print_kv("Provider probes", to_json(provider_probes)) }
 	if trim(to_string(run_ids)) != "" {
 		print_kv("Scoped run_ids", run_ids)
 	}
@@ -1756,6 +1830,7 @@ func run_import_run(command_args) {
 			"--output-root": {"takes_value": true, "default": "outputs"},
 			"--bundle-path": {"takes_value": true, "required": true},
 			"--verify-bundle-signature": {"takes_value": false, "default": false},
+			"--allow-unsigned-bundle": {"takes_value": false, "default": false},
 			"--signing-key": {"takes_value": true, "default": ""},
 			"--strict-mutations": {"takes_value": false, "default": false},
 			"--confirm-mutation": {"takes_value": false, "default": false}
@@ -1767,7 +1842,7 @@ func run_import_run(command_args) {
 	enforce_mutation_guard_or_exit(parsed, "import-run", "--bundle-path")
 	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
 	bundle_path := parsed_flag_value(parsed, "--bundle-path", "")
-	verify_signature := parsed_has_flag(parsed, "--verify-bundle-signature")
+	verify_signature := parsed_has_flag(parsed, "--allow-unsigned-bundle") == false
 	result := import_run_bundle(output_root, bundle_path, {
 		"verify_signature": verify_signature,
 		"signing_key": resolve_signing_key(parsed, "--signing-key")
@@ -1777,6 +1852,96 @@ func run_import_run(command_args) {
 	}
 	print_kv("Imported run", result["run_id"])
 	print_kv("Run Directory", result["run_dir"])
+}
+
+func run_init(command_args) {
+	parsed := parse_cli_args(command_args, {"flags": {"--dir": {"takes_value": true, "default": "dispatch-workflow"}, "--force": {"takes_value": false, "default": false}}})
+	if parsed["ok"] == false { exit_error(parsed["error"]["message"]) }
+	project_dir := trim(parsed_flag_value(parsed, "--dir", "dispatch-workflow"))
+	path_check := normalize_config_path(project_dir + "/workflow.json")
+	if path_check["ok"] == false { exit_error(path_check["message"]) }
+	workflow_path := path_check["config_path"]
+	catalog_path := project_dir + "/model-catalog.json"
+	force := parsed_has_flag(parsed, "--force")
+	if force == false && (file_exists(workflow_path) || file_exists(catalog_path)) { exit_error("Init target already contains Dispatch files. Use --force to replace them.") }
+	ensure_dir(project_dir)
+	catalog := {"schema_name": "ai-sdk-model-catalog", "schema_version": "1.0.0", "id": "starter-catalog", "version": "1", "models": [{"provider": "fixture", "model": "dispatch-starter", "quality_tier": "fixture", "relative_quality": 1, "reliability_score": 1, "supports_tools": true, "supports_structured_output": true, "enabled": true}], "metadata": {"purpose": "Dispatch starter; replace through dispatch catalog sync before live use"}}
+	catalog["catalog_hash"] := sha256(to_json(catalog))
+	workflow := {"id": "starter-workflow", "name": "Dispatch Starter Workflow", "description": "A routed starter workflow.", "input_schema": {"type": "dict"}, "agents": {"worker": {"id": "worker", "name": "Worker", "purpose": "Complete the requested work.", "instructions": "Return a concise result.", "handler_id": "model", "execution_contract": {"id": "dispatch-model-agent", "version": "1"}, "capabilities": {"general": true}, "model": {"provider": "fixture", "model": "dispatch-starter"}, "model_candidates": [{"provider": "fixture", "model": "dispatch-starter"}], "tools": [], "output_schema": {"type": "dict"}, "uses_model": true}}, "tools": [], "steps": [{"id": "work", "name": "Complete work", "type": "agent", "agent_id": "worker", "input_from": ["input"], "output_key": "result"}], "routing": {"enabled": true, "policy_version": "1.0.0", "objective": "balanced", "model_catalog_file": "model-catalog.json", "fallback": {"max_fallbacks": 0, "max_evaluation_retries": 0}}, "budgets": {"max_steps": 4, "max_total_tokens": 20000, "max_cost_usd": 5, "max_wall_time_ms": 300000}, "memory_config": {}, "default_retry_policy": {"max_attempts": 2, "base_delay_ms": 250, "max_delay_ms": 2000, "strategy": "exponential", "retry_on_codes": ["timeout", "rate_limit", "network_error"]}, "approval_config": {"auto_approve": false}, "output_schema": {"type": "dict"}}
+	write_file(workflow_path, to_json(workflow) + "\n", true)
+	write_file(catalog_path, to_json(catalog) + "\n", true)
+	print_kv("Workflow", workflow_path)
+	print_kv("Catalog", catalog_path)
+	print("Fixture run: DISPATCH_OFFLINE_FIXTURE=true dispatch run \"First task\" --workflow-file " + workflow_path + " --yes --non-interactive")
+}
+
+func run_catalog(command_args) {
+	parsed := parse_cli_args(command_args, {"min_positionals": 2, "flags": {"--output": {"takes_value": true, "required": true}}})
+	if parsed["ok"] == false { exit_error(parsed["error"]["message"]) }
+	positionals := parsed_positionals_or_empty(parsed)
+	if len(positionals) != 2 { exit_error("catalog requires <generate|sync> <config.json>.") }
+	action := positionals[0]
+	if action != "generate" && action != "sync" { exit_error("catalog action must be generate or sync.") }
+	config_path_result := normalize_config_path(positionals[1])
+	if config_path_result["ok"] == false { exit_error(config_path_result["message"]) }
+	config_path := config_path_result["config_path"]
+	if starts_with(config_path, "/") == false { config_path = os_getcwd() + "/" + config_path }
+	if file_exists(config_path) == false { exit_error("Catalog config not found: " + config_path) }
+	output_path_result := normalize_config_path(parsed_flag_value(parsed, "--output", ""))
+	if output_path_result["ok"] == false { exit_error(output_path_result["message"]) }
+	output_path := output_path_result["config_path"]
+	if action == "generate" && file_exists(output_path) { exit_error("Catalog output already exists. Use catalog sync to replace it.") }
+	ai_sdk_path := trim(to_string(env("AI_SDK_PATH")))
+	if ai_sdk_path == "" { ai_sdk_path = dispatch_root_path("../ai-sdk") }
+	kujo_bin := trim(to_string(env("KUJO_BIN")))
+	if kujo_bin == "" { kujo_bin = "kujo" }
+	generator := ai_sdk_path + "/scripts/generate_model_catalog.kujo"
+	if file_exists(generator) == false { exit_error("AI SDK catalog generator is unavailable: " + generator) }
+	generated := spawn_process([kujo_bin, "run", "scripts/generate_model_catalog.kujo", "--interpreter", "--", config_path], {"cwd": ai_sdk_path, "inherit_env": true, "timeout_ms": 120000, "max_output_bytes": 5242880})
+	if generated.success == false { exit_error("AI SDK catalog generation failed: " + trim(to_string(generated.stderr))) }
+	catalog_text := trim(to_string(generated.stdout))
+	catalog := null
+	try { catalog = parse_json(catalog_text) } except err { exit_error("AI SDK catalog generator returned invalid JSON.") }
+	if type(catalog) != "dict" || dict_get_or(catalog, "schema_name", "") != "ai-sdk-model-catalog" { exit_error("AI SDK catalog generator returned an incompatible catalog.") }
+	write_file(output_path, to_json(catalog) + "\n", true)
+	print_kv("Catalog", output_path)
+	print_kv("Catalog hash", dict_get_or(catalog, "catalog_hash", ""))
+}
+
+func run_webhooks(command_args) {
+	parsed := parse_cli_args(command_args, {"flags": {"--output-root": {"takes_value": true, "default": "outputs"}, "--url": {"takes_value": true, "default": ""}, "--destination": {"takes_value": true, "default": "lifecycle"}, "--json": {"takes_value": false, "default": false}, "--strict-mutations": {"takes_value": false, "default": false}, "--confirm-mutation": {"takes_value": false, "default": false}}})
+	if parsed["ok"] == false { exit_error(parsed["error"]["message"]) }
+	positionals := parsed_positionals_or_empty(parsed)
+	if len(positionals) != 1 { exit_error("webhooks requires status or replay.") }
+	action := positionals[0]
+	output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
+	options := {"output_root": output_root}
+	result := null
+	if action == "status" {
+		result = webhook_outbox_status(options)
+	} else if action == "replay" {
+		enforce_mutation_guard_or_exit(parsed, "webhooks replay", "--url")
+		url := trim(parsed_flag_value(parsed, "--url", ""))
+		if url == "" { exit_error("--url is required for webhooks replay.") }
+		destination := trim(parsed_flag_value(parsed, "--destination", "lifecycle"))
+		if destination != "lifecycle" && destination != "leash" { exit_error("--destination must be lifecycle or leash.") }
+		result = replay_webhook_outbox(options, url, destination)
+	} else {
+		exit_error("webhooks action must be status or replay.")
+	}
+	if parsed_has_flag(parsed, "--json") { print(to_json(result)); return }
+	print_kv("Outbox", result["path"])
+	if action == "status" {
+		print_kv("Events", result["events"])
+		print_kv("Pending", result["pending"])
+		print_kv("Delivered", result["delivered"])
+		print_kv("Dead letter", result["dead_letter"])
+	} else {
+		print_kv("Attempted", result["attempted"])
+		print_kv("Delivered", result["delivered"])
+		print_kv("Failed", result["failed"])
+		if result["ok"] == false { exit(1) }
+	}
 }
 
 raw_args := args()
@@ -1793,8 +1958,20 @@ while i < len(raw_args) {
 	i := i + 1
 }
 
-if command == "demo" {
+if command == "run" || command == "demo" {
 	run_demo(command_args)
+	return
+}
+if command == "init" {
+	run_init(command_args)
+	return
+}
+if command == "catalog" {
+	run_catalog(command_args)
+	return
+}
+if command == "webhooks" {
+	run_webhooks(command_args)
 	return
 }
 if command == "show" {

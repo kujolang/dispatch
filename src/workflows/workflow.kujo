@@ -14,6 +14,8 @@ func create_workflow(definition) {
 		"memory_config": definition["memory_config"],
 		"default_retry_policy": definition["default_retry_policy"],
 		"routing": dict_get_or(definition, "routing", {}),
+		"budgets": dict_get_or(definition, "budgets", {}),
+		"max_parallel_steps": dict_get_or(definition, "max_parallel_steps", 1),
 		"approval_config": definition["approval_config"],
 		"output_schema": definition["output_schema"]
 	}

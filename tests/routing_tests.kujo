@@ -7,6 +7,8 @@ test_setup {
 	from src.core.runner import run_workflow
 	from src.core.trace import collect_event_type_counts
 	from src.core.utils import dict_get_or, ensure_dir
+	from src.agents.agent import model_agent_output
+	from src.tools.tool import create_tool_registry, create_tool, register_tool
 
 func base_agent(agent_id, handler_id, capability, model_candidates) {
 	capabilities := {}
@@ -283,9 +285,33 @@ test "routing rejects unknown constrained risk incompatible schemas and unsuppor
 	workflow["routing"] := {"enabled": true, "policy_version": "2.0.0", "model_catalog": model_catalog}
 	version_result := resolve_route(route_request(workflow, step, model_catalog))
 	assert_equal(version_result["error"]["code"], "unsupported_routing_policy_version")
-	workflow["routing"] := {"enabled": true, "policy_version": "1.0.0", "objective": "cost_first", "model_catalog": model_catalog}
+	workflow["routing"] := {"enabled": true, "policy_version": "1.0.0", "objective": "random_first", "model_catalog": model_catalog}
 	objective_result := resolve_route(route_request(workflow, step, model_catalog))
 	assert_equal(objective_result["error"]["code"], "unsupported_routing_objective")
+}
+
+test "cost latency and balanced objectives produce deterministic distinct choices" {
+	agent := base_agent("writer", "writer", "write", [
+		{"provider": "openai", "model": "frontier"},
+		{"provider": "openai", "model": "cheap"},
+		{"provider": "openai", "model": "fast"}
+	])
+	model_catalog := catalog([
+		{"provider": "openai", "model": "frontier", "quality_tier": "frontier", "relative_quality": 0.95, "reliability_score": 0.99, "input_cost_per_million": 20, "output_cost_per_million": 60, "typical_latency_ms": 3000, "enabled": true},
+		{"provider": "openai", "model": "cheap", "quality_tier": "standard", "relative_quality": 0.75, "reliability_score": 0.97, "input_cost_per_million": 1, "output_cost_per_million": 2, "typical_latency_ms": 1000, "enabled": true},
+		{"provider": "openai", "model": "fast", "quality_tier": "standard", "relative_quality": 0.7, "reliability_score": 0.95, "input_cost_per_million": 3, "output_cost_per_million": 5, "typical_latency_ms": 100, "enabled": true}
+	])
+	step := {"id": "write", "agent_id": "writer", "config": {}}
+	workflow := {"agents": {"writer": agent}, "routing": {"enabled": true, "model_catalog": model_catalog}}
+	for objective_case in [{"objective": "quality_first", "model": "frontier"}, {"objective": "cost_first", "model": "cheap"}, {"objective": "latency_first", "model": "fast"}, {"objective": "balanced", "model": "frontier"}] {
+		routing_config := workflow["routing"]
+		routing_config["objective"] := objective_case["objective"]
+		workflow["routing"] := routing_config
+		result := resolve_route(route_request(workflow, step, model_catalog))
+		assert_true(result["ok"])
+		assert_equal(result["decision"]["model"], objective_case["model"])
+		assert_equal(result["decision"]["objective"], objective_case["objective"])
+	}
 }
 
 test "AI SDK catalog metadata is authoritative over agent candidate claims" {
@@ -487,6 +513,55 @@ test "generic model handler executes a declarative routed agent" {
 	result := run_workflow(workflow, state, {}, {"auto_approve": true, "interactive": false})
 	assert_true(result["ok"])
 	assert_equal(result["run_state"]["status"], "completed")
+}
+
+test "generic model handler executes only model-requested tools with bounded idempotent replay" {
+	model_invoker := func(agent_obj, prompt, options) {
+		if len(options["messages"]) <= 4 {
+			return {"ok": true, "provider": "fixture", "model": "tool-model", "output_text": "", "tool_calls": [{"id": "call-stable", "type": "function", "function": {"name": "safe_tool", "arguments": "{\"value\":\"approved\"}"}}], "usage": {"total_tokens": 2}}
+		}
+		return {"ok": true, "provider": "fixture", "model": "tool-model", "output_text": "complete", "tool_calls": [], "usage": {"total_tokens": 1}}
+	}
+	tool_handler := func(payload, context) {
+		return {"ok": true, "data": {"echo": payload["value"]}}
+	}
+	registry := create_tool_registry()
+	registry := register_tool(registry, create_tool("safe_tool", "Safe test tool", {"type": "dict", "required": ["value"]}, {"type": "dict"}, tool_handler, null))
+	agent := base_agent("analyst", "model", "analyze", [])
+	agent["output_schema"] := {}
+	agent["__model_invoker"] := model_invoker
+	agent["model_options"] := {"max_tool_rounds": 3, "max_tool_calls": 2}
+	result := model_agent_output(agent, {"input": {"topic": "tools"}}, {"run_id": "run-tool", "workflow_id": "workflow-tool", "status": "running"}, registry, {"step_id": "analyze"})
+	assert_true(result["ok"])
+	assert_equal(result["tool_call_count"], 1)
+	assert_equal(len(result["model_calls"]), 3)
+	assert_equal(result["data"]["tool_results"]["call-stable"]["data"]["echo"], "approved")
+}
+
+test "generic model handler fails closed when tool authorization denies a request" {
+	agent := base_agent("analyst", "model", "analyze", [])
+	agent["output_schema"] := {}
+	agent["__model_invoker"] := func(agent_obj, prompt, options) { return {"ok": true, "provider": "fixture", "model": "tool-model", "output_text": "", "tool_calls": [{"id": "call-denied", "type": "function", "function": {"name": "safe_tool", "arguments": "{}"}}], "usage": {}} }
+	registry := create_tool_registry()
+	registry := register_tool(registry, create_tool("safe_tool", "Safe test tool", {"type": "dict"}, {"type": "dict"}, func(payload, context) { return {"ok": true, "data": {}} }, null))
+	result := model_agent_output(agent, {}, {"run_id": "run-denied", "workflow_id": "workflow-tool", "status": "running"}, registry, {"step_id": "analyze", "tool_authorization_policy": func(input) { return false }})
+	assert_false(result["ok"])
+	assert_equal(result["error"]["code"], "tool_execution_denied")
+}
+
+test "generic model handler persists incremental stream events" {
+	agent := base_agent("streamer", "model", "stream", [])
+	agent["tools"] := []
+	agent["output_schema"] := {}
+	agent["model_options"] := {"stream": true}
+	run_dir := "tests/tmp/model-stream-" + to_string(current_timestamp())
+	ensure_dir(run_dir)
+	result := model_agent_output(agent, {"input": {"topic": "stream"}}, {"run_id": "run-stream", "workflow_id": "workflow-stream", "status": "running", "run_dir": run_dir}, {}, {"step_id": "stream"})
+	assert_true(result["ok"])
+	stream_path := run_dir + "/stream-stream.jsonl"
+	assert_true(file_exists(stream_path))
+	assert_true(len(split(trim(read_file(stream_path)), "\n")) >= 2)
+	assert_equal(result["data"]["__stream_events_path"], stream_path)
 }
 
 test "route evaluation pauses for native human review and resumes stored output" {
