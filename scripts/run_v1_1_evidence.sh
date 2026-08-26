@@ -22,7 +22,7 @@ DISPATCH_OFFLINE_FIXTURE=true "$KUJO_BIN" run dispatch.kujo -- explain-route \
 
 "$KUJO_BIN" run dispatch.kujo -- init --dir "$EVIDENCE_DIR/starter" --force \
 	> "$EVIDENCE_DIR/init.txt"
-"$KUJO_BIN" run dispatch.kujo -- catalog generate \
+"$KUJO_BIN" run dispatch.kujo -- catalog sync \
 	examples/dispatch-model-catalog.config.json \
 	--output "$EVIDENCE_DIR/generated-catalog.json" \
 	> "$EVIDENCE_DIR/catalog.txt"
