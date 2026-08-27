@@ -30,11 +30,17 @@ jobs:
           repository: kujolang/kujo
           ref: 123542ba17a0ef0150970a6c626b518946ff0bbb
           path: .release/kujo
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/ai-sdk
+          ref: 849dbbbba7a734938320dd9569d1ed7aa6240298
+          path: .release/ai-sdk
       - run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal
       - run: cargo build --release --locked --manifest-path .release/kujo/Cargo.toml
       - name: Verify exact tagged source
         env:
           KUJO_BIN: ${{ github.workspace }}/.release/kujo/target/release/kujo
+          AI_SDK_PATH: ${{ github.workspace }}/.release/ai-sdk
         run: bash scripts/run_release_gate.sh
 
   package:
