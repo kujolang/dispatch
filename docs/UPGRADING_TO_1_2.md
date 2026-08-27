@@ -1,6 +1,6 @@
-# Upgrading Dispatch from 1.0 to 1.1
+# Upgrading Dispatch from 1.1 to 1.2
 
-Dispatch 1.1 adds opt-in deterministic agent, provider, and model routing. Existing workflows remain static unless they explicitly set `routing.enabled` to `true`; existing run-state fields and command behavior remain compatible.
+Dispatch 1.2 packages the deterministic routing, reliability, lifecycle, artifact, and installation hardening shipped after 1.1. Existing workflows remain compatible.
 
 ## Install or Update
 
@@ -9,7 +9,7 @@ Install the router through its pinned release dependency closure, not a moving e
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/123542ba17a0ef0150970a6c626b518946ff0bbb/install.sh \
   | bash -s -- --package dispatch \
-      --release-manifest https://raw.githubusercontent.com/kujolang/dispatch/v1.1.0/release/dispatch-v1.1.0.refs
+      --release-manifest https://raw.githubusercontent.com/kujolang/dispatch/v1.2.0/release/dispatch-v1.2.0.refs
 
 export PATH="$HOME/.local/bin:$PATH"
 dispatch version

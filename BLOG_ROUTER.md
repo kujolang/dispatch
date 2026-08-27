@@ -102,7 +102,7 @@ Install the production Dispatch dependency closure. The release manifest prevent
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/123542ba17a0ef0150970a6c626b518946ff0bbb/install.sh \
   | bash -s -- --package dispatch \
-      --release-manifest https://raw.githubusercontent.com/kujolang/dispatch/v1.1.0/release/dispatch-v1.1.0.refs
+      --release-manifest https://raw.githubusercontent.com/kujolang/dispatch/v1.2.0/release/dispatch-v1.2.0.refs
 
 export PATH="$HOME/.local/bin:$PATH"
 dispatch --help

@@ -1,6 +1,6 @@
 [package]
 name = "dispatch"
-version = "1.1.0"
+version = "1.2.0"
 description = "Reliable workflow orchestration for multi-step AI agent systems in Kujo."
 license = "MIT"
 authors = ["Kujolang <contact@kujolang.ai>"]
@@ -15,7 +15,7 @@ readme = "README.md"
 stage = "production"
 stability = "stable"
 public_api = true
-notes = "The Dispatch 1.1 CLI, workflow, routing-policy, and persisted evidence contracts are public and versioned."
+notes = "The Dispatch 1.2 CLI, workflow, routing-policy, and persisted evidence contracts are public and versioned."
 
 [kujo]
 minimum_version = "1.0.2"

@@ -1,6 +1,6 @@
 # Dispatch
 
-[![Version](https://img.shields.io/badge/version-1.1.0-black)](https://github.com/kujolang/dispatch)
+[![Version](https://img.shields.io/badge/version-1.2.0-black)](https://github.com/kujolang/dispatch)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 [![built with Kujo](https://img.shields.io/badge/built%20with-Kujo-white.svg)](https://github.com/kujolang/kujo)
 
@@ -526,7 +526,7 @@ Exclude generated/bulk paths from the main sweep unless the task explicitly targ
 Release governance artifacts:
 
 - [Router HOWTO](HOWTO.md)
-- [Dispatch 1.1 upgrade guide](docs/UPGRADING_TO_1_1.md)
+- [Dispatch 1.2 upgrade guide](docs/UPGRADING_TO_1_2.md)
 - [Dispatch 1.1 release checklist](docs/release-checklist.md)
 
 - `CHANGELOG.md`: changelog format and versioning policy.

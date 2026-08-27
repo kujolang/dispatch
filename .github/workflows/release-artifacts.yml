@@ -59,7 +59,7 @@ jobs:
           sha256sum "$artifact" > "$artifact.sha256"
           commit_sha="$(git rev-parse HEAD)"
           artifact_sha="$(awk '{print $1}' "$artifact.sha256")"
-          printf '{"schema_version":"1.0","tag":"%s","dispatch_commit":"%s","artifact":"%s","artifact_sha256":"%s","dependency_manifest":"release/dispatch-v1.1.0.refs"}\n' \
+          printf '{"schema_version":"1.0","tag":"%s","dispatch_commit":"%s","artifact":"%s","artifact_sha256":"%s","dependency_manifest":"release/dispatch-v1.2.0.refs"}\n' \
             "$GITHUB_REF_NAME" "$commit_sha" "$artifact" "$artifact_sha" \
             > "dispatch-${GITHUB_REF_NAME}-provenance.json"
       - name: Attest source artifact provenance
@@ -86,7 +86,7 @@ jobs:
         run: |
           curl -fsSL "https://raw.githubusercontent.com/kujolang/kujo/123542ba17a0ef0150970a6c626b518946ff0bbb/install.sh" \
             | bash -s -- --package dispatch \
-                --release-manifest "https://raw.githubusercontent.com/kujolang/dispatch/${GITHUB_REF_NAME}/release/dispatch-v1.1.0.refs"
+                --release-manifest "https://raw.githubusercontent.com/kujolang/dispatch/${GITHUB_REF_NAME}/release/dispatch-v1.2.0.refs"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Verify installed workload outside source tree
         env:

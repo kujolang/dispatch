@@ -72,10 +72,10 @@ jobs:
 
       - name: Verify immutable dependency closure and installer parser
         run: |
-          grep -qx "kujo=123542ba17a0ef0150970a6c626b518946ff0bbb" release/dispatch-v1.1.0.refs
-          grep -qx "ai-sdk=849dbbbba7a734938320dd9569d1ed7aa6240298" release/dispatch-v1.1.0.refs
-          grep -qx "agents-sdk=d3904d348754b492bda298b6c30f49c1eb24b7ea" release/dispatch-v1.1.0.refs
-          grep -qx "dispatch=v1.1.0" release/dispatch-v1.1.0.refs
+          grep -qx "kujo=123542ba17a0ef0150970a6c626b518946ff0bbb" release/dispatch-v1.2.0.refs
+          grep -qx "ai-sdk=849dbbbba7a734938320dd9569d1ed7aa6240298" release/dispatch-v1.2.0.refs
+          grep -qx "agents-sdk=d3904d348754b492bda298b6c30f49c1eb24b7ea" release/dispatch-v1.2.0.refs
+          grep -qx "dispatch=v1.2.0" release/dispatch-v1.2.0.refs
           test "$(git -C .ci/kujo rev-parse HEAD)" = "123542ba17a0ef0150970a6c626b518946ff0bbb"
           test "$(git -C .ci/ai-sdk rev-parse HEAD)" = "849dbbbba7a734938320dd9569d1ed7aa6240298"
           test "$(git -C .ci/agents-sdk rev-parse HEAD)" = "d3904d348754b492bda298b6c30f49c1eb24b7ea"

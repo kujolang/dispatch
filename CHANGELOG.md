@@ -28,6 +28,11 @@ Each release section should include only shipped changes and use these headings 
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-08-27
+
+### Added
+- Released the post-1.1 routing, reliability, lifecycle, artifact, and installation hardening updates as Dispatch 1.2.0.
+
 ## [1.1.0] - 2026-08-26
 
 ### Added

@@ -1,13 +1,13 @@
-# Dispatch 1.1 Release Checklist
+# Dispatch 1.2 Release Checklist
 
 Run this checklist from a clean Dispatch checkout with the intended Kujo runtime on `PATH`.
 
 ## Package and Documentation
 
-- [ ] `kennel.toml`, `kujo.toml`, the README badge, and `dispatch version` agree on `1.1.0`.
-- [ ] `CHANGELOG.md` contains the dated 1.1.0 entry and `docs/UPGRADING_TO_1_1.md` describes adoption and rollback.
+- [ ] `kennel.toml`, `kujo.toml`, the README badge, and `dispatch version` agree on `1.2.0`.
+- [ ] `CHANGELOG.md` contains the dated 1.2.0 entry and `docs/UPGRADING_TO_1_2.md` describes adoption and rollback.
 - [ ] `HOWTO.md`, `BLOG_ROUTER.md`, and the routed example use supported field names and copyable commands.
-- [ ] `release/dispatch-v1.1.0.refs` pins Kujo, Dispatch, AI SDK, and Agents SDK; `install.sh --package dispatch --release-manifest ...` installs only that closure and supplies location-independent shim paths.
+- [ ] `release/dispatch-v1.2.0.refs` pins Kujo, Dispatch, AI SDK, and Agents SDK; `install.sh --package dispatch --release-manifest ...` installs only that closure and supplies location-independent shim paths.
 - [ ] Confirm the pinned Kujo commit is public, reports package version `1.0.2`, and contains the installer used by the release workflow.
 - [ ] Confirm the pinned AI SDK and Agents SDK commits are reachable from their public repositories and their own gates pass at those exact revisions.
 
@@ -42,6 +42,6 @@ DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh
 - [ ] Run ShipCheck against the final clean revision and resolve release blockers.
 - [ ] Confirm generated run artifacts, temporary credentials, and local test outputs are not staged.
 - [ ] Commit in small changes, push the release candidate, and verify the remote revision before creating the tag/release.
-- [ ] Push `v1.1.0` only after all pinned dependency commits are public and protected; verify the release workflow publishes the source tarball, checksum, provenance JSON, GitHub build-provenance attestation, and passes clean-install jobs on both operating systems.
+- [ ] Push `v1.2.0` only after all pinned dependency commits are public and protected; verify the release workflow publishes the source tarball, checksum, provenance JSON, GitHub build-provenance attestation, and passes clean-install jobs on both operating systems.
 
 Publishing a tag or public release remains a separate explicit action after every checkbox is backed by current evidence.
