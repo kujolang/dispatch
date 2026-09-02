@@ -7,9 +7,24 @@ test_setup {
 	from src.core.retry import run_with_retry
 	from src.core.hooks import webhook_outbox_status, webhook_response_success, webhook_destination_allowed, validate_webhook_options
 	from sdk_adapter import custom_provider_endpoint_allowed
-	from src.core.trace import create_trace, append_trace, render_otel_trace_json
+	from src.core.trace import create_trace, append_trace, render_otel_trace_json, render_watchdog_native_events
 	from src.core.utils import ensure_dir, dict_get_or
 	from src.tools.tool import create_tool_registry, create_tool, register_tool
+}
+
+test "Watchdog trace projection is metadata only and preserves workflow correlation" {
+	trace := create_trace("run-watchdog", "Sensitive Workflow")
+	trace := append_trace(trace, "tool_completed", "step-secret", "do not export this message", {"prompt": "never-export", "tool_output": "never-export"})
+	events := render_watchdog_native_events(trace)
+	assert_equal(len(events), 1)
+	event := events[0]
+	assert_equal(event["schema_version"], "watchdog.native-event.v1")
+	assert_equal(event["event_kind"], "tool")
+	assert_equal(event["status"], "ok")
+	assert_equal(event["references"][0]["id"], "run-watchdog")
+	encoded := to_json(event)
+	assert_equal(contains(encoded, "never-export"), 0)
+	assert_equal(contains(encoded, "do not export"), 0)
 }
 
 test "retry backoff fails closed when it would cross the execution deadline" {

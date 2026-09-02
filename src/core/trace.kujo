@@ -155,6 +155,56 @@ func render_otel_trace_json(trace_state) {
 	return to_json({"resourceSpans": [{"resource": {"attributes": [otel_attribute("service.name", "dispatch"), otel_attribute("dispatch.workflow", dict_get_or(trace_state, "workflow_name", ""))]}, "scopeSpans": [{"scope": {"name": "kujolang.dispatch", "version": "1.2.0"}, "spans": spans}]}]})
 }
 
+func watchdog_event_kind(event_type) {
+	name := to_lower(to_string(event_type))
+	if contains(name, "approval") || contains(name, "human_intervention") { return "approval" }
+	if contains(name, "handoff") { return "handoff" }
+	if contains(name, "tool") { return "tool" }
+	if contains(name, "model") { return "model" }
+	if contains(name, "error") || contains(name, "failed") || contains(name, "repair") { return "workflow" }
+	return "workflow"
+}
+
+func watchdog_event_status(event_type) {
+	name := to_lower(to_string(event_type))
+	if contains(name, "failed") || contains(name, "error") { return "error" }
+	if contains(name, "denied") || contains(name, "rejected") { return "denied" }
+	if contains(name, "cancel") { return "cancelled" }
+	if contains(name, "completed") || contains(name, "approved") || contains(name, "resumed") { return "ok" }
+	return "unset"
+}
+
+# Convert Dispatch lifecycle evidence into Watchdog's metadata-only native
+# ingestion boundary. Dispatch remains the workflow/state owner; Watchdog gets
+# correlation and status, never step input/output, messages, or payload bodies.
+func render_watchdog_native_events(trace_state) {
+	result := []
+	run_id := to_string(dict_get_or(trace_state, "run_id", ""))
+	workflow := to_string(dict_get_or(trace_state, "workflow_name", ""))
+	for event in dict_get_or(trace_state, "events", []) {
+		step_id := to_string(dict_get_or(event, "step_id", ""))
+		refs := [{"type": "run", "id": run_id, "namespace": "dispatch", "relation": "source"}]
+		if workflow != "" { refs = push(refs, {"type": "workflow", "id": workflow, "namespace": "dispatch", "relation": "source"}) }
+		if step_id != "" { refs = push(refs, {"type": "task", "id": step_id, "namespace": "dispatch", "relation": "source"}) }
+		event_type := to_string(dict_get_or(event, "type", "event"))
+		status := watchdog_event_status(event_type)
+		error_value := null
+		if status == "error" { error_value = {"category": "dispatch_workflow", "message": null} }
+		result = push(result, {
+			"schema_version": "watchdog.native-event.v1",
+			"event_id": to_string(dict_get_or(event, "id", "dispatch-event")),
+			"event_kind": watchdog_event_kind(event_type), "instantaneous": true,
+			"trace_id": to_string(dict_get_or(event, "trace_id", dict_get_or(trace_state, "trace_id", run_id))),
+			"span_id": to_string(dict_get_or(event, "span_id", substring(sha256(run_id + "::" + event_type), 0, 16))),
+			"parent_span_id": null, "name": "dispatch." + event_type, "status": status,
+			"started_at_ms": current_timestamp(), "ended_at_ms": null, "references": refs,
+			"attributes": {"dispatch.event_type": event_type, "dispatch.has_payload": type(dict_get_or(event, "payload", null)) != "null"},
+			"usage": null, "costs": [], "error": error_value
+		})
+	}
+	return result
+}
+
 func finalize_trace(trace_state, status) {
 	trace_state["status"] := status
 	trace_state["finished_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
@@ -225,3 +275,4 @@ export collect_event_type_counts := collect_event_type_counts
 export render_trace_markdown := render_trace_markdown
 export render_otel_trace_json := render_otel_trace_json
 export apply_trace_limits := apply_trace_limits
+export render_watchdog_native_events := render_watchdog_native_events

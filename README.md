@@ -416,6 +416,13 @@ Artifacts:
 - `state.json`: full run state snapshot
 - `trace.json`: structured execution trace
 - `trace.md`: human-readable trace timeline
+
+Watchdog integration uses `render_watchdog_native_events` from
+`src/core/trace.kujo`. It projects run/workflow/task correlation and lifecycle
+status into `watchdog.native-event.v1` while excluding messages, step payloads,
+inputs, outputs, and paths. Dispatch remains the orchestrator and state owner;
+the embedding host owns fail-open delivery and Watchdog owns privacy,
+persistence, retention, and export.
 - `report.md`: human-readable report
 - `report.json`: machine-readable report payload
 - `dispatch-mutations.jsonl`: active mutation/policy audit log for `doctor --write`, `cleanup --apply`, bundle imports, and policy-denied tool attempts
