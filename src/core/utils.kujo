@@ -168,147 +168,59 @@ func redact_sensitive_data(value) {
 	if root_type != "dict" && root_type != "array" {
 		return value
 	}
-
-	nodes := [{
-		"kind": "pending",
-		"source": value,
-		"keys": [],
-		"child_ids": [],
-		"value": null
-	}]
-
+	# Queue only containers. Primitive leaves are copied directly into their
+	# parent instead of allocating a traversal record for every scalar.
+	# Resolve children backwards to avoid recursion on deeply nested input.
+	nodes := [{"source": value}]
 	queue_index := 0
 	while queue_index < len(nodes) {
-		node := nodes[queue_index]
-		node_kind := dict_get_or(node, "kind", "pending")
-		if node_kind == "primitive" {
-			queue_index := queue_index + 1
-			continue
-		}
-		source := dict_get_or(node, "source", null)
-		source_type := type(source)
-
-		if source_type == "dict" {
-			node_keys := []
-			node_child_ids := []
-			for key in keys(source) {
-				node_keys := push(node_keys, key)
-				child_id := len(nodes)
-				if is_sensitive_key_name(key) {
-					nodes := push(nodes, {
-						"kind": "primitive",
-						"value": "[REDACTED]",
-						"keys": [],
-						"child_ids": []
-					})
-				} else {
-					child_value := source[key]
-					child_type := type(child_value)
-					if child_type == "dict" || child_type == "array" {
-						nodes := push(nodes, {
-							"kind": "pending",
-							"source": child_value,
-							"keys": [],
-							"child_ids": [],
-							"value": null
-						})
-					} else {
-						nodes := push(nodes, {
-							"kind": "primitive",
-							"value": child_value,
-							"keys": [],
-							"child_ids": []
-						})
-					}
-				}
-				node_child_ids := push(node_child_ids, child_id)
+		source := nodes[queue_index]["source"]
+		built := {}
+		entry_keys := []
+		if type(source) == "dict" {
+			entry_keys = keys(source)
+		} else {
+			built = []
+			i := 0
+			while i < len(source) {
+				entry_keys = push(entry_keys, i)
+				built = push(built, null)
+				i = i + 1
 			}
-			node["kind"] := "dict"
-			node["keys"] := node_keys
-			node["child_ids"] := node_child_ids
-			nodes[queue_index] := node
-			queue_index := queue_index + 1
-			continue
 		}
-
-		if source_type == "array" {
-			node_child_ids := []
-			for item in source {
-				child_id := len(nodes)
-				item_type := type(item)
-				if item_type == "dict" || item_type == "array" {
-					nodes := push(nodes, {
-						"kind": "pending",
-						"source": item,
-						"keys": [],
-						"child_ids": [],
-						"value": null
-					})
-				} else {
-					nodes := push(nodes, {
-						"kind": "primitive",
-						"value": item,
-						"keys": [],
-						"child_ids": []
-					})
-				}
-				node_child_ids := push(node_child_ids, child_id)
+		child_keys := []
+		child_ids := []
+		for key in entry_keys {
+			if type(source) == "dict" && is_sensitive_key_name(key) {
+				built[key] := "[REDACTED]"
+				continue
 			}
-			node["kind"] := "array"
-			node["child_ids"] := node_child_ids
-			nodes[queue_index] := node
-			queue_index := queue_index + 1
-			continue
+			child := source[key]
+			if type(child) == "dict" || type(child) == "array" {
+				child_keys = push(child_keys, key)
+				child_ids = push(child_ids, len(nodes))
+				nodes = push(nodes, {"source": child})
+				built[key] := null
+			} else {
+				built[key] := child
+			}
 		}
-
-		node["kind"] := "primitive"
-		node["value"] := source
-		nodes[queue_index] := node
-		queue_index := queue_index + 1
+		nodes[queue_index] := {"value": built, "child_keys": child_keys, "child_ids": child_ids}
+		queue_index = queue_index + 1
 	}
-
-	resolved := []
-	i := 0
-	while i < len(nodes) {
-		resolved := push(resolved, null)
-		i := i + 1
-	}
-
 	i := len(nodes) - 1
 	while i >= 0 {
 		node := nodes[i]
-		kind := dict_get_or(node, "kind", "primitive")
-
-		if kind == "primitive" {
-			resolved[i] := dict_get_or(node, "value", null)
-			i := i - 1
-			continue
+		built := node["value"]
+		child_index := 0
+		while child_index < len(node["child_ids"]) {
+			built[node["child_keys"][child_index]] := nodes[node["child_ids"][child_index]]["value"]
+			child_index = child_index + 1
 		}
-
-		if kind == "array" {
-			built_array := []
-			child_ids := dict_get_or(node, "child_ids", [])
-			for child_id in child_ids {
-				built_array := push(built_array, resolved[child_id])
-			}
-			resolved[i] := built_array
-			i := i - 1
-			continue
-		}
-
-		built_dict := {}
-		node_keys := dict_get_or(node, "keys", [])
-		child_ids := dict_get_or(node, "child_ids", [])
-		key_index := 0
-		while key_index < len(node_keys) {
-			built_dict[node_keys[key_index]] := resolved[child_ids[key_index]]
-			key_index := key_index + 1
-		}
-		resolved[i] := built_dict
-		i := i - 1
+		nodes[i] := {"value": built}
+		i = i - 1
 	}
-
-	return resolved[0]
+	return nodes[0]["value"]
 }
 
 func summarize_value(value, max_chars) {

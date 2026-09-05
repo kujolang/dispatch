@@ -1,0 +1,20 @@
+from src.core.hooks import emit_hook_event
+from src.core.utils import ensure_dir
+
+# Fixed workload, no network: append 200 events to an existing 1 MiB sink.
+root := "tests/tmp/benchmark-webhook-sink"
+ensure_dir(root)
+path := root + "/events.jsonl"
+seed := repeat("x", 1048576)
+write_file(path, seed, true)
+event := {"event_type": "benchmark", "message": repeat("y", 128)}
+started := current_timestamp()
+i := 0
+while i < 200 {
+	emit_hook_event({"webhook_sink": path}, event)
+	i = i + 1
+}
+elapsed := current_timestamp() - started
+expected := len(seed) + 200 * (len(to_json(event)) + 1)
+if file_size(path) != expected { error("Webhook sink benchmark output size mismatch") }
+print(to_json({"events": 200, "seed_bytes": len(seed), "final_bytes": file_size(path), "elapsed_ms": elapsed}))

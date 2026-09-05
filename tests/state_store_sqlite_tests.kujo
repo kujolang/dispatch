@@ -1,7 +1,7 @@
 test_setup {
 	from src.workflows.workflow import create_research_report_workflow
 	from src.core.state import create_run_state, persist_run_state, load_run_state
-	from src.core.state_store import state_store_health
+	from src.core.state_store import state_store_health, state_store_write
 }
 
 test "sqlite state store persists revisions and remains authoritative" {
@@ -12,6 +12,10 @@ test "sqlite state store persists revisions and remains authoritative" {
 	state["status"] := "paused"
 	state := persist_run_state(state)
 	assert_true(state["revision"] > initial_revision)
+	stale := state_store_write(state, to_json({"status": "corrupted"}))
+	assert_false(stale["ok"])
+	assert_equal(stale["error"]["code"], "state_revision_conflict")
+	write_file(state["run_dir"] + "/state.json", "{\"status\":\"corrupted\"}", true)
 	loaded := load_run_state(output_root, state["run_id"])
 	assert_true(loaded["ok"])
 	assert_equal(loaded["run_state"]["status"], "paused")

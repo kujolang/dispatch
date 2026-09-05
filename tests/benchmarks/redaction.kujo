@@ -1,0 +1,13 @@
+from src.core.utils import redact_sensitive_data
+
+payload := []
+i := 0
+while i < 200 {
+	payload = push(payload, {"id": i, "api_key": "must-redact", "nested": {"message": "keep", "input_tokens": i}, "values": [1, 2, 3, "keep"]})
+	i = i + 1
+}
+started := current_timestamp()
+result := redact_sensitive_data(payload)
+elapsed := current_timestamp() - started
+if result[199]["api_key"] != "[REDACTED]" || result[199]["nested"]["input_tokens"] != 199 { error("Redaction benchmark contract failed") }
+print(to_json({"items": len(payload), "elapsed_ms": elapsed, "output_bytes": len(to_json(result)), "output_hash": sha256(to_json(result))}))

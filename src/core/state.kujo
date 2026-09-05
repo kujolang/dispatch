@@ -888,15 +888,16 @@ func persist_run_state(run_state) {
 	redacted_state := redact_sensitive_data(run_state)
 	redacted_state_result := ensure_run_state_contract_fields(redacted_state)
 	redacted_state = redacted_state_result["run_state"]
-	redacted_trace := redact_sensitive_data(run_state["trace"])
+	redacted_trace := redacted_state["trace"]
 	trace_contract_result := ensure_trace_contract_fields(redacted_trace)
 	redacted_trace = trace_contract_result["trace_state"]
-	store_result := state_store_write(run_state, to_json(redacted_state))
+	state_json := to_json(redacted_state)
+	store_result := state_store_write(run_state, state_json)
 	if dict_get_or(store_result, "ok", false) == false {
 		store_error := dict_get_or(store_result, "error", {"code": "state_store_write_failed", "message": "State store write failed."})
 		return error(dict_get_or(store_error, "code", "state_store_write_failed") + ": " + dict_get_or(store_error, "message", "State store write failed."))
 	}
-	write_file_atomic(run_state["run_dir"] + "/state.json", to_json(redacted_state), true)
+	write_file_atomic(run_state["run_dir"] + "/state.json", state_json, true)
 	write_file_atomic(run_state["run_dir"] + "/trace.json", to_json(redacted_trace), true)
 	write_file_atomic(run_state["run_dir"] + "/trace.md", render_trace_markdown(redacted_trace), true)
 	write_file_atomic(run_state["run_dir"] + "/otel-traces.json", render_otel_trace_json(redacted_trace), true)

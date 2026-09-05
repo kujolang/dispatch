@@ -92,15 +92,13 @@ func emit_hook_event(options, event_payload) {
 		if dir_path != "" && dir_path != "." {
 			ensure_dir(dir_path)
 		}
-		existing := ""
-		if file_exists(webhook_sink) {
-			existing = read_file(webhook_sink)
-		}
 		line := to_json(event_payload)
-		if existing != "" {
-			line = existing + "\n" + line
+		# Preserve the established no-trailing-newline framing without reading
+		# or rewriting the complete history for every lifecycle event.
+		if file_exists(webhook_sink) && file_size(webhook_sink) > 0 {
+			line = "\n" + line
 		}
-		write_file(webhook_sink, line, true)
+		append_file(webhook_sink, line)
 	}
 	webhook_url := to_string(dict_get_or(options, "webhook_url", ""))
 	if trim(webhook_url) != "" {
