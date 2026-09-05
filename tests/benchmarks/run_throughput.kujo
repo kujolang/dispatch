@@ -72,3 +72,7 @@ print("Completed: " + to_string(ok_count) + "/" + to_string(iterations))
 print("Total wall time (ms): " + to_string(elapsed_ms))
 print("Average per-run latency (ms): " + to_string(avg_ms))
 print("Throughput (runs/sec): " + to_string(runs_per_sec))
+
+if ok_count != iterations {
+	exit(1)
+}

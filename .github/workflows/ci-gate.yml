@@ -103,15 +103,7 @@ jobs:
           "$KUJO_BIN" --help | grep -q "run"
 
       - name: Verify default run path is warning-free
-        run: |
-          set -euo pipefail
-          err="$("$KUJO_BIN" run dispatch.kujo demo "CI warning-free smoke" --yes --non-interactive --output-root tests/tmp/ci-smoke 2>&1 >/dev/null || true)"
-          if [ -n "$err" ]; then
-            echo "Default VM run path emitted stderr output:" >&2
-            echo "$err" >&2
-            exit 1
-          fi
-          rm -rf tests/tmp/ci-smoke
+        run: bash scripts/check_vm_smoke.sh
 
       - name: Run Dispatch release gate
         timeout-minutes: 45

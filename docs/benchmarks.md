@@ -59,3 +59,27 @@ Per-step `running` status updates no longer rewrite the full run-index catalog
 non-`running` status transition. This bounds index writes per run to O(1)
 regardless of step count. For very large catalogs, isolate workloads with a
 dedicated `--output-root` per service so index writes stay small.
+
+## Focused hardening workloads
+
+```bash
+kujo run tests/benchmarks/redaction.kujo
+kujo run tests/benchmarks/webhook_sink.kujo
+```
+
+The redaction workload processes 200 nested objects and reports elapsed time,
+output bytes, and a deterministic output hash. The sink workload appends 200
+fixed events to a freshly seeded 1 MiB file and verifies the final size. Both
+reset their input per invocation; neither uses provider calls. Compare the same
+runtime and machine, and retain raw results when changing these paths. Timing
+is evidence, not a blocking CI threshold. Update workload expectations only
+when intentionally changing their documented inputs or output contracts.
+
+The release gate now prints one receipt per suite and keeps full runner output
+under `tests/tmp/dispatch-test-shards/logs/`. Set `DISPATCH_TEST_VERBOSE=true`
+to also print passing logs. Failures retain the full log and print its last 80
+lines. This changes verification-script verbosity, not Dispatch CLI output.
+
+The throughput harness exits nonzero if any requested run does not complete.
+Its existing output fields are retained, so a failure cannot look like a passing
+performance check merely because timing numbers were printed.

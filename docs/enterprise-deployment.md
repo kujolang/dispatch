@@ -38,7 +38,7 @@ This guide describes production assumptions, hardening controls, and operational
 ## Concurrency and Durability
 
 - Artifact writes are atomic; the run index (`.dispatch-run-index.json`) is a rebuildable cache, and `runs`/`doctor` fall back to scanning state when it is missing or malformed.
-- Dispatch takes an owner-bound per-run lock for run/resume execution and recovers abandoned locks after the configured stale interval. Never share one run directory across hosts without shared lock semantics.
+- Dispatch uses atomic no-overwrite creation for its owner-bound run/resume lock. Recovery uses lock age, not process liveness: an active worker can lose its lock after `DISPATCH_RUN_LOCK_STALE_MS` (default 900000 ms). Prevent overlapping workers for long-running workflows and never share a run directory across hosts without external shared lock semantics. See the hardening audit for the lease/fencing follow-up.
 - `DISPATCH_STATE_BACKEND=sqlite` makes a WAL/FULL-synchronous SQLite database authoritative and rejects stale revisions with compare-and-swap. JSON run artifacts remain readable mirrors. Use a database/storage architecture appropriate to the deployment topology; SQLite is not a distributed consensus system.
 - Bounded concurrent execution applies only to dependency-ready tool steps explicitly marked `parallel_safe` with an `idempotency_key`. Agent and human-decision transitions remain serialized.
 - `doctor` flags runs whose `state.json` exceeds `DISPATCH_STATE_MAX_BYTES`; alert on these to catch runs accumulating oversized step outputs.

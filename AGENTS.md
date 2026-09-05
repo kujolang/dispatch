@@ -25,13 +25,11 @@ Canonical, user-facing examples live in:
 
 The files under `examples/research-report/sources/` are local fixture sources used by the verified offline workflow. They are canonical fixture inputs, not generated output.
 
-Historical audit trails live in:
-
-- `docs/dispatch-extension-checklist.md`
-- `docs/dispatch-next-session-checklist.md`
-- `docs/dispatch-next-session-checklist-v2.md`
-
-Treat those checklist files as completed implementation records unless the user asks to update the backlog itself.
+Engineering audit records live in `docs/audits/`. Treat those reports as
+implementation evidence; `docs/release-checklist.md` is the active release
+authority. Use `DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh`
+for complete verification;
+passing-suite logs are retained under `tests/tmp/dispatch-test-shards/logs/`.
 
 Generated or bulk paths:
 

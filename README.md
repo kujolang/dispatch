@@ -10,7 +10,7 @@ It routes structured work through repeatable workflow templates and produces rev
 
 Dispatch is strongest as a Control-layer primitive: workflow routing, run-state persistence, import/export, approval gates, and auditable orchestration evidence.
 
-Model execution is live and fail-closed by default. Deterministic offline fixtures are an explicit test/demo mode enabled with `DISPATCH_OFFLINE_FIXTURE=true`; live SDK integration requires AI SDK plus provider credentials.
+Model execution is live and fail-closed by default, including the built-in planner and writer when routing is disabled. Deterministic offline fixtures are an explicit test/demo mode enabled with `DISPATCH_OFFLINE_FIXTURE=true`; live SDK integration requires AI SDK plus provider credentials.
 
 ## Why Dispatch
 
@@ -196,7 +196,7 @@ cd /path/to/kujo-dispatch
 DISPATCH_OFFLINE_FIXTURE=true kujo run dispatch.kujo demo "How do AI agent workflows differ from chatbots?" --yes --non-interactive
 ```
 
-Dispatch runs on the default Kujo bytecode VM, which executes cleanly with no diagnostic output. The `--interpreter` flag (tree-walking interpreter) is supported for debugging but prints type-checker warnings to stderr; prefer the default VM path shown above for production and automation.
+Dispatch runs on the default Kujo bytecode VM, which executes cleanly with no diagnostic output. The `--interpreter` flag (tree-walking interpreter) is supported for debugging; prefer the default VM path shown above for production and automation. Supported help/version paths are checked for unexpected diagnostics.
 
 Expected output shape:
 
@@ -236,6 +236,7 @@ Dispatch reads the following environment variables:
 | `DISPATCH_BUNDLE_SIGNING_KEY_ID` | No | `default` | Key id label recorded in signed bundles, enabling key rotation |
 | `DISPATCH_BUNDLE_SIGNING_KEYS` | No | empty | Trusted verification key set (`id1=key1,id2=key2`) used during signature verification for rotation windows |
 | `DISPATCH_BUNDLE_MAX_BYTES` | No | `26214400` | Maximum bundle size accepted before import parsing |
+| `DISPATCH_ALLOWED_CUSTOM_API_KEY_ENVS` | No | empty | Additional credential environment-variable names custom providers may select; `CUSTOM_API_KEY` is always allowed |
 | `DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS` | For custom live providers | empty | Exact comma-separated HTTPS base URLs allowed to receive custom-provider credentials |
 | `DISPATCH_ALLOW_INSECURE_LOCAL_CUSTOM_PROVIDER` | No | `false` | Allows an explicitly allowlisted localhost HTTP custom provider for development only |
 | `DISPATCH_ALLOW_ANY_WEBHOOK_SINK` | No | `false` | Allows absolute or otherwise unrestricted `--webhook-sink` paths when explicitly set to `true` |
@@ -243,7 +244,7 @@ Dispatch reads the following environment variables:
 | `DISPATCH_STATE_MAX_BYTES` | No | `5242880` | `state.json` size budget; `doctor` flags runs whose state exceeds it |
 | `DISPATCH_STATE_BACKEND` | No | `filesystem` | Durable state authority: `filesystem` or SQLite (`sqlite`, WAL + revision compare-and-swap) |
 | `DISPATCH_RUN_LOCK_TIMEOUT_MS` | No | `5000` | Maximum wait for the owner-bound per-run execution lock |
-| `DISPATCH_RUN_LOCK_STALE_MS` | No | `300000` | Age after which an abandoned per-run lock can be recovered |
+| `DISPATCH_RUN_LOCK_STALE_MS` | No | `900000` | Age after which a per-run lock becomes eligible for recovery; this does not establish that its owner has exited |
 | `DISPATCH_WEBHOOK_OUTBOX` | No | `<output-root>/.dispatch-webhook-outbox.jsonl` | Durable webhook delivery ledger |
 | `DISPATCH_WEBHOOK_MAX_ATTEMPTS` | No | `3` | Bounded webhook attempts before dead-lettering (1–10) |
 | `DISPATCH_WEBHOOK_OUTBOX_MAX_BYTES` | No | `10485760` | Rotates the webhook outbox to one bounded backup before append |
@@ -463,9 +464,9 @@ Workflow specifications can bound execution directly:
 
 Only tool steps marked `parallel_safe: true` are eligible for concurrent execution, and those steps must declare an `idempotency_key`. Dispatch uses `max_parallel_steps` as a hard concurrency bound and merges results in workflow order. Agent, approval, handoff, and report steps stay serialized so route persistence and human decisions remain deterministic.
 
-Set `agent.model_options.stream: true` to persist incremental model events to `stream-<step-id>.jsonl` in the run directory while the AI SDK bridge is active. The final normalized model response remains the step result.
+Set `agent.model_options.stream: true` to persist incremental model events to `stream-<step-id>.jsonl` in the run directory while the AI SDK bridge is active. The final normalized model response remains the step result. Streaming step IDs must not contain path separators.
 
-Every run is protected by an owner-bound lock. State schema v1 artifacts migrate additively to schema v2 when loaded, with the migration recorded in `state.json`. For a shared or restart-sensitive deployment, use `DISPATCH_STATE_BACKEND=sqlite`; JSON artifacts remain human-readable mirrors while SQLite is authoritative.
+Run execution takes an owner-bound lock using atomic no-overwrite creation. Lock recovery is age-based; operators must prevent overlapping workers when a run could outlive `DISPATCH_RUN_LOCK_STALE_MS`. State schema v1 artifacts migrate additively to schema v2 when loaded, with the migration recorded in `state.json`. For a shared or restart-sensitive deployment, use `DISPATCH_STATE_BACKEND=sqlite`; JSON artifacts remain human-readable mirrors while SQLite is authoritative.
 
 Operational commands:
 
@@ -479,7 +480,7 @@ dispatch webhooks replay --output-root outputs --url https://collector.example/e
 ## Testing
 
 ```bash
-kujo test-run tests/dispatch_tests.kujo
+DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh
 ```
 
 ## CI Gate
@@ -504,19 +505,11 @@ kujo test-run tests/policy_precedence_tests.kujo -v
 kujo test-run tests/dispatch_tests.kujo -v
 ```
 
-## Historical implementation checklists
+## Engineering audit
 
-Track prioritized hardening, architecture cleanup, extensibility work, and testing backlog in:
-
-- `docs/dispatch-next-session-checklist-v4.md`
-- `docs/dispatch-next-session-checklist-v3.md`
-- `docs/dispatch-next-session-checklist-v2.md`
-
-These files are retained as implementation audit trails; the release checklist is the active release authority.
-
-`docs/dispatch-next-session-checklist.md` is kept as historical context from the earliest backlog phase.
-
-A deeper external review and a workflow-builder guide live under `review/`.
+The [repository hardening report](docs/audits/repository-hardening.md) records
+verified changes, measurements, compatibility, and remaining operational risks.
+The [release checklist](docs/release-checklist.md) remains the release authority.
 
 ## Agent And Contributor Guidance
 

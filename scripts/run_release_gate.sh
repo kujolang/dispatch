@@ -60,12 +60,32 @@ echo "Shards: $SHARD_COUNT"
 echo "Source tests: $total_tests"
 
 echo
+echo "Running smoke-gate regression checks..."
+bash tests/smoke_gate_tests.sh
+KUJO_BIN="$KUJO_BIN" bash tests/run_lock_concurrency_tests.sh
+
 echo "Running focused integration suites..."
-"$KUJO_BIN" test-run tests/sdk_adapter_tests.kujo -v
-"$KUJO_BIN" test-run tests/policy_precedence_tests.kujo -v
-"$KUJO_BIN" test-run tests/routing_tests.kujo -v
-DISPATCH_STATE_BACKEND=sqlite "$KUJO_BIN" test-run tests/state_store_sqlite_tests.kujo -v
-"$KUJO_BIN" test-run tests/operational_controls_tests.kujo -v
+mkdir -p "$SHARD_DIR/logs"
+run_suite() {
+	local name="$1"
+	shift
+	local log="$SHARD_DIR/logs/$name.log"
+	local result=0
+	"$@" >"$log" 2>&1 || result=$?
+	if [[ "$result" -ne 0 ]]; then
+		echo "$name failed (exit $result). Full evidence: $log" >&2
+		tail -n 80 "$log" >&2
+		return "$result"
+	fi
+	echo "$name passed. $(grep '^Tests:' "$log" | tail -1) Evidence: $log"
+	if [[ "${DISPATCH_TEST_VERBOSE:-false}" == true ]]; then cat "$log"; fi
+}
+run_suite sdk_adapter "$KUJO_BIN" test-run tests/sdk_adapter_tests.kujo -v
+run_suite policy_precedence "$KUJO_BIN" test-run tests/policy_precedence_tests.kujo -v
+run_suite routing "$KUJO_BIN" test-run tests/routing_tests.kujo -v
+DISPATCH_STATE_BACKEND=sqlite run_suite state_store_sqlite "$KUJO_BIN" test-run tests/state_store_sqlite_tests.kujo -v
+run_suite operational_controls "$KUJO_BIN" test-run tests/operational_controls_tests.kujo -v
+run_suite hardening "$KUJO_BIN" test-run tests/hardening_tests.kujo -v
 
 echo
 echo "Running sharded Dispatch contract suite..."
@@ -73,7 +93,7 @@ index=1
 while [[ "$index" -le "$SHARD_COUNT" ]]; do
 	shard_file="$SHARD_DIR/dispatch_tests_shard_${index}.kujo"
 	echo "Shard $index/$SHARD_COUNT: $shard_file"
-	"$KUJO_BIN" test-run "$shard_file" -v
+	run_suite "dispatch-$index" "$KUJO_BIN" test-run "$shard_file" -v
 	index=$((index + 1))
 done
 

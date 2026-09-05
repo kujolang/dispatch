@@ -28,6 +28,20 @@ Each release section should include only shipped changes and use these headings 
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve persisted token budgets and block further model rounds at exact exhaustion.
+- Propagate planner/writer model failures even when routing is disabled.
+- Reject forbidden library output roots and streaming step path separators before writing.
+- Acquire run locks with atomic no-overwrite creation; document age-based recovery limits.
+- Reject silent VM-smoke failures and verify SQLite authority over stale mirrors.
+
+### Changed
+
+- Reduce redaction traversal allocations, reuse persistence serialization, and append webhook sink events without rewriting history.
+- Keep complete release-gate logs behind concise suite receipts; use `DISPATCH_TEST_VERBOSE=true` for full passing output.
+- Add hardening, lock-contention, smoke-gate regression tests and reproducible redaction/sink workloads.
+
 ## [1.2.0] - 2026-08-27
 
 ### Added
