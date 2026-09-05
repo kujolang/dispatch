@@ -64,7 +64,7 @@ func planner_output(agent, step_input, run_state, context) {
 		"max_tokens": 180,
 		"temperature": 0.1
 	}, context))
-	if dict_get_or(model_result, "ok", false) == false && dict_get_or(agent, "__routing_enabled", false) {
+	if dict_get_or(model_result, "ok", false) == false {
 		return model_result
 	}
 
@@ -81,11 +81,7 @@ func planner_output(agent, step_input, run_state, context) {
 		"created_at": format_date(now(), "YYYY-MM-DD HH:mm:ss")
 	}
 
-	if dict_get_or(model_result, "ok", false) {
-		plan["model_brief"] := dict_get_or(model_result, "output_text", "")
-	} else {
-		plan["model_brief"] := "Model call unavailable; using deterministic planner output."
-	}
+	plan["model_brief"] := dict_get_or(model_result, "output_text", "")
 
 	return {
 		"ok": true,
@@ -222,12 +218,10 @@ func writer_output(agent, step_input, run_state, tool_registry, context) {
 		"max_tokens": 220,
 		"temperature": 0.2
 	}, context))
-	if dict_get_or(model_result, "ok", false) == false && dict_get_or(agent, "__routing_enabled", false) {
+	if dict_get_or(model_result, "ok", false) == false {
 		return model_result
 	}
-	if dict_get_or(model_result, "ok", false) {
-		tool_payload["summary"] := dict_get_or(model_result, "output_text", tool_payload["summary"])
-	}
+	tool_payload["summary"] := dict_get_or(model_result, "output_text", tool_payload["summary"])
 	return {
 		"ok": true,
 		"data": tool_payload,
@@ -314,20 +308,25 @@ func model_agent_output(agent, step_input, run_state, tool_registry, context) {
 	model_result := null
 	model_invoker := dict_get_or(agent, "__model_invoker", call_agent_model)
 	remaining_model_tokens := dict_get_or(context, "model_total_token_budget", 0)
+	bounded_total_tokens := type(remaining_model_tokens) == "int" && remaining_model_tokens > 0
 
 	while true {
 		deadline_error := execution_budget_error(context, "model call")
 		if type(deadline_error) == "dict" { return deadline_error }
 		model_options := {"max_tokens": dict_get_or(model_config, "max_tokens", 700), "temperature": dict_get_or(model_config, "temperature", 0.2), "messages": messages}
 		model_options = bounded_model_options(model_options, context)
-		if type(remaining_model_tokens) == "int" && remaining_model_tokens > 0 {
+		if bounded_total_tokens {
 			estimated_input_tokens := to_int((len(to_json(messages)) + 3) / 4)
 			available_output_tokens := remaining_model_tokens - estimated_input_tokens
 			if available_output_tokens < 1 { return {"ok": false, "error": {"code": "workflow_budget_exceeded", "message": "Model-call envelope has no remaining token capacity.", "retryable": false}, "model_calls": model_calls, "trace_events": trace_events} }
 			if dict_get_or(model_options, "max_tokens", available_output_tokens) > available_output_tokens { model_options["max_tokens"] := available_output_tokens }
 		}
 		if dict_get_or(model_config, "stream", false) {
-			stream_path := dict_get_or(run_state, "run_dir", "") + "/stream-" + dict_get_or(context, "step_id", "model") + ".jsonl"
+			stream_step_id := to_string(dict_get_or(context, "step_id", "model"))
+			if contains(stream_step_id, "/") || contains(stream_step_id, "\\") {
+				return {"ok": false, "error": {"code": "invalid_stream_step_id", "message": "Streaming step ids must not contain path separators.", "retryable": false}}
+			}
+			stream_path := dict_get_or(run_state, "run_dir", "") + "/stream-" + stream_step_id + ".jsonl"
 			model_options["stream"] := true
 			model_options["stream_events_path"] := stream_path
 		}
@@ -347,7 +346,7 @@ func model_agent_output(agent, step_input, run_state, tool_registry, context) {
 			return model_result
 		}
 		model_calls := push(model_calls, {"ok": true, "provider": dict_get_or(model_result, "provider", ""), "model": dict_get_or(model_result, "model", ""), "usage": dict_get_or(model_result, "usage", {})})
-		if type(remaining_model_tokens) == "int" && remaining_model_tokens > 0 {
+		if bounded_total_tokens {
 			call_usage := dict_get_or(model_result, "usage", {})
 			charged_tokens := dict_get_or(call_usage, "total_tokens", 0)
 			if type(charged_tokens) != "int" || charged_tokens <= 0 {

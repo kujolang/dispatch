@@ -135,6 +135,7 @@ func is_sensitive_key_name(key_name) {
 		"completion_tokens",
 		"required_context_tokens",
 		"max_tokens",
+		"max_total_tokens",
 		"token_efficiency"
 	]
 	for safe_metric in safe_token_metrics {

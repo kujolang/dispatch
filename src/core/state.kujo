@@ -822,9 +822,10 @@ func build_persistable_workflow_definition(workflow) {
 
 func create_run_state(workflow, input_payload, output_root, options) {
 	output_root_validation := normalize_output_root(output_root)
-	if output_root_validation["ok"] {
-		output_root = output_root_validation["output_root"]
+	if output_root_validation["ok"] == false {
+		return error("invalid_output_root: " + output_root_validation["error"]["message"])
 	}
+	output_root = output_root_validation["output_root"]
 	run_id := "run-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
 	ensure_dir(output_root)
 	run_dir := output_root + "/" + run_id
@@ -963,7 +964,7 @@ func acquire_run_lock(run_state) {
 		payload := {"owner": owner, "run_id": dict_get_or(run_state, "run_id", ""), "created_at_ms": current_timestamp()}
 		acquired := false
 		try {
-			write_file(lock_path, to_json(payload), false)
+			write_file_atomic(lock_path, to_json(payload), false)
 			acquired = true
 		} except err {
 			acquired = false

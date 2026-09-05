@@ -1,0 +1,7 @@
+from src.core.state import acquire_run_lock
+
+# The winner leaves its lock in place until the harness removes its private
+# test directory, so process scheduling cannot admit a later second winner.
+values := args()
+result := acquire_run_lock({"run_dir": values[0], "run_id": "run-contender"})
+print(to_json(result))

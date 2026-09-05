@@ -1,0 +1,122 @@
+test_setup {
+	from src.workflows.loader import load_workflow_from_spec
+	from src.core.state import create_run_state, load_run_state
+	from src.core.hooks import emit_hook_event
+	from src.core.utils import ensure_dir, redact_sensitive_data
+	from src.agents.agent import model_agent_output, run_agent_with_agent
+	from src.tools.tool import create_tool, register_tool, register_default_tools
+}
+
+test "persisted token budgets survive workflow reload without exposing credentials" {
+	spec := {"id": "budget-reload", "name": "Budget reload", "budgets": {"max_total_tokens": 42}, "steps": [{"id": "gate", "type": "approval"}]}
+	loaded := load_workflow_from_spec(spec)
+	assert_true(loaded["ok"])
+	state := create_run_state(loaded["workflow"], {"auth_token": "credential-must-not-persist"}, "tests/tmp/hardening-budget-" + to_string(current_timestamp()), {})
+	restored := load_run_state(state["output_root"], state["run_id"])
+	assert_true(restored["ok"])
+	definition := restored["run_state"]["workflow_definition"]
+	assert_equal(definition["budgets"]["max_total_tokens"], 42)
+	assert_true(load_workflow_from_spec(definition)["ok"])
+	assert_equal(restored["run_state"]["input"]["auth_token"], "[REDACTED]")
+	assert_equal(to_json(restored["run_state"]["trace"]), read_file(state["run_dir"] + "/trace.json"))
+}
+
+test "workflow loader rejects non-object steps with structured errors" {
+	for invalid_step in [null, true, 12, "step", []] {
+		result := load_workflow_from_spec({"id": "invalid", "name": "Invalid", "steps": [invalid_step]})
+		assert_false(result["ok"])
+		assert_equal(result["error"]["code"], "invalid_workflow_spec")
+		assert_equal(result["error"]["message"], "steps[0] must be an object")
+	}
+}
+
+test "webhook sink appends preserve exact existing JSONL framing" {
+	root := "tests/tmp/hardening-sink-" + to_string(current_timestamp())
+	ensure_dir(root)
+	event := {"event_type": "test", "value": "Unicode café"}
+	path := root + "/events.jsonl"
+	options := {"webhook_sink": path}
+	assert_true(emit_hook_event(options, event)["ok"])
+	assert_equal(read_file(path), to_json(event))
+	assert_true(emit_hook_event(options, event)["ok"])
+	assert_equal(read_file(path), to_json(event) + "\n" + to_json(event))
+	write_file(path, "", true)
+	emit_hook_event(options, event)
+	assert_equal(read_file(path), to_json(event))
+	write_file(path, "existing\n", true)
+	emit_hook_event(options, event)
+	assert_equal(read_file(path), "existing\n\n" + to_json(event))
+}
+
+
+test "exhausted model token envelope blocks the next model round" {
+	registry := register_tool({}, create_tool("safe_tool", "Safe", {"type": "dict"}, {"type": "dict"}, func(payload, context) { return {"ok": true, "data": {}} }, null))
+	agent := {"tools": ["safe_tool"], "output_schema": {}, "__model_invoker": func(agent_obj, prompt, options) {
+		if len(options["messages"]) > 2 { return {"ok": false, "error": {"code": "unexpected_second_model_call"}} }
+		return {"ok": true, "output_text": "", "tool_calls": [{"id": "budget-call", "function": {"name": "safe_tool", "arguments": "{}"}}], "usage": {"total_tokens": 200}}
+	}}
+	result := model_agent_output(agent, {}, {}, registry, {"model_total_token_budget": 200})
+	assert_false(result["ok"])
+	assert_equal(result["error"]["code"], "workflow_budget_exceeded")
+	assert_equal(len(result["model_calls"]), 1)
+}
+
+test "streaming rejects step ids that escape the run directory" {
+	agent := {"tools": [], "output_schema": {}, "model_options": {"stream": true}, "__model_invoker": func(agent_obj, prompt, options) {
+		return {"ok": false, "error": {"code": "unexpected_model_call"}}
+	}}
+	for step_id in ["../../outside", "nested/step", "nested\\step"] {
+		result := model_agent_output(agent, {}, {"run_dir": "tests/tmp/hardening-stream"}, {}, {"step_id": step_id})
+		assert_false(result["ok"])
+		assert_equal(result["error"]["code"], "invalid_stream_step_id")
+	}
+}
+
+test "redaction preserves nested shapes and leaves the original data untouched" {
+	input := {"items": [{"password": {"nested": "hidden"}, "safe": [null, false, 12, 1.5, "café", {}, []]}, {"authorization": "hidden", "input_tokens": 3}], "api_key_env": "CUSTOM_API_KEY"}
+	original := to_json(input)
+	expected := {"items": [{"password": "[REDACTED]", "safe": [null, false, 12, 1.5, "café", {}, []]}, {"authorization": "[REDACTED]", "input_tokens": 3}], "api_key_env": "CUSTOM_API_KEY"}
+	assert_equal(to_json(redact_sensitive_data(input)), to_json(expected))
+	assert_equal(to_json(input), original)
+	assert_equal(redact_sensitive_data("unchanged"), "unchanged")
+	assert_equal(to_json(redact_sensitive_data([])), "[]")
+	assert_equal(to_json(redact_sensitive_data({})), "{}")
+	deep := {"secret": "hidden", "keep": true}
+	i := 0
+	while i < 64 { deep = {"child": [deep]}; i = i + 1 }
+	redacted := redact_sensitive_data(deep)
+	i = 0
+	while i < 64 { redacted = redacted["child"][0]; i = i + 1 }
+	assert_equal(redacted["secret"], "[REDACTED]")
+	assert_true(redacted["keep"])
+}
+
+test "library run creation rejects forbidden output roots before writing" {
+	loaded := load_workflow_from_spec({"id": "path-guard", "name": "Path guard", "steps": [{"id": "gate", "type": "approval"}]})
+	path := os_getcwd() + "/tests/tmp/hardening-rejected-output-" + to_string(current_timestamp())
+	caught := false
+	try {
+		create_run_state(loaded["workflow"], {}, path, {})
+	} except err {
+		caught = contains(to_string(err), "invalid_output_root") == 1
+	}
+	assert_true(caught)
+	assert_false(file_exists(path))
+}
+
+
+test "unrouted built-in agents propagate live model failures" {
+	original_fixture := env("DISPATCH_OFFLINE_FIXTURE")
+	env_set("DISPATCH_OFFLINE_FIXTURE", "false")
+	registry := register_default_tools("examples/research-report/sources")
+	results := []
+	for handler in ["planner", "writer"] {
+		agent := {"id": handler, "instructions": "test", "model": {"provider": "custom", "api_key_env": "PATH"}, "__routing_enabled": false}
+		results = push(results, run_agent_with_agent(agent, handler, {}, {"input": {"topic": "failure"}}, {"input": {}, "run_id": "run-failure", "workflow_id": "workflow-failure", "status": "running"}, registry, {}))
+	}
+	env_set("DISPATCH_OFFLINE_FIXTURE", to_string(original_fixture))
+	for result in results {
+		assert_false(result["ok"])
+		assert_equal(result["error"]["code"], "credential_env_not_allowed")
+	}
+}
