@@ -1,3 +1,4 @@
+from src.plugins.rag import create_rag_plugin
 from src.core.plugins import create_plugin
 from src.tools.tool import create_tool
 from src.core.utils import dict_get_or
@@ -89,7 +90,8 @@ func create_sample_plugin() {
 
 func create_builtin_plugin_registry() {
 	return {
-		"sample": create_sample_plugin()
+		"sample": create_sample_plugin(),
+		"rag": create_rag_plugin()
 	}
 }
 

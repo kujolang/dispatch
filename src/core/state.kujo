@@ -803,6 +803,7 @@ func build_persistable_workflow_definition(workflow) {
 	}
 	return {
 		"id": dict_get_or(workflow, "id", ""),
+		"metadata": dict_get_or(workflow, "metadata", {}),
 		"name": dict_get_or(workflow, "name", ""),
 		"description": dict_get_or(workflow, "description", ""),
 		"input_schema": dict_get_or(workflow, "input_schema", {"type": "dict"}),

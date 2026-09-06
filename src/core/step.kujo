@@ -3,6 +3,7 @@ from src.core.utils import dict_get_or, clone_dict
 func create_step(step_id, name, step_type, config) {
 	base := {
 		"id": step_id,
+		"metadata": dict_get_or(config, "metadata", {}),
 		"name": name,
 		"type": step_type,
 		"status": "pending",

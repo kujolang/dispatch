@@ -99,6 +99,7 @@ func build_steps_from_spec(raw_steps) {
 		}
 		config := {
 			"agent_id": dict_get_or(raw_step, "agent_id", ""),
+			"metadata": dict_get_or(raw_step, "metadata", {}),
 			"tool_name": dict_get_or(raw_step, "tool_name", ""),
 			"input_from": dict_get_or(raw_step, "input_from", []),
 			"depends_on": dict_get_or(raw_step, "depends_on", []),
@@ -186,6 +187,7 @@ func load_workflow_from_spec(spec) {
 
 	workflow := create_workflow({
 		"id": workflow_id,
+		"metadata": dict_get_or(spec, "metadata", {}),
 		"name": workflow_name,
 		"description": to_string(dict_get_or(spec, "description", "User-defined Dispatch workflow.")),
 		"input_schema": dict_get_or(spec, "input_schema", {"type": "dict"}),

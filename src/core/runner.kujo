@@ -1,3 +1,4 @@
+from src.core.retrieval_preferences import resolve_dispatch_retrieval_preferences
 from src.core.utils import dict_get_or, summarize_value
 from src.core.errors import invalid_step_error, approval_rejected_error
 from src.core.retry import run_with_retry
@@ -414,6 +415,7 @@ func agent_evaluation_config(step, workflow) {
 }
 
 func execute_agent_step(step, workflow, step_input, run_state, tool_registry, options) {
+	resolved_preferences := resolve_dispatch_retrieval_preferences(workflow, run_state["input"], step)
 	previous_output := dict_get_or(step, "output", null)
 	if type(previous_output) == "dict" && dict_get_or(previous_output, "kind", "") == "route_human_review" {
 		approval_result := resolve_approval(previous_output["approval"], options)
@@ -482,6 +484,7 @@ func execute_agent_step(step, workflow, step_input, run_state, tool_registry, op
 		wrapped := run_with_retry("agent:" + dict_get_or(decision, "selected_agent_id", agent_id) + ":" + dict_get_or(decision, "provider_id", "") + ":" + dict_get_or(decision, "model", ""), policy, func(attempt_number) {
 			agent_options := bounded_options["options"]
 			agent_options["step_id"] := dict_get_or(step, "id", "")
+			agent_options["metadata"] := {"retrieval_preferences": resolved_preferences}
 			return run_agent_with_agent(effective_agent, handler_id, workflow["agents"], step_input, run_state, tool_registry, agent_options)
 		})
 		total_attempts = total_attempts + wrapped["attempts"]
@@ -716,6 +719,7 @@ func bounded_step_deadline(step, workflow, run_state) {
 }
 
 func execute_tool_step(step, workflow, step_input, run_state, tool_registry, options) {
+	resolved_preferences := resolve_dispatch_retrieval_preferences(workflow, run_state["input"], step)
 	tool_name := dict_get_or(step, "tool_name", "")	
 	tool_payload := build_tool_payload(tool_registry, tool_name, step_input)
 	authorization := evaluate_tool_authorization(step, step_input, run_state, options)
@@ -747,6 +751,7 @@ func execute_tool_step(step, workflow, step_input, run_state, tool_registry, opt
 			"run_id": run_state["run_id"],
 			"step_id": dict_get_or(step, "id", ""),
 			"input": run_state["input"],
+			"metadata": {"retrieval_preferences": resolved_preferences},
 			"sources_dir": dict_get_or(tool_registry, "__sources_dir", "examples/research-report/sources"),
 			"execution_timeout_ms": deadline["timeout_ms"],
 			"deadline_ms": deadline["deadline_ms"],

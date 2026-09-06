@@ -461,6 +461,7 @@ func run_agent_with_agent(agent, handler_id, workflow_agents, step_input, run_st
 		"input": run_state["input"],
 		"sources_dir": dict_get_or(tool_registry, "__sources_dir", "examples/research-report/sources"),
 		"step_id": dict_get_or(options, "step_id", ""),
+		"metadata": dict_get_or(options, "metadata", {}),
 		"tool_authorization_policy": dict_get_or(options, "tool_authorization_policy", null),
 		"model_max_tokens_cap": dict_get_or(options, "model_max_tokens_cap", 0),
 		"model_total_token_budget": dict_get_or(options, "model_total_token_budget", 0),

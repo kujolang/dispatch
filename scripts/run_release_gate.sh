@@ -82,6 +82,7 @@ run_suite() {
 }
 run_suite sdk_adapter "$KUJO_BIN" test-run tests/sdk_adapter_tests.kujo -v
 run_suite policy_precedence "$KUJO_BIN" test-run tests/policy_precedence_tests.kujo -v
+run_suite retrieval_preferences "$KUJO_BIN" test-run tests/retrieval_preferences_tests.kujo -v
 run_suite routing "$KUJO_BIN" test-run tests/routing_tests.kujo -v
 DISPATCH_STATE_BACKEND=sqlite run_suite state_store_sqlite "$KUJO_BIN" test-run tests/state_store_sqlite_tests.kujo -v
 run_suite operational_controls "$KUJO_BIN" test-run tests/operational_controls_tests.kujo -v

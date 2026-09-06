@@ -5,6 +5,7 @@ from src.core.utils import dict_get_or
 func create_workflow(definition) {
 	workflow := {
 		"id": definition["id"],
+		"metadata": dict_get_or(definition, "metadata", {}),
 		"name": definition["name"],
 		"description": definition["description"],
 		"input_schema": definition["input_schema"],

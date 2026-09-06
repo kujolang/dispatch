@@ -1,0 +1,70 @@
+test_setup {
+ from src.core.retrieval_preferences import resolve_dispatch_retrieval_preferences
+ from src.workflows.loader import load_workflow_from_spec
+ from src.core.state import create_run_state, load_run_state, persist_run_state
+ from src.core.runner import run_workflow
+ from src.tools.tool import create_tool_registry, register_tool, create_tool
+ from src.core.utils import dict_get_or
+}
+
+test "step run and workflow preference precedence preserves explicit clearing" {
+ workflow := {"metadata": {"retrieval_preferences": {"programming_language": "javascript"}}}
+ input := {"metadata": {"retrieval_preferences": {"programming_language": " Python "}}}
+ step := {"config": {"metadata": {"retrieval_preferences": {"programming_language": " Rust "}}}}
+ assert_equal(resolve_dispatch_retrieval_preferences(workflow, {}, {}), {"programming_language": "javascript"})
+ assert_equal(resolve_dispatch_retrieval_preferences(workflow, input, {}), {"programming_language": "python"})
+ assert_equal(resolve_dispatch_retrieval_preferences(workflow, input, step), {"programming_language": "rust"})
+ for clear in [{}, null, {"programming_language": ""}, {"programming_language": "rust\r\nX-Test: yes"}] {
+  assert_equal(resolve_dispatch_retrieval_preferences(workflow, input, {"config": {"metadata": {"retrieval_preferences": clear}}}), {})
+ }
+ assert_equal(resolve_dispatch_retrieval_preferences({}, {}, {}), {})
+}
+
+test "loaded workflow delivers run preference to tool and preserves it through disk reload" {
+ loaded := load_workflow_from_spec({"id": "retrieval-test", "name": "Retrieval test", "metadata": {"retrieval_preferences": {"programming_language": "javascript"}}, "tools": ["observe"], "steps": [{"id": "docs", "name": "Docs", "type": "tool", "tool_name": "observe", "input_from": ["input"], "output_key": "documentation"}]})
+ assert_equal(loaded["ok"], true)
+ workflow := loaded["workflow"]
+ registry := register_tool(create_tool_registry(), create_tool("observe", "Observe task preference", {"type": "dict"}, {"type": "dict"}, func(payload, context) {
+  return {"ok": true, "data": {"preferences": context["metadata"]["retrieval_preferences"]}}
+ }, func(input) { return input }))
+ state := create_run_state(workflow, {"metadata": {"retrieval_preferences": {"programming_language": "python"}}}, "tests/tmp/retrieval-preferences", {"auto_approve": true, "interactive": false})
+ saved := persist_run_state(state)
+ restored := load_run_state("tests/tmp/retrieval-preferences", state["run_id"])
+ assert_equal(restored["ok"], true)
+ restored_workflow := load_workflow_from_spec(restored["run_state"]["workflow_definition"])["workflow"]
+ assert_equal(restored_workflow["metadata"]["retrieval_preferences"]["programming_language"], "javascript")
+ result := run_workflow(restored_workflow, restored["run_state"], registry, {"auto_approve": true, "interactive": false})
+ assert_equal(result["ok"], true)
+ assert_equal(result["run_state"]["data"]["documentation"]["preferences"], {"programming_language": "python"})
+ second := load_run_state("tests/tmp/retrieval-preferences", state["run_id"])
+ assert_equal(second["run_state"]["input"]["metadata"]["retrieval_preferences"]["programming_language"], "python")
+}
+
+test "retry and approval resume preserve run selection and a later explicit clear" {
+ spec := {"id": "retrieval-resume", "name": "Retrieval resume", "metadata": {"retrieval_preferences": {"programming_language": "javascript"}}, "tools": ["observe"], "steps": [
+  {"id": "first", "name": "First", "type": "tool", "tool_name": "observe", "input_from": ["input"], "output_key": "first", "retry_policy": {"max_attempts": 2, "base_delay_ms": 0, "max_delay_ms": 0}},
+  {"id": "review", "name": "Review", "type": "approval", "approval_required": true, "approval_gate": {"reason": "Review fixture", "summary": "Review"}, "output_key": "approval"},
+  {"id": "second", "name": "Second", "type": "tool", "tool_name": "observe", "input_from": ["input"], "output_key": "second", "metadata": {"retrieval_preferences": {}}}
+ ]}
+ workflow := load_workflow_from_spec(spec)["workflow"]
+ receipt := "/tmp/dispatch-retrieval-retry-" + to_string(current_timestamp()) + ".txt"
+ registry := register_tool(create_tool_registry(), create_tool("observe", "Observe", {"type": "dict"}, {"type": "dict"}, func(payload, context) {
+  if context["step_id"] == "first" {
+   append_file(context["input"]["receipt_path"], "call\n")
+   if read_file(context["input"]["receipt_path"]) == "call\n" { return {"ok": false, "error": {"code": "fixture_retry", "message": "Retry fixture", "retryable": true}} }
+  }
+  return {"ok": true, "data": {"preferences": context["metadata"]["retrieval_preferences"]}}
+ }, func(input) { return input }))
+ state := create_run_state(workflow, {"receipt_path": receipt, "metadata": {"retrieval_preferences": {"programming_language": "python"}}}, "tests/tmp/retrieval-preferences", {"auto_approve": false, "interactive": false})
+ first := run_workflow(workflow, state, registry, {"auto_approve": false, "interactive": false, "simulated_decision": "changes"})
+ assert_equal(first["paused"], true)
+ restored := load_run_state("tests/tmp/retrieval-preferences", state["run_id"])["run_state"]
+ resumed_workflow := load_workflow_from_spec(restored["workflow_definition"])["workflow"]
+ result := run_workflow(resumed_workflow, restored, registry, {"auto_approve": true, "interactive": false})
+ assert_equal(result["run_state"]["status"], "completed")
+ assert_equal(result["run_state"]["data"]["first"]["preferences"], {"programming_language": "python"})
+ assert_equal(result["run_state"]["data"]["second"]["preferences"], {})
+ assert_equal(result["run_state"]["steps"][0]["attempts"], 2)
+ assert_equal(read_file(receipt), "call\ncall\n")
+ delete_file(receipt)
+}
