@@ -21,6 +21,18 @@ func replace_step(steps, target_index, replacement_step) {
 	return steps
 }
 
+# Optional metadata-only retry observation. The supplied sink must be a bounded
+# local callback; failure cannot alter retry policy, backoff or handler execution.
+func observe_dispatch_attempt(options, run_state, step, attempt) {
+    try {
+        sink := dict_get_or(options, "on_attempt_observed", null)
+        if type(sink) == "function" {
+            sink({"run_id":dict_get_or(run_state,"run_id",""), "step_id":dict_get_or(step,"id",""), "attempt":attempt, "occurred_at_ms":current_timestamp()})
+        }
+    } except err { return false }
+    return true
+}
+
 func resolve_retry_policy(step, workflow) {
 	step_policy := dict_get_or(step, "retry_policy", null)
 	if type(step_policy) == "dict" {
@@ -482,8 +494,10 @@ func execute_agent_step(step, workflow, step_input, run_state, tool_registry, op
 		policy["deadline_ms"] := dict_get_or(bounded_options["options"], "deadline_ms", 0)
 		policy["deadline_error_code"] := dict_get_or(bounded_options["options"], "deadline_error_code", "workflow_budget_exceeded")
 		wrapped := run_with_retry("agent:" + dict_get_or(decision, "selected_agent_id", agent_id) + ":" + dict_get_or(decision, "provider_id", "") + ":" + dict_get_or(decision, "model", ""), policy, func(attempt_number) {
+            observe_dispatch_attempt(options, run_state, step, attempt_number)
 			agent_options := bounded_options["options"]
 			agent_options["step_id"] := dict_get_or(step, "id", "")
+            agent_options["attempt"] := attempt_number
 			agent_options["metadata"] := {"retrieval_preferences": resolved_preferences}
 			return run_agent_with_agent(effective_agent, handler_id, workflow["agents"], step_input, run_state, tool_registry, agent_options)
 		})
@@ -747,6 +761,7 @@ func execute_tool_step(step, workflow, step_input, run_state, tool_registry, opt
 	policy["deadline_ms"] := deadline["deadline_ms"]
 	policy["deadline_error_code"] := deadline["deadline_error_code"]
 	wrapped := run_with_retry("tool:" + tool_name, policy, func(attempt_number) {
+        observe_dispatch_attempt(options, run_state, step, attempt_number)
 		context := {
 			"run_id": run_state["run_id"],
 			"step_id": dict_get_or(step, "id", ""),
@@ -1490,3 +1505,5 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 }
 
 export run_workflow := run_workflow
+
+export observe_dispatch_attempt := observe_dispatch_attempt

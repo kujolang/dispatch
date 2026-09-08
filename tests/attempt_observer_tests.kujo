@@ -1,0 +1,49 @@
+test_setup {
+from src.core.runner import observe_dispatch_attempt
+from src.core.retry import run_with_retry
+from src.workflows.workflow import create_workflow
+from src.core.step import create_step
+from src.core.state import create_run_state
+from src.core.runner import run_workflow
+from src.core.plugins import create_plugin, apply_plugin_to_runtime
+from src.agents.agent import create_agent
+from src.tools.tool import register_default_tools
+}
+test "real retry invokes metadata observation and observer errors cannot stop the retry" {
+    path := "/tmp/dispatch-attempt-observer.jsonl"
+    write_file(path,"",true)
+    result := run_with_retry("fixture-tool", {"max_attempts":2}, func(attempt) {
+        observe_dispatch_attempt({"on_attempt_observed":func(event){append_file(path,to_json(event)+"\n")}}, {"run_id":"retry-proof"}, {"id":"step-proof"}, attempt)
+        if attempt == 1 { return {"ok":false,"error":{"retryable":true}} }
+        return {"ok":true}
+    })
+    assert(result["ok"] && result["attempts"]==2,"real retry failed")
+    lines := split(trim(read_file(path)),"\n")
+    assert(len(lines)==2 && parse_json(lines[1])["attempt"]==2,"second attempt missing")
+    assert(parse_json(lines[0])["step_id"]=="step-proof","binding lost")
+    isolated := run_with_retry("source-work", {"max_attempts":1}, func(attempt) {
+        observe_dispatch_attempt({"on_attempt_observed":func(event){assert(false,"observer unavailable")}}, {"run_id":"safe"}, {"id":"step"}, attempt)
+        return {"ok":true}
+    })
+    assert(isolated["ok"],"observer error stopped business work")
+}
+
+test "workflow supplies actual attempt identity to retry observation and agent handler" {
+    path := "/tmp/dispatch-workflow-retry-observer.jsonl"
+    write_file(path,"",true)
+    agent := create_agent("retry-worker", "Retry worker", "Fixture", "Fixture", {}, [], [], {"type":"dict"}, {})
+    workflow := create_workflow({"id":"observer-retry-contract", "name":"Retry contract", "description":"Retry contract", "memory_config":{}, "default_retry_policy":{"max_attempts":2}, "agents":{}, "tools":[], "steps":[create_step("step","Step","agent",{"agent_id":"retry-worker","output_key":"result"})], "input_schema":{"type":"dict"}, "output_schema":{"type":"dict"}, "approval_config":{"auto_approve":true}})
+    handler := func(agent,input,state,tools,context) {
+        lines := split(trim(read_file(path)),"\n")
+        assert(parse_json(lines[len(lines)-1])["attempt"]==context["attempt"],"source observation must precede matching handler attempt")
+        if context["attempt"]==1 { return {"ok":false,"error":{"code":"retry-fixture","message":"first attempt fails","retryable":true}} }
+        return {"ok":true,"data":{"attempt":context["attempt"]}}
+    }
+    installed := apply_plugin_to_runtime(workflow,register_default_tools("examples/research-report/sources"),create_plugin("retry-contract",{"retry-worker":agent},{"retry-worker":handler},[]))
+    workflow = installed["workflow"]
+    state := create_run_state(workflow,{},"tests/tmp/observer-retry",{"auto_approve":true,"interactive":false})
+    result := run_workflow(workflow,state,installed["tool_registry"],{"auto_approve":true,"interactive":false,"on_attempt_observed":func(event){append_file(path,to_json(event)+"\n")}})
+    assert(result["ok"],"workflow retry failed")
+    records := split(trim(read_file(path)),"\n")
+    assert(len(records)==2 && parse_json(records[1])["attempt"]==2,"real workflow retry observation missing")
+}
