@@ -1,0 +1,23 @@
+# Ordinary Dispatch agent handler invokes the real SDK example in its own root.
+from src.workflows.workflow import create_workflow
+from src.core.step import create_step
+from src.core.state import create_run_state
+from src.core.runner import run_workflow
+from src.core.plugins import create_plugin, apply_plugin_to_runtime
+from src.agents.agent import create_agent
+from src.tools.tool import register_default_tools
+
+worker := create_agent("city-worker", "Documentation worker", "Retrieve local docs", "Offline model proof", {}, [], [], {"type": "dict"}, {})
+workflow := create_workflow({"id": "agent-city-proof", "name": "Agent City real retrieval", "description": "Real SDK/RAG proof", "memory_config": {}, "default_retry_policy": {}, "agents": {}, "tools": [], "steps": [create_step("retrieve-docs", "Retrieve documentation", "agent", {"agent_id": "city-worker", "output_key": "retrieval"})], "input_schema": {"type": "dict"}, "output_schema": {"type": "dict"}, "approval_config": {"auto_approve": true}})
+handler := func(agent, input, state, tools, context) {
+    result := spawn_process([env_or("KUJO_BIN", "kujo"), "run", "examples/agent_city_observer.kujo", "--interpreter"], {"cwd": env_or("CITY_SDK_ROOT", "../agents-sdk"), "inherit_env": true, "env": {"CITY_RUN": state["run_id"], "CITY_TASK": state["run_id"] + ":" + context["step_id"]}, "timeout_ms": 30000, "max_output_bytes": 65536})
+    print(result.stdout)
+    if result.success == false { return {"ok": false, "error": {"code": "sdk_failed", "message": "SDK child failed", "retryable": false}} }
+    return {"ok": true, "data": {"sdk_run": state["run_id"], "task": "retrieve-docs", "retrieval": "completed"}}
+}
+installed := apply_plugin_to_runtime(workflow, register_default_tools("examples/research-report/sources"), create_plugin("agent-city-observer", {"city-worker": worker}, {"city-worker": handler}, []))
+workflow = installed["workflow"]
+state := create_run_state(workflow, {"topic": "Kujo module imports"}, "tests/tmp/agent-city", {"auto_approve": true, "interactive": false})
+result := run_workflow(workflow, state, installed["tool_registry"], {"auto_approve": true, "interactive": false})
+print(to_json({"dispatch_run": state["run_id"], "ok": result["ok"]}))
+assert(result["ok"], "Dispatch proof failed")
