@@ -30,6 +30,9 @@ Each release section should include only shipped changes and use these headings 
 
 ### Fixed
 
+- Supply a stable tool-handler effect idempotency key so external sinks can
+  deduplicate crash-before-checkpoint replays; document the at-least-once
+  limitation rather than implying the local step cache is exactly-once.
 - Preserve persisted token budgets and block further model rounds at exact exhaustion.
 - Propagate planner/writer model failures even when routing is disabled.
 - Reject forbidden library output roots and streaming step path separators before writing.
@@ -49,6 +52,9 @@ Each release section should include only shipped changes and use these headings 
 - Reduce redaction traversal allocations, reuse persistence serialization, and append webhook sink events without rewriting history.
 - Keep complete release-gate logs behind concise suite receipts; use `DISPATCH_TEST_VERBOSE=true` for full passing output.
 - Add hardening, lock-contention, smoke-gate regression tests and reproducible redaction/sink workloads.
+- Add scripted v1.2 paused-run upgrade/backup rollback and real pinned
+  clean-install checks; run the pinned AI SDK and Agents SDK gates and repeated
+  state-scale samples on both CI platforms.
 
 ## [1.2.0] - 2026-08-27
 
