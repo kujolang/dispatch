@@ -1,6 +1,7 @@
 from src.core.utils import dict_get_or, read_json_or, ensure_dir
 from src.core.decision import normalize_decision
 from src.cli.cli_args import parse_cli_args, parsed_has_flag, parsed_flag_value
+from src.cli.bundled_workflow import bundled_workflow_path, normalize_config_path
 from src.workflows.workflow import create_workflow_by_template, list_workflow_templates
 from src.workflows.loader import load_workflow_from_file, load_workflow_from_spec
 from src.tools.tool import register_default_tools, normalize_sources_dir
@@ -111,54 +112,10 @@ func key_exists(map_obj, key_name) {
 		return default_value
 	}
 
-	func normalize_config_path(raw_config_path) {
-		path := trim(to_string(raw_config_path))
-		if path == "" {
-			return {
-				"ok": true,
-				"config_path": ""
-			}
-		}
-		path = replace(path, "\\", "/")
-
-		allow_any := to_lower(trim(to_string(env("DISPATCH_ALLOW_ANY_CONFIG_PATH"))))
-		allow_any_config_path := allow_any == "true" || allow_any == "1" || allow_any == "yes" || allow_any == "on"
-		if allow_any_config_path {
-			return {
-				"ok": true,
-				"config_path": path
-			}
-		}
-
-		if starts_with(path, "/") || starts_with(path, "~/") {
-			return {
-				"ok": false,
-				"message": "Absolute config paths are blocked by default. Set DISPATCH_ALLOW_ANY_CONFIG_PATH=true for explicit opt-in."
-			}
-		}
-		lower_path := to_lower(path)
-		if contains(lower_path, "..") || contains(lower_path, "%2f") || contains(lower_path, "%5c") {
-			return {
-				"ok": false,
-				"message": "Path traversal patterns are not allowed in --config path."
-			}
-		}
-
-		segments := split(path, "/")
-		for segment in segments {
-			clean_segment := trim(segment)
-			if clean_segment == "" || clean_segment == "." || clean_segment == ".." {
-				return {
-					"ok": false,
-					"message": "Config path contains invalid path segments."
-				}
-			}
-		}
-
-		return {
-			"ok": true,
-			"config_path": path
-		}
+	func normalize_workflow_file_path(raw_workflow_file) {
+		bundled := bundled_workflow_path(raw_workflow_file, env("DISPATCH_ROOT"))
+		if type(bundled) == "dict" { return bundled }
+		return normalize_config_path(raw_workflow_file)
 	}
 
 	func strip_wrapping_quotes(raw_value) {
@@ -693,7 +650,7 @@ func enforce_mutation_guard_or_exit(parsed, command_name, mutation_flag) {
 
 func dispatch_resolve_workflow(workflow_file, workflow_template_id, topic, auto_approve) {
 	if workflow_file != "" {
-		workflow_file_path := normalize_config_path(workflow_file)
+		workflow_file_path := normalize_workflow_file_path(workflow_file)
 		if workflow_file_path["ok"] == false {
 			exit_error(workflow_file_path["message"])
 		}
@@ -824,6 +781,10 @@ func routing_environment_preflight(workflow, live_mode) {
 	}
 	if live_mode {
 		bridge_path := trim(to_string(env("DISPATCH_SDK_BRIDGE_SCRIPT")))
+		legacy_bridge_path := dispatch_root_path("bridge_chat.kujo")
+		if bridge_path == legacy_bridge_path && file_exists(bridge_path) == false {
+			bridge_path = dispatch_root_path("src/bridge/bridge_chat.kujo")
+		}
 		if bridge_path == "" { bridge_path = dispatch_root_path("src/bridge/bridge_chat.kujo") }
 		if file_exists(bridge_path) == false {
 			errors := push(errors, {"path": "environment.DISPATCH_SDK_BRIDGE_SCRIPT", "message": "Dispatch AI SDK bridge is unavailable: " + bridge_path})
@@ -839,7 +800,7 @@ func load_routing_command_workflow(command_args, command_name) {
 	if parsed["ok"] == false { exit_error(parsed["error"]["message"]) }
 	workflow_file := trim(parsed_flag_value(parsed, "--workflow-file", ""))
 	if workflow_file == "" { exit_error("--workflow-file is required for " + command_name + ".") }
-	workflow_file_path := normalize_config_path(workflow_file)
+	workflow_file_path := normalize_workflow_file_path(workflow_file)
 	if workflow_file_path["ok"] == false { exit_error(workflow_file_path["message"]) }
 	loaded := load_workflow_from_file(workflow_file_path["config_path"])
 	if loaded["ok"] == false { exit_error(loaded["error"]["message"]) }

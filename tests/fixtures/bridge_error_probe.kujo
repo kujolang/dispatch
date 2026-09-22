@@ -1,0 +1,9 @@
+from src.bridge.sdk_adapter import call_agent_model
+
+result := call_agent_model({"model": {"provider": "openai", "model": "fixture"}}, "bridge error probe", {"offline_fixture": false, "timeout_ms": 5000})
+encoded := to_json(result)
+if result["ok"] || result["error"]["code"] != "sdk_bridge_exec_error" || contains(encoded, "dispatch-fixture-secret") {
+	print("Bridge error was not redacted or did not fail closed.")
+	exit(1)
+}
+print("Bridge execution errors remain redacted.")

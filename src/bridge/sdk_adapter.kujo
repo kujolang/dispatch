@@ -145,6 +145,11 @@ func resolve_bridge_paths() {
 	ai_sdk_path := env_or("AI_SDK_PATH", default_ai_sdk)
 	kujo_bin := env_or("KUJO_BIN", "kujo")
 	bridge_script := env_or("DISPATCH_SDK_BRIDGE_SCRIPT", default_bridge)
+	# The 1.2 pinned installer shim exports the former root bridge path. Only
+	# translate that exact, now-absent path; preserve arbitrary operator overrides.
+	if dispatch_root != "" && bridge_script == dispatch_root + "/bridge_chat.kujo" && file_exists(bridge_script) == false {
+		bridge_script = default_bridge
+	}
 
 	return {
 		"ai_sdk_path": ai_sdk_path,
@@ -388,6 +393,7 @@ export parse_json_from_output := parse_json_from_output
 export build_bridge_parse_error_details := build_bridge_parse_error_details
 export build_bridge_exec_error_message := build_bridge_exec_error_message
 export build_bridge_spawn_command := build_bridge_spawn_command
+export resolve_bridge_paths := resolve_bridge_paths
 export resolve_bridge_timeout_ms := resolve_bridge_timeout_ms
 export build_offline_fixture_model_result := build_offline_fixture_model_result
 export custom_provider_api_key_env_allowed := custom_provider_api_key_env_allowed

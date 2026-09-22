@@ -1,0 +1,9 @@
+from src.bridge.sdk_adapter import resolve_bridge_paths
+
+paths := resolve_bridge_paths()
+expected := to_string(env("DISPATCH_ROOT")) + "/src/bridge/bridge_chat.kujo"
+if paths["bridge_script"] != expected || !file_exists(paths["bridge_script"]) {
+	print("Pinned installer bridge path was not mapped to its packaged source.")
+	exit(1)
+}
+print("Pinned installer bridge path resolved.")
