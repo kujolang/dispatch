@@ -22,13 +22,13 @@ jobs:
     timeout-minutes: 60
     env:
       DISPATCH_OFFLINE_FIXTURE: "true"
-      RUSTUP_TOOLCHAIN: "1.88.0"
+      RUSTUP_TOOLCHAIN: "1.96.0"
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/kujo
-          ref: 123542ba17a0ef0150970a6c626b518946ff0bbb
+          ref: 266a8902068a14c3d17f803bef467dc28f1fe162
           path: .release/kujo
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -65,7 +65,7 @@ jobs:
           sha256sum "$artifact" > "$artifact.sha256"
           commit_sha="$(git rev-parse HEAD)"
           artifact_sha="$(awk '{print $1}' "$artifact.sha256")"
-          printf '{"schema_version":"1.0","tag":"%s","dispatch_commit":"%s","artifact":"%s","artifact_sha256":"%s","dependency_manifest":"release/dispatch-v1.2.0.refs"}\n' \
+          printf '{"schema_version":"1.0","tag":"%s","dispatch_commit":"%s","artifact":"%s","artifact_sha256":"%s","dependency_manifest":"release/dispatch-v1.3.0.refs"}\n' \
             "$GITHUB_REF_NAME" "$commit_sha" "$artifact" "$artifact_sha" \
             > "dispatch-${GITHUB_REF_NAME}-provenance.json"
       - name: Attest source artifact provenance
@@ -90,9 +90,9 @@ jobs:
     steps:
       - name: Install pinned Dispatch closure
         run: |
-          curl -fsSL "https://raw.githubusercontent.com/kujolang/kujo/123542ba17a0ef0150970a6c626b518946ff0bbb/install.sh" \
+          curl -fsSL "https://raw.githubusercontent.com/kujolang/kujo/266a8902068a14c3d17f803bef467dc28f1fe162/install.sh" \
             | bash -s -- --package dispatch \
-                --release-manifest "https://raw.githubusercontent.com/kujolang/dispatch/${GITHUB_REF_NAME}/release/dispatch-v1.2.0.refs"
+                --release-manifest "https://raw.githubusercontent.com/kujolang/dispatch/${GITHUB_REF_NAME}/release/dispatch-v1.3.0.refs"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Verify installed workload outside source tree
         env:

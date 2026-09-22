@@ -1,6 +1,6 @@
 # Dispatch
 
-[![Version](https://img.shields.io/badge/version-1.2.0-black)](https://github.com/kujolang/dispatch)
+[![Version](https://img.shields.io/badge/version-1.3.0--candidate-black)](https://github.com/kujolang/dispatch)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 [![built with Kujo](https://img.shields.io/badge/built%20with-Kujo-white.svg)](https://github.com/kujolang/kujo)
 
@@ -14,10 +14,15 @@ Dispatch is a showcase of Kujo's module system, typed workflow data, CLI runtime
 and testable agent orchestration—not an enterprise certification or a drop-in
 multi-tenant service. Start with the credential-free fixture below, then use
 [the deployment guide](docs/enterprise-deployment.md) for the production trust
-model and [the next review](docs/audits/next-review-2026-09-22.md) for open work.
-In particular, lock recovery is age-based: do not run competing workers against
-the same run after a lock may expire. Live providers, platform isolation, and
-deployment-specific controls require separate validation.
+model and [the 1.3 follow-up review](docs/audits/next-review-v1.3-2026-09-22.md) for open work.
+For an existing deployment, read [the 1.3 upgrade guide](docs/UPGRADING_TO_1_3.md)
+before changing the runtime or sharing an output root with older workers.
+The 1.3 development line requires Kujo 1.4.0 for process-owned POSIX locks;
+do not mix it with pre-1.3 workers on a run directory. Live providers,
+platform isolation, and deployment-specific controls require separate validation.
+
+[Try your first workflow](docs/first-workflow.md) for a credential-free
+workflow-to-trace tour and an example of a plugin with a scoped tool allowlist.
 
 Model execution is live and fail-closed by default, including the built-in planner and writer when routing is disabled. Deterministic offline fixtures are an explicit test/demo mode enabled with `DISPATCH_OFFLINE_FIXTURE=true`; live SDK integration requires AI SDK plus provider credentials.
 
@@ -46,7 +51,7 @@ Single-step chat calls are rarely enough when work needs to be repeated, reviewe
 - DAG-style step dependencies (`depends_on`) with dependency-ordered scheduling and bounded concurrent execution for explicitly idempotent `parallel_safe` tool steps
 - Agent-to-agent handoff events
 - Run cataloging and filtering (`runs --status`, `--topic`, `--issues-only`, `--json`)
-- Output retention cleanup with safe dry-run/apply modes (`cleanup`)
+- Lossless, tombstone-based catalog cleanup with safe dry-run/apply modes (`cleanup`); physical artifact retention remains operator-managed
 - Workflow template selection by ID (`demo/resume --workflow <template-id>`)
 - Health diagnostics and repair (`doctor`, `doctor --write`)
 - Report generation (`report.md`, `report.json`)
@@ -66,6 +71,7 @@ Core modules:
 
 - `dispatch.kujo`: CLI entrypoint and command routing
 - `src/cli/cli_args.kujo`: schema-driven CLI argument parsing
+- `src/cli/bundled_workflow.kujo`: strict configuration paths and installed example allowlist
 - `src/workflows/workflow.kujo`: workflow templates and template registry
 - `src/workflows/loader.kujo`: declarative JSON workflow spec loader (`--workflow-file`)
 - `src/plugins/builtin_plugins.kujo`: built-in plugin registry applied via `--plugin`
@@ -191,7 +197,7 @@ SDK's `create_model_catalog`/`provider_model_catalog`, not a copied routing tabl
 
 ## Prerequisites
 
-- Kujo CLI/runtime installed for local fixture runs
+- Kujo CLI/runtime 1.4.0 or newer (POSIX) for this development line
 - AI SDK installed by the Kujo `ai` profile, or a local clone for source development
 - `dispatch` checked out locally
 
@@ -253,7 +259,6 @@ Dispatch reads the following environment variables:
 | `DISPATCH_STATE_MAX_BYTES` | No | `5242880` | `state.json` size budget; `doctor` flags runs whose state exceeds it |
 | `DISPATCH_STATE_BACKEND` | No | `filesystem` | Durable state authority: `filesystem` or SQLite (`sqlite`, WAL + revision compare-and-swap) |
 | `DISPATCH_RUN_LOCK_TIMEOUT_MS` | No | `5000` | Maximum wait for the owner-bound per-run execution lock |
-| `DISPATCH_RUN_LOCK_STALE_MS` | No | `900000` | Age after which a per-run lock becomes eligible for recovery; this does not establish that its owner has exited |
 | `DISPATCH_WEBHOOK_OUTBOX` | No | `<output-root>/.dispatch-webhook-outbox.jsonl` | Durable webhook delivery ledger |
 | `DISPATCH_WEBHOOK_MAX_ATTEMPTS` | No | `3` | Bounded webhook attempts before dead-lettering (1–10) |
 | `DISPATCH_WEBHOOK_OUTBOX_MAX_BYTES` | No | `10485760` | Rotates the webhook outbox to one bounded backup before append |
@@ -475,7 +480,15 @@ Only tool steps marked `parallel_safe: true` are eligible for concurrent executi
 
 Set `agent.model_options.stream: true` to persist incremental model events to `stream-<step-id>.jsonl` in the run directory while the AI SDK bridge is active. The final normalized model response remains the step result. Streaming step IDs must not contain path separators.
 
-Run execution takes an owner-bound lock using atomic no-overwrite creation. Lock recovery is age-based; operators must prevent overlapping workers when a run could outlive `DISPATCH_RUN_LOCK_STALE_MS`. State schema v1 artifacts migrate additively to schema v2 when loaded, with the migration recorded in `state.json`. For a shared or restart-sensitive deployment, use `DISPATCH_STATE_BACKEND=sqlite`; JSON artifacts remain human-readable mirrors while SQLite is authoritative.
+Run execution holds a process-owned POSIX advisory lock on `.dispatch-run.lock`.
+The file is never unlinked, and the OS releases the handle when the worker exits;
+lock age no longer grants ownership. Quiesce older workers before upgrading:
+their age-based cleanup protocol does not coordinate with advisory locks. Run
+directories on multiple hosts still need a distributed lock and storage layer.
+State schema v1 artifacts migrate additively to schema v2 when loaded, with the
+migration recorded in `state.json`. For a restart-sensitive single-host deployment,
+use `DISPATCH_STATE_BACKEND=sqlite`; JSON artifacts remain human-readable mirrors
+while SQLite is authoritative.
 
 Operational commands:
 
@@ -519,7 +532,7 @@ kujo test-run tests/dispatch_tests.kujo -v
 The [repository hardening report](docs/audits/repository-hardening.md) records
 verified changes, measurements, compatibility, and remaining operational risks.
 The [release checklist](docs/release-checklist.md) remains the release authority.
-The [2026-09-22 review backlog](docs/audits/next-review-2026-09-22.md) tracks
+The [1.3 follow-up backlog](docs/audits/next-review-v1.3-2026-09-22.md) tracks
 the remaining readiness, portability, and verification work; a passing offline
 fixture gate is not evidence of universal or enterprise production readiness.
 
@@ -538,8 +551,10 @@ Exclude generated/bulk paths from the main sweep unless the task explicitly targ
 Release governance artifacts:
 
 - [Router HOWTO](HOWTO.md)
+- [Dispatch 1.3 upgrade guide](docs/UPGRADING_TO_1_3.md)
 - [Dispatch 1.2 upgrade guide](docs/UPGRADING_TO_1_2.md)
-- [Dispatch 1.1 release checklist](docs/release-checklist.md)
+- [Dispatch 1.3 release checklist](docs/release-checklist.md)
+- [Dispatch 1.2 historical checklist](docs/release-checklist-1.2.md)
 
 - `CHANGELOG.md`: changelog format and versioning policy.
 - `docs/release-checklist.md`: step-by-step release gate and tagging checklist.

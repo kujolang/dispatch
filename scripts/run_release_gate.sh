@@ -64,6 +64,9 @@ echo "Running smoke-gate regression checks..."
 bash tests/source_layout_tests.sh
 bash tests/smoke_gate_tests.sh
 KUJO_BIN="$KUJO_BIN" bash tests/run_lock_concurrency_tests.sh
+KUJO_BIN="$KUJO_BIN" bash tests/webhook_sink_concurrency_tests.sh
+KUJO_BIN="$KUJO_BIN" bash tests/bridge_process_tests.sh
+KUJO_BIN="$KUJO_BIN" bash tests/showcase_walkthrough_tests.sh
 
 echo "Running focused integration suites..."
 mkdir -p "$SHARD_DIR/logs"

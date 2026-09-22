@@ -33,12 +33,18 @@ Each release section should include only shipped changes and use these headings 
 - Preserve persisted token budgets and block further model rounds at exact exhaustion.
 - Propagate planner/writer model failures even when routing is disabled.
 - Reject forbidden library output roots and streaming step path separators before writing.
-- Acquire run locks with atomic no-overwrite creation; document age-based recovery limits.
+- Replace age-based run-lock recovery with process-owned POSIX advisory locks; retain the lock inode across release and recover after worker exit.
 - Reject silent VM-smoke failures and verify SQLite authority over stale mirrors.
+- Serialize lifecycle webhook JSONL framing across processes with a persistent sink lock.
+- Allow installed Dispatch shims to load only their bundled absolute workflow examples and resolve the legacy installer bridge path without widening arbitrary config paths.
 
 ### Changed
 
 - Move the internal SDK adapter and bridge script into `src/bridge/`; keep `dispatch.kujo` as the root package entrypoint and update the default bridge-script path. Existing `DISPATCH_SDK_BRIDGE_SCRIPT` overrides remain supported.
+- Require Kujo 1.4.0 for process-owned POSIX locking; do not mix workers with older lock protocols on a run directory. The 1.3 candidate is not tagged or certified until its release checklist passes.
+- Add isolated bridge, concurrent webhook, and copyable first-workflow/plugin policy checks.
+- Extract CLI config-path checks into a small module to keep the Kujo interpreter's type inference warning-free.
+- Record repeated state/catalog/trace memory and time measurements, with lossless tombstone retention explicitly documented.
 - Clarify enterprise-readiness limits in the README and add a prioritized follow-up review.
 - Reduce redaction traversal allocations, reuse persistence serialization, and append webhook sink events without rewriting history.
 - Keep complete release-gate logs behind concise suite receipts; use `DISPATCH_TEST_VERBOSE=true` for full passing output.

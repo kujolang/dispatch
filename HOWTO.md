@@ -525,7 +525,6 @@ SQLite uses WAL, full synchronous durability, and revision compare-and-swap. Hum
 
 ```bash
 export DISPATCH_RUN_LOCK_TIMEOUT_MS=5000
-export DISPATCH_RUN_LOCK_STALE_MS=300000
 ```
 
 HTTP lifecycle events are recorded before delivery. Network delivery requires an exact HTTPS origin allowlist and a signing key:
