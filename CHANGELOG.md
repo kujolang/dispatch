@@ -55,6 +55,8 @@ Each release section should include only shipped changes and use these headings 
 - Add scripted v1.2 paused-run upgrade/backup rollback and real pinned
   clean-install checks; run the pinned AI SDK and Agents SDK gates and repeated
   state-scale samples on both CI platforms.
+- Rehearse upgrades and rollback under the separate pinned Kujo executables
+  used by Dispatch 1.2 and 1.3, including both persisted-state backends.
 
 ## [1.2.0] - 2026-08-27
 

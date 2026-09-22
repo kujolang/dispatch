@@ -20,11 +20,20 @@ same output root during a rolling deployment.
    safe to run alongside a 1.3 worker. Restore the staged output-root backup
    if the older runtime cannot read a new run artifact.
 
-`KUJO_BIN=/path/to/pinned/kujo bash tests/upgrade_rehearsal_tests.sh` rehearses
-the quiesced paused-run upgrade and backup rollback for both filesystem and
-SQLite state. It checks the immutable v1.2 tag and uses its source, but executes
-both versions on the chosen 1.3-compatible Kujo runtime; target staging must
-still test the actual previous runtime and deployment-specific storage.
+Rehearse the quiesced paused-run upgrade and backup rollback for both filesystem
+and SQLite state:
+
+```bash
+KUJO_BIN=/path/to/pinned/kujo-1.4 KUJO_OLD_BIN=/path/to/pinned/kujo-1.0.2 \
+  bash tests/upgrade_rehearsal_tests.sh
+```
+
+The script verifies the
+immutable v1.2 source tag and the old runtime's version. The old executable
+creates and rolls back the paused run, while the candidate executable resumes
+it. Without `KUJO_OLD_BIN`, the source-level rehearsal remains available using
+the selected current runtime for both phases. Target staging must still test
+representative deployment storage and worker quiescence.
 
 Webhook sink writers now coordinate through a persistent
 `<sink>.dispatch-write.lock` file. Keep it on the same local filesystem as the

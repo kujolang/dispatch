@@ -8,7 +8,7 @@ final revision; local fixture success alone does not qualify as a public release
 
 - [x] `kennel.toml`, `kujo.toml`, the badge, `dispatch version`, and OTLP scope version agree on 1.3.0.
 - [x] `release/dispatch-v1.3.0.refs` pins public Kujo 1.4.0, AI SDK, Agents SDK, and the eventual Dispatch tag; the Kujo runtime exposes `file_lock`/`file_unlock` on Linux and macOS. The Dispatch tag is only a planned manifest reference, not a published release.
-- [ ] Quiesce pre-1.3 workers before replacing age-reclaimable lock files; validate resumed legacy runs and document rollback without mixing lock protocols. Source-level rehearsal passed both state backends on Linux/macOS at `573dec5`, but target staging with the original runtime remains pending.
+- [ ] Quiesce pre-1.3 workers before replacing age-reclaimable lock files; validate resumed legacy runs and document rollback without mixing lock protocols. A pinned Kujo 1.0.2-to-1.4.0 local rehearsal passed both state backends; cross-platform dual-runtime CI and target staging remain pending.
 - [x] The commit-pinned installer handles both the legacy root bridge path exported by the pinned shim and the `src/bridge/` source layout without enabling arbitrary config paths. Real isolated Linux/macOS installations passed at `573dec5`; authorized release-tag installations remain separate.
 
 ## Deterministic and adversarial gates
