@@ -24,7 +24,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-14]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
       DISPATCH_OFFLINE_FIXTURE: "true"
       # Bump deliberately after compatibility verification and record the
@@ -108,3 +108,35 @@ jobs:
       - name: Run Dispatch release gate
         timeout-minutes: 45
         run: bash scripts/run_release_gate.sh
+
+      - name: Run pinned AI SDK release gate
+        timeout-minutes: 15
+        working-directory: .ci/ai-sdk
+        run: bash scripts/release_quality_gates.sh
+
+      - name: Run pinned Agents SDK offline gate
+        timeout-minutes: 15
+        working-directory: .ci/agents-sdk
+        run: bash scripts/ci_no_network_enforcement.sh
+
+      - name: Rehearse quiesced v1.2 upgrade and backup rollback
+        timeout-minutes: 20
+        run: |
+          git fetch --depth=1 origin refs/tags/v1.2.0:refs/tags/v1.2.0
+          bash tests/upgrade_rehearsal_tests.sh
+
+      - name: Measure catalog state and trace scale
+        timeout-minutes: 10
+        run: bash tests/benchmarks/measure_state_scale.sh
+
+      - name: Clean-install pinned candidate and verify shim outside source
+        timeout-minutes: 35
+        run: |
+          candidate_dir="$RUNNER_TEMP/dispatch-candidate"
+          candidate_manifest="$RUNNER_TEMP/dispatch-candidate.refs"
+          sed "s/^dispatch=v1.3.0$/dispatch=${GITHUB_SHA}/" release/dispatch-v1.3.0.refs > "$candidate_manifest"
+          grep -qx "dispatch=$(git rev-parse HEAD)" "$candidate_manifest"
+          bash .ci/kujo/install.sh --package dispatch --source \
+            --release-manifest "$candidate_manifest" \
+            --prefix "$candidate_dir/root" --bin-dir "$candidate_dir/bin"
+          bash tests/installed_package_tests.sh "$candidate_dir/root"
