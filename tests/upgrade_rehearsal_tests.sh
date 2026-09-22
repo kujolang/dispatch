@@ -5,6 +5,19 @@ cd "$(dirname "$0")/.."
 dispatch_root="$PWD"
 KUJO_BIN="${KUJO_BIN:-kujo}"
 case "$KUJO_BIN" in /*) ;; *) KUJO_BIN="$(command -v "$KUJO_BIN")" ;; esac
+old_runtime_explicit="${KUJO_OLD_BIN:-}"
+KUJO_OLD_BIN="${old_runtime_explicit:-$KUJO_BIN}"
+case "$KUJO_OLD_BIN" in /*) ;; *) KUJO_OLD_BIN="$(command -v "$KUJO_OLD_BIN")" ;; esac
+if [[ -n "$old_runtime_explicit" ]]; then
+	[[ "$KUJO_OLD_BIN" != "$KUJO_BIN" ]] || {
+		echo "The old and new runtimes must be separate binaries." >&2
+		exit 1
+	}
+	[[ "$("$KUJO_OLD_BIN" --version)" == 'kujo 1.0.2' ]] || {
+		echo "The pinned v1.2 source requires its original Kujo 1.0.2 runtime." >&2
+		exit 1
+	}
+fi
 
 git rev-parse -q --verify 'refs/tags/v1.2.0^{commit}' >/dev/null || {
 	echo "Fetch the immutable v1.2.0 tag before the upgrade rehearsal." >&2
@@ -24,7 +37,7 @@ for backend in filesystem sqlite; do
 	root="$evidence_dir/v1.2/tests/tmp/$backend-runs"
 	(
 		cd "$evidence_dir/v1.2"
-		DISPATCH_STATE_BACKEND="$backend" DISPATCH_OFFLINE_FIXTURE=true "$KUJO_BIN" \
+		DISPATCH_STATE_BACKEND="$backend" DISPATCH_OFFLINE_FIXTURE=true "$KUJO_OLD_BIN" \
 			run dispatch.kujo demo "Legacy $backend upgrade" --non-interactive \
 			--decision changes --output-root "tests/tmp/$backend-runs" \
 			>"$evidence_dir/$backend-create.log"
@@ -47,7 +60,7 @@ for backend in filesystem sqlite; do
 	(
 		cd "$evidence_dir/v1.2"
 		DISPATCH_STATE_BACKEND="$backend" DISPATCH_OFFLINE_FIXTURE=true \
-			DISPATCH_ALLOW_ANY_OUTPUT_ROOT=true "$KUJO_BIN" run dispatch.kujo \
+			DISPATCH_ALLOW_ANY_OUTPUT_ROOT=true "$KUJO_OLD_BIN" run dispatch.kujo \
 			resume "$run_id" --yes --non-interactive \
 			--output-root "$evidence_dir/$backend-rollback" \
 			>"$evidence_dir/$backend-rollback.log"
