@@ -1,0 +1,19 @@
+values := args()
+raw := read_file(values[0])
+lines := split(raw, "\n")
+expected := to_int(values[1])
+if len(lines) != expected || ends_with(raw, "\n") {
+	print("Unexpected JSONL event count or trailing newline.")
+	exit(1)
+}
+seen := {}
+for line in lines {
+	event := parse_json(line)
+	key := to_string(event["worker"]) + ":" + to_string(event["sequence"])
+	if has_key(seen, key) {
+		print("Duplicate webhook event: " + key)
+		exit(1)
+	}
+	seen[key] := true
+}
+print("Webhook JSONL validated: " + to_string(len(lines)) + " unique events.")

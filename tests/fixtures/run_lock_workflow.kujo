@@ -1,0 +1,44 @@
+from src.workflows.workflow import create_workflow
+from src.core.step import create_step
+from src.core.state import create_run_state, load_run_state
+from src.core.runner import run_workflow
+from src.tools.tool import create_tool_registry, register_tool, create_tool
+from src.core.utils import dict_get_or
+
+values := args()
+mode := values[0]
+output_root := values[1]
+workflow := create_workflow({
+	"id": "lock-side-effect",
+	"name": "Lock Side Effect",
+	"description": "Exercise one side-effecting tool behind the process-owned run lock.",
+	"input_schema": {"type": "dict"},
+	"agents": {},
+	"tools": ["fixture_side_effect"],
+	"steps": [create_step("work", "Work", "tool", {"tool_name": "fixture_side_effect", "input_from": ["input"], "output_key": "work"})],
+	"memory_config": {},
+	"default_retry_policy": {"max_attempts": 1},
+	"approval_config": {"auto_approve": true},
+	"output_schema": {"type": "dict"}
+})
+if mode == "prepare" {
+	state := create_run_state(workflow, {"topic": "lock"}, output_root, {"auto_approve": true, "interactive": false})
+	print(state["run_id"])
+	exit(0)
+}
+
+run_id := values[2]
+marker_path := values[3]
+loaded := load_run_state(output_root, run_id)
+if loaded["ok"] == false { print(to_json(loaded)); exit(1) }
+registry := create_tool_registry()
+registry := register_tool(registry, create_tool(
+	"fixture_side_effect", "Record one effect", {"type": "dict"}, {"type": "dict"},
+	func(payload, context) {
+		append_file(marker_path, "effect\n")
+		sleep(1500)
+		return {"ok": true, "data": {"done": true}}
+	}, null
+))
+result := run_workflow(workflow, loaded["run_state"], registry, {"auto_approve": true, "interactive": false})
+print(to_json({"ok": result["ok"], "error": dict_get_or(result, "error", null)}))

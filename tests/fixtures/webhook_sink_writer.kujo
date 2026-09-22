@@ -1,0 +1,11 @@
+from src.core.hooks import emit_hook_event
+
+values := args()
+sink_path := values[0]
+worker := values[1]
+count := to_int(values[2])
+i := 0
+while i < count {
+	emit_hook_event({"webhook_sink": sink_path}, {"event_type": "fixture", "worker": worker, "sequence": i})
+	i = i + 1
+}

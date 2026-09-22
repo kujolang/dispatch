@@ -926,30 +926,24 @@ func run_lock_timeout_ms() {
 	return value
 }
 
-func run_lock_stale_ms() {
-	value := 900000
-	try {
-		value = to_int(trim(to_string(env("DISPATCH_RUN_LOCK_STALE_MS"))))
-	} except err {
-		value = 900000
-	}
-	if value < 10000 || value > 86400000 {
-		return 900000
-	}
-	return value
-}
-
 func release_run_lock(lock_info) {
 	lock_path := dict_get_or(lock_info, "lock_path", "")
 	owner := dict_get_or(lock_info, "owner", "")
-	if lock_path == "" || file_exists(lock_path) == false {
-		return {"ok": true}
+	lock_handle := dict_get_or(lock_info, "lock_handle", null)
+	if lock_path == "" || type(lock_handle) != "int" || file_exists(lock_path) == false {
+		return {"ok": false, "error": {"code": "run_lock_ownership_lost", "message": "A held run lock handle is required for release.", "retryable": false}}
 	}
 	current := read_json_or(lock_path, {})
 	if dict_get_or(current, "owner", "") != owner {
 		return {"ok": false, "error": {"code": "run_lock_ownership_lost", "message": "Run lock ownership changed before release.", "retryable": false}}
 	}
-	delete_file(lock_path)
+	try {
+		file_unlock(lock_handle)
+	} except err {
+		return {"ok": false, "error": {"code": "run_lock_ownership_lost", "message": "The process no longer holds the run lock.", "retryable": false}}
+	}
+	# Keep the inode in place: unlinking an advisory lock allows a second
+	# process to lock a different inode at the same path before the first exits.
 	return {"ok": true}
 }
 
@@ -960,28 +954,26 @@ func acquire_run_lock(run_state) {
 	}
 	lock_path := run_dir + "/.dispatch-run.lock"
 	owner := dict_get_or(run_state, "run_id", "run") + "-" + to_string(current_timestamp()) + "-" + to_string(random_int(1000, 9999))
-	started_at := current_timestamp()
 	timeout_ms := run_lock_timeout_ms()
-	while current_timestamp() - started_at <= timeout_ms {
-		payload := {"owner": owner, "run_id": dict_get_or(run_state, "run_id", ""), "created_at_ms": current_timestamp()}
-		acquired := false
-		try {
-			write_file_atomic(lock_path, to_json(payload), false)
-			acquired = true
-		} except err {
-			acquired = false
+	lock_handle := null
+	try {
+		lock_handle = file_lock(lock_path, timeout_ms)
+	} except err {
+		message := to_string(err)
+		if contains(message, "cannot acquire file lock") {
+			return {"ok": false, "error": {"code": "run_lock_timeout", "message": "Another process owns this run. Retry after the active worker completes.", "retryable": true}}
 		}
-		if acquired {
-			return {"ok": true, "lock_path": lock_path, "owner": owner}
-		}
-		existing := read_json_or(lock_path, {})
-		created_at_ms := dict_get_or(existing, "created_at_ms", current_timestamp())
-		if current_timestamp() - created_at_ms > run_lock_stale_ms() {
-			release_run_lock({"lock_path": lock_path, "owner": dict_get_or(existing, "owner", "")})
-		}
-		sleep(25)
+		return {"ok": false, "error": {"code": "run_lock_unavailable", "message": "A private process-owned file lock is required: " + message, "retryable": false}}
 	}
-	return {"ok": false, "error": {"code": "run_lock_timeout", "message": "Another process owns this run. Retry after the active worker completes or the lock becomes stale.", "retryable": true}}
+	# Write through the existing locked inode. Atomic replace would sever the
+	# advisory lock from the path and admit a second owner during this run.
+	try {
+		write_file(lock_path, to_json({"owner": owner, "run_id": dict_get_or(run_state, "run_id", ""), "created_at_ms": current_timestamp()}), true)
+	} except err {
+		file_unlock(lock_handle)
+		return {"ok": false, "error": {"code": "run_lock_unavailable", "message": "Could not record run lock ownership.", "retryable": false}}
+	}
+	return {"ok": true, "lock_path": lock_path, "owner": owner, "lock_handle": lock_handle}
 }
 
 func load_run_state(output_root, run_id) {

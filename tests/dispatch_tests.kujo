@@ -765,7 +765,7 @@ test "state persistence saves and reloads run" {
 	assert_equal(dict_get_or(loaded_trace, "schema_version", 0), 1)
 }
 
-test "run locks are owner-bound and stale locks recover safely" {
+test "run locks are process-owned and remain on disk for crash recovery" {
 	workflow := create_research_report_workflow("Lock contract", true)
 	state := create_run_state(workflow, {"topic": "lock"}, "tests/tmp/run-lock-contract-" + to_string(current_timestamp()), {"auto_approve": true, "interactive": false})
 	lock := acquire_run_lock(state)
@@ -775,7 +775,12 @@ test "run locks are owner-bound and stale locks recover safely" {
 	assert_true(file_exists(lock["lock_path"]))
 	released := release_run_lock(lock)
 	assert_true(released["ok"])
-	assert_false(file_exists(lock["lock_path"]))
+	assert_true(file_exists(lock["lock_path"]))
+	assert_false(release_run_lock(lock)["ok"])
+	second := acquire_run_lock(state)
+	assert_true(second["ok"])
+	assert_false(release_run_lock(lock)["ok"])
+	assert_true(release_run_lock(second)["ok"])
 }
 
 test "load run state backfills missing contract schema metadata" {
@@ -1151,6 +1156,10 @@ test "cleanup command supports dry-run and apply pruning" {
 	assert_true(dry_run["dry_run"])
 	assert_true(dry_run["candidate_count"] >= 1)
 	assert_equal(dry_run["pruned_count"], 0)
+	for candidate in dry_run["candidates"] {
+		assert_true(file_exists(candidate["run_dir"] + "/state.json"))
+		assert_false(file_exists(candidate["run_dir"] + "/.dispatch-pruned"))
+	}
 	runs_after_dry := list_runs(output_root)
 	assert_true(len(runs_after_dry) >= 3)
 
@@ -1158,6 +1167,10 @@ test "cleanup command supports dry-run and apply pruning" {
 	assert_false(apply_run["dry_run"])
 	assert_true(apply_run["candidate_count"] >= 1)
 	assert_true(apply_run["pruned_count"] >= 1)
+	for candidate in apply_run["candidates"] {
+		assert_true(file_exists(candidate["run_dir"] + "/state.json"))
+		assert_true(file_exists(candidate["run_dir"] + "/.dispatch-pruned"))
+	}
 	runs_after_apply := list_runs(output_root)
 	assert_equal(len(runs_after_apply), 1)
 }
