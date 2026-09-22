@@ -31,7 +31,7 @@ KUJO_BIN=kujo AI_SDK_PATH=/path/to/pinned/ai-sdk DISPATCH_OFFLINE_FIXTURE=true b
 - [ ] Complete a representative failure/restart and fixture soak, then a real approved provider or approved local proxy route; record only non-secret provider/model and outcome metadata. The forced crash/restart fixture and a local 100/100-run offline soak passed; live target evidence remains pending.
 - [ ] For consequential tool actions, prove that the external sink enforces the stable `context.effect_idempotency_key` across crash-before-checkpoint replay; the fixture regression intentionally demonstrates a duplicate without that enforcement.
 - [ ] Complete a sealed repository-wide Codex Security scan on the final revision and resolve reportable findings; run ShipCheck against the same revision.
-- [ ] Stage only reviewed source and documentation, commit in small pieces, push, and verify both CI operating systems and a clean remote revision.
+- [x] Stage only reviewed source and documentation, commit in small pieces, push, and verify both CI operating systems and a clean remote revision. [CI run 35755836627](https://github.com/kujolang/dispatch/actions/runs/35755836627) passed the documentation-only final tip `b7cf1bd` on Linux and macOS; the working tree and `origin/main` matched afterward.
 - [ ] After explicit release authorization, verify a protected 1.3.0 tag, source tarball/checksum, provenance and attestation, and Linux/macOS clean-install jobs.
 
 The 1.3 development line is not a certified multi-tenant or distributed-lock
