@@ -13,7 +13,7 @@ from src.core.plugins import create_plugin_registry, register_plugin, apply_plug
 from src.plugins.builtin_plugins import resolve_builtin_plugins, emit_builtin_plugin_events
 from src.core.routing import validate_workflow_routing, resolve_route, routing_policy_version, supported_route_provider
 from src.core.hooks import webhook_outbox_status, replay_webhook_outbox
-from sdk_adapter import custom_provider_api_key_env_allowed, custom_provider_endpoint_allowed, call_agent_model
+from src.bridge.sdk_adapter import custom_provider_api_key_env_allowed, custom_provider_endpoint_allowed, call_agent_model
 from src.core.state_store import state_store_health
 
 func dispatch_root_path(relative_path) {
@@ -824,7 +824,7 @@ func routing_environment_preflight(workflow, live_mode) {
 	}
 	if live_mode {
 		bridge_path := trim(to_string(env("DISPATCH_SDK_BRIDGE_SCRIPT")))
-		if bridge_path == "" { bridge_path = dispatch_root_path("bridge_chat.kujo") }
+		if bridge_path == "" { bridge_path = dispatch_root_path("src/bridge/bridge_chat.kujo") }
 		if file_exists(bridge_path) == false {
 			errors := push(errors, {"path": "environment.DISPATCH_SDK_BRIDGE_SCRIPT", "message": "Dispatch AI SDK bridge is unavailable: " + bridge_path})
 		}

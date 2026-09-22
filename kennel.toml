@@ -21,7 +21,7 @@ notes = "The Dispatch 1.2 CLI, workflow, routing-policy, and persisted evidence 
 minimum_version = "1.0.2"
 entry = "dispatch.kujo"
 sources = ["."]
-includes = ["README.md", "HOWTO.md", "BLOG_ROUTER.md", "CHANGELOG.md", "docs", "examples", "release", "scripts", "src", "tests", "bridge_chat.kujo", "sdk_adapter.kujo", "dispatch.kujo", "kujo.toml"]
+includes = ["README.md", "HOWTO.md", "BLOG_ROUTER.md", "CHANGELOG.md", "docs", "examples", "release", "scripts", "src", "tests", "dispatch.kujo", "kujo.toml"]
 excludes = [".git", "kennel_packages", "dist", "build", "node_modules", "outputs"]
 
 [build]
@@ -43,7 +43,7 @@ engine = "src/core/runner.kujo"
 cli = "dispatch.kujo"
 
 [package.metadata]
-bridge_script = "bridge_chat.kujo"
+bridge_script = "src/bridge/bridge_chat.kujo"
 
 [registry]
 index = ""

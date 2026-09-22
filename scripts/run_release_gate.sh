@@ -61,6 +61,7 @@ echo "Source tests: $total_tests"
 
 echo
 echo "Running smoke-gate regression checks..."
+bash tests/source_layout_tests.sh
 bash tests/smoke_gate_tests.sh
 KUJO_BIN="$KUJO_BIN" bash tests/run_lock_concurrency_tests.sh
 

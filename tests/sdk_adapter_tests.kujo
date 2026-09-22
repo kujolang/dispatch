@@ -1,5 +1,5 @@
 test_setup {
-	from sdk_adapter import parse_json_from_output, build_bridge_parse_error_details, build_bridge_exec_error_message, build_bridge_spawn_command, resolve_bridge_timeout_ms, build_bridge_payload, call_agent_model, custom_provider_api_key_env_allowed
+	from src.bridge.sdk_adapter import parse_json_from_output, build_bridge_parse_error_details, build_bridge_exec_error_message, build_bridge_spawn_command, resolve_bridge_timeout_ms, build_bridge_payload, call_agent_model, custom_provider_api_key_env_allowed
 }
 
 test "custom providers cannot select arbitrary process secret variables" {

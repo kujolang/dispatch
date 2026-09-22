@@ -137,10 +137,10 @@ func resolve_bridge_paths() {
 	dispatch_root := env_or("DISPATCH_ROOT", "")
 	if dispatch_root == "" { dispatch_root = os_getcwd() }
 	default_ai_sdk := "../ai-sdk"
-	default_bridge := "bridge_chat.kujo"
+	default_bridge := "src/bridge/bridge_chat.kujo"
 	if dispatch_root != "" {
 		default_ai_sdk = dispatch_root + "/../ai-sdk"
-		default_bridge = dispatch_root + "/bridge_chat.kujo"
+		default_bridge = dispatch_root + "/src/bridge/bridge_chat.kujo"
 	}
 	ai_sdk_path := env_or("AI_SDK_PATH", default_ai_sdk)
 	kujo_bin := env_or("KUJO_BIN", "kujo")
@@ -160,7 +160,7 @@ func build_bridge_spawn_command(paths) {
 		dict_get_or(paths, "ai_sdk_path", "../ai-sdk"),
 		dict_get_or(paths, "kujo_bin", "kujo"),
 		"run",
-		dict_get_or(paths, "bridge_script", "bridge_chat.kujo"),
+		dict_get_or(paths, "bridge_script", "src/bridge/bridge_chat.kujo"),
 		"--interpreter"
 	]
 }

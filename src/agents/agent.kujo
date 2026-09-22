@@ -1,5 +1,5 @@
 from src.core.utils import dict_get_or
-from sdk_adapter import call_agent_model
+from src.bridge.sdk_adapter import call_agent_model
 from src.tools.tool import call_tool, get_tool
 from src.core.errors import missing_agent_error, agent_execution_error
 

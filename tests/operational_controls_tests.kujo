@@ -6,7 +6,7 @@ test_setup {
 	from src.core.runner import run_workflow
 	from src.core.retry import run_with_retry
 	from src.core.hooks import webhook_outbox_status, webhook_response_success, webhook_destination_allowed, validate_webhook_options
-	from sdk_adapter import custom_provider_endpoint_allowed
+	from src.bridge.sdk_adapter import custom_provider_endpoint_allowed
 	from src.core.trace import create_trace, append_trace, render_otel_trace_json, render_watchdog_native_events
 	from src.core.utils import ensure_dir, dict_get_or
 	from src.tools.tool import create_tool_registry, create_tool, register_tool
