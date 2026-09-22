@@ -35,7 +35,12 @@ registry := create_tool_registry()
 registry := register_tool(registry, create_tool(
 	"fixture_side_effect", "Record one effect", {"type": "dict"}, {"type": "dict"},
 	func(payload, context) {
-		append_file(marker_path, "effect\n")
+		if mode == "idempotent" {
+			# Model an external effect sink that atomically accepts a stable key.
+			try { write_file_atomic(marker_path, context["effect_idempotency_key"], false) } except err {}
+		} else {
+			append_file(marker_path, "effect\n")
+		}
 		sleep(1500)
 		return {"ok": true, "data": {"done": true}}
 	}, null

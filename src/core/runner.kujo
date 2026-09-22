@@ -765,6 +765,9 @@ func execute_tool_step(step, workflow, step_input, run_state, tool_registry, opt
 		context := {
 			"run_id": run_state["run_id"],
 			"step_id": dict_get_or(step, "id", ""),
+			# Stable across retries and restarts; the external effect sink must
+			# enforce this key, since a local checkpoint cannot make effects atomic.
+			"effect_idempotency_key": run_state["run_id"] + ":" + dict_get_or(step, "id", ""),
 			"input": run_state["input"],
 			"metadata": {"retrieval_preferences": resolved_preferences},
 			"sources_dir": dict_get_or(tool_registry, "__sources_dir", "examples/research-report/sources"),

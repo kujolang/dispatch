@@ -318,7 +318,12 @@ Steps can be marked `optional` in a workflow template. When an optional step fai
 - `--webhook-url <https-url>` records each signed envelope in the durable outbox before bounded delivery. Failed deliveries are dead-lettered and can be inspected or replayed with `dispatch webhooks status|replay`; webhook failure does not fail the workflow.
 - `--cancel-after-step <step-id>` cooperatively cancels the run after the named step completes, producing a `cancelled` lifecycle state.
 
-Tool and agent steps can declare an `idempotency_key`; a keyed result is cached in run state and reused on resume instead of re-executing the side effect.
+Tool and agent steps can declare an `idempotency_key`; a successfully
+checkpointed result is cached in run state and reused on resume. A process can
+die after an external effect but before its checkpoint, so Dispatch provides
+at-least-once replay in that window, not exactly-once effects. Tool handlers
+receive a stable `context.effect_idempotency_key` (`run_id:step_id`) on retries
+and resume; the external service must enforce it for consequential actions.
 
 ## Common Usage Flows
 

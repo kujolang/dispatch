@@ -68,4 +68,54 @@ wait "$first_pid"
 grep -q '"ok":true' "$fixture_dir/first.json"
 [[ "$(wc -l < "$marker" | tr -d ' ')" == 1 ]]
 grep -q '"status":"completed"' "$fixture_dir/$run_id/state.json"
-echo "Run lock contention, expiry resistance, crash recovery, and resumed side-effect fencing passed."
+
+# A crash after the external effect but before its state checkpoint releases
+# ownership. Resuming makes progress, but replays the non-idempotent effect;
+# operators must provide external idempotency for exactly-once requirements.
+crash_id="$("$KUJO_BIN" run tests/fixtures/run_lock_workflow.kujo -- prepare "$fixture_dir")"
+crash_marker="$fixture_dir/crash-effects.log"
+"$KUJO_BIN" run tests/fixtures/run_lock_workflow.kujo -- \
+	execute "$fixture_dir" "$crash_id" "$crash_marker" \
+	>"$fixture_dir/crash-first.json" 2>"$fixture_dir/crash-first.stderr" &
+crash_pid="$!"
+for attempt in {1..150}; do
+	if [[ -s "$crash_marker" ]]; then break; fi
+	if ! kill -0 "$crash_pid" 2>/dev/null; then break; fi
+	sleep 0.02
+done
+[[ -s "$crash_marker" ]]
+kill -0 "$crash_pid"
+kill -TERM "$crash_pid"
+wait "$crash_pid" 2>/dev/null || true
+grep -q '"status":"running"' "$fixture_dir/$crash_id/state.json"
+"$KUJO_BIN" run tests/fixtures/run_lock_workflow.kujo -- \
+	execute "$fixture_dir" "$crash_id" "$crash_marker" \
+	>"$fixture_dir/crash-resumed.json" 2>"$fixture_dir/crash-resumed.stderr"
+grep -q '"ok":true' "$fixture_dir/crash-resumed.json"
+grep -q '"status":"completed"' "$fixture_dir/$crash_id/state.json"
+[[ "$(wc -l < "$crash_marker" | tr -d ' ')" == 2 ]]
+
+# An external sink that atomically accepts the stable run/step key can reject
+# the replay even when Dispatch has not checkpointed the step result yet.
+idempotent_id="$("$KUJO_BIN" run tests/fixtures/run_lock_workflow.kujo -- prepare "$fixture_dir")"
+idempotent_marker="$fixture_dir/idempotent-effect"
+"$KUJO_BIN" run tests/fixtures/run_lock_workflow.kujo -- \
+	idempotent "$fixture_dir" "$idempotent_id" "$idempotent_marker" \
+	>"$fixture_dir/idempotent-first.json" 2>"$fixture_dir/idempotent-first.stderr" &
+idempotent_pid="$!"
+for attempt in {1..150}; do
+	if [[ -s "$idempotent_marker" ]]; then break; fi
+	if ! kill -0 "$idempotent_pid" 2>/dev/null; then break; fi
+	sleep 0.02
+done
+[[ -s "$idempotent_marker" ]]
+kill -0 "$idempotent_pid"
+kill -TERM "$idempotent_pid"
+wait "$idempotent_pid" 2>/dev/null || true
+"$KUJO_BIN" run tests/fixtures/run_lock_workflow.kujo -- \
+	idempotent "$fixture_dir" "$idempotent_id" "$idempotent_marker" \
+	>"$fixture_dir/idempotent-resumed.json" 2>"$fixture_dir/idempotent-resumed.stderr"
+grep -q '"ok":true' "$fixture_dir/idempotent-resumed.json"
+[[ "$(<"$idempotent_marker")" == "$idempotent_id:work" ]]
+grep -q '"status":"completed"' "$fixture_dir/$idempotent_id/state.json"
+echo "Run locking, at-least-once crash replay, and external idempotency passed."
