@@ -83,3 +83,33 @@ lines. This changes verification-script verbosity, not Dispatch CLI output.
 The throughput harness exits nonzero if any requested run does not complete.
 Its existing output fields are retained, so a failure cannot look like a passing
 performance check merely because timing numbers were printed.
+
+## Run catalog, state, and trace scale
+
+Run `KUJO_BIN=kujo bash tests/benchmarks/measure_state_scale.sh` on each target
+platform. It records three independent samples per size, measures peak resident
+memory with the platform's `time` utility, and leaves raw evidence under
+`tests/tmp/state-scale.*` (ignored by git). The large case writes 50 runs with
+262,144-character input payloads; the small case writes five 128-character
+payloads. Trace payloads are capped at 2,400 characters and eight events.
+
+On the local macOS reference machine with Kujo 1.4.0, 2026-09-22:
+
+| Case | Wall time, three runs | Peak RSS, three runs | Last state | Last trace | Run index |
+| --- | --- | --- | --- | --- | --- |
+| 5 × 128 chars | 2.712 / 2.911 / 3.126 s | 31.7 / 33.0 / 33.1 MB | 20,096 B | 1,065 B | 2,027 B |
+| 50 × 262,144 chars | 32.872 / 31.543 / 34.979 s | 42.5 / 44.5 / 42.7 MB | 548,734 B | 5,668 B | 19,797 B |
+
+These are development measurements, not production throughput or memory
+guarantees. Choose a per-run input/output budget and disk capacity for the
+deployment, cap traces with `DISPATCH_TRACE_MAX_EVENTS` and
+`DISPATCH_TRACE_MAX_PAYLOAD_CHARS`, and alert using `doctor` and
+`DISPATCH_STATE_MAX_BYTES` (default 5 MiB). Keep output roots partitioned by
+service so the index and directory scan do not grow without operational review.
+
+`cleanup --apply` is lossless logical retention: it writes a tombstone and
+removes the catalog entry but deliberately keeps run artifacts for recovery.
+It does **not** reclaim disk space. Dry-run and completed-status selection
+should be reviewed before applying cleanup; archive and physically purge only
+after an independently approved retention and backup policy. Do not rotate or
+truncate run state/trace files in place: that would break resume and audit.

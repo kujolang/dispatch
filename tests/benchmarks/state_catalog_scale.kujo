@@ -1,0 +1,37 @@
+from src.workflows.workflow import create_research_report_workflow
+from src.core.state import create_run_state, persist_run_state
+from src.core.trace import append_trace
+
+values := args()
+run_count := to_int(values[0])
+payload_size := to_int(values[1])
+output_root := values[2]
+if run_count < 1 || run_count > 200 || payload_size < 1 || payload_size > 1048576 {
+	print("Expected 1..200 runs and 1..1048576 payload characters.")
+	exit(1)
+}
+
+payload := "x"
+while len(payload) < payload_size { payload = payload + payload }
+payload = substring(payload, 0, payload_size)
+workflow := create_research_report_workflow("Scale benchmark", true)
+started_at := current_timestamp()
+state_bytes := 0
+trace_bytes := 0
+i := 0
+while i < run_count {
+	state := create_run_state(workflow, {"topic": "scale-" + to_string(i), "context": payload}, output_root, {"trace_max_events": 8, "trace_max_payload_chars": 2400})
+	state["trace"] := append_trace(state["trace"], "benchmark", "scale", "Measured payload", {"content": payload})
+	state := persist_run_state(state)
+	state_bytes = file_size(state["run_dir"] + "/state.json")
+	trace_bytes = file_size(state["run_dir"] + "/trace.json")
+	i = i + 1
+}
+print(to_json({
+	"runs": run_count,
+	"payload_chars": payload_size,
+	"wall_ms": current_timestamp() - started_at,
+	"last_state_bytes": state_bytes,
+	"last_trace_bytes": trace_bytes,
+	"index_bytes": file_size(output_root + "/.dispatch-run-index.json")
+}))
