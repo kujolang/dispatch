@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+stage=setup
+trap 'result=$?; if [[ "$result" -ne 0 ]]; then echo "Bridge package test failed at stage: $stage" >&2; fi' EXIT
 
 cd "$(dirname "$0")/.."
 KUJO_BIN="${KUJO_BIN:-kujo}"
@@ -29,12 +31,14 @@ run_installed() {
 }
 version="$(run_installed version)"
 [[ "$version" == "Dispatch 1.3.0" ]]
+stage=reject_arbitrary_absolute_path
 if run_installed validate --workflow-file "$fixture_dir/work/outside.json" --json \
 	>"$fixture_dir/outside.log" 2>&1; then
 	echo "An arbitrary absolute workflow path unexpectedly passed." >&2
 	exit 1
 fi
 grep -q 'Absolute config paths are blocked' "$fixture_dir/outside.log"
+stage=reject_traversal_paths
 for unsafe_name in '../outside.json' 'encoded%2foutside.json'; do
 	if run_installed validate --workflow-file "$install_root/examples/workflows/$unsafe_name" --json \
 		>"$fixture_dir/traversal.log" 2>&1; then
@@ -44,9 +48,11 @@ for unsafe_name in '../outside.json' 'encoded%2foutside.json'; do
 	grep -q 'Absolute config paths are blocked' "$fixture_dir/traversal.log"
 done
 
+stage=validate_bundled_workflow
 run_installed validate --workflow-file "$install_root/examples/workflows/routed-review.json" --json \
 	>"$fixture_dir/installed-validate.json"
 
+stage=resolve_pinned_bridge_path
 (
 	cd "$install_root"
 	DISPATCH_ROOT="$install_root" AI_SDK_PATH="$AI_SDK_PATH" \
@@ -54,6 +60,7 @@ run_installed validate --workflow-file "$install_root/examples/workflows/routed-
 		"$KUJO_BIN" run tests/fixtures/bridge_resolve_probe.kujo
 )
 
+stage=run_bundled_demo
 if ! DISPATCH_OFFLINE_FIXTURE=true run_installed demo "Bridge package smoke" \
 	--workflow-file "$install_root/examples/workflows/routed-review.json" \
 	--yes --non-interactive --output-root package-output >"$fixture_dir/demo.log" 2>&1; then
@@ -62,6 +69,7 @@ if ! DISPATCH_OFFLINE_FIXTURE=true run_installed demo "Bridge package smoke" \
 fi
 grep -q 'Status: completed' "$fixture_dir/demo.log"
 
+stage=reject_custom_provider_origin
 payload='{"provider_id":"custom","base_url":"https://unapproved.example/v1","api_key_env":"CUSTOM_API_KEY","messages":[{"role":"user","content":"dispatch-fixture-secret"}]}'
 if DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS=https://models.example/v1 \
 	DISPATCH_BRIDGE_PAYLOAD="$payload" /usr/bin/env -C "$AI_SDK_PATH" "$KUJO_BIN" \
@@ -75,6 +83,7 @@ if grep -q 'dispatch-fixture-secret' "$fixture_dir/rejected.json" "$fixture_dir/
 	exit 1
 fi
 
+stage=redact_bridge_execution_failure
 (
 	cd "$install_root"
 	DISPATCH_ROOT="$install_root" AI_SDK_PATH="$AI_SDK_PATH" KUJO_BIN="$KUJO_BIN" \
