@@ -672,7 +672,7 @@ Before merging a routed workflow:
 - `examples/workflows/routed-review.json`: complete offline routed workflow.
 - `src/core/routing.kujo`: filtering, ranking, decision, and evaluation contracts.
 - `src/core/runner.kujo`: persistence, execution, retry, fallback, and resume behavior.
-- `sdk_adapter.kujo` and `bridge_chat.kujo`: AI SDK bridge boundary.
+- `src/bridge/sdk_adapter.kujo` and `src/bridge/bridge_chat.kujo`: AI SDK bridge boundary.
 - `tests/routing_tests.kujo`: executable routing behavior examples.
 - `../ai-sdk/src/model_catalog.kujo`: model catalog construction and validation.
 - `../agents-sdk/src/agents/core_types.kujo`: routable agent metadata and compatibility.

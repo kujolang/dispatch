@@ -10,6 +10,15 @@ It routes structured work through repeatable workflow templates and produces rev
 
 Dispatch is strongest as a Control-layer primitive: workflow routing, run-state persistence, import/export, approval gates, and auditable orchestration evidence.
 
+Dispatch is a showcase of Kujo's module system, typed workflow data, CLI runtime,
+and testable agent orchestration—not an enterprise certification or a drop-in
+multi-tenant service. Start with the credential-free fixture below, then use
+[the deployment guide](docs/enterprise-deployment.md) for the production trust
+model and [the next review](docs/audits/next-review-2026-09-22.md) for open work.
+In particular, lock recovery is age-based: do not run competing workers against
+the same run after a lock may expire. Live providers, platform isolation, and
+deployment-specific controls require separate validation.
+
 Model execution is live and fail-closed by default, including the built-in planner and writer when routing is disabled. Deterministic offline fixtures are an explicit test/demo mode enabled with `DISPATCH_OFFLINE_FIXTURE=true`; live SDK integration requires AI SDK plus provider credentials.
 
 ## Why Dispatch
@@ -76,13 +85,13 @@ Core modules:
 - `src/core/report.kujo`: report payload and artifact writing
 - `src/core/tool_policy.kujo`: centralized tool authorization policy parsing and builder
 - `src/core/plugins.kujo`: plugin registration and runtime injection for external tools/agents
-- `sdk_adapter.kujo`: external AI SDK bridge invocation
-- `bridge_chat.kujo`: Kujo bridge script executed from `AI_SDK_PATH`
+- `src/bridge/sdk_adapter.kujo`: external AI SDK bridge invocation
+- `src/bridge/bridge_chat.kujo`: Kujo bridge script executed with `AI_SDK_PATH` as the working directory
 
 Module layout:
 
 - All implementation modules live under `src/`, including the tool handler layer (`src/tools/`).
-- Root-level runtime entry scripts are limited to `dispatch.kujo` (CLI entrypoint), `sdk_adapter.kujo` (imported bridge invoker), and `bridge_chat.kujo` (spawned from `AI_SDK_PATH`).
+- `dispatch.kujo` stays at the root as the CLI/package entrypoint; the bridge implementation lives in `src/bridge/`.
 - New development should target `src/` modules directly.
 
 ## External AI SDK Integration (AI Chat Style)
@@ -90,7 +99,7 @@ Module layout:
 Dispatch uses the same pattern as `ai-chat`:
 
 1. Dispatch does not vendor `ai_sdk.kujo` or `providers.kujo`.
-2. `sdk_adapter.kujo` invokes a bridge process.
+2. `src/bridge/sdk_adapter.kujo` invokes the `src/bridge/bridge_chat.kujo` bridge process.
 3. The bridge runs with `AI_SDK_PATH` as module root and imports shared SDK modules from that external project.
 
 This keeps SDK behavior centralized in one repository (`ai-sdk`) while allowing Dispatch to remain lightweight.
@@ -221,7 +230,7 @@ Dispatch reads the following environment variables:
 |---|---|---|---|
 | `KUJO_BIN` | No | `kujo` | Kujo executable used to invoke bridge calls |
 | `AI_SDK_PATH` | Yes (for live SDK integration) | `../ai-sdk` | Directory containing `ai_sdk.kujo` and `providers.kujo` |
-| `DISPATCH_SDK_BRIDGE_SCRIPT` | No | `<DISPATCH_ROOT>/bridge_chat.kujo`, or `<PWD>/bridge_chat.kujo` from source | Override bridge script path |
+| `DISPATCH_SDK_BRIDGE_SCRIPT` | No | `<DISPATCH_ROOT>/src/bridge/bridge_chat.kujo`, or `<PWD>/src/bridge/bridge_chat.kujo` from source | Override bridge script path |
 | `DISPATCH_OFFLINE_FIXTURE` | No | `false` | Explicitly enables deterministic fixture-mode model calls for tests and demos; production fails closed without live configuration |
 | `DISPATCH_ALLOW_ANY_SOURCES_DIR` | No | `false` | Allows non-default `--sources-dir` paths when explicitly set to `true` |
 | `DISPATCH_ALLOW_ANY_OUTPUT_ROOT` | No | `false` | Allows unconstrained `--output-root` paths (absolute and broader targets) when explicitly set to `true` |
@@ -510,6 +519,9 @@ kujo test-run tests/dispatch_tests.kujo -v
 The [repository hardening report](docs/audits/repository-hardening.md) records
 verified changes, measurements, compatibility, and remaining operational risks.
 The [release checklist](docs/release-checklist.md) remains the release authority.
+The [2026-09-22 review backlog](docs/audits/next-review-2026-09-22.md) tracks
+the remaining readiness, portability, and verification work; a passing offline
+fixture gate is not evidence of universal or enterprise production readiness.
 
 ## Agent And Contributor Guidance
 
@@ -615,6 +627,9 @@ The supported VM and interpreter help/version paths are warning-free. Treat unex
 dispatch/
   README.md
   src/
+    bridge/
+      sdk_adapter.kujo
+      bridge_chat.kujo
     cli/
       cli_args.kujo
     workflows/
@@ -639,8 +654,6 @@ dispatch/
       step.kujo
       trace.kujo
   dispatch.kujo
-  sdk_adapter.kujo
-  bridge_chat.kujo
   examples/
     research-report/
       sources/
