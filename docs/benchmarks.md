@@ -84,6 +84,12 @@ The throughput harness exits nonzero if any requested run does not complete.
 Its existing output fields are retained, so a failure cannot look like a passing
 performance check merely because timing numbers were printed.
 
+An additional local fixture soak of 100 research-report runs completed 100/100
+on 2026-09-22 using pinned Kujo 1.4.0. Elapsed wall time was 2,249,762 ms
+(22,497 ms per run) on a heavily contended development host. This is a
+completion regression check, not a provider test or performance SLA;
+the output directory also contains older, unrelated run artifacts.
+
 ## Run catalog, state, and trace scale
 
 Run `KUJO_BIN=kujo bash tests/benchmarks/measure_state_scale.sh` on each target

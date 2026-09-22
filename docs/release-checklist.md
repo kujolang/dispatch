@@ -8,7 +8,7 @@ final revision; local fixture success alone does not qualify as a public release
 
 - [x] `kennel.toml`, `kujo.toml`, the badge, `dispatch version`, and OTLP scope version agree on 1.3.0.
 - [x] `release/dispatch-v1.3.0.refs` pins public Kujo 1.4.0, AI SDK, Agents SDK, and the eventual Dispatch tag; the Kujo runtime exposes `file_lock`/`file_unlock` on Linux and macOS. The Dispatch tag is only a planned manifest reference, not a published release.
-- [ ] Quiesce pre-1.3 workers before replacing age-reclaimable lock files; validate resumed legacy runs and document rollback without mixing lock protocols. A pinned Kujo 1.0.2-to-1.4.0 local rehearsal passed both state backends; cross-platform dual-runtime CI and target staging remain pending.
+- [ ] Quiesce pre-1.3 workers before replacing age-reclaimable lock files; validate resumed legacy runs and document rollback without mixing lock protocols. The pinned Kujo 1.0.2-to-1.4.0 rehearsal passed both backends on [Linux/macOS CI](https://github.com/kujolang/dispatch/actions/runs/35751227471); representative target staging remains pending.
 - [x] The commit-pinned installer handles both the legacy root bridge path exported by the pinned shim and the `src/bridge/` source layout without enabling arbitrary config paths. Real isolated Linux/macOS installations passed at `573dec5`; authorized release-tag installations remain separate.
 
 ## Deterministic and adversarial gates
@@ -18,7 +18,7 @@ kujo check dispatch.kujo
 KUJO_BIN=kujo AI_SDK_PATH=/path/to/pinned/ai-sdk DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh
 ```
 
-- [x] Linux and macOS pass the exact pinned full CI gate: SDK, routing, SQLite, policy, operational, hardening, 24 contract shards, warning-free VM/interpreter smoke, and bounded 3/3 workload. [CI run 35740688654](https://github.com/kujolang/dispatch/actions/runs/35740688654) passed both platforms at `573dec5`; the subsequent release-evidence edit is documentation-only.
+- [x] Linux and macOS pass the exact pinned full CI gate: SDK, routing, SQLite, policy, operational, hardening, 24 contract shards, warning-free VM/interpreter smoke, and bounded 3/3 workload. [CI run 35751227471](https://github.com/kujolang/dispatch/actions/runs/35751227471) passed both platforms at `d9fda63`; the subsequent release-evidence edit is documentation-only.
 - [x] Process-owned run-lock contention, backdated metadata, crash recovery, stale-release and long-running-resume tests pass; no second owner can perform tool/state side effects before the first exits. Both platforms passed in the same CI run.
 - [x] Concurrent webhook JSONL sink test preserves every event and exact framing; signed network webhook/outbox regression stays green. Both platforms passed in the same CI run.
 - [x] From outside the package, run installed `dispatch version`, validate the bundled routed workflow, execute its fixture, and exercise the bridge's origin rejection and redacted failure path. Both platforms passed in the CI run above against the pinned candidate commit.
@@ -28,7 +28,7 @@ KUJO_BIN=kujo AI_SDK_PATH=/path/to/pinned/ai-sdk DISPATCH_OFFLINE_FIXTURE=true b
 ## Integrations and release decision
 
 - [x] Pinned AI SDK and Agents SDK passed their own offline release gates on Linux and macOS; the immutable commit-level full installation closure passed in the CI run above. Live provider and eventual release-tag checks remain pending.
-- [ ] Complete a representative failure/restart and fixture soak, then a real approved provider or approved local proxy route; record only non-secret provider/model and outcome metadata.
+- [ ] Complete a representative failure/restart and fixture soak, then a real approved provider or approved local proxy route; record only non-secret provider/model and outcome metadata. The forced crash/restart fixture and a local 100/100-run offline soak passed; live target evidence remains pending.
 - [ ] For consequential tool actions, prove that the external sink enforces the stable `context.effect_idempotency_key` across crash-before-checkpoint replay; the fixture regression intentionally demonstrates a duplicate without that enforcement.
 - [ ] Complete a sealed repository-wide Codex Security scan on the final revision and resolve reportable findings; run ShipCheck against the same revision.
 - [ ] Stage only reviewed source and documentation, commit in small pieces, push, and verify both CI operating systems and a clean remote revision.
