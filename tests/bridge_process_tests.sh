@@ -70,13 +70,19 @@ grep -q 'Status: completed' "$fixture_dir/demo.log"
 
 stage=reject_custom_provider_origin
 payload='{"provider_id":"custom","base_url":"https://unapproved.example/v1","api_key_env":"CUSTOM_API_KEY","messages":[{"role":"user","content":"dispatch-fixture-secret"}]}'
-if DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS=https://models.example/v1 \
-	DISPATCH_BRIDGE_PAYLOAD="$payload" /usr/bin/env -C "$AI_SDK_PATH" "$KUJO_BIN" \
-	run "$install_root/src/bridge/bridge_chat.kujo" --interpreter >"$fixture_dir/rejected.json" 2>"$fixture_dir/rejected.err"; then
+if (
+	cd "$AI_SDK_PATH"
+	DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS=https://models.example/v1 \
+		DISPATCH_BRIDGE_PAYLOAD="$payload" "$KUJO_BIN" \
+		run "$install_root/src/bridge/bridge_chat.kujo" --interpreter
+) >"$fixture_dir/rejected.json" 2>"$fixture_dir/rejected.err"; then
 	echo "Unapproved provider unexpectedly passed the bridge." >&2
 	exit 1
 fi
-grep -q '"code":"provider_endpoint_not_allowed"' "$fixture_dir/rejected.json"
+if ! grep -q '"code":"provider_endpoint_not_allowed"' "$fixture_dir/rejected.json"; then
+	echo "Bridge origin rejection did not return the expected structured code." >&2
+	exit 1
+fi
 if grep -q 'dispatch-fixture-secret' "$fixture_dir/rejected.json" "$fixture_dir/rejected.err"; then
 	echo "Bridge rejection leaked request content." >&2
 	exit 1
