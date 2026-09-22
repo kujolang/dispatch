@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 stage=setup
-trap 'result=$?; if [[ "$result" -ne 0 ]]; then echo "Bridge package test failed at stage: $stage" >&2; fi' EXIT
 
 cd "$(dirname "$0")/.."
 KUJO_BIN="${KUJO_BIN:-kujo}"
@@ -10,7 +9,7 @@ AI_SDK_PATH="${AI_SDK_PATH:-$PWD/../ai-sdk}"
 
 mkdir -p tests/tmp
 fixture_dir="$(mktemp -d tests/tmp/bridge-package.XXXXXX)"
-trap 'rm -rf "$fixture_dir"' EXIT
+trap 'result=$?; if [[ "$result" -ne 0 ]]; then echo "Bridge package test failed at stage: $stage" >&2; fi; rm -rf "$fixture_dir"' EXIT
 fixture_dir="$PWD/$fixture_dir"
 install_root="$fixture_dir/package"
 mkdir -p "$install_root" "$fixture_dir/work"
