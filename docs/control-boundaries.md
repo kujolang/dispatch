@@ -34,6 +34,16 @@ step remains `completed`; policy failure is a separate workflow outcome. A
 review boundary writes `state.json`, a hash-linked `control-events.jsonl`, and
 a `kujo.intervention-request/v2`. Bare `resume` refuses an open policy boundary.
 
+`scope: workflow` closes admission for every pending step immediately.
+`step`, `descendants`, and `branch` use the transitive dependency closure rooted
+at the producing step; Dispatch drains unrelated runnable DAG branches, then
+enters `paused`. The persisted boundary lists the exact blocked step IDs and
+records `workflow_quiescing` followed by `workflow_paused`. Because Dispatch's
+current parallel batches join before policy resolution, there are no live
+in-process siblings at the decision point: their late outcomes are already
+recorded, and `in_flight` remains auditable policy metadata rather than a claim
+that arbitrary tool processes were rolled back or force-killed.
+
 `resume-decision` accepts the existing approval payload and the new
 `kujo.intervention-decision/v2` payload. A v2 payload must include Dispatch's
 additive `run_id` routing field, match the request and boundary IDs, match the

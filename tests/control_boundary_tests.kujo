@@ -3,7 +3,7 @@ test_setup {
     from src.core.runner import run_workflow
     from src.core.control import validate_evaluation_result, resolve_control_decision
     from src.core.intervention import validate_intervention_decision, prepare_intervention_continuation
-    from tests.control_boundary_fixtures import evaluation_result, control_workflow, control_registry, control_run_options, intervention_state, intervention_decision
+    from tests.control_boundary_fixtures import evaluation_result, control_workflow, scoped_control_workflow, control_registry, control_run_options, intervention_state, intervention_decision
 }
 
 test "evaluation failure can pause at a durable review boundary" {
@@ -61,6 +61,27 @@ test "evaluation warning can continue" {
     assert_equal(result["run_state"]["status"], "completed")
     assert_equal(result["run_state"]["steps"][1]["status"], "completed")
     assert_equal(len(result["run_state"]["control_decisions"]), 1)
+}
+
+test "descendant boundary drains an unrelated DAG branch before pausing" {
+    policies := [{
+        "when": {"result": "evaluation", "verdict": "fail"},
+        "decide": {"disposition": "require_intervention", "reason": "Branch review required.", "scope": "descendants", "in_flight": "allow_finish", "allowed_actions": ["resume_from_boundary", "abort"]}
+    }]
+    workflow := scoped_control_workflow(policies)
+    state := create_run_state(workflow, {"topic": "scoped"}, "tests/tmp/control-boundary-scoped", control_run_options("tests/tmp/control-boundary-scoped"))
+    result := run_workflow(workflow, state, control_registry(), control_run_options("tests/tmp/control-boundary-scoped"))
+    assert_true(result["ok"])
+    assert_true(result["paused"])
+    final := result["run_state"]
+    assert_equal(final["steps"][0]["status"], "completed")
+    assert_equal(final["steps"][1]["status"], "pending")
+    assert_equal(final["steps"][2]["status"], "completed")
+    assert_equal(final["control_barrier"]["status"], "quiesced")
+    assert_equal(final["current_control_boundary"]["blocked_step_ids"], ["downstream"])
+    journal := read_file(final["run_dir"] + "/control-events.jsonl")
+    assert_true(contains(journal, "workflow_quiescing") == 1)
+    assert_true(contains(journal, "workflow_paused") == 1)
 }
 
 test "evaluation result cannot issue an orchestration action" {

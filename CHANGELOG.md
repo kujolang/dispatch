@@ -10,6 +10,8 @@
   rollback or clean-state re-execution when a provider contract is absent.
 - Added provider-backed `retry_clean` preparation using portable re-execution
   descriptors while retaining fail-closed effect-safety checks.
+- Enforced persisted DAG admission barriers for workflow and transitive
+  descendant scopes, allowing unrelated branches to drain before review.
 
 All notable changes to this project will be documented in this file.
 

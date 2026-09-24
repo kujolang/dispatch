@@ -57,6 +57,10 @@ func downstream_handler(input, context) {
     return {"ok": true, "data": {"ran": true}}
 }
 
+func independent_handler(input, context) {
+    return {"ok": true, "data": {"independent": true}}
+}
+
 export func control_workflow(gate_tool, policies) {
     return create_workflow({
         "id": "control-boundary-test",
@@ -85,7 +89,15 @@ export func control_registry() {
     tools = register_tool(tools, create_tool("gate_fail", "Failing evaluator", {"type": "dict"}, {"type": "dict"}, failing_gate_handler, null))
     tools = register_tool(tools, create_tool("gate_warn", "Warning evaluator", {"type": "dict"}, {"type": "dict"}, warning_gate_handler, null))
     tools = register_tool(tools, create_tool("downstream", "Downstream effect", {"type": "dict"}, {"type": "dict"}, downstream_handler, null))
+    tools = register_tool(tools, create_tool("independent", "Independent branch", {"type": "dict"}, {"type": "dict"}, independent_handler, null))
     return tools
+}
+
+export func scoped_control_workflow(policies) {
+    workflow := control_workflow("gate_fail", policies)
+    workflow["tools"] := push(workflow["tools"], "independent")
+    workflow["steps"] := push(workflow["steps"], create_step("independent", "Independent", "tool", {"tool_name": "independent", "input_from": ["input"], "output_key": "independent", "effect_class": "none"}))
+    return workflow
 }
 
 export func control_run_options(root) {

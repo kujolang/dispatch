@@ -23,6 +23,52 @@ func replace_step(steps, target_index, replacement_step) {
     return steps
 }
 
+func array_has(values, expected) {
+    if type(values) != "array" {return false}
+    for value in values {if value == expected {return true}}
+    return false
+}
+
+func scoped_blocked_step_ids(steps, root_step_id, scope_kind) {
+    mut blocked := []
+    if scope_kind == "workflow" {
+        for item in steps {
+            if dict_get_or(item, "status", "pending") == "pending" {blocked = push(blocked, dict_get_or(item, "id", ""))}
+        }
+        return blocked
+    }
+    # A postcondition boundary blocks the producing step's continuation. The
+    # current DAG has dependency edges but no separate branch identity, so
+    # step/descendants/branch all resolve to the transitive dependent closure.
+    mut changed := true
+    while changed {
+        changed = false
+        for item in steps {
+            item_id := dict_get_or(item, "id", "")
+            if item_id == root_step_id||array_has(blocked, item_id) {continue}
+            for dependency_id in dict_get_or(item, "depends_on", []) {
+                if dependency_id == root_step_id||array_has(blocked, dependency_id) {
+                    blocked = push(blocked, item_id)
+                    changed = true
+                }
+            }
+        }
+    }
+    return blocked
+}
+
+func step_blocked_by_control(run_state, step_id) {
+    barrier := dict_get_or(run_state, "control_barrier", null)
+    return type(barrier) == "dict"&&dict_get_or(barrier, "status", "") == "closed_to_admission"&&array_has(dict_get_or(barrier, "blocked_step_ids", []), step_id)
+}
+
+func unblocked_pending_exists(steps, blocked_step_ids) {
+    for item in steps {
+        if dict_get_or(item, "status", "pending") == "pending"&&array_has(blocked_step_ids, dict_get_or(item, "id", "")) == false {return true}
+    }
+    return false
+}
+
 func fail_from_control_decision(run_state, step, decision, control_evaluation, options) {
     error_payload := {
         "code": "control_policy_failed",
@@ -70,6 +116,9 @@ func pause_from_control_decision(run_state, step, step_index, decision, control_
         preservation["limitations"] := []
     }
     reexecution_descriptor := dict_get_or(decision, "reexecution_descriptor", dict_get_or(control_evaluation, "reexecution_descriptor", null))
+    scope_kind := dict_get_or(dict_get_or(decision, "scope", {}), "kind", "workflow")
+    blocked_step_ids := scoped_blocked_step_ids(run_state["steps"], dict_get_or(step, "id", ""), scope_kind)
+    quiescing := scope_kind != "workflow"&&unblocked_pending_exists(run_state["steps"], blocked_step_ids)
     boundary := {
         "schema": "kujo.control-boundary/v1",
         "boundary_id": boundary_id,
@@ -79,19 +128,25 @@ func pause_from_control_decision(run_state, step, step_index, decision, control_
         "evaluation_result": control_evaluation,
         "policy_decision": decision,
         "preservation": preservation,
-        "created_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
+        "created_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ"),
+        "blocked_step_ids": blocked_step_ids,
+        "quiescing": quiescing
     }
     if type(reexecution_descriptor) == "dict" {boundary["reexecution_descriptor"] := reexecution_descriptor}
     run_state["status"] := "paused"
+    if quiescing {run_state["status"] := "running"}
     run_state["pause_reason"] := dict_get_or(dict_get_or(decision, "reason", {}), "code", "policy_review")
     run_state["current_step_index"] := step_index + 1
     run_state["control_boundaries"] := push(dict_get_or(run_state, "control_boundaries", []), boundary)
     run_state["current_control_boundary"] := boundary
+    run_state["control_barrier"] := {"boundary_id": boundary_id, "status": "closed_to_admission", "scope": dict_get_or(decision, "scope", {}), "blocked_step_ids": blocked_step_ids, "in_flight": dict_get_or(decision, "in_flight", "allow_finish")}
     # Persist the admission barrier before journaling or requesting review.
     run_state = persist_run_state(run_state)
     journaled := append_control_event(run_state, "policy_decision", dict_get_or(step, "id", ""), [dict_get_or(decision, "decision_id", ""), dict_get_or(control_evaluation, "result_id", "")], {"disposition": dict_get_or(decision, "disposition", ""), "scope": dict_get_or(decision, "scope", {})})
     run_state = journaled["run_state"]
-    journaled = append_control_event(run_state, "workflow_paused", dict_get_or(step, "id", ""), [boundary_id], {"reason": dict_get_or(decision, "reason", {}), "preservation_status": dict_get_or(preservation, "status", "")})
+    pause_event := "workflow_paused"
+    if quiescing {pause_event = "workflow_quiescing"}
+    journaled = append_control_event(run_state, pause_event, dict_get_or(step, "id", ""), [boundary_id], {"reason": dict_get_or(decision, "reason", {}), "preservation_status": dict_get_or(preservation, "status", ""), "blocked_step_ids": blocked_step_ids})
     run_state = journaled["run_state"]
     boundary["state_revision"] := dict_get_or(run_state, "revision", 0) + 1
     boundaries := dict_get_or(run_state, "control_boundaries", [])
@@ -102,8 +157,25 @@ func pause_from_control_decision(run_state, step, step_index, decision, control_
     run_state["human_intervention"] := human_event
     run_state["trace"] := append_trace(run_state["trace"], "control_boundary_opened", dict_get_or(step, "id", ""), dict_get_or(dict_get_or(decision, "reason", {}), "message", "Workflow paused for review."), {"boundary_id": boundary_id, "policy_decision": decision, "preservation": preservation})
     run_state = persist_run_state(run_state)
-    emit_lifecycle_event(run_state, options, "workflow_paused", dict_get_or(step, "id", ""), dict_get_or(dict_get_or(decision, "reason", {}), "message", "Workflow paused for review."), {"boundary_id": boundary_id, "policy_decision": decision})
+    emit_lifecycle_event(run_state, options, pause_event, dict_get_or(step, "id", ""), dict_get_or(dict_get_or(decision, "reason", {}), "message", "Workflow paused for review."), {"boundary_id": boundary_id, "policy_decision": decision, "blocked_step_ids": blocked_step_ids})
     emit_hook_event(options, human_event)
+    return {"ok": true, "paused": quiescing == false, "deferred": quiescing, "run_state": run_state}
+}
+
+func finish_control_quiescence(run_state) {
+    boundary := dict_get_or(run_state, "current_control_boundary", {})
+    boundary["quiescing"] := false
+    run_state["current_control_boundary"] := boundary
+    boundaries := dict_get_or(run_state, "control_boundaries", [])
+    if len(boundaries) > 0 {boundaries[len(boundaries) - 1] := boundary}
+    run_state["control_boundaries"] := boundaries
+    run_state["status"] := "paused"
+    barrier := dict_get_or(run_state, "control_barrier", {})
+    barrier["status"] := "quiesced"
+    run_state["control_barrier"] := barrier
+    journaled := append_control_event(run_state, "workflow_paused", dict_get_or(boundary, "step_id", ""), [dict_get_or(boundary, "boundary_id", "")], {"reason": dict_get_or(dict_get_or(boundary, "policy_decision", {}), "reason", {}), "blocked_step_ids": dict_get_or(boundary, "blocked_step_ids", [])})
+    run_state = journaled["run_state"]
+    run_state = persist_run_state(run_state)
     return {"ok": true, "paused": true, "run_state": run_state}
 }
 
@@ -1090,7 +1162,7 @@ func prepare_parallel_tool_batch(workflow, run_state, tool_registry, options) {
     step_index := 0
     while step_index < len(run_state["steps"])&&len(candidate_indexes) < max_parallel {
         step := run_state["steps"][step_index]
-        if dict_get_or(step, "status", "pending") == "pending"&&dict_get_or(step, "type", "") == "tool"&&dict_get_or(step, "parallel_safe", false)&&step_dependencies_satisfied(run_state["steps"], step) {
+        if dict_get_or(step, "status", "pending") == "pending"&&step_blocked_by_control(run_state, dict_get_or(step, "id", "")) == false&&dict_get_or(step, "type", "") == "tool"&&dict_get_or(step, "parallel_safe", false)&&step_dependencies_satisfied(run_state["steps"], step) {
             idempotency_key := trim(to_string(dict_get_or(step, "idempotency_key", "")))
             idempotency_store := dict_get_or(run_state, "idempotency", {})
             if idempotency_key != ""&&has_key(idempotency_store, idempotency_key) == 0 {
@@ -1216,6 +1288,10 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
                 break
             }
             if cycle_progress == false {
+                boundary := dict_get_or(run_state, "current_control_boundary", null)
+                if type(boundary) == "dict"&&dict_get_or(boundary, "status", "") == "open"&&dict_get_or(boundary, "quiescing", false) {
+                    return finish_control_quiescence(run_state)
+                }
                 run_state["status"] := "failed"
                 run_state["failed_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
                 error_payload := {
@@ -1245,6 +1321,10 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
             continue
         }
         step := run_state["steps"][index]
+        if step_blocked_by_control(run_state, dict_get_or(step, "id", "")) {
+            index := index + 1
+            continue
+        }
         cancel_before_step := cancellation_requested(step, options, run_state, false)
         if cancel_before_step["cancel"] {
             return build_cancelled_result(run_state, cancel_before_step["reason"], options)
@@ -1550,7 +1630,15 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
                 if disposition == "retry"&&len(dict_get_or(control_decision, "allowed_actions", [])) == 0 {
                     control_decision["allowed_actions"] := ["retry_evaluation", "retry_step", "retry_clean", "abort"]
                 }
-                return pause_from_control_decision(run_state, step, index, control_decision, control_evaluation, options)
+                paused_result := pause_from_control_decision(run_state, step, index, control_decision, control_evaluation, options)
+                if dict_get_or(paused_result, "deferred", false) {
+                    run_state = paused_result["run_state"]
+                    index := index + 1
+                    cycle_progress = true
+                    run_state["current_step_index"] := index
+                    continue
+                }
+                return paused_result
             }
         }
         cancel_after_step := cancellation_requested(step, options, run_state, true)

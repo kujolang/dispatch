@@ -1299,6 +1299,12 @@ func close_control_boundary(run_state, decision) {
     if type(closed) != "dict" {return {"ok": false, "run_state": run_state}}
     run_state["control_boundaries"] := boundaries
     run_state["current_control_boundary"] := closed
+    barrier := dict_get_or(run_state, "control_barrier", null)
+    if type(barrier) == "dict"&&dict_get_or(barrier, "boundary_id", "") == boundary_id {
+        barrier["status"] := "released"
+        barrier["released_by_decision_id"] := dict_get_or(decision, "decision_id", "")
+        run_state["control_barrier"] := barrier
+    }
     return {"ok": true, "run_state": run_state, "boundary": closed}
 }
 
