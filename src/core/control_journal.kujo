@@ -1,0 +1,32 @@
+from src.core.utils import dict_get_or, redact_sensitive_data, ensure_dir
+
+func append_control_event(run_state, kind, step_id, refs, details) {
+    journal := dict_get_or(run_state, "control_journal", {})
+    sequence := dict_get_or(journal, "sequence", 0) + 1
+    previous_sha256 := dict_get_or(journal, "last_sha256", "")
+    event := {
+        "schema": "kujo.control-event/v1",
+        "sequence": sequence,
+        "event_id": "ce_" + substring(sha256(to_json({"run_id": dict_get_or(run_state, "run_id", ""), "sequence": sequence, "kind": kind, "at": current_timestamp()})), 0, 24),
+        "previous_sha256": previous_sha256,
+        "run_id": dict_get_or(run_state, "run_id", ""),
+        "state_revision": dict_get_or(run_state, "revision", 0),
+        "kind": kind,
+        "subject": {"step_id": step_id},
+        "refs": refs,
+        "details": details,
+        "occurred_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
+    }
+    redacted := redact_sensitive_data(event)
+    event_sha256 := sha256(to_json(redacted))
+    redacted["event_sha256"] := event_sha256
+    path := dict_get_or(run_state, "run_dir", "") + "/control-events.jsonl"
+    ensure_dir(dirname(path))
+    line := to_json(redacted)
+    if file_exists(path)&&file_size(path) > 0 {line = "\n" + line}
+    append_file(path, line)
+    run_state["control_journal"] := {"schema": "kujo.control-journal/v1", "path": path, "sequence": sequence, "last_sha256": event_sha256}
+    return {"run_state": run_state, "event": redacted}
+}
+
+export append_control_event := append_control_event

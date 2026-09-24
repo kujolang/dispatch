@@ -58,6 +58,8 @@ Single-step chat calls are rarely enough when work needs to be repeated, reviewe
 - Trace generation (`trace.json`, `trace.md`)
 - Provider-neutral human-intervention events and validated `resume-decision`
   bridge handoff for Leash ChatOps routing
+- Producer-neutral evaluation results, workflow policy mapping, durable control
+  boundaries, and revision-bound intervention decisions
 - Quality-first route selection with hard policy constraints, explicit fallback limits,
   resumable route evidence, and structured `no_route_available` failures
 
@@ -77,6 +79,9 @@ Core modules:
 - `src/plugins/builtin_plugins.kujo`: built-in plugin registry applied via `--plugin`
 - `src/cli/output.kujo`: CLI output, version, and contract-metadata helpers
 - `src/core/runner.kujo`: orchestration engine entrypoint
+- `src/core/control.kujo`: portable result validation and workflow policy mapping
+- `src/core/control_journal.kujo`: append-only hash-linked control event journal
+- `src/core/intervention.kujo`: revision-bound continuation validation and retry safety
 - `src/core/routing.kujo`: deterministic route filtering, ranking, evaluation, and fallback policy
 - `src/agents/agent.kujo`: agent execution entrypoint and handler registry mapping
 - `src/tools/tool.kujo`: tool registry, payload adapters, and tool invocation entrypoint
@@ -138,6 +143,9 @@ Broader policy cannot be weakened by an agent or step. Allowlists intersect,
 requirements and denylists accumulate, minimums increase, and maximums decrease.
 Unknown providers are rejected unless they are one of the explicit adapters:
 `fixture`, `openai`, `openrouter`, `deepseek`, or configured `custom`.
+
+See [`docs/control-boundaries.md`](docs/control-boundaries.md) for evaluation,
+policy, evidence, review, resume, and effect-aware retry contracts.
 
 On resume, Dispatch reuses the persisted route. It will not silently reroute if the
 catalog, model, agent, handler, execution contract, or plugin that supplied a route

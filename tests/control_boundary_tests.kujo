@@ -1,0 +1,140 @@
+test_setup {
+    from src.core.state import create_run_state
+    from src.core.runner import run_workflow
+    from src.core.control import validate_evaluation_result, resolve_control_decision
+    from src.core.intervention import validate_intervention_decision, prepare_intervention_continuation
+    from tests.control_boundary_fixtures import evaluation_result, control_workflow, control_registry, control_run_options, intervention_state, intervention_decision
+}
+
+test "evaluation failure can pause at a durable review boundary" {
+    policies := [{
+        "when": {"result": "evaluation", "verdict": "fail", "minimum_severity": "error"},
+        "decide": {
+            "disposition": "require_intervention",
+            "reason_code": "evaluation_failed",
+            "reason": "Required evaluation failed.",
+            "scope": "workflow",
+            "in_flight": "allow_finish",
+            "preservation": {"required": false, "acceptable_modes": ["none"]},
+            "allowed_actions": ["retry_evaluation", "retry_step", "retry_clean", "approve_override", "abort"]
+        }
+    }]
+    workflow := control_workflow("gate_fail", policies)
+    state := create_run_state(workflow, {"topic": "pause"}, "tests/tmp/control-boundary-pause", control_run_options("tests/tmp/control-boundary-pause"))
+    result := run_workflow(workflow, state, control_registry(), control_run_options("tests/tmp/control-boundary-pause"))
+    assert_true(result["ok"])
+    assert_true(result["paused"])
+    paused := result["run_state"]
+    assert_equal(paused["status"], "paused")
+    assert_equal(paused["pause_reason"], "evaluation_failed")
+    assert_equal(paused["steps"][0]["status"], "completed")
+    assert_equal(paused["steps"][1]["status"], "pending")
+    assert_equal(paused["current_control_boundary"]["status"], "open")
+    assert_equal(paused["human_intervention"]["schema"], "kujo.intervention-request/v2")
+    assert_equal(paused["human_intervention"]["boundary_id"], paused["current_control_boundary"]["boundary_id"])
+    assert_equal(paused["human_intervention"]["state_revision"], paused["revision"])
+    assert_true(file_exists(paused["run_dir"] + "/control-events.jsonl"))
+    journal := read_file(paused["run_dir"] + "/control-events.jsonl")
+    assert_true(contains(journal, "policy_decision") == 1)
+    assert_true(contains(journal, "workflow_paused") == 1)
+}
+
+test "evaluation failure can fail the workflow without failing the action" {
+    policies := [{"when": {"result": "evaluation", "verdict": "fail"}, "decide": {"disposition": "fail", "reason_code": "evaluation_failed", "reason": "Gate failed.", "scope": "workflow", "in_flight": "allow_finish"}}]
+    workflow := control_workflow("gate_fail", policies)
+    state := create_run_state(workflow, {"topic": "fail"}, "tests/tmp/control-boundary-fail", control_run_options("tests/tmp/control-boundary-fail"))
+    result := run_workflow(workflow, state, control_registry(), control_run_options("tests/tmp/control-boundary-fail"))
+    assert_false(result["ok"])
+    assert_equal(result["run_state"]["status"], "failed")
+    assert_equal(result["run_state"]["steps"][0]["status"], "completed")
+    assert_equal(result["run_state"]["steps"][1]["status"], "pending")
+    assert_equal(result["error"]["code"], "control_policy_failed")
+}
+
+test "evaluation warning can continue" {
+    policies := [{"when": {"result": "evaluation", "verdict": "warn"}, "decide": {"disposition": "continue", "reason_code": "evaluation_warning", "reason": "Warning accepted.", "scope": "workflow", "in_flight": "allow_finish"}}]
+    workflow := control_workflow("gate_warn", policies)
+    state := create_run_state(workflow, {"topic": "warn"}, "tests/tmp/control-boundary-warn", control_run_options("tests/tmp/control-boundary-warn"))
+    result := run_workflow(workflow, state, control_registry(), control_run_options("tests/tmp/control-boundary-warn"))
+    assert_true(result["ok"])
+    assert_false(result["paused"])
+    assert_equal(result["run_state"]["status"], "completed")
+    assert_equal(result["run_state"]["steps"][1]["status"], "completed")
+    assert_equal(len(result["run_state"]["control_decisions"]), 1)
+}
+
+test "evaluation result cannot issue an orchestration action" {
+    invalid := evaluation_result("pass", "info", "er-invalid")
+    invalid["action"] := "pause"
+    validated := validate_evaluation_result(invalid)
+    assert_false(validated["ok"])
+    assert_equal(validated["error"]["code"], "invalid_evaluation_result")
+}
+
+test "portable evaluation result resolves through workflow policy" {
+    workflow := control_workflow("gate_fail", [{"when": {"result": "evaluation", "verdict": "fail"}, "decide": {"disposition": "fail", "reason": "failed", "scope": "workflow", "in_flight": "allow_finish"}}])
+    resolved := resolve_control_decision(workflow, workflow["steps"][0], evaluation_result("fail", "error", "er-debug"))
+    assert_true(resolved["ok"])
+}
+
+test "revision-bound intervention resumes without rerunning the producer" {
+    state := intervention_state(["resume_from_boundary"], "none")
+    steps := state["steps"]
+    step := steps[0]
+    step["status"] := "completed"
+    steps[0] := step
+    state["steps"] := steps
+    decision := intervention_decision("resume_from_boundary", 7)
+    validated := validate_intervention_decision(decision, state)
+    assert_true(validated["ok"])
+    prepared := prepare_intervention_continuation(state, decision)
+    assert_true(prepared["ok"])
+    assert_equal(prepared["mode"], "continue")
+    assert_equal(prepared["run_state"]["steps"][0]["status"], "completed")
+}
+
+test "retry evaluation creates an explicit new pending attempt" {
+    state := intervention_state(["retry_evaluation"], "none")
+    steps := state["steps"]
+    step := steps[0]
+    step["status"] := "completed"
+    step["output"] := {"verdict": "fail"}
+    steps[0] := step
+    state["steps"] := steps
+    decision := intervention_decision("retry_evaluation", 7)
+    validated := validate_intervention_decision(decision, state)
+    assert_true(validated["ok"])
+    prepared := prepare_intervention_continuation(state, decision)
+    assert_true(prepared["ok"])
+    assert_equal(prepared["mode"], "retry")
+    assert_equal(prepared["run_state"]["steps"][0]["status"], "pending")
+    assert_equal(prepared["run_state"]["data"]["evaluation"], null)
+}
+
+test "stale intervention decision is rejected" {
+    state := intervention_state(["resume_from_boundary"], "none")
+    decision := intervention_decision("resume_from_boundary", 6)
+    validated := validate_intervention_decision(decision, state)
+    assert_false(validated["ok"])
+    assert_equal(validated["error"]["code"], "stale_intervention_decision")
+}
+
+test "unsafe retry is rejected without an idempotency contract" {
+    state := intervention_state(["retry_step"], "external_non_idempotent")
+    decision := intervention_decision("retry_step", 7)
+    validated := validate_intervention_decision(decision, state)
+    assert_true(validated["ok"])
+    prepared := prepare_intervention_continuation(state, decision)
+    assert_false(prepared["ok"])
+    assert_equal(prepared["error"]["code"], "unsafe_retry")
+}
+
+test "retry clean refuses to emulate a provider snapshot" {
+    state := intervention_state(["retry_clean"], "none")
+    decision := intervention_decision("retry_clean", 7)
+    validated := validate_intervention_decision(decision, state)
+    assert_true(validated["ok"])
+    prepared := prepare_intervention_continuation(state, decision)
+    assert_false(prepared["ok"])
+    assert_equal(prepared["error"]["code"], "retry_clean_unavailable")
+}

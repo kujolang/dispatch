@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Added opt-in portable evaluation-result consumption, workflow control policy
+  mapping, persisted scheduler barriers, and a hash-linked control event journal.
+- Added `kujo.intervention-request/v2` emission and revision-bound
+  `kujo.intervention-decision/v2` handling while retaining the v1 approval path.
+- Added effect metadata and fail-closed retry admission; Dispatch does not infer
+  rollback or clean-state re-execution when a provider contract is absent.
+
 All notable changes to this project will be documented in this file.
 
 This project follows Keep a Changelog and Semantic Versioning.
