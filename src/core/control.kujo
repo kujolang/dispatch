@@ -114,6 +114,14 @@ func validate_policy_decision(decision) {
     if disposition == "require_intervention"&&len(dict_get_or(decision, "allowed_actions", [])) == 0 {
         return control_error("invalid_policy_decision", "Intervention policy requires allowed_actions.")
     }
+    preservation_outcome := dict_get_or(decision, "preservation_outcome", null)
+    if type(preservation_outcome) != "null"&&(type(preservation_outcome) != "dict"||dict_get_or(preservation_outcome, "schema", "") != "kujo.preservation-outcome/v1") {
+        return control_error("invalid_policy_decision", "preservation_outcome must use kujo.preservation-outcome/v1.")
+    }
+    reexecution_descriptor := dict_get_or(decision, "reexecution_descriptor", null)
+    if type(reexecution_descriptor) != "null"&&(type(reexecution_descriptor) != "dict"||dict_get_or(reexecution_descriptor, "schema", "") != "kujo.reexecution-descriptor/v1") {
+        return control_error("invalid_policy_decision", "reexecution_descriptor must use kujo.reexecution-descriptor/v1.")
+    }
     return {"ok": true, "decision": decision}
 }
 
@@ -148,6 +156,8 @@ func build_policy_decision(control, step, evaluation_result, decide) {
         "allowed_actions": dict_get_or(decide, "allowed_actions", []),
         "decided_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
     }
+    if type(dict_get_or(decide, "preservation_outcome", null)) == "dict" {decision["preservation_outcome"] := decide["preservation_outcome"]}
+    if type(dict_get_or(decide, "reexecution_descriptor", null)) == "dict" {decision["reexecution_descriptor"] := decide["reexecution_descriptor"]}
     return validate_policy_decision(decision)
 }
 

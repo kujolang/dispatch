@@ -98,6 +98,18 @@ test "portable evaluation result resolves through workflow policy" {
     assert_true(resolved["ok"])
 }
 
+test "provider preservation and reexecution contracts cross policy without coupling" {
+    preservation := {"schema": "kujo.preservation-outcome/v1", "result_id": "po-provider", "subject": {"run_id": "external-run", "step_id": "gate", "attempt_id": "a1"}, "requested_mode": "handoff_bundle", "actual_mode": "handoff_bundle", "status": "satisfied", "provider": {"name": "custom-provider"}, "reconstructability": "clean_source_plus_patch", "evidence": [{"$ref": "handoff-bundle.json"}], "limitations": [], "created_at": "2026-09-24T14:32:15Z", "cleanup": {"owner": "custom-provider"}}
+    descriptor := {"schema": "kujo.reexecution-descriptor/v1", "capability": "re_executable", "source": {"repository": "/fixture", "commit": "abc"}, "workflow": {"id": "fixture", "version": "1", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}, "tool": {"name": "custom-provider", "version": "1"}, "inputs": [], "secret_refs": [], "external_dependencies": [], "effects": {"automatic_retry_allowed": true}}
+    policy := [{"when": {"result": "evaluation", "verdict": "fail"}, "decide": {"disposition": "require_intervention", "reason": "review", "scope": "workflow", "in_flight": "allow_finish", "allowed_actions": ["retry_clean", "abort"], "preservation_outcome": preservation, "reexecution_descriptor": descriptor}}]
+    workflow := control_workflow("gate_fail", policy)
+    state := create_run_state(workflow, {"topic": "portable"}, "tests/tmp/control-boundary-portable", control_run_options("tests/tmp/control-boundary-portable"))
+    result := run_workflow(workflow, state, control_registry(), control_run_options("tests/tmp/control-boundary-portable"))
+    assert_true(result["paused"])
+    assert_equal(result["run_state"]["current_control_boundary"]["preservation"]["result_id"], "po-provider")
+    assert_equal(result["run_state"]["current_control_boundary"]["reexecution_descriptor"]["tool"]["name"], "custom-provider")
+}
+
 test "revision-bound intervention resumes without rerunning the producer" {
     state := intervention_state(["resume_from_boundary"], "none")
     steps := state["steps"]

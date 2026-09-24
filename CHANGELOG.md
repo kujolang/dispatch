@@ -12,6 +12,8 @@
   descriptors while retaining fail-closed effect-safety checks.
 - Enforced persisted DAG admission barriers for workflow and transitive
   descendant scopes, allowing unrelated branches to drain before review.
+- Preserved provider-owned preservation outcomes and re-execution descriptors
+  across policy resolution without importing their producers.
 
 All notable changes to this project will be documented in this file.
 

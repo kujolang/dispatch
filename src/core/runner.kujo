@@ -115,6 +115,10 @@ func pause_from_control_decision(run_state, step, step_index, decision, control_
         preservation["status"] := "satisfied"
         preservation["limitations"] := []
     }
+    supplied_preservation := dict_get_or(decision, "preservation_outcome", dict_get_or(control_evaluation, "preservation_outcome", null))
+    if type(supplied_preservation) == "dict"&&dict_get_or(supplied_preservation, "schema", "") == "kujo.preservation-outcome/v1" {
+        preservation = supplied_preservation
+    }
     reexecution_descriptor := dict_get_or(decision, "reexecution_descriptor", dict_get_or(control_evaluation, "reexecution_descriptor", null))
     scope_kind := dict_get_or(dict_get_or(decision, "scope", {}), "kind", "workflow")
     blocked_step_ids := scoped_blocked_step_ids(run_state["steps"], dict_get_or(step, "id", ""), scope_kind)

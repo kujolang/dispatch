@@ -44,6 +44,13 @@ in-process siblings at the decision point: their late outcomes are already
 recorded, and `in_flight` remains auditable policy metadata rather than a claim
 that arbitrary tool processes were rolled back or force-killed.
 
+Policy engines may attach an already-produced
+`kujo.preservation-outcome/v1` as `preservation_outcome` and a
+`kujo.reexecution-descriptor/v1` as `reexecution_descriptor`. Dispatch stores
+those provider-owned outcomes on the boundary; it otherwise records an honest
+unsupported/satisfied-none local placeholder and never invents a Workcell
+snapshot.
+
 `resume-decision` accepts the existing approval payload and the new
 `kujo.intervention-decision/v2` payload. A v2 payload must include Dispatch's
 additive `run_id` routing field, match the request and boundary IDs, match the
