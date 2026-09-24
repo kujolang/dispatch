@@ -138,3 +138,39 @@ test "retry clean refuses to emulate a provider snapshot" {
     assert_false(prepared["ok"])
     assert_equal(prepared["error"]["code"], "retry_clean_unavailable")
 }
+
+test "retry clean prepares a fresh provider-backed attempt" {
+    state := intervention_state(["retry_clean"], "local_reversible")
+    boundary := state["current_control_boundary"]
+    boundary["reexecution_descriptor"] := {
+        "schema": "kujo.reexecution-descriptor/v1",
+        "capability": "re_executable",
+        "source": {"repository": "/fixture", "commit": "abc123"},
+        "workflow": {"id": "fixture", "version": "1", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+        "tool": {"name": "workcell", "version": "1"},
+        "inputs": [{"name": "workcell_definition", "evidence_ref": "reexecution-input.json"}],
+        "secret_refs": [],
+        "external_dependencies": [{"name": "network", "mode": "none", "replayable": true}],
+        "effects": {"automatic_retry_allowed": true}
+    }
+    state["current_control_boundary"] := boundary
+    decision := intervention_decision("retry_clean", 7)
+    validated := validate_intervention_decision(decision, state)
+    assert_true(validated["ok"])
+    prepared := prepare_intervention_continuation(state, decision)
+    assert_true(prepared["ok"])
+    assert_equal(prepared["mode"], "retry_clean")
+    assert_equal(prepared["run_state"]["steps"][0]["status"], "pending")
+    assert_equal(prepared["run_state"]["steps"][0]["reexecution_source"], "clean")
+}
+
+test "retry clean still rejects unsafe external effects" {
+    state := intervention_state(["retry_clean"], "external_non_idempotent")
+    boundary := state["current_control_boundary"]
+    boundary["reexecution_descriptor"] := {"schema": "kujo.reexecution-descriptor/v1", "capability": "re_executable"}
+    state["current_control_boundary"] := boundary
+    decision := intervention_decision("retry_clean", 7)
+    prepared := prepare_intervention_continuation(state, decision)
+    assert_false(prepared["ok"])
+    assert_equal(prepared["error"]["code"], "unsafe_retry")
+}

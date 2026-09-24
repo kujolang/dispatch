@@ -115,10 +115,24 @@ func prepare_intervention_continuation(run_state, decision) {
     if action == "abort" {return {"ok": true, "run_state": run_state, "mode": "abort", "target_step_id": target_step_id}}
     if action == "cancel" {return {"ok": true, "run_state": run_state, "mode": "cancel", "target_step_id": target_step_id}}
     if action == "retry_clean" {
-        if type(dict_get_or(boundary, "reexecution_descriptor", null)) != "dict" {
+        descriptor := dict_get_or(boundary, "reexecution_descriptor", null)
+        if type(descriptor) != "dict"||dict_get_or(descriptor, "schema", "") != "kujo.reexecution-descriptor/v1"||dict_get_or(descriptor, "capability", "inspectable") == "inspectable" {
             return intervention_error("retry_clean_unavailable", "retry_clean requires a provider re-execution descriptor; it cannot be approximated with the current workspace.")
         }
-        return intervention_error("retry_clean_unavailable", "No re-execution provider is configured for this run.")
+        steps := dict_get_or(run_state, "steps", [])
+        target_index := find_step_index(steps, target_step_id)
+        if target_index < 0 {return intervention_error("invalid_continuation_target", "Continuation target step was not found: " + target_step_id)}
+        target_step := steps[target_index]
+        if retry_is_effect_safe(target_step) == false {
+            return intervention_error("unsafe_retry", "retry_clean cannot duplicate an unsafe external effect without an idempotency contract.")
+        }
+        target_step = reset_step_for_attempt(target_step)
+        target_step["reexecution_descriptor"] := descriptor
+        target_step["reexecution_source"] := "clean"
+        steps[target_index] := target_step
+        run_state["steps"] := steps
+        run_state["current_step_index"] := target_index
+        return {"ok": true, "run_state": run_state, "mode": "retry_clean", "target_step_id": target_step_id, "reexecution_descriptor": descriptor}
     }
     steps := dict_get_or(run_state, "steps", [])
     target_index := find_step_index(steps, target_step_id)

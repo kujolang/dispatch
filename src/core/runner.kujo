@@ -69,6 +69,7 @@ func pause_from_control_decision(run_state, step, step_index, decision, control_
         preservation["status"] := "satisfied"
         preservation["limitations"] := []
     }
+    reexecution_descriptor := dict_get_or(decision, "reexecution_descriptor", dict_get_or(control_evaluation, "reexecution_descriptor", null))
     boundary := {
         "schema": "kujo.control-boundary/v1",
         "boundary_id": boundary_id,
@@ -80,6 +81,7 @@ func pause_from_control_decision(run_state, step, step_index, decision, control_
         "preservation": preservation,
         "created_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
     }
+    if type(reexecution_descriptor) == "dict" {boundary["reexecution_descriptor"] := reexecution_descriptor}
     run_state["status"] := "paused"
     run_state["pause_reason"] := dict_get_or(dict_get_or(decision, "reason", {}), "code", "policy_review")
     run_state["current_step_index"] := step_index + 1
@@ -858,6 +860,10 @@ func execute_tool_step(step, workflow, step_input, run_state, tool_registry, opt
             "execution_timeout_ms": deadline["timeout_ms"],
             "deadline_ms": deadline["deadline_ms"],
             "deadline_error_code": deadline["deadline_error_code"]
+        }
+        if type(dict_get_or(step, "reexecution_descriptor", null)) == "dict" {
+            context["reexecution_descriptor"] := step["reexecution_descriptor"]
+            context["reexecution_source"] := dict_get_or(step, "reexecution_source", "clean")
         }
         if deadline["deadline_ms"] > 0&&current_timestamp() >= deadline["deadline_ms"] {return {"ok": false, "error": {"code": deadline["deadline_error_code"], "message": "Execution deadline expired before tool call: " + tool_name, "retryable": false}}}
         tool_result := call_tool(tool_registry, tool_name, tool_payload, context)

@@ -8,6 +8,8 @@
   `kujo.intervention-decision/v2` handling while retaining the v1 approval path.
 - Added effect metadata and fail-closed retry admission; Dispatch does not infer
   rollback or clean-state re-execution when a provider contract is absent.
+- Added provider-backed `retry_clean` preparation using portable re-execution
+  descriptors while retaining fail-closed effect-safety checks.
 
 All notable changes to this project will be documented in this file.
 
