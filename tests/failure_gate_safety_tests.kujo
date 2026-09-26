@@ -1,4 +1,5 @@
 test_setup {
+    from src.core.hooks import create_control_intervention_event
     from src.core.control import validate_execution_result, validate_evaluation_result, resolve_control_decision
     from src.core.intervention import retry_is_effect_safe, validate_intervention_decision, prepare_intervention_continuation
     from src.core.control_journal import append_control_event, reconcile_control_journal
@@ -135,4 +136,27 @@ test "an atomic event beyond an absent journal requires recovery" {
     create_dir(root + "/control-records")
     write_file(root + "/control-records/1.json", "{}")
     assert_equal(reconcile_control_journal({"run_id": "fixture", "run_dir": root})["error"]["code"], "control_recovery_required")
+}
+
+test "review requests explain unavailable replay without granting new actions" {
+    state := intervention_state(["retry_step", "abort"], "external_non_idempotent")
+    boundary := state["current_control_boundary"]
+    boundary["policy_decision"] := {"decision_id": "policy", "reason": {"code": "custom.execution.failure", "message": "Action failed after an uncertain effect"}, "allowed_actions": ["retry_step", "abort"]}
+    event := create_control_intervention_event(state, state["steps"][0], boundary, {})
+    assert_equal(event["reason"]["type"], "other")
+    assert_equal(event["reason"]["code"], "custom.execution.failure")
+    assert_equal(event["allowed_actions"], ["retry_step", "abort"])
+    assert_equal(len(event["unavailable_actions"]), 1)
+    assert_equal(event["unavailable_actions"][0]["action"], "retry_step")
+    assert_equal(event["unavailable_actions"][0]["code"], "unsafe_retry")
+    assert_equal(state["steps"][0]["status"], "pending")
+}
+
+test "policy action availability work is bounded and duplicate actions reject" {
+    for actions in [["abort", "abort"], ["abort", "abort", "abort", "abort", "abort", "abort", "abort", "abort", "abort"]] {
+        workflow := control_workflow("gate_fail", [{"when": {"result": "evaluation", "verdict": "fail"}, "decide": {"disposition": "require_intervention", "reason": "Review", "allowed_actions": actions}}])
+        result := resolve_control_decision(workflow, workflow["steps"][0], evaluation_result("fail", "error", "fixture"))
+        assert_false(result["ok"])
+        assert_equal(result["error"]["code"], "invalid_policy_decision")
+    }
 }

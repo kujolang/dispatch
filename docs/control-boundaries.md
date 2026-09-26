@@ -147,3 +147,19 @@ The durable-record path requires a Kujo source build exposing
 to bounded artifact I/O. This is not a claim that the published 1.5.0 binary
 already contains the directory-sync primitive. Workflows without `control`
 retain legacy execution/retry behavior and do not create control records.
+
+Intervention requests distinguish policy-authorized `allowed_actions` from
+`unavailable_actions`, which carries the current effect/preservation rejection
+code and message. Admission rechecks these facts when a decision arrives. Unknown
+policy reason codes use the portable `other` reason type and retain their original
+code. Action lists are unique and bounded by the eight supported actions.
+
+`tests/reexecution_lifecycle_fixture.kujo` exercises a trusted local adapter with
+actual retained/fresh workspace identities, reconstructed input hashes, a stable
+sink-enforced idempotency key and reconciled attempt journals. It is an offline
+contract proof, not a provider-resume guarantee.
+
+The journal also snapshots each intervention request before delivery. Its
+transport target, routing and callback metadata are redacted; typed review facts,
+preservation, authorized/unavailable actions and correlation identities remain
+inspectable independently of mutable workflow state.

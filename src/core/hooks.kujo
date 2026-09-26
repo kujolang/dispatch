@@ -1,3 +1,4 @@
+from src.core.intervention import prepare_intervention_continuation
 from src.core.utils import dict_get_or, ensure_dir
 
 func create_lifecycle_event(run_state, event_type, step_id, message, details) {
@@ -84,6 +85,19 @@ func create_control_intervention_event(run_state, step, boundary, options) {
             if type(ref) == "dict" {evidence = push(evidence, ref)}
         }
     }
+    # Policy authorization and current replay availability are separate facts.
+    unavailable := []
+    for action in dict_get_or(decision, "allowed_actions", []) {
+        probe := prepare_intervention_continuation({"current_control_boundary": boundary, "steps": [step]}, {"action": action, "continuation": {"target_step_id": dict_get_or(step, "id", "")}})
+        if dict_get_or(probe, "ok", false) == false {
+            unavailable = push(unavailable, {"action": action, "code": probe["error"]["code"], "message": probe["error"]["message"]})
+        }
+    }
+    reason_code := dict_get_or(reason, "code", "policy_review")
+    reason_type := "other"
+    for known in ["approval_required", "evaluation_failed", "policy_denied", "verification_failed", "unsafe_side_effect", "external_dependency", "operator_requested", "changes_requested", "other"] {
+        if reason_code == known {reason_type = known}
+    }
     callback_target := trim(to_string(dict_get_or(options, "leash_callback_url", "")))
     if callback_target == "" {
         callback_target = "dispatch://resume-decision/" + dict_get_or(run_state, "run_id", "")
@@ -96,12 +110,13 @@ func create_control_intervention_event(run_state, step, boundary, options) {
         "boundary_id": dict_get_or(boundary, "boundary_id", ""),
         "run_id": dict_get_or(run_state, "run_id", ""),
         "state_revision": dict_get_or(boundary, "state_revision", dict_get_or(run_state, "revision", 0)),
-        "reason": {"type": dict_get_or(reason, "code", "policy_review"), "message": dict_get_or(reason, "message", "Policy requires review.")},
+        "reason": {"type": reason_type, "code": reason_code, "message": dict_get_or(reason, "message", "Policy requires review.")},
         "summary": dict_get_or(reason, "message", "Policy requires review."),
         "policy_decision_ref": dict_get_or(decision, "decision_id", ""),
         "evidence": evidence,
         "preservation": dict_get_or(boundary, "preservation", {"status": "not_requested", "actual_mode": "none"}),
         "allowed_actions": dict_get_or(decision, "allowed_actions", []),
+        "unavailable_actions": unavailable,
         "created_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ"),
         "expires_at": dict_get_or(boundary, "expires_at", null),
         "callback": {"target": callback_target, "correlation_id": dict_get_or(boundary, "boundary_id", "")},

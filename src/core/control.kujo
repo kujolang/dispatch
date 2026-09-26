@@ -159,7 +159,11 @@ func validate_policy_decision(decision) {
     reason := dict_get_or(decision, "reason", {})
     if dict_get_or(reason, "code", "") == ""||dict_get_or(reason, "message", "") == "" {return control_error("invalid_policy_decision", "Policy requires a reason.")}
     if type(dict_get_or(decision, "allowed_actions", [])) != "array" {return control_error("invalid_policy_decision", "Allowed actions must be an array.")}
+    if len(dict_get_or(decision, "allowed_actions", [])) > 8 {return control_error("invalid_policy_decision", "Allowed actions exceed the supported action set.")}
+    seen_actions := []
     for action in dict_get_or(decision, "allowed_actions", []) {
+        if allowed_value(action, seen_actions) {return control_error("invalid_policy_decision", "Allowed actions must be unique.")}
+        seen_actions = push(seen_actions, action)
         if allowed_value(action, ["resume_from_boundary", "retry_evaluation", "retry_step", "retry_clean", "amend_inputs", "approve_override", "abort", "cancel"]) == false {return control_error("invalid_policy_decision", "Unknown intervention action.")}
     }
     disposition := trim(to_lower(to_string(dict_get_or(decision, "disposition", ""))))

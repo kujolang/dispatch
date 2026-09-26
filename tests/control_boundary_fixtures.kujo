@@ -139,6 +139,10 @@ export func intervention_decision(action, expected_revision) {
 }
 
 func failed_action_handler(input, context) {
+    if has_key(context["input"], "attempt_counter") {
+        counter := context["input"]["attempt_counter"]
+        write_file(counter, to_json(parse_json(read_file(counter)) + 1), true)
+    }
     return {"ok": false, "error": {"code": "fixture_action_failed", "message": "Fixture failure after a possible effect.", "retryable": true}}
 }
 

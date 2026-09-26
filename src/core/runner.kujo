@@ -159,6 +159,15 @@ func pause_from_control_decision(run_state, step, step_index, decision, control_
     run_state["current_control_boundary"] := boundary
     human_event := create_control_intervention_event(run_state, step, boundary, options)
     run_state["human_intervention"] := human_event
+    # Retain the reviewed request independently of mutable state. Transport URLs
+    # can contain credentials and are not part of executable policy authority.
+    audit_request := human_event
+    audit_request["callback"] := {"target": "redacted-transport", "correlation_id": boundary_id}
+    audit_request["metadata"] := {"transport_redacted": true}
+    audit_request["routing"] := {}
+    journaled = append_control_event(run_state, "intervention_requested", step["id"], [human_event["request_id"], boundary_id], {"request": audit_request})
+    run_state = journaled["run_state"]
+
     run_state["trace"] := append_trace(run_state["trace"], "control_boundary_opened", dict_get_or(step, "id", ""), dict_get_or(dict_get_or(decision, "reason", {}), "message", "Workflow paused for review."), {"boundary_id": boundary_id, "policy_decision": decision, "preservation": preservation})
     run_state = persist_run_state(run_state)
     emit_lifecycle_event(run_state, options, pause_event, dict_get_or(step, "id", ""), dict_get_or(dict_get_or(decision, "reason", {}), "message", "Workflow paused for review."), {"boundary_id": boundary_id, "policy_decision": decision, "blocked_step_ids": blocked_step_ids})

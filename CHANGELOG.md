@@ -45,6 +45,8 @@ Each release section should include only shipped changes and use these headings 
 
 ### Added
 
+- Review requests explain currently unavailable actions and preserve custom reason codes within the portable vocabulary; local lifecycle fixtures prove retained/clean workspace replay and sink-enforced deduplication.
+
 - Producer-neutral execution failure policies, explicit evaluator errors, and an offline Workcell/Eval failure-review proof with RunLedger/CaseFile handoffs.
 
 ### Fixed
