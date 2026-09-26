@@ -1,7 +1,9 @@
 # Upgrading Dispatch from 1.2 to 1.3
 
 Dispatch 1.3 is a development candidate. Its process-owned POSIX run locks
-require Kujo 1.4.0 or newer; the old 1.2 release uses an age-reclaimable file
+and confined directory durability require the exact Kujo source commit pinned
+in `release/dispatch-v1.3.0.refs`; even the released 1.5.0 tag predates the
+directory barrier. The old 1.2 release uses an age-reclaimable file
 that can admit overlapping workers. Do not point 1.2 and 1.3 workers at the
 same output root during a rolling deployment.
 

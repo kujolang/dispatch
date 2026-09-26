@@ -17,7 +17,9 @@ multi-tenant service. Start with the credential-free fixture below, then use
 model and [the 1.3 follow-up review](docs/audits/next-review-v1.3-2026-09-22.md) for open work.
 For an existing deployment, read [the 1.3 upgrade guide](docs/UPGRADING_TO_1_3.md)
 before changing the runtime or sharing an output root with older workers.
-The 1.3 development line requires Kujo 1.4.0 for process-owned POSIX locks;
+The 1.3 development line requires the exact Kujo source commit in
+`release/dispatch-v1.3.0.refs` for process-owned POSIX locks and confined directory
+durability barriers. The released Kujo 1.5.0 tag predates the barrier;
 do not mix it with pre-1.3 workers on a run directory. Live providers,
 platform isolation, and deployment-specific controls require separate validation.
 
@@ -205,7 +207,7 @@ SDK's `create_model_catalog`/`provider_model_catalog`, not a copied routing tabl
 
 ## Prerequisites
 
-- Kujo CLI/runtime 1.4.0 or newer (POSIX) for this development line
+- Kujo source runtime at `87fae36dd331b185d29256f74d2a92f1aefc5ea5` (POSIX), as pinned by this candidate
 - AI SDK installed by the Kujo `ai` profile, or a local clone for source development
 - `dispatch` checked out locally
 

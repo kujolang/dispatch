@@ -7,9 +7,13 @@ final revision; local fixture success alone does not qualify as a public release
 ## Contract and dependencies
 
 - [x] `kennel.toml`, `kujo.toml`, the badge, `dispatch version`, and OTLP scope version agree on 1.3.0.
-- [x] `release/dispatch-v1.3.0.refs` pins public Kujo 1.4.0, AI SDK, Agents SDK, and the eventual Dispatch tag; the Kujo runtime exposes `file_lock`/`file_unlock` on Linux and macOS. The Dispatch tag is only a planned manifest reference, not a published release.
+- [x] `release/dispatch-v1.3.0.refs` pins public Kujo source commit `87fae36dd331b185d29256f74d2a92f1aefc5ea5`, AI SDK, Agents SDK, and the eventual Dispatch tag; the Kujo runtime exposes `file_lock`/`file_unlock` and `sync_directory_beneath` on Linux and macOS. The source pin is newer than the 1.5.0 release tag. The Dispatch tag is only a planned manifest reference, not a published release.
 - [ ] Quiesce pre-1.3 workers before replacing age-reclaimable lock files; validate resumed legacy runs and document rollback without mixing lock protocols. The pinned Kujo 1.0.2-to-1.4.0 rehearsal passed both backends on [Linux/macOS CI](https://github.com/kujolang/dispatch/actions/runs/35751227471); representative target staging remains pending.
 - [x] The commit-pinned installer handles both the legacy root bridge path exported by the pinned shim and the `src/bridge/` source layout without enabling arbitrary config paths. Real isolated Linux/macOS installations passed at `573dec5`; authorized release-tag installations remain separate.
+
+The earlier CI links below remain historical evidence for their recorded runtime
+pairings. The failure-gate PR must pass fresh CI with the updated source pin;
+`scripts/check_runtime_contract.sh` rejects a runtime missing the durability API.
 
 ## Deterministic and adversarial gates
 

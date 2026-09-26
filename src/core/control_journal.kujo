@@ -4,6 +4,8 @@ func append_control_event(run_state, kind, step_id, refs, details) {
     journal := dict_get_or(run_state, "control_journal", {})
     sequence := dict_get_or(journal, "sequence", 0) + 1
     previous_sha256 := dict_get_or(journal, "last_sha256", "")
+    attempt_id := ""
+    for step in dict_get_or(run_state, "steps", []) {if dict_get_or(step, "id", "") == step_id {attempt_id = to_string(dict_get_or(step, "control_attempt", 1))}}
     event := {
         "schema": "kujo.control-event/v1",
         "sequence": sequence,
@@ -12,10 +14,18 @@ func append_control_event(run_state, kind, step_id, refs, details) {
         "run_id": dict_get_or(run_state, "run_id", ""),
         "state_revision": dict_get_or(run_state, "revision", 0),
         "kind": kind,
-        "subject": {"step_id": step_id},
+        "subject": {"step_id": step_id, "attempt_id": attempt_id},
+        "record_ref": "control-records/" + to_string(sequence) + ".json",
         "refs": refs,
         "details": details,
         "occurred_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
+    }
+    # Raw producer outputs are evidence artifacts, never durable control payloads.
+    if type(dict_get_or(details, "result", null)) == "dict" {
+        facts := {}
+        for key in keys(details["result"]) {if key != "output" {facts[key] := details["result"][key]}}
+        details["result"] := facts
+        event["details"] := details
     }
     redacted := redact_sensitive_data(event)
     event_sha256 := sha256(to_json(redacted))
@@ -23,10 +33,56 @@ func append_control_event(run_state, kind, step_id, refs, details) {
     path := dict_get_or(run_state, "run_dir", "") + "/control-events.jsonl"
     ensure_dir(dirname(path))
     line := to_json(redacted)
+    if len(line) > 1048576 {throw("control_event_limit: event exceeds 1 MiB")}
     if file_exists(path)&&file_size(path) > 0 {line = "\n" + line}
+    if file_exists(path)&&file_size(path) + len(line) > 8388608 {throw("control_journal_limit: archive this run before continuing")}
+    ensure_dir(run_state["run_dir"] + "/control-records")
+    write_file_atomic_beneath(run_state["run_dir"], redacted["record_ref"], to_json(redacted), false)
+    sync_directory_beneath(run_state["run_dir"], "control-records")
     append_file(path, line)
     run_state["control_journal"] := {"schema": "kujo.control-journal/v1", "path": path, "sequence": sequence, "last_sha256": event_sha256}
     return {"run_state": run_state, "event": redacted}
 }
 
 export append_control_event := append_control_event
+
+# Run once under the run lock. Never interpret orphan journal records as permission
+# to repeat an action. Torn tails and cursor mismatches require explicit recovery.
+func reconcile_control_journal(run_state) {
+    path := dict_get_or(run_state, "run_dir", "") + "/control-events.jsonl"
+    journal := dict_get_or(run_state, "control_journal", {})
+    sequence := 0
+    previous := ""
+    if file_exists(path) {
+        body := ""
+        try {body = read_file_beneath(run_state["run_dir"], "control-events.jsonl", 8388608)} except err {
+            return {"ok": false, "error": {"code": "control_journal_unreadable", "message": "Journal must be a bounded regular file; archive/review before continuing.", "retryable": false}}
+        }
+        try {
+            for line in split(body, "\n") {
+                if trim(line) == "" {continue}
+                event := parse_json(line)
+                sequence = sequence + 1
+                if event["sequence"] != sequence||event["previous_sha256"] != previous||event["run_id"] != run_state["run_id"] {throw("Invalid control sequence")}
+                unsigned := {}
+                for key in keys(event) {if key != "event_sha256" {unsigned[key] := event[key]}}
+                if sha256(to_json(unsigned)) != event["event_sha256"] {throw("Invalid control digest")}
+                record_ref := dict_get_or(event, "record_ref", "")
+                if record_ref != "" {
+                    if record_ref != "control-records/" + to_string(sequence) + ".json" {throw("Invalid record reference")}
+                    if read_file_beneath(run_state["run_dir"], record_ref, 1048576) != to_json(event) {throw("Control record mismatch")}
+                }
+                previous = event["event_sha256"]
+            }
+        } except err {
+            return {"ok": false, "error": {"code": "control_journal_corrupt", "message": "Control history is corrupt or torn; no action was replayed.", "retryable": false}}
+        }
+    }
+    if file_exists(run_state["run_dir"] + "/control-records/" + to_string(sequence + 1) + ".json") {return {"ok": false, "error": {"code": "control_recovery_required", "message": "Durable event exists beyond the journal tail; inspect before recovery.", "retryable": false}}}
+    if sequence != dict_get_or(journal, "sequence", 0)||previous != dict_get_or(journal, "last_sha256", "") {
+        return {"ok": false, "error": {"code": "control_recovery_required", "message": "Journal and checkpoint differ. Reconcile from retained decision evidence before resuming; automatic replay is prohibited.", "retryable": false}}
+    }
+    return {"ok": true, "run_state": run_state}
+}
+
+export reconcile_control_journal := reconcile_control_journal

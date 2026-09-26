@@ -14,7 +14,7 @@ dispatch_bin="$(dirname "$prefix")/bin/dispatch"
 [[ -f "$package_root/dispatch.kujo" && -f "$ai_sdk_root/src/ai_sdk.kujo" ]]
 [[ -x "$kujo_bin" && -x "$dispatch_bin" ]]
 [[ "$(<"$package_root/.kujo-install-ref")" == "$(git rev-parse HEAD)" ]]
-[[ "$(<"$prefix/sources/kujo/.kujo-install-ref")" == 266a8902068a14c3d17f803bef467dc28f1fe162 ]]
+[[ "$(<"$prefix/sources/kujo/.kujo-install-ref")" == 87fae36dd331b185d29256f74d2a92f1aefc5ea5 ]]
 
 mkdir -p tests/tmp
 evidence_dir="$(mktemp -d "$PWD/tests/tmp/installed-package.XXXXXX")"

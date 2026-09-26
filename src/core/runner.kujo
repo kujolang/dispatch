@@ -1,7 +1,7 @@
 from src.agents.agent import run_agent, run_agent_with_agent
 from src.core.approval import create_approval_request, resolve_approval
-from src.core.control import resolve_control_decision
-from src.core.control_journal import append_control_event
+from src.core.control import resolve_control_decision, execution_failure_result
+from src.core.control_journal import append_control_event, reconcile_control_journal
 from src.core.errors import invalid_step_error, approval_rejected_error
 from src.core.handoff import create_handoff, summarize_handoff
 from src.core.hooks import create_lifecycle_event, create_human_intervention_event, create_control_intervention_event, emit_hook_event, validate_webhook_options
@@ -159,6 +159,15 @@ func pause_from_control_decision(run_state, step, step_index, decision, control_
     run_state["current_control_boundary"] := boundary
     human_event := create_control_intervention_event(run_state, step, boundary, options)
     run_state["human_intervention"] := human_event
+    # Retain the reviewed request independently of mutable state. Transport URLs
+    # can contain credentials and are not part of executable policy authority.
+    audit_request := human_event
+    audit_request["callback"] := {"target": "redacted-transport", "correlation_id": boundary_id}
+    audit_request["metadata"] := {"transport_redacted": true}
+    audit_request["routing"] := {}
+    journaled = append_control_event(run_state, "intervention_requested", step["id"], [human_event["request_id"], boundary_id], {"request": audit_request})
+    run_state = journaled["run_state"]
+
     run_state["trace"] := append_trace(run_state["trace"], "control_boundary_opened", dict_get_or(step, "id", ""), dict_get_or(dict_get_or(decision, "reason", {}), "message", "Workflow paused for review."), {"boundary_id": boundary_id, "policy_decision": decision, "preservation": preservation})
     run_state = persist_run_state(run_state)
     emit_lifecycle_event(run_state, options, pause_event, dict_get_or(step, "id", ""), dict_get_or(dict_get_or(decision, "reason", {}), "message", "Workflow paused for review."), {"boundary_id": boundary_id, "policy_decision": decision, "blocked_step_ids": blocked_step_ids})
@@ -196,6 +205,7 @@ func observe_dispatch_attempt(options, run_state, step, attempt) {
 }
 
 func resolve_retry_policy(step, workflow) {
+    if len(keys(dict_get_or(workflow, "control", {}))) > 0 {return {"max_attempts": 1, "base_delay_ms": 0, "retry_on_codes": []}}
     step_policy := dict_get_or(step, "retry_policy", null)
     if type(step_policy) == "dict" {
         return step_policy
@@ -937,6 +947,12 @@ func execute_tool_step(step, workflow, step_input, run_state, tool_registry, opt
             "deadline_ms": deadline["deadline_ms"],
             "deadline_error_code": deadline["deadline_error_code"]
         }
+        context["reexecution_source"] := dict_get_or(step, "reexecution_source", "original")
+        context["preservation"] := dict_get_or(step, "preservation", null)
+        context["retained_evidence"] := dict_get_or(step, "retained_evidence", [])
+        context["retained_input_evidence_ids"] := dict_get_or(step, "retained_input_evidence_ids", [])
+        context["control_attempt"] := dict_get_or(step, "control_attempt", 1)
+        if context["reexecution_source"] == "existing_evidence" {tool_payload = dict_get_or(step, "retained_input", tool_payload)}
         if type(dict_get_or(step, "reexecution_descriptor", null)) == "dict" {
             context["reexecution_descriptor"] := step["reexecution_descriptor"]
             context["reexecution_source"] := dict_get_or(step, "reexecution_source", "clean")
@@ -957,6 +973,7 @@ func execute_tool_step(step, workflow, step_input, run_state, tool_registry, opt
     }
     return {
         "ok": false,
+        "data": dict_get_or(wrapped["result"], "data", null),
         "error": dict_get_or(wrapped["result"], "error", {"code": "tool_execution_failure", "message": "Unknown tool error", "retryable": false}),
         "attempts": wrapped["attempts"],
         "attempt_records": wrapped["attempt_records"]
@@ -1169,7 +1186,7 @@ func prepare_parallel_tool_batch(workflow, run_state, tool_registry, options) {
         if dict_get_or(step, "status", "pending") == "pending"&&step_blocked_by_control(run_state, dict_get_or(step, "id", "")) == false&&dict_get_or(step, "type", "") == "tool"&&dict_get_or(step, "parallel_safe", false)&&step_dependencies_satisfied(run_state["steps"], step) {
             idempotency_key := trim(to_string(dict_get_or(step, "idempotency_key", "")))
             idempotency_store := dict_get_or(run_state, "idempotency", {})
-            if idempotency_key != ""&&has_key(idempotency_store, idempotency_key) == 0 {
+            if dict_get_or(step, "control_attempt", 1) == 1&&idempotency_key != ""&&has_key(idempotency_store, idempotency_key) == 0 {
                 candidate_indexes := push(candidate_indexes, step_index)
             }
         }
@@ -1266,6 +1283,8 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
     if dict_get_or(routing_validation, "ok", false) == false {
         return {"ok": false, "paused": false, "run_state": run_state, "error": {"code": "invalid_routing_config", "message": "Workflow routing configuration is invalid.", "retryable": false, "details": dict_get_or(routing_validation, "errors", [])}}
     }
+    boundary := dict_get_or(run_state, "current_control_boundary", {})
+    if dict_get_or(boundary, "status", "") == "open"&&dict_get_or(run_state, "status", "") == "paused" {return {"ok": true, "paused": true, "run_state": run_state}}
     run_state["status"] := "running"
     total_steps := len(run_state["steps"])
     index := run_state["current_step_index"]
@@ -1380,7 +1399,7 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
                 "attempts": 1,
                 "attempt_records": []
             }
-        } else if idempotency_key != ""&&has_key(idempotency_store, idempotency_key) == 1 {
+        } else if dict_get_or(step, "control_attempt", 1) == 1&&idempotency_key != ""&&has_key(idempotency_store, idempotency_key) == 1 {
             # Replay-safe: a prior run already produced this keyed result, so
             # return the cached output instead of re-executing the side effect.
             executed := {
@@ -1479,6 +1498,35 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
                 "ok": true,
                 "paused": true,
                 "run_state": run_state
+            }
+        }
+
+        if dict_get_or(executed, "ok", false) == false&&len(keys(dict_get_or(workflow, "control", {}))) > 0&&dict_get_or(executed, "policy_denied", false) == false {
+            failed_result := dict_get_or(executed, "data", null)
+            normalized := type(failed_result) == "dict"&&(starts_with(dict_get_or(failed_result, "schema", ""), "kujo.execution-result/")||starts_with(dict_get_or(failed_result, "schema", ""), "kujo.evaluation-result/")||has_key(failed_result, "execution_result")||has_key(failed_result, "evaluation_result"))
+            if normalized == false {failed_result = execution_failure_result(step, executed, run_state)}
+            if dict_get_or(failed_result, "schema", "") == "kujo.execution-result/v1"&&dict_get_or(failed_result, "status", "") == "success" {failed_result = execution_failure_result(step, executed, run_state)}
+            resolution := resolve_control_decision(workflow, step, failed_result)
+            if dict_get_or(resolution, "ok", false)&&dict_get_or(resolution, "found", false) {
+                facts := dict_get_or(resolution, "evaluation_result", {})
+                step = mark_step_failed(step, dict_get_or(executed, "error", {}), dict_get_or(executed, "attempts", 1))
+                if dict_get_or(facts, "schema", "") == "kujo.execution-result/v1" {step["execution_result"] := facts}
+                run_state["steps"] := replace_step(run_state["steps"], index, step)
+                decision := resolution["decision"]
+                run_state["control_decisions"] := push(dict_get_or(run_state, "control_decisions", []), decision)
+                logged := append_control_event(run_state, "policy_decided", step["id"], decision["inputs"], {"result": facts, "policy_decision": decision})
+                run_state = logged["run_state"]
+                disposition := decision["disposition"]
+                if disposition == "require_intervention"||disposition == "retry" {
+                    if len(dict_get_or(decision, "allowed_actions", [])) == 0 {decision["allowed_actions"] := ["abort"]}
+                    # Failed actions cannot drain dependent work until explicitly accepted.
+                    decision["scope"] := {"kind": "workflow", "root_step_id": step["id"]}
+                    return pause_from_control_decision(run_state, step, index, decision, facts, options)
+                }
+                if disposition == "cancel" {return build_cancelled_result(run_state, "Cancelled by failure policy.", options)}
+                if disposition != "continue" {return fail_from_control_decision(run_state, step, decision, facts, options)}
+                executed["ok"] := true
+                executed["data"] := failed_result
             }
         }
 
@@ -1618,6 +1666,13 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
         }
         if dict_get_or(control_resolution, "found", false) {
             control_decision := control_resolution["decision"]
+            facts := dict_get_or(control_resolution, "evaluation_result", {})
+            if dict_get_or(facts, "schema", "") == "kujo.execution-result/v1" {
+                step["execution_result"] := facts
+                run_state["steps"] := replace_step(run_state["steps"], index, step)
+            }
+            logged := append_control_event(run_state, "policy_decided", step["id"], dict_get_or(control_decision, "inputs", []), {"result": facts, "policy_decision": control_decision})
+            run_state = logged["run_state"]
             control_evaluation := dict_get_or(control_resolution, "evaluation_result", null)
             run_state["control_decisions"] := push(dict_get_or(run_state, "control_decisions", []), control_decision)
             run_state["trace"] := append_trace(run_state["trace"], "control_policy_resolved", step["id"], "Workflow control policy resolved.", {"policy_decision": control_decision, "evaluation_result_id": dict_get_or(control_evaluation, "result_id", "")})
@@ -1702,7 +1757,15 @@ func run_workflow(workflow, run_state, tool_registry, options) {
     }
     result := null
     try {
-        result = run_workflow_unlocked(workflow, run_state, tool_registry, options)
+        if array_has(["completed", "failed", "cancelled", "aborted"], dict_get_or(run_state, "status", "")) {
+            result = {"ok": false, "paused": false, "run_state": run_state, "error": {"code": "terminal_run", "message": "Terminal runs cannot resume.", "retryable": false}}
+        } else {
+            reconciled := reconcile_control_journal(run_state)
+            if reconciled["ok"] == false {result = {"ok": false, "paused": false, "run_state": run_state, "error": reconciled["error"]}} else {
+                run_state = reconciled["run_state"]
+                result = run_workflow_unlocked(workflow, run_state, tool_registry, options)
+            }
+        }
     } except err {
         runtime_error := {
             "code": "workflow_runtime_error",
@@ -1730,3 +1793,6 @@ func run_workflow(workflow, run_state, tool_registry, options) {
 export run_workflow := run_workflow
 
 export observe_dispatch_attempt := observe_dispatch_attempt
+
+# Internal entrypoint for the CLI decision transaction, which already owns the run lock.
+export run_workflow_under_lock := run_workflow_unlocked

@@ -1,6 +1,6 @@
 # Immutable dependency closure for the forthcoming Dispatch v1.3.0 release.
 # Do not claim the Dispatch tag is published until it exists and CI has passed.
-kujo=266a8902068a14c3d17f803bef467dc28f1fe162
+kujo=87fae36dd331b185d29256f74d2a92f1aefc5ea5
 ai-sdk=849dbbbba7a734938320dd9569d1ed7aa6240298
 agents-sdk=d3904d348754b492bda298b6c30f49c1eb24b7ea
 dispatch=v1.3.0

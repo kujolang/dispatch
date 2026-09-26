@@ -1,0 +1,107 @@
+# Trusted local adapter fixture: actual workspace identity and sink deduplication.
+from src.core.state import create_run_state, persist_run_state
+from src.core.runner import run_workflow
+from src.core.intervention import validate_intervention_decision, prepare_intervention_continuation
+from src.core.control_journal import append_control_event, reconcile_control_journal
+from src.core.step import create_step
+from src.tools.tool import create_tool_registry, create_tool, register_tool
+from src.workflows.workflow import create_workflow
+
+func require(condition, message) {if condition == false {throw(message)}}
+
+func workspace_action(input, context) {
+    root := context["input"]["root"]
+    mode := context["input"]["mode"]
+    attempt := context["control_attempt"]
+    workspace := root + "/workspace-1"
+    if attempt == 2&&mode != "same" {workspace = root + "/workspace-2"}
+    if attempt == 2 {
+        if mode == "same" {
+            if context["reexecution_source"] != "preserved_workspace"||read_file(workspace + "/marker") != "attempt-1" {throw("Retained workspace was not reused")}
+        } else {
+            if context["reexecution_source"] != "clean"||file_exists(workspace) {throw("Clean workspace was not fresh")}
+        }
+    }
+    if file_exists(workspace) == false {
+        create_dir(workspace)
+        write_file(workspace + "/input", read_file(root + "/source-input"))
+    }
+    if read_file(workspace + "/input") != read_file(root + "/source-input") {throw("Input reconstruction changed the source")}
+    write_file(workspace + "/marker", "attempt-" + to_string(attempt), true)
+    effect := {"effect_id": "workspace", "class": "local_reversible", "state": "committed"}
+    if mode == "idempotent" {
+        # The fixture sink enforces a stable key independently of the workspace.
+        key := context["effect_idempotency_key"]
+        receipt := root + "/sink-" + sha256(key)
+        if file_exists(receipt) == false {
+            write_file(receipt, key)
+            count := 0
+            if file_exists(root + "/sink-count") {count = parse_json(read_file(root + "/sink-count"))}
+            write_file(root + "/sink-count", to_json(count + 1), true)
+        }
+        effect = {"effect_id": "sink", "class": "external_idempotent", "state": "unknown", "idempotency_key": key, "enforced_by": "fixture-sink", "enforcement_evidence_ref": receipt}
+    }
+    status := "failure"
+    if attempt == 2 {status = "success"}
+    stamp := format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
+    subject := {"run_id": context["run_id"], "step_id": context["step_id"], "attempt_id": to_string(attempt)}
+    preservation := {"schema": "kujo.preservation-outcome/v1", "result_id": "preservation-" + to_string(attempt), "subject": subject, "requested_mode": "filesystem", "actual_mode": "filesystem", "status": "satisfied", "provider": {"name": "local-fixture"}, "reconstructability": "same_filesystem", "evidence": [], "created_at": stamp, "retain_until": "2099-01-01T00:00:00Z", "cleanup": {"owner": "fixture", "handle": workspace}}
+    descriptor := {"schema": "kujo.reexecution-descriptor/v1", "descriptor_id": "clean-fixture", "subject": subject, "capability": "re_executable", "mode": "clean_workspace", "source": {"repository": "local-fixture", "commit": context["input"]["source_commit"]}, "workflow": {"id": "reexecution-fixture", "version": "1", "sha256": context["input"]["fixture_sha256"]}, "tool": {"name": "local-fixture", "version": "1"}, "inputs": [], "secret_refs": [], "external_dependencies": [], "source_attempt_id": to_string(attempt), "target_attempt_id": to_string(attempt + 1), "effects": {"automatic_retry_allowed": true}}
+    result := {"schema": "kujo.execution-result/v1", "result_id": context["run_id"] + ":" + to_string(attempt), "subject": subject, "producer": {"name": "local-fixture", "version": "1"}, "attempt": attempt, "status": status, "classification": "execution_failure", "started_at": stamp, "finished_at": stamp, "effects": [effect], "evidence": [{"$ref": workspace + "/marker"}], "input_sha256": sha256(read_file(workspace + "/input")), "workspace_ref": workspace, "preservation_outcome": preservation, "reexecution_descriptor": descriptor}
+    write_file(root + "/execution-" + to_string(attempt) + ".json", to_json(result))
+    return {"ok": true, "data": result}
+}
+
+func descendant(input, context) {return {"ok": true, "data": {"ran": true}}}
+
+source_commit := trim(spawn_process(["git", "rev-parse", "HEAD"], {}).stdout)
+fixture_sha256 := sha256(read_file("tests/reexecution_lifecycle_fixture.kujo"))
+proofs := []
+for mode in ["same", "clean", "idempotent"] {
+    root := "tests/tmp/reexecution-" + mode + "-" + uuid_v4()
+    create_dir(root)
+    write_file(root + "/source-input", "original immutable fixture input")
+    action := "retry_clean"
+    source := "original_source"
+    if mode == "same" {action = "retry_step"; source = "preserved_workspace"}
+    workflow := create_workflow({"id": "reexecution-fixture", "name": "Reexecution fixture", "description": "Actual local adapter lifecycle", "input_schema": {"type": "dict"}, "agents": {}, "tools": ["action", "descendant"], "steps": [
+        create_step("action", "Workspace action", "tool", {"tool_name": "action", "input_from": ["input"], "output_key": "action", "effect_class": "local_reversible", "reexecution_modes": ["same_workspace", "clean_workspace"]}),
+        create_step("descendant", "After review", "tool", {"tool_name": "descendant", "depends_on": ["action"], "input_from": ["action"], "output_key": "descendant", "effect_class": "none"})
+        ], "routing": {"enabled": false}, "control": {"policy_id": "fixture", "policy_version": "1", "policies": [{"when": {"result": "execution", "status": "failure"}, "decide": {"disposition": "require_intervention", "reason": "Review first attempt", "allowed_actions": [action, "abort"]}}]}, "default_retry_policy": {"max_attempts": 1}, "approval_config": {"auto_approve": false}, "memory_config": {}, "budgets": {}, "max_parallel_steps": 1, "output_schema": {"type": "dict"}})
+    registry := create_tool_registry()
+    registry = register_tool(registry, create_tool("action", "Trusted local fixture", {"type": "dict"}, {"type": "dict"}, workspace_action, null))
+    registry = register_tool(registry, create_tool("descendant", "After review", {"type": "dict"}, {"type": "dict"}, descendant, null))
+    options := {"output_root": root + "/runs", "auto_approve": false, "interactive": false}
+    first := run_workflow(workflow, create_run_state(workflow, {"root": root, "mode": mode, "source_commit": source_commit, "fixture_sha256": fixture_sha256}, options["output_root"], options), registry, options)
+    require(first["ok"]&&first["paused"], "First action must require review: " + to_json(first))
+    state := first["run_state"]
+    require(state["steps"][1]["status"] == "pending", "Descendant crossed a failed gate")
+    request := state["human_intervention"]
+    write_file(root + "/intervention-request.json", to_json(request))
+    decision := {"schema": "kujo.intervention-decision/v2", "decision_id": "review-" + mode, "request_id": request["request_id"], "boundary_id": request["boundary_id"], "expected_state_revision": state["revision"], "action": action, "continuation": {"target_step_id": "action", "source": source, "new_attempt": true}, "actor": {"id": "fixture", "type": "system", "authenticated_by": "local-fixture", "authorization": "fixture:review"}, "reason": "Review explicit replay", "decided_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")}
+    require(validate_intervention_decision(decision, state)["ok"], "Decision validation failed")
+    prepared := prepare_intervention_continuation(state, decision)
+    require(prepared["ok"], "Replay admission failed: " + to_json(prepared))
+    state = prepared["run_state"]
+    boundary := state["current_control_boundary"]
+    boundary["status"] := "closed"
+    state["current_control_boundary"] := boundary
+    state["control_barrier"] := {"status": "released"}
+    state["human_intervention"] := null
+    logged := append_control_event(state, "intervention_decided", "action", [decision["decision_id"]], {"decision": decision})
+    second := run_workflow(workflow, persist_run_state(logged["run_state"]), registry, options)
+    require(second["ok"]&&second["paused"] == false, "Replay did not complete: " + to_json(second))
+    require(second["run_state"]["steps"][0]["control_attempt"] == 2, "Missing new attempt identity")
+    require(second["run_state"]["steps"][1]["status"] == "completed", "Descendant did not follow successful replay")
+    require(reconcile_control_journal(second["run_state"])["ok"], "Replay journal did not reconcile")
+    if mode == "same" {
+        require(read_file(root + "/workspace-1/marker") == "attempt-2"&&file_exists(root + "/workspace-2") == false, "Same-state replay changed workspace")
+    } else {
+        require(read_file(root + "/workspace-1/marker") == "attempt-1"&&read_file(root + "/workspace-2/marker") == "attempt-2", "Clean replay lost workspace provenance")
+    }
+    if mode == "idempotent" {require(read_file(root + "/sink-count") == "1", "Sink effect was duplicated")}
+    proofs = push(proofs, {"mode": mode, "root": root, "state_path": second["run_state"]["run_dir"] + "/state.json"})
+    print("PASS actual " + mode + " reexecution, attempt identity, review barrier, and journal")
+}
+
+write_file("tests/tmp/reexecution-proof.json", to_json(proofs), true)

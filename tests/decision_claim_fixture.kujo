@@ -1,0 +1,12 @@
+from src.core.runner import run_workflow
+from src.core.state import create_run_state
+from tests.control_boundary_fixtures import control_workflow, control_registry, control_run_options
+root := args()[0]
+workflow := control_workflow("gate_fail", [{"when": {"verdict": "fail"}, "decide": {"disposition": "require_intervention", "reason": "Fixture review", "allowed_actions": ["abort"]}}])
+options := control_run_options(root)
+state := create_run_state(workflow, {"topic": "claim"}, root, options)
+result := run_workflow(workflow, state, control_registry(), options)
+if result["paused"] != true {throw("Expected paused review")}
+state = result["run_state"]
+request := state["human_intervention"]
+write_file(root + "/decision.json", to_json({"schema": "kujo.intervention-decision/v2", "run_id": state["run_id"], "decision_id": "claim-fixture", "request_id": request["request_id"], "boundary_id": request["boundary_id"], "expected_state_revision": state["revision"], "action": "abort", "continuation": {}, "actor": {"id": "fixture", "type": "human", "authenticated_by": "local-cli", "authorization": "review"}, "reason": "Abort fixture", "decided_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")}))

@@ -29,7 +29,7 @@ jobs:
       DISPATCH_OFFLINE_FIXTURE: "true"
       # Bump deliberately after compatibility verification and record the
       # Dispatch-to-Kujo pairing in the release evidence.
-      KUJO_RUNTIME_REF: "266a8902068a14c3d17f803bef467dc28f1fe162"
+      KUJO_RUNTIME_REF: "87fae36dd331b185d29256f74d2a92f1aefc5ea5"
       KUJO_V1_2_RUNTIME_REF: "123542ba17a0ef0150970a6c626b518946ff0bbb"
       RUSTUP_TOOLCHAIN: "1.96.0"
 
@@ -81,11 +81,11 @@ jobs:
 
       - name: Verify immutable dependency closure and installer parser
         run: |
-          grep -qx "kujo=266a8902068a14c3d17f803bef467dc28f1fe162" release/dispatch-v1.3.0.refs
+          grep -qx "kujo=87fae36dd331b185d29256f74d2a92f1aefc5ea5" release/dispatch-v1.3.0.refs
           grep -qx "ai-sdk=849dbbbba7a734938320dd9569d1ed7aa6240298" release/dispatch-v1.3.0.refs
           grep -qx "agents-sdk=d3904d348754b492bda298b6c30f49c1eb24b7ea" release/dispatch-v1.3.0.refs
           grep -qx "dispatch=v1.3.0" release/dispatch-v1.3.0.refs
-          test "$(git -C .ci/kujo rev-parse HEAD)" = "266a8902068a14c3d17f803bef467dc28f1fe162"
+          test "$(git -C .ci/kujo rev-parse HEAD)" = "87fae36dd331b185d29256f74d2a92f1aefc5ea5"
           test "$(git -C .ci/kujo-old rev-parse HEAD)" = "123542ba17a0ef0150970a6c626b518946ff0bbb"
           test "$(git -C .ci/ai-sdk rev-parse HEAD)" = "849dbbbba7a734938320dd9569d1ed7aa6240298"
           test "$(git -C .ci/agents-sdk rev-parse HEAD)" = "d3904d348754b492bda298b6c30f49c1eb24b7ea"
