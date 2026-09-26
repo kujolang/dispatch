@@ -146,3 +146,22 @@ export func failed_action_registry() {
     tools := control_registry()
     return register_tool(tools, create_tool("failed_action", "Failure fixture", {"type": "dict"}, {"type": "dict"}, failed_action_handler, null))
 }
+
+func passing_gate_handler(input, context) {
+    return {"ok": true, "data": {
+            "schema": "kujo.evaluation-result/v1",
+            "result_id": "er-pass",
+            "evaluator": {"name": "custom-evaluator", "version": "1"},
+            "subject": {"run_id": "external-run", "step_id": "gate", "attempt_id": "a1"},
+            "verdict": "pass",
+            "severity": "info",
+            "checks": {"passed": 1, "failed": 0, "warned": 0, "skipped": 0},
+            "started_at": "2026-09-24T14:32:08Z",
+            "finished_at": "2026-09-24T14:32:15Z",
+            "evidence": [{"$ref": "ev-report"}]
+    }}
+}
+
+export func passing_gate_registry() {
+    return register_tool(control_registry(), create_tool("gate_pass", "Passing fixture", {"type": "dict"}, {"type": "dict"}, passing_gate_handler, null))
+}

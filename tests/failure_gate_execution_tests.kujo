@@ -1,7 +1,7 @@
 test_setup {
     from src.core.state import create_run_state
     from src.core.runner import run_workflow
-    from tests.control_boundary_fixtures import control_workflow, failed_action_registry, control_run_options
+    from tests.control_boundary_fixtures import control_workflow, failed_action_registry, control_run_options, passing_gate_registry
 }
 
 test "execution failure enters review without running descendants or retrying effects" {
@@ -58,4 +58,15 @@ test "evaluator crash maps to error review without declaring a quality failure" 
     assert_equal(evaluation["evaluation_status"], "error")
     assert_equal(evaluation["verdict"], "indeterminate")
     assert_equal(evaluation["checks"]["failed"], 0)
+}
+
+test "a passed evaluation continues through the same neutral policy path" {
+    workflow := control_workflow("gate_pass", [{"when": {"result": "evaluation", "verdict": "pass"}, "decide": {"disposition": "continue", "reason": "Required gate passed"}}])
+    options := control_run_options("tests/tmp/failure-gate-pass")
+    state := create_run_state(workflow, {"topic": "pass"}, options["output_root"], options)
+    result := run_workflow(workflow, state, passing_gate_registry(), options)
+    assert_true(result["ok"])
+    assert_false(result["paused"])
+    assert_equal(result["run_state"]["status"], "completed")
+    assert_equal(result["run_state"]["steps"][1]["status"], "completed")
 }
