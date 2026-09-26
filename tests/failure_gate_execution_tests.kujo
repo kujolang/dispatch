@@ -1,0 +1,61 @@
+test_setup {
+    from src.core.state import create_run_state
+    from src.core.runner import run_workflow
+    from tests.control_boundary_fixtures import control_workflow, failed_action_registry, control_run_options
+}
+
+test "execution failure enters review without running descendants or retrying effects" {
+    workflow := control_workflow("failed_action", [{"when": {"result": "execution", "status": "failure"}, "decide": {"disposition": "require_intervention", "reason": "Review partial effects", "allowed_actions": ["abort", "approve_override"]}}])
+    workflow["default_retry_policy"] := {"max_attempts": 3, "retry_on_codes": ["fixture_action_failed"]}
+    steps := workflow["steps"]
+    config := steps[0]["config"]
+    config["control_role"] := "action"
+    item := steps[0]
+    item["config"] := config
+    steps[0] := item
+    workflow["steps"] := steps
+    options := control_run_options("tests/tmp/failure-action-review")
+    state := create_run_state(workflow, {"topic": "failure"}, options["output_root"], options)
+    result := run_workflow(workflow, state, failed_action_registry(), options)
+    assert_true(result["paused"])
+    assert_equal(result["run_state"]["steps"][0]["status"], "failed")
+    assert_equal(result["run_state"]["steps"][0]["attempts"], 1)
+    assert_equal(result["run_state"]["steps"][1]["status"], "pending")
+    assert_equal(result["run_state"]["current_control_boundary"]["evaluation_result"]["schema"], "kujo.execution-result/v1")
+}
+
+test "execution failure with no matching policy stops by default" {
+    workflow := control_workflow("failed_action", [])
+    steps := workflow["steps"]
+    config := steps[0]["config"]
+    config["control_role"] := "action"
+    item := steps[0]
+    item["config"] := config
+    steps[0] := item
+    workflow["steps"] := steps
+    options := control_run_options("tests/tmp/failure-action-stop")
+    state := create_run_state(workflow, {"topic": "stop"}, options["output_root"], options)
+    result := run_workflow(workflow, state, failed_action_registry(), options)
+    assert_false(result["ok"])
+    assert_equal(result["run_state"]["status"], "failed")
+    assert_equal(result["run_state"]["steps"][1]["status"], "pending")
+}
+
+test "evaluator crash maps to error review without declaring a quality failure" {
+    workflow := control_workflow("failed_action", [{"when": {"result": "evaluation", "evaluation_status": "error"}, "decide": {"disposition": "require_intervention", "reason": "Evaluator unavailable", "allowed_actions": ["retry_evaluation", "abort"]}}])
+    steps := workflow["steps"]
+    item := steps[0]
+    config := item["config"]
+    config["control_role"] := "evaluator"
+    item["config"] := config
+    steps[0] := item
+    workflow["steps"] := steps
+    options := control_run_options("tests/tmp/evaluator-crash-review")
+    state := create_run_state(workflow, {"topic": "crash"}, options["output_root"], options)
+    result := run_workflow(workflow, state, failed_action_registry(), options)
+    assert_true(result["paused"])
+    evaluation := result["run_state"]["current_control_boundary"]["evaluation_result"]
+    assert_equal(evaluation["evaluation_status"], "error")
+    assert_equal(evaluation["verdict"], "indeterminate")
+    assert_equal(evaluation["checks"]["failed"], 0)
+}

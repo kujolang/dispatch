@@ -1,0 +1,16 @@
+from src.core.control_journal import append_control_event, reconcile_control_journal
+root := "tests/tmp/control-journal-benchmark-" + to_string(current_timestamp())
+create_dir(root)
+state := {"run_id": "benchmark", "run_dir": root, "revision": 1}
+started := current_timestamp()
+index := 0
+while index < 100 {
+    appended := append_control_event(state, "policy_decided", "gate", ["fixture-result"], {"disposition": "continue"})
+    state = appended["run_state"]
+    index = index + 1
+}
+append_ms := current_timestamp() - started
+started = current_timestamp()
+checked := reconcile_control_journal(state)
+if checked["ok"] != true {throw("Benchmark journal did not reconcile")}
+print(to_json({"events": 100, "append_ms": append_ms, "recovery_ms": current_timestamp() - started, "journal_bytes": file_size(root + "/control-events.jsonl"), "durability": "atomic_records_and_directory_sync"}))

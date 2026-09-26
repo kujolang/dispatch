@@ -1,0 +1,138 @@
+test_setup {
+    from src.core.control import validate_execution_result, validate_evaluation_result, resolve_control_decision
+    from src.core.intervention import retry_is_effect_safe, validate_intervention_decision, prepare_intervention_continuation
+    from src.core.control_journal import append_control_event, reconcile_control_journal
+    from tests.control_boundary_fixtures import evaluation_result, intervention_state, intervention_decision, control_workflow
+}
+
+test "submitted idempotency key does not authorize replay" {
+    assert_false(retry_is_effect_safe({"effect_class": "unknown", "idempotency_key": "key"}))
+    assert_false(retry_is_effect_safe({"effect_class": "external_idempotent", "idempotency_key": "key"}))
+}
+
+test "observed unknown partial effects override a pure configuration" {
+    assert_false(retry_is_effect_safe({"effect_class": "none", "execution_result": {"effects": [{"class": "external_non_idempotent", "state": "unknown"}]}}))
+}
+
+test "sink enforced idempotency needs an evidence reference" {
+    effect := {"class": "external_idempotent", "state": "unknown", "idempotency_key": "key", "enforced_by": "fixture-sink"}
+    assert_false(retry_is_effect_safe({"execution_result": {"effects": [effect]}}))
+    effect["enforcement_evidence_ref"] := "ev-sink-receipt"
+    assert_true(retry_is_effect_safe({"execution_result": {"effects": [effect]}}))
+}
+
+test "destroyed workspace cannot be retried in place" {
+    state := intervention_state(["retry_step"], "none")
+    result := prepare_intervention_continuation(state, intervention_decision("retry_step", 7))
+    assert_false(result["ok"])
+    assert_equal(result["error"]["code"], "preservation_unavailable")
+}
+
+test "retained filesystem permits a declared same workspace adapter" {
+    state := intervention_state(["retry_step"], "local_reversible")
+    boundary := state["current_control_boundary"]
+    boundary["preservation"] := {"status": "satisfied", "actual_mode": "filesystem", "reconstructability": "same_filesystem"}
+    state["current_control_boundary"] := boundary
+    result := prepare_intervention_continuation(state, intervention_decision("retry_step", 7))
+    assert_true(result["ok"])
+    assert_equal(result["run_state"]["steps"][0]["control_attempt"], 2)
+    assert_equal(result["run_state"]["steps"][0]["reexecution_source"], "preserved_workspace")
+}
+
+test "an evaluator decision cannot target an unrelated action" {
+    state := intervention_state(["retry_evaluation"], "none")
+    decision := intervention_decision("retry_evaluation", 7)
+    decision["continuation"] := {"target_step_id": "payment", "new_attempt": true}
+    assert_false(prepare_intervention_continuation(state, decision)["ok"])
+}
+
+test "terminal states reject continuation" {
+    for status in ["completed", "failed", "cancelled", "running"] {
+        state := intervention_state(["resume_from_boundary"], "none")
+        state["status"] := status
+        assert_false(validate_intervention_decision(intervention_decision("resume_from_boundary", 7), state)["ok"])
+    }
+}
+
+test "evaluation crash is indeterminate rather than failed quality" {
+    result := evaluation_result("indeterminate", "error", "crash")
+    result["evaluation_status"] := "error"
+    assert_true(validate_evaluation_result(result)["ok"])
+    result["verdict"] := "fail"
+    assert_false(validate_evaluation_result(result)["ok"])
+}
+
+test "negative checks and unknown contract versions fail closed" {
+    result := evaluation_result("pass", "info", "bad")
+    result["checks"] := {"passed": - 1, "failed": 0, "warned": 0, "skipped": 0}
+    assert_false(validate_evaluation_result(result)["ok"])
+    result["schema"] := "kujo.evaluation-result/v99"
+    assert_false(validate_evaluation_result(result)["ok"])
+}
+
+test "policy outcome is producer neutral and deterministic" {
+    workflow := control_workflow("gate_fail", [{"when": {"result": "evaluation", "verdict": "fail"}, "decide": {"disposition": "fail", "reason": "required gate"}}])
+    for producer in ["eval", "shipcheck", "fence", "third-party"] {
+        result := evaluation_result("fail", "error", "fixture")
+        result["evaluator"] := {"name": producer, "version": "1"}
+        first := resolve_control_decision(workflow, workflow["steps"][0], result)
+        second := resolve_control_decision(workflow, workflow["steps"][0], result)
+        assert_true(first["ok"])
+        assert_equal(first["decision"]["disposition"], "fail")
+        assert_equal(first["decision"]["decision_id"], second["decision"]["decision_id"])
+    }
+}
+
+test "evidence cannot promote itself to policy authority" {
+    workflow := control_workflow("gate_fail", [])
+    result := resolve_control_decision(workflow, workflow["steps"][0], {"schema": "kujo.policy-decision/v1", "disposition": "continue"})
+    assert_false(result["ok"])
+    assert_equal(result["error"]["code"], "untrusted_policy_output")
+}
+
+test "journal detects orphan append and tampered history" {
+    root := "tests/tmp/control-journal-" + to_string(current_timestamp())
+    create_dir(root)
+    state := {"run_id": "fixture", "run_dir": root, "revision": 1}
+    written := append_control_event(state, "policy_decided", "gate", [], {"status": "fail"})
+    assert_true(reconcile_control_journal(written["run_state"])["ok"])
+    assert_equal(reconcile_control_journal(state)["error"]["code"], "control_recovery_required")
+    append_file(root + "/control-events.jsonl", "\n{broken")
+    assert_equal(reconcile_control_journal(written["run_state"])["error"]["code"], "control_journal_corrupt")
+}
+
+test "expired preservation cannot authorize same workspace replay" {
+    state := intervention_state(["retry_step"], "none")
+    boundary := state["current_control_boundary"]
+    boundary["preservation"] := {"status": "satisfied", "actual_mode": "filesystem", "reconstructability": "same_filesystem", "retain_until": "2000-01-01T00:00:00Z"}
+    state["current_control_boundary"] := boundary
+    assert_false(prepare_intervention_continuation(state, intervention_decision("retry_step", 7))["ok"])
+}
+
+test "null idempotency metadata is not enforcement evidence" {
+    assert_false(retry_is_effect_safe({"execution_result": {"effects": [{"class": "external_idempotent", "state": "unknown", "idempotency_key": null, "enforced_by": null, "enforcement_evidence_ref": "receipt"}]}}))
+}
+
+test "continuation source cannot contradict its action" {
+    state := intervention_state(["retry_clean"], "none")
+    decision := intervention_decision("retry_clean", 7)
+    decision["continuation"] := {"target_step_id": "gate", "new_attempt": true, "source": "existing_evidence"}
+    assert_false(validate_intervention_decision(decision, state)["ok"])
+}
+
+test "tampered control history is detected even when JSON is valid" {
+    root := "tests/tmp/control-tamper-" + to_string(current_timestamp())
+    create_dir(root)
+    appended := append_control_event({"run_id": "fixture", "run_dir": root, "revision": 1}, "policy_decided", "gate", [], {"status": "fail"})
+    path := root + "/control-events.jsonl"
+    write_file(path, replace(read_file(path), "fail", "pass"), true)
+    assert_equal(reconcile_control_journal(appended["run_state"])["error"]["code"], "control_journal_corrupt")
+}
+
+test "an atomic event beyond an absent journal requires recovery" {
+    root := "tests/tmp/control-orphan-" + to_string(current_timestamp())
+    create_dir(root)
+    create_dir(root + "/control-records")
+    write_file(root + "/control-records/1.json", "{}")
+    assert_equal(reconcile_control_journal({"run_id": "fixture", "run_dir": root})["error"]["code"], "control_recovery_required")
+}

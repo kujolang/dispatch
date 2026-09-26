@@ -2,14 +2,14 @@ from src.bridge.sdk_adapter import custom_provider_api_key_env_allowed, custom_p
 from src.cli.bundled_workflow import bundled_workflow_path, normalize_config_path
 from src.cli.cli_args import parse_cli_args, parsed_has_flag, parsed_flag_value
 from src.cli.output import print_lines, print_kv, print_error, exit_error, print_item, print_nested_item, print_report_path_if_present, read_package_version, run_version, build_contract_metadata, build_artifact_paths, print_run_completion, print_artifact_summary
+from src.core.control_journal import append_control_event, reconcile_control_journal
 from src.core.decision import normalize_decision
-from src.core.control_journal import append_control_event
 from src.core.hooks import webhook_outbox_status, replay_webhook_outbox
 from src.core.intervention import validate_intervention_decision, prepare_intervention_continuation
 from src.core.plugins import create_plugin_registry, register_plugin, apply_plugins_to_runtime
 from src.core.routing import validate_workflow_routing, resolve_route, routing_policy_version, supported_route_provider
-from src.core.runner import run_workflow
-from src.core.state import create_run_state, persist_run_state, load_run_state, list_runs, list_runs_with_diagnostics, summarize_run, filter_runs, paginate_runs, build_run_catalog, prune_runs, doctor_runs, normalize_output_root, mutation_audit_path, export_run_bundle, import_run_bundle
+from src.core.runner import run_workflow, run_workflow_under_lock
+from src.core.state import acquire_run_lock, release_run_lock, create_run_state, persist_run_state, load_run_state, list_runs, list_runs_with_diagnostics, summarize_run, filter_runs, paginate_runs, build_run_catalog, prune_runs, doctor_runs, normalize_output_root, mutation_audit_path, export_run_bundle, import_run_bundle
 from src.core.state_store import state_store_health
 from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_policy_with_profile
 from src.core.trace import apply_trace_limits, append_trace, finalize_trace
@@ -1316,11 +1316,14 @@ func load_amended_inputs(input_ref) {
     if file_exists(path) == false||file_size(path) > 1048576 {
         return resume_decision_error("invalid_input_ref", "Amended input_ref is missing or exceeds 1 MiB.")
     }
-    amended := read_json_or(path, null)
+    body := ""
+    try {body = read_file_beneath(".", path, 1048576)} except err {return resume_decision_error("invalid_input_ref", "Amended input must be a bounded regular file below the project root.")}
+    amended := null
+    try {amended = parse_json(body)} except err {return resume_decision_error("invalid_input_ref", "Amended input must be valid JSON.")}
     if type(amended) != "dict" {
         return resume_decision_error("invalid_input_ref", "Amended input_ref must contain a JSON object.")
     }
-    return {"ok": true, "input": amended, "path": path, "sha256": sha256(read_file(path))}
+    return {"ok": true, "input": amended, "path": path, "sha256": sha256(body)}
 }
 
 func run_v2_resume_decision(decision, parsed, command_args) {
@@ -1330,10 +1333,21 @@ func run_v2_resume_decision(decision, parsed, command_args) {
     output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
     loaded := load_run_state(output_root, run_id)
     if loaded["ok"] == false {exit_error(loaded["error"]["message"])}
+    lock := acquire_run_lock(loaded["run_state"])
+    if lock["ok"] == false {exit_error(to_json(lock["error"]))}
+    # Reload after locking so concurrent callers cannot validate stale snapshots.
+    loaded = load_run_state(output_root, run_id)
+    if loaded["ok"] == false {exit_error(to_json(loaded["error"]))}
     run_state := loaded["run_state"]
+    recovered := reconcile_control_journal(run_state)
+    if recovered["ok"] == false {exit_error(to_json(recovered["error"]))}
+    decision_digest := sha256(to_json(decision))
     decision_history := dict_get_or(run_state, "human_decisions", {})
     if type(decision_history) != "dict" {decision_history = {}}
+    if has_key(decision_history, decision_id)&&dict_get_or(decision_history[decision_id], "decision_sha256", "") != decision_digest {exit_error("conflicting_intervention_decision")}
+    if has_key(decision_history, decision_id)&&dict_get_or(decision_history[decision_id], "status", "") == "claimed" {exit_error("control_recovery_required: decision was claimed; do not replay automatically")}
     if has_key(decision_history, decision_id)&&dict_get_or(decision_history[decision_id], "status", "") == "applied" {
+        release_run_lock(lock)
         print(to_json({"status": "already_applied", "run_id": run_id, "decision_id": decision_id}))
         return
     }
@@ -1361,7 +1375,7 @@ func run_v2_resume_decision(decision, parsed, command_args) {
         "boundary_id": dict_get_or(decision, "boundary_id", ""),
         "action": action,
         "actor": dict_get_or(decision, "actor", {}),
-        "status": "claimed",
+        "status": "claimed", "decision_sha256": decision_digest,
         "claimed_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
     }
     if type(amended_result) == "dict" {
@@ -1370,7 +1384,7 @@ func run_v2_resume_decision(decision, parsed, command_args) {
     run_state["human_decisions"] := decision_history
     run_state["last_human_decision"] := decision
     run_state["human_intervention"] := null
-    journaled := append_control_event(run_state, "intervention_decision", dict_get_or(closed["boundary"], "step_id", ""), [decision_id, dict_get_or(decision, "request_id", ""), dict_get_or(decision, "boundary_id", "")], {"action": action, "actor": dict_get_or(decision, "actor", {})})
+    journaled := append_control_event(run_state, "intervention_decision", dict_get_or(closed["boundary"], "step_id", ""), [decision_id, dict_get_or(decision, "request_id", ""), dict_get_or(decision, "boundary_id", "")], {"action": action, "decision": decision, "decision_sha256": decision_digest, "continuation_mode": dict_get_or(prepared, "mode", "")})
     run_state = journaled["run_state"]
     run_state["trace"] := append_trace(run_state["trace"], "intervention_decision", dict_get_or(closed["boundary"], "step_id", ""), "Control boundary decision accepted: " + action, {"decision_id": decision_id, "boundary_id": dict_get_or(decision, "boundary_id", "")})
     mode := dict_get_or(prepared, "mode", "continue")
@@ -1388,6 +1402,7 @@ func run_v2_resume_decision(decision, parsed, command_args) {
         journaled = append_control_event(run_state, "workflow_" + terminal_status, dict_get_or(closed["boundary"], "step_id", ""), [decision_id], {"action": action})
         run_state = journaled["run_state"]
         run_state = persist_run_state(run_state)
+        release_run_lock(lock)
         print_run_completion(run_state)
         print(to_json({"status": terminal_status, "run_id": run_id, "decision_id": decision_id, "boundary_id": dict_get_or(decision, "boundary_id", "")}))
         return
@@ -1401,7 +1416,7 @@ func run_v2_resume_decision(decision, parsed, command_args) {
     plugin_runtime := dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, {})
     workflow = plugin_runtime["workflow"]
     tool_registry = plugin_runtime["tool_registry"]
-    result := run_workflow(workflow, run_state, tool_registry, {
+    result := run_workflow_under_lock(workflow, run_state, tool_registry, {
         "auto_approve": false,
         "interactive": false,
         "command_name": "resume-decision",
@@ -1422,6 +1437,7 @@ func run_v2_resume_decision(decision, parsed, command_args) {
     journaled = append_control_event(final_state, "continuation_finished", dict_get_or(closed["boundary"], "step_id", ""), [decision_id], {"action": action, "run_status": dict_get_or(final_state, "status", "")})
     final_state = journaled["run_state"]
     final_state = persist_run_state(final_state)
+    release_run_lock(lock)
     print_run_completion(final_state)
     print(to_json({"status": dict_get_or(final_state, "status", "unknown"), "run_id": run_id, "decision_id": decision_id, "boundary_id": dict_get_or(decision, "boundary_id", "")}))
     if result["ok"] == false&&dict_get_or(result, "cancelled", false) == false {exit_error(to_json(result["error"]))}
@@ -1447,7 +1463,8 @@ func run_resume_decision(command_args) {
         exit_error("decision JSON path is required for resume-decision command.")
     }
     decision_path := to_string(positionals[0])
-    decision := read_json_or(decision_path, null)
+    decision := null
+    try {decision = parse_json(read_file_beneath(dirname(decision_path), basename(decision_path), 1048576))} except err {exit_error("Decision must be a bounded regular JSON file (1 MiB maximum).")}
     if type(decision) != "dict" {
         exit_error("Decision payload could not be read as JSON.")
     }

@@ -19,7 +19,44 @@ func severity_rank(severity) {
     return 0
 }
 
+func bounded_control(value) {
+    return len(to_json(value)) <= 1048576
+}
+
+func validate_execution_result(result) {
+    if type(result) != "dict"||dict_get_or(result, "schema", "") != "kujo.execution-result/v1"||bounded_control(result) == false {
+        return control_error("invalid_execution_result", "Expected bounded execution-result/v1.")
+    }
+    for field in ["result_id", "started_at", "finished_at"] {
+        if type(dict_get_or(result, field, null)) != "string"||result[field] == "" {return control_error("invalid_execution_result", "Missing execution identity or time.")}
+    }
+    if allowed_value(dict_get_or(result, "status", ""), ["success", "failure", "timeout", "cancelled", "indeterminate"]) == false {return control_error("invalid_execution_result", "Invalid status.")}
+    subject := dict_get_or(result, "subject", {})
+    for field in ["run_id", "step_id", "attempt_id"] {
+        if type(dict_get_or(subject, field, null)) != "string"||subject[field] == "" {return control_error("invalid_execution_result", "Missing subject identity.")}
+    }
+    if type(dict_get_or(result, "attempt", null)) != "int"||result["attempt"] < 1 {return control_error("invalid_execution_result", "Invalid attempt.")}
+    producer := dict_get_or(result, "producer", {})
+    if dict_get_or(producer, "name", "") == ""||dict_get_or(producer, "version", "") == "" {return control_error("invalid_execution_result", "Missing producer.")}
+    if type(dict_get_or(result, "effects", null)) != "array"||type(dict_get_or(result, "evidence", null)) != "array"||len(result["effects"]) > 1000||len(result["evidence"]) > 1000 {return control_error("invalid_execution_result", "Invalid bounded effects/evidence.")}
+    for effect in result["effects"] {
+        if type(effect) != "dict"||dict_get_or(effect, "effect_id", "") == ""||allowed_value(dict_get_or(effect, "class", ""), ["none", "local_reversible", "external_idempotent", "external_non_idempotent", "destructive"]) == false||allowed_value(dict_get_or(effect, "state", ""), ["not_started", "started", "committed", "compensated", "failed_before_commit", "unknown"]) == false {return control_error("invalid_execution_result", "Invalid effect facts.")}
+    }
+    if allowed_value(result["status"], ["failure", "timeout", "indeterminate"])&&allowed_value(dict_get_or(result, "classification", ""), ["execution_failure", "infrastructure_failure", "verification_failure", "artifact_failure", "policy_denial", "unsafe_output", "unknown"]) == false {return control_error("invalid_execution_result", "Missing failure classification.")}
+    return {"ok": true, "result": result}
+}
+
+# Normalize the runner's own observed failure, without inferring that effects did not occur.
+func execution_failure_result(step, executed, run_state) {
+    attempt := dict_get_or(step, "control_attempt", 1)
+    if dict_get_or(dict_get_or(step, "config", {}), "control_role", "") == "evaluator" {
+        return {"schema": "kujo.evaluation-result/v1", "result_id": run_state["run_id"] + ":" + step["id"] + ":" + to_string(attempt), "subject": {"run_id": run_state["run_id"], "step_id": step["id"], "attempt_id": to_string(attempt)}, "evaluator": {"name": dict_get_or(step, "tool_name", "evaluator"), "version": "unknown"}, "verdict": "indeterminate", "evaluation_status": "error", "severity": "error", "checks": {"passed": 0, "failed": 0, "warned": 0, "skipped": 0}, "started_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ"), "finished_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ"), "evidence": [], "annotations": [{"code": "evaluator_execution_failed", "message": "The evaluator did not complete; no quality verdict is available."}]}
+    }
+    return {"schema": "kujo.execution-result/v1", "result_id": run_state["run_id"] + ":" + step["id"] + ":" + to_string(attempt), "subject": {"run_id": run_state["run_id"], "step_id": step["id"], "attempt_id": to_string(attempt)}, "producer": {"name": "dispatch", "version": "1"}, "status": "failure", "classification": "execution_failure", "attempt": attempt, "started_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ"), "finished_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ"), "effects": [{"effect_id": step["id"], "class": "external_non_idempotent", "state": "unknown"}], "evidence": [], "error_code": dict_get_or(dict_get_or(executed, "error", {}), "code", "execution_failure")}
+}
+
 func validate_evaluation_result(result) {
+
     if type(result) != "dict" {
         return control_error("invalid_evaluation_result", "Evaluation result must be an object.")
     }
@@ -29,6 +66,15 @@ func validate_evaluation_result(result) {
     if trim(to_string(dict_get_or(result, "result_id", ""))) == "" {
         return control_error("invalid_evaluation_result", "Evaluation result requires result_id.")
     }
+    if bounded_control(result) == false {return control_error("invalid_evaluation_result", "Result exceeds 1 MiB.")}
+    for field in ["started_at", "finished_at"] {
+        if type(dict_get_or(result, field, null)) != "string"||result[field] == "" {return control_error("invalid_evaluation_result", "Missing evaluation time.")}
+    }
+    evaluator := dict_get_or(result, "evaluator", {})
+    if dict_get_or(evaluator, "name", "") == ""||dict_get_or(evaluator, "version", "") == "" {return control_error("invalid_evaluation_result", "Missing evaluator.")}
+    if type(dict_get_or(result, "evidence", null)) != "array"||len(result["evidence"]) > 1000 {return control_error("invalid_evaluation_result", "Invalid evidence.")}
+    status := dict_get_or(result, "evaluation_status", "completed")
+    if allowed_value(status, ["completed", "error", "blocked"]) == false||(status != "completed"&&dict_get_or(result, "verdict", "") != "indeterminate") {return control_error("invalid_evaluation_result", "Incomplete evaluations must be indeterminate.")}
     verdict := trim(to_lower(to_string(dict_get_or(result, "verdict", ""))))
     if allowed_value(verdict, ["pass", "fail", "warn", "indeterminate"]) == false {
         return control_error("invalid_evaluation_result", "Evaluation result verdict is invalid.")
@@ -43,7 +89,10 @@ func validate_evaluation_result(result) {
     if type(dict_get_or(result, "checks", null)) != "dict" {
         return control_error("invalid_evaluation_result", "Evaluation result requires checks.")
     }
-    if has_key(result, "action")||has_key(result, "disposition") {
+    for field in ["passed", "failed", "warned", "skipped"] {
+        if type(dict_get_or(result["checks"], field, null)) != "int"||result["checks"][field] < 0 {return control_error("invalid_evaluation_result", "Invalid check count.")}
+    }
+    if has_key(result, "action")||has_key(result, "disposition")||has_key(result, "pause")||has_key(result, "retry")||has_key(result, "continue") {
         return control_error("invalid_evaluation_result", "Evaluation results describe judgment and must not contain workflow control commands.")
     }
     return {"ok": true, "result": result}
@@ -65,6 +114,7 @@ func configured_evaluation_result_path(step) {
 
 func extract_evaluation_result(step, output_value) {
     candidate := null
+    if type(output_value) == "dict"&&has_key(output_value, "evaluation_result")&&type(output_value["evaluation_result"]) != "dict" {return control_error("invalid_evaluation_result", "Normalized evaluation wrapper must contain an object.")}
     if type(output_value) == "dict" {
         if dict_get_or(output_value, "schema", "") == "kujo.evaluation-result/v1" {
             candidate = output_value
@@ -77,7 +127,11 @@ func extract_evaluation_result(step, output_value) {
         if dict_get_or(path_result, "ok", false) == false {return path_result}
         path := dict_get_or(path_result, "path", "")
         if path != "" {
-            body := safe_read_file(path, "")
+            body := ""
+            read_root := "."
+            relative := path
+            if to_bool(env("DISPATCH_ALLOW_ANY_CONFIG_PATH"), false) {read_root = dirname(path); relative = basename(path)}
+            try {body = read_file_beneath(read_root, relative, 1048576)} except err {return control_error("evaluation_result_unreadable", "Evaluation file must be a bounded regular file below the project root.")}
             if trim(body) == "" {
                 return control_error("evaluation_result_unreadable", "Evaluation result path is missing or unreadable: " + path)
             }
@@ -97,6 +151,16 @@ func extract_evaluation_result(step, output_value) {
 func validate_policy_decision(decision) {
     if type(decision) != "dict"||dict_get_or(decision, "schema", "") != "kujo.policy-decision/v1" {
         return control_error("invalid_policy_decision", "Policy decision schema must be kujo.policy-decision/v1.")
+    }
+    if bounded_control(decision) == false {return control_error("invalid_policy_decision", "Policy exceeds 1 MiB.")}
+    policy := dict_get_or(decision, "policy", {})
+    if dict_get_or(decision, "decision_id", "") == ""||dict_get_or(decision, "decided_at", "") == ""||dict_get_or(policy, "id", "") == ""||dict_get_or(policy, "version", "") == ""||len(dict_get_or(policy, "sha256", "")) != 64 {return control_error("invalid_policy_decision", "Policy identity, hash and time are required.")}
+    if type(dict_get_or(decision, "inputs", null)) != "array"||len(decision["inputs"]) == 0||len(decision["inputs"]) > 1000 {return control_error("invalid_policy_decision", "Policy requires bounded input references.")}
+    reason := dict_get_or(decision, "reason", {})
+    if dict_get_or(reason, "code", "") == ""||dict_get_or(reason, "message", "") == "" {return control_error("invalid_policy_decision", "Policy requires a reason.")}
+    if type(dict_get_or(decision, "allowed_actions", [])) != "array" {return control_error("invalid_policy_decision", "Allowed actions must be an array.")}
+    for action in dict_get_or(decision, "allowed_actions", []) {
+        if allowed_value(action, ["resume_from_boundary", "retry_evaluation", "retry_step", "retry_clean", "amend_inputs", "approve_override", "abort", "cancel"]) == false {return control_error("invalid_policy_decision", "Unknown intervention action.")}
     }
     disposition := trim(to_lower(to_string(dict_get_or(decision, "disposition", ""))))
     if allowed_value(disposition, ["continue", "retry", "require_intervention", "fail", "cancel"]) == false {
@@ -127,7 +191,12 @@ func validate_policy_decision(decision) {
 
 func policy_rule_matches(rule, evaluation_result) {
     when := dict_get_or(rule, "when", {})
-    if dict_get_or(when, "result", "evaluation") != "evaluation" {return false}
+    kind := "evaluation"
+    if dict_get_or(evaluation_result, "schema", "") == "kujo.execution-result/v1" {kind = "execution"}
+    if dict_get_or(when, "result", "evaluation") != kind {return false}
+    for field in ["status", "classification", "evaluation_status"] {
+        if has_key(when, field)&&dict_get_or(evaluation_result, field, "completed") != when[field] {return false}
+    }
     configured_verdict := trim(to_lower(to_string(dict_get_or(when, "verdict", ""))))
     if configured_verdict != ""&&configured_verdict != dict_get_or(evaluation_result, "verdict", "") {return false}
     minimum_severity := trim(to_lower(to_string(dict_get_or(when, "minimum_severity", ""))))
@@ -145,7 +214,7 @@ func build_policy_decision(control, step, evaluation_result, decide) {
     if type(scope) == "string" {scope = {"kind": scope, "root_step_id": dict_get_or(step, "id", "")}}
     decision := {
         "schema": "kujo.policy-decision/v1",
-        "decision_id": "pd_" + substring(sha256(to_json({"policy": control, "step": dict_get_or(step, "id", ""), "result_id": dict_get_or(evaluation_result, "result_id", ""), "at": current_timestamp()})), 0, 24),
+        "decision_id": "pd_" + substring(sha256(to_json({"policy": control, "step": dict_get_or(step, "id", ""), "result_id": dict_get_or(evaluation_result, "result_id", ""), "result": evaluation_result})), 0, 24),
         "policy": {"id": policy_id, "version": policy_version, "sha256": sha256(to_json(control))},
         "inputs": [dict_get_or(evaluation_result, "result_id", "")],
         "disposition": disposition,
@@ -167,10 +236,31 @@ func resolve_control_decision(workflow, step, output_value) {
         return {"ok": true, "found": false}
     }
     if type(output_value) == "dict"&&dict_get_or(output_value, "schema", "") == "kujo.policy-decision/v1" {
+        if dict_get_or(dict_get_or(step, "config", {}), "policy_authority", false) != true {return control_error("untrusted_policy_output", "Only an explicitly configured policy step may issue control decisions.")}
         validated := validate_policy_decision(output_value)
         if dict_get_or(validated, "ok", false) == false {return validated}
         return {"ok": true, "found": true, "decision": output_value, "evaluation_result": null}
     }
+    if type(output_value) == "dict"&&starts_with(dict_get_or(output_value, "schema", ""), "kujo.policy-decision/") {return control_error("invalid_policy_decision", "Unsupported policy contract version.")}
+    candidate := output_value
+    if type(output_value) == "dict"&&has_key(output_value, "execution_result") {candidate = output_value["execution_result"]}
+    if type(candidate) == "dict"&&starts_with(dict_get_or(candidate, "schema", ""), "kujo.execution-result/") {
+        checked := validate_execution_result(candidate)
+        if checked["ok"] == false {return checked}
+        for rule in dict_get_or(control, "policies", []) {
+            if policy_rule_matches(rule, candidate) {
+                built := build_policy_decision(control, step, candidate, dict_get_or(rule, "decide", {}))
+                if built["ok"] == false {return built}
+                return {"ok": true, "found": true, "decision": built["decision"], "evaluation_result": candidate}
+            }
+        }
+        fallback := {"disposition": "fail", "reason": "Execution did not succeed."}
+        if candidate["status"] == "success" {fallback = {"disposition": "continue", "reason": "Execution succeeded."}}
+        built := build_policy_decision(control, step, candidate, fallback)
+        if built["ok"] == false {return built}
+        return {"ok": true, "found": true, "decision": built["decision"], "evaluation_result": candidate}
+    }
+    if type(output_value) == "dict"&&starts_with(dict_get_or(output_value, "schema", ""), "kujo.evaluation-result/")&&output_value["schema"] != "kujo.evaluation-result/v1" {return control_error("unsupported_evaluation_result", "Unsupported evaluation contract version.")}
     extracted := extract_evaluation_result(step, output_value)
     if dict_get_or(extracted, "ok", false) == false {return extracted}
     if dict_get_or(extracted, "found", false) == false {return {"ok": true, "found": false}}
@@ -182,7 +272,9 @@ func resolve_control_decision(workflow, step, output_value) {
             return {"ok": true, "found": true, "decision": built["decision"], "evaluation_result": evaluation_result}
         }
     }
-    default_decision := dict_get_or(control, "default", {"disposition": "continue", "reason_code": "no_policy_match", "reason": "No control policy matched; explicit default continuation applied."})
+    fallback := {"disposition": "fail", "reason": "Unmatched evaluation did not pass."}
+    if evaluation_result["verdict"] == "pass" {fallback = {"disposition": "continue", "reason": "Evaluation passed."}}
+    default_decision := dict_get_or(control, "default", fallback)
     built := build_policy_decision(control, step, evaluation_result, default_decision)
     if dict_get_or(built, "ok", false) == false {return built}
     return {"ok": true, "found": true, "decision": built["decision"], "evaluation_result": evaluation_result}
@@ -192,3 +284,6 @@ export validate_evaluation_result := validate_evaluation_result
 export validate_policy_decision := validate_policy_decision
 export extract_evaluation_result := extract_evaluation_result
 export resolve_control_decision := resolve_control_decision
+
+export validate_execution_result := validate_execution_result
+export execution_failure_result := execution_failure_result
