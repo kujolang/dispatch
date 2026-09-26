@@ -74,3 +74,76 @@ that stopping a workflow reverses an external effect.
 `DISPATCH_DEBUG_ERRORS=true` adds the caught internal error string to an
 unexpected runner failure. Use it only for local diagnostics because internal
 errors may expose implementation details.
+
+## Failure and safe re-execution completion (September 2026)
+
+Opt-in `control` workflows also accept `kujo.execution-result/v1`, either
+as tool data or under `execution_result`. Rules use `when.result: execution`
+and optional `status`/`classification`. Unmatched unsuccessful execution stops.
+Failed handlers are normalized before the legacy terminal failure path; an
+explicit review policy can pause a failed step while leaving descendants
+pending. Execution-failure review currently closes the whole workflow scope.
+A trusted step configured with `control_role: evaluator` maps a handler crash
+to `evaluation_status: error`, `verdict: indeterminate`, and zero failed checks.
+It does not claim the subject failed a quality check. Legacy workflows without
+`control` retain their old behavior.
+
+For control workflows, execution attempts stop after the first failure; policy
+`retry` requests review rather than silently replaying the action. Same-result
+policy decision IDs are deterministic. Evaluation defaults are fail-closed
+unless the workflow supplies an explicit default. A producer cannot emit a
+policy decision unless its trusted step config sets `policy_authority: true`.
+
+These rules replace the earlier idempotency-key-only retry guidance above:
+
+- `retry_evaluation` requires `control_role: evaluator`, retained evaluation
+  facts, and the same input/evidence references. Tool context includes
+  `retained_evidence`, `retained_input_evidence_ids`, `reexecution_source:
+  existing_evidence`, and the new `control_attempt`. The evaluator adapter must
+  verify referenced artifacts against retained integrity before using them.
+- `retry_step` requires satisfied, unexpired filesystem preservation with
+  `reconstructability: same_filesystem` and trusted config
+  `reexecution_modes: ["same_workspace"]`. The handler receives the preservation
+  record and must verify that the owned workspace still exists.
+- `retry_clean` requires a re-executable descriptor, replay permission and
+  trusted config `reexecution_modes: ["clean_workspace"]`. The adapter creates
+  a fresh workspace from trusted original definitions. Metadata commands are
+  never executed by Dispatch. The new attempt bypasses the old result cache.
+- A submitted key alone cannot permit replay. An observed external idempotent
+  effect requires `idempotency_key`, `enforced_by`, and
+  `enforcement_evidence_ref`. Unknown/partial non-idempotent effects deny replay,
+  even if a step was originally declared pure. JSON facts must come from a
+  trusted producer; these fields cannot prove an untrusted sink's behavior.
+- `resume_from_boundary`/`approve_override` accept the boundary without replay;
+  a failed producing step becomes explicitly skipped with the decision ID.
+  `abort`/`cancel` end the run. Terminal runs cannot re-enter execution.
+
+V2 decision consumption holds the run lock across reload, validation, claim,
+continuation and final receipt. A repeated identical decision returns
+`already_applied`; reusing its ID with another payload is a conflict. A claimed
+but unfinished decision requires recovery, never automatic replay. Expired,
+stale, unrelated-target and disallowed decisions fail before changing steps.
+Local CLI access is the authority boundary; actor fields record attribution,
+not cryptographic authentication. Remote consumers must authenticate transport.
+
+Control events retain normalized policy inputs/decisions, references, revision,
+and typed intervention decisions; raw producer `output` is excluded. New events
+are written to immutable, atomic, directory-synced `control-records/<sequence>.json`
+files before appending the hash-linked JSONL index. On admission, the consumer
+checks sequence, hashes, records and checkpoint cursor once. A torn tail, orphan
+record or checkpoint mismatch returns `control_recovery_required` or
+`control_journal_corrupt`. Preserve these files and reconcile the checkpoint
+against the immutable decisions under the run lock; there is deliberately no
+command that guesses whether an external effect happened. Existing legacy
+journal records remain readable. Active journals are bounded to 8 MiB; archive
+completed runs before reaching the limit. Journals are audit evidence, not an
+event-sourced scheduler or an authenticated signature chain.
+
+Run the offline example in [failure-gate/README.md](../examples/failure-gate/README.md)
+and the focused safety, execution, boundary and concurrent decision-claim tests.
+
+The durable-record path requires a Kujo source build exposing
+`sync_directory_beneath` (currently an Unreleased preview primitive), in addition
+to bounded artifact I/O. This is not a claim that the published 1.5.0 binary
+already contains the directory-sync primitive. Workflows without `control`
+retain legacy execution/retry behavior and do not create control records.

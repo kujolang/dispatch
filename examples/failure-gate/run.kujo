@@ -1,0 +1,106 @@
+# Offline cross-repository failure/review proof. Run from the Dispatch root.
+from src.core.state import create_run_state, persist_run_state
+from src.core.runner import run_workflow
+from src.core.intervention import validate_intervention_decision, prepare_intervention_continuation
+from src.core.control_journal import append_control_event, reconcile_control_journal
+from src.core.step import create_step
+from src.tools.tool import create_tool_registry, create_tool, register_tool
+from src.workflows.workflow import create_workflow
+
+func require(condition, message) {if condition == false {throw(message)}}
+func command(argv, cwd) {
+    result := spawn_process(argv, {"cwd": cwd, "timeout_ms": 120000, "max_output_bytes": 1048576})
+    require(result.exitcode == 0, "Fixture command failed: " + result.stderr + result.stdout)
+    return result
+}
+
+func action(input, context) {
+    config := context["input"]
+    root := config["root"]
+    require(file_exists(root + "/action-ran") == false, "Original action was replayed")
+    write_file(root + "/action-ran", "1")
+    result := command([config["kujo"], "run", config["workcell"] + "/main.kujo", "run", "--file", "tests/fixtures/portable/workcell.json", "--repo", root + "/source", "--output", root + "/workcell", "--manifest", "tests/fixtures/backend-protocol/manifest.json", "--profiles", "tests/fixtures/portable/profiles.json", "--profile", "fixture", "--preserve-until-evaluated", "--retain-until", "2099-01-01T00:00:00Z", "--json"], config["workcell"])
+    value := parse_json(result.stdout)
+    output := value["output_dir"]
+    preservation := parse_json(read_file(output + "/preservation.json"))
+    require(preservation["actual_mode"] == "handoff_bundle", "Evidence was not exported before late evaluation")
+    command([config["kujo"], "run", config["workcell"] + "/main.kujo", "verify", "--run", output, "--json"], config["workcell"])
+    return {"ok": true, "data": {"output_dir": output, "preservation": preservation, "execution_result": parse_json(read_file(output + "/execution-result.json"))}}
+}
+
+func evaluate(input, context) {
+    config := context["input"]
+    evidence := input["action"]
+    output := config["root"] + "/evaluation-" + to_string(context["control_attempt"])
+    subject := {"run_id": context["run_id"], "step_id": context["step_id"], "attempt_id": to_string(context["control_attempt"]), "input_evidence_ids": [sha256(read_file(evidence["output_dir"] + "/manifest.json"))]}
+    if context["reexecution_source"] == "existing_evidence" {require(subject["input_evidence_ids"] == context["retained_input_evidence_ids"], "Evaluator input evidence changed")}
+    subject_path := output + "-subject.json"
+    write_file(subject_path, to_json(subject))
+    result := spawn_process([config["kujo"], "run", config["eval"] + "/main.kujo", "run", config["root"] + "/suite.json", "--subject-context", subject_path, "--output-dir", output, "--artifact-checksums", "--json"], {"cwd": config["eval"], "timeout_ms": 120000, "max_output_bytes": 1048576})
+    require(result.exitcode == 1, "Eval fixture must fail a quality check: " + result.stderr + result.stdout)
+    value := parse_json(read_file(output + "/evaluation-result.json"))
+    require(value["verdict"] == "fail", "Evaluator did not emit a failed judgment")
+    value["preservation_outcome"] := evidence["preservation"]
+    command([config["kujo"], "run", config["eval"] + "/main.kujo", "verify-manifest", "--output-dir", output, "--json"], config["eval"])
+    return {"ok": true, "data": value}
+}
+
+func downstream(input, context) {throw("Failed gate admitted a descendant")}
+
+kujo := env("KUJO_BIN")
+workcell := env("FAILURE_GATE_WORKCELL")
+eval_root := env("FAILURE_GATE_EVAL")
+root := env("TMPDIR") + "/failure-golden-" + to_string(current_timestamp())
+create_dir(root)
+create_dir(root + "/source")
+command(["git", "init", "-q"], root + "/source")
+write_file(root + "/source/README.md", "Offline failure-gate fixture\n")
+command(["git", "add", "README.md"], root + "/source")
+command(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "-qm", "fixture"], root + "/source")
+write_file(root + "/suite.json", to_json({"name": "failure-gate", "tests": [{"name": "required missing artifact", "check": "file_exists", "params": {"path": "__failure_gate_intentionally_missing__"}}]}))
+workflow := create_workflow({"id": "failure-golden", "name": "Failure golden path", "description": "Offline provider-neutral failure boundary", "input_schema": {"type": "dict"}, "agents": {}, "tools": ["action", "evaluate", "downstream"], "steps": [
+    create_step("action", "Workcell fixture", "tool", {"tool_name": "action", "input_from": ["input"], "output_key": "action", "effect_class": "local_reversible"}),
+    create_step("evaluate", "Eval gate", "tool", {"tool_name": "evaluate", "input_from": ["action"], "depends_on": ["action"], "output_key": "evaluation", "effect_class": "none", "control_role": "evaluator"}),
+    create_step("downstream", "Blocked descendant", "tool", {"tool_name": "downstream", "depends_on": ["evaluate"]})
+    ], "routing": {"enabled": false}, "control": {"policy_id": "failure-golden", "policy_version": "1", "policies": [{"when": {"result": "evaluation", "verdict": "fail"}, "decide": {"disposition": "require_intervention", "reason": "Required artifact missing", "reason_code": "evaluation_failed", "allowed_actions": ["retry_evaluation", "abort"]}}]}, "default_retry_policy": {"max_attempts": 1}, "approval_config": {"auto_approve": false}, "memory_config": {}, "budgets": {}, "max_parallel_steps": 1, "output_schema": {"type": "dict"}})
+registry := create_tool_registry()
+registry = register_tool(registry, create_tool("action", "Workcell fixture", {"type": "dict"}, {"type": "dict"}, action, null))
+registry = register_tool(registry, create_tool("evaluate", "Eval", {"type": "dict"}, {"type": "dict"}, evaluate, null))
+registry = register_tool(registry, create_tool("downstream", "Must not execute", {"type": "dict"}, {"type": "dict"}, downstream, null))
+options := {"output_root": "tests/tmp/failure-golden-runs", "auto_approve": false, "interactive": false}
+state := create_run_state(workflow, {"topic": "failure fixture", "root": root, "kujo": kujo, "workcell": workcell, "eval": eval_root}, options["output_root"], options)
+first := run_workflow(workflow, state, registry, options)
+require(first["ok"]&&first["paused"], "Workflow did not pause: " + to_json(first))
+state = first["run_state"]
+request := state["human_intervention"]
+decision := {"schema": "kujo.intervention-decision/v2", "decision_id": "fixture-review-1", "request_id": request["request_id"], "boundary_id": request["boundary_id"], "expected_state_revision": state["revision"], "action": "retry_evaluation", "continuation": {"target_step_id": "evaluate", "source": "existing_evidence", "new_attempt": true}, "actor": {"id": "local-fixture", "type": "system", "authenticated_by": "fixture-harness", "authorization": "fixture:review"}, "reason": "Prove evaluator-only retry", "decided_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")}
+require(validate_intervention_decision(decision, state)["ok"], "Decision was rejected")
+prepared := prepare_intervention_continuation(state, decision)
+require(prepared["ok"], "Evaluator retry unavailable")
+state = prepared["run_state"]
+boundary := state["current_control_boundary"]
+boundary["status"] := "closed"
+state["current_control_boundary"] := boundary
+state["control_barrier"] := {"status": "released"}
+state["human_intervention"] := null
+logged := append_control_event(state, "intervention_decided", "evaluate", [decision["decision_id"]], {"decision": decision, "mode": "evaluator_only"})
+state = persist_run_state(logged["run_state"])
+second := run_workflow(workflow, state, registry, options)
+require(second["ok"]&&second["paused"], "Repeated evaluation must still stop descendants: " + to_json(second))
+require(second["run_state"]["steps"][0]["attempts"] == 1, "Action was replayed")
+require(second["run_state"]["steps"][1]["control_attempt"] == 2, "Evaluation attempt did not advance")
+require(second["run_state"]["steps"][2]["status"] == "pending", "Descendant ran")
+require(reconcile_control_journal(second["run_state"])["ok"], "Journal does not reconcile")
+handoff := {"schema": "kujo.failure-gate-handoff/v1", "evidence_label": "fixture", "run_id": state["run_id"], "state_path": state["run_dir"] + "/state.json", "journal_path": state["run_dir"] + "/control-events.jsonl", "journal_sha256": sha256(read_file(state["run_dir"] + "/control-events.jsonl")), "workcell": state["data"]["action"], "decision": decision, "action_attempts": 1, "evaluation_attempts": 2, "downstream": "blocked"}
+write_file(root + "/handoff.json", to_json(handoff))
+ledger_root := env("FAILURE_GATE_RUNLEDGER")
+casefile_root := env("FAILURE_GATE_CASEFILE")
+command([kujo, "run", ledger_root + "/runledger.kujo", "start", "--provider", "fixture", "--model", "none", "--task", "Failure gate local proof", "--repo", root + "/source", "--ledger", root + "/ledger"], ledger_root)
+ledger_list := command([kujo, "run", ledger_root + "/runledger.kujo", "list", "--ledger", root + "/ledger", "--json"], ledger_root)
+ledger_id := parse_json(ledger_list.stdout)[0]["id"]
+command([kujo, "run", ledger_root + "/runledger.kujo", "correlate", ledger_id, "--dispatch-run", state["run_id"], "--ledger", root + "/ledger"], ledger_root)
+command([kujo, "run", ledger_root + "/runledger.kujo", "finish", ledger_id, "--status", "pass", "--verdict", "Failure boundary proof passed; downstream remains blocked", "--notes", "Evidence: " + root + "/handoff.json", "--ledger", root + "/ledger"], ledger_root)
+case_result := command([kujo, "run", "--isolated-imports", "--interpreter", casefile_root + "/casefile.kujo", "capture", "--manual", "--name", "failure-gate", "--notes", "Review handoff: " + root + "/handoff.json; SHA256=" + sha256(read_file(root + "/handoff.json")), "--format", "json"], root + "/source")
+write_file(root + "/casefile-result.json", case_result.stdout)
+write_file(root + "/ledger-ref.json", to_json({"ledger_id": ledger_id, "ledger": root + "/ledger", "dispatch_run_id": state["run_id"]}))
+print(to_json({"ok": true, "handoff": root + "/handoff.json", "run_id": state["run_id"], "root": root}))

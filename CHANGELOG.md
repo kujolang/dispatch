@@ -43,6 +43,14 @@ Each release section should include only shipped changes and use these headings 
 
 ## [Unreleased]
 
+### Added
+
+- Producer-neutral execution failure policies, explicit evaluator errors, and an offline Workcell/Eval failure-review proof with RunLedger/CaseFile handoffs.
+
+### Fixed
+
+- Control-enabled workflows require evidenced replay safety, retained evaluator inputs, real preservation and declared adapter modes; bare idempotency keys no longer authorize replay. V2 decisions lock the full transaction and reject stale/conflicting duplicates. Durable control records detect journal/checkpoint crash gaps before continuation.
+
 ### Fixed
 
 - Supply a stable tool-handler effect idempotency key so external sinks can
