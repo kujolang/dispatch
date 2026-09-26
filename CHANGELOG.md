@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Pin the failure-gate candidate to the Kujo source runtime with confined directory durability; reject older runtimes before running the release gate.
+
 - Added opt-in portable evaluation-result consumption, workflow control policy
   mapping, persisted scheduler barriers, and a hash-linked control event journal.
 - Added `kujo.intervention-request/v2` emission and revision-bound

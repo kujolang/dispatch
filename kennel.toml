@@ -15,10 +15,10 @@ readme = "README.md"
 stage = "production"
 stability = "stable"
 public_api = true
-notes = "The Dispatch 1.3 CLI and workflow contracts are public; POSIX execution locks require Kujo 1.4.0."
+notes = "The Dispatch 1.3 CLI and workflow contracts are public; Requires the exact source-runtime pin in release/dispatch-v1.3.0.refs for POSIX locks and directory durability; released Kujo 1.5.0 lacks the latter."
 
 [kujo]
-minimum_version = "1.4.0"
+minimum_version = "1.5.0"
 entry = "dispatch.kujo"
 sources = ["."]
 includes = ["README.md", "HOWTO.md", "BLOG_ROUTER.md", "CHANGELOG.md", "docs", "examples", "release", "scripts", "src", "tests", "dispatch.kujo", "kujo.toml"]

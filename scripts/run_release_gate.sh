@@ -2,6 +2,7 @@
 set -euo pipefail
 
 KUJO_BIN="${KUJO_BIN:-kujo}"
+KUJO_BIN="$KUJO_BIN" bash scripts/check_runtime_contract.sh
 SHARD_COUNT="${DISPATCH_TEST_SHARDS:-24}"
 SHARD_DIR="tests/tmp/dispatch-test-shards"
 SOURCE_TEST="tests/dispatch_tests.kujo"
