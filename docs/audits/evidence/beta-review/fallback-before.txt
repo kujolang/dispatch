@@ -1,0 +1,4 @@
+PASS compatibility: 60 legacy comparisons and required downgrade rejection
+[KUJOVM001] [vm] Runtime Error: unknown profile masked malformed selected assurance
+  --> 0:0
+

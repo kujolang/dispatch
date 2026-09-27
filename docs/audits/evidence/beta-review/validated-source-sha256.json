@@ -1,0 +1,6 @@
+{
+  "src/core/assurance_compatibility.kujo": "6440da433b457a53b2fca38f60d102a310302d42bd4069060561fab421a2aad0",
+  "src/core/effect_assurance.kujo": "f9a4f4795d7e5bbbfdd8568ba37a57e245c7cb1ee906132de0617ab804cc7b58",
+  "tests/assurance_compatibility_tests.kujo": "7c0e0f9fd4adb0586faa79dcc278612e8e20ba0cbab0f337931301374bf0a141",
+  "tests/assurance_conformance.kujo": "1b022134bd2c023857a47517502e15c8d7cb3f0abc9ca2f3649420adc913e6f2"
+}

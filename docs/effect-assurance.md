@@ -1,9 +1,14 @@
 # Effect assurance prototype
 
-Status: design validated against SQLite and Git local adapters; opt-in prototype,
+Status: design validated against SQLite, Git and Ability local adapters; opt-in prototype,
 unreleased. Broad migration is unscheduled. This is not completion of Wave C.
 The source/trust audit and original plan are in
 [audits/effect-assurance-prototype.md](audits/effect-assurance-prototype.md).
+
+Current admission and persistence rules are in [compatibility](effect-assurance-compatibility.md)
+and [persisted negotiation](persisted-assurance-negotiation.md). The original
+two-adapter derivation below is historical context; the [beta review](effect-assurance-beta-review.md)
+records the current inventory, restrictions and remaining freeze blockers.
 
 ## Compatibility and ownership
 

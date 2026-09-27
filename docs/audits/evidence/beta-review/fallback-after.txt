@@ -1,0 +1,1 @@
+PASS compatibility: 60 legacy comparisons and required downgrade rejection

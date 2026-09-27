@@ -194,12 +194,13 @@ Rows are evaluated in order; later rows cannot override an earlier denial.
 | Out-of-scope class or multiple effects | — | block | block | block |
 | Malformed/duplicate registry; disabled binding; known profile lacks verifier | — | configuration error | configuration error | configuration error |
 | Selected configured binding revoked (even if sidecar absent) | — | block | block | block |
-| Selected profile/version unsupported | — | block unsupported | v1 fallback, unverified | block unsupported |
-| Supported profile/binding; sidecar absent | — | block missing | v1 fallback, unverified | block missing |
-| Bounded JSON object; unknown envelope version | — | block unsupported | v1 fallback, unverified | block unsupported |
-| Known envelope, mechanism differs from host profile | — | block mismatch | block mismatch | block mismatch |
-| Known envelope extra fields, malformed, oversized, conflicting documents | — | block invalid | block invalid | block invalid |
-| Recognized, but expired/future/revoked/live verification fails or evidence unavailable | — | block | block | block |
+| Selected content malformed/oversized, invalid JSON framing or sidecar read failure | — | block invalid | block invalid | block invalid |
+| Known envelope extra fields, invalid shape, understood binding/time failure (even under unknown selected profile) | — | block invalid | block invalid | block invalid |
+| Known envelope, mechanism differs from known host profile | — | block mismatch | block mismatch | block mismatch |
+| Selected profile/version unsupported after those checks | — | block unsupported | v1 fallback, unverified | block unsupported |
+| Supported profile/binding; sidecar truly absent | — | block missing | v1 fallback, unverified | block missing |
+| Bounded JSON object with nonempty schema ID; unknown envelope version | — | block unsupported | v1 fallback, unverified | block unsupported |
+| Recognized profile, live verification fails or evidence unavailable | — | block | block | block |
 | Recognized, correct binding/current authority/live predicate verified; v1 allows | — | verified v1 eligibility | verified v1 eligibility | verified v1 eligibility |
 
 An unknown **host-selected profile** is unsupported. An unknown or different
@@ -237,8 +238,12 @@ are missing, the system MUST NOT invent them and claim historical byte identity.
 Required admission blocks; optional recognized verification failure also blocks.
 Explicit legacy selection may still apply old policy without claiming assurance.
 
-Later verification MAY create a new sidecar bound to retained historical bytes,
-current live authority and a new validity interval. It MUST NOT mutate or relabel
+Later verification MAY create a new sidecar bound to retained historical bytes
+only where the selected profile and immutable run-selection rules permit it.
+This is not an implemented renewal API: SQLite/Git validity is part of persisted
+intent identity, and Ability receipt publication can change the evidence digest.
+A new interval must not silently change a transaction or the original result
+enforcement reference. See the beta review for this migration boundary. It MUST NOT mutate or relabel
 the historical result, original enforcement strings or old sidecar. Upgrading a
 sidecar requires a supported destination profile/envelope, fresh verification and
 new independently recorded document digest. Preserve old artifacts and record
@@ -410,8 +415,9 @@ control journal, with locked live resolution, restart tests, three real profile 
 and actual previous-controller refusal. Protected state uses a guarded codec because
 older readers ignore additive authority fields. Legacy runs retain v1 semantics.
 
-**Recommended next task:** beta contract design/review for the bounded local,
-single-effect profile. Review the guarded storage boundary, operator installation
-contract, reason-code stability and migration/retention rules against the retained
-test evidence. Do not promote automatically, enable globally, or add remote/multi-effect
-semantics. Alpha remains opt-in and unreleased.
+**Beta review outcome:** [Beta contract review](effect-assurance-beta-review.md)
+retains alpha. Portable commitment vectors, completed owner profile specifications
+and a three-family alpha-to-beta rehearsal remain freeze blockers. The review fixes
+unsupported-profile fallback masking malformed/expired/binding-invalid selected
+alpha content. The common suite now has 69 checks per family. No beta schema is
+registered; no global enablement or runtime change.

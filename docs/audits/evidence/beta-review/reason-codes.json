@@ -1,0 +1,568 @@
+{
+  "schema": "dispatch.contract-audit/v1",
+  "status": "source inventory, not beta-stable code registry",
+  "codes": [
+    {
+      "code": "ability_assurance_expired",
+      "sources": [
+        "src/core/effect_assurance.kujo:92"
+      ]
+    },
+    {
+      "code": "ability_assurance_revoked",
+      "sources": [
+        "src/core/effect_assurance.kujo:92"
+      ]
+    },
+    {
+      "code": "ability_business_effect_unverified",
+      "sources": [
+        "src/adapters/ability_assurance.kujo:9",
+        "src/core/effect_assurance.kujo:92"
+      ]
+    },
+    {
+      "code": "ability_business_receipt_mismatch",
+      "sources": [
+        "src/core/effect_assurance.kujo:92"
+      ]
+    },
+    {
+      "code": "ability_idempotency_conflict",
+      "sources": [
+        "src/core/effect_assurance.kujo:92"
+      ]
+    },
+    {
+      "code": "ability_principal_mismatch",
+      "sources": [
+        "src/core/effect_assurance.kujo:92"
+      ]
+    },
+    {
+      "code": "ability_request_mismatch",
+      "sources": [
+        "src/adapters/ability_assurance.kujo:12",
+        "src/adapters/ability_assurance.kujo:6",
+        "src/core/effect_assurance.kujo:92"
+      ]
+    },
+    {
+      "code": "ability_transaction_mismatch",
+      "sources": [
+        "src/core/effect_assurance.kujo:92"
+      ]
+    },
+    {
+      "code": "assurance_action_unsupported",
+      "sources": [
+        "src/core/assurance_admission.kujo:77",
+        "src/core/effect_assurance.kujo:119"
+      ]
+    },
+    {
+      "code": "assurance_attempt_mismatch",
+      "sources": [
+        "src/core/effect_assurance.kujo:75"
+      ]
+    },
+    {
+      "code": "assurance_authoritative_store_missing",
+      "sources": [
+        "src/core/state.kujo:1045",
+        "src/core/state.kujo:919"
+      ]
+    },
+    {
+      "code": "assurance_authority_mismatch",
+      "sources": [
+        "src/core/assurance_configuration.kujo:41"
+      ]
+    },
+    {
+      "code": "assurance_binding_mismatch",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:71",
+        "src/core/effect_assurance.kujo:82"
+      ]
+    },
+    {
+      "code": "assurance_claim_insufficient",
+      "sources": [
+        "src/core/effect_assurance.kujo:84"
+      ]
+    },
+    {
+      "code": "assurance_clock_invalid",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:68",
+        "src/core/effect_assurance.kujo:70"
+      ]
+    },
+    {
+      "code": "assurance_configuration_invalid",
+      "sources": [
+        "src/core/assurance_configuration.kujo:11",
+        "src/core/assurance_configuration.kujo:12",
+        "src/core/assurance_configuration.kujo:44",
+        "src/core/assurance_configuration.kujo:8",
+        "src/core/assurance_configuration.kujo:9"
+      ]
+    },
+    {
+      "code": "assurance_configuration_mismatch",
+      "sources": [
+        "src/core/assurance_configuration.kujo:40",
+        "src/core/assurance_configuration.kujo:68"
+      ]
+    },
+    {
+      "code": "assurance_configuration_unsupported",
+      "sources": [
+        "src/core/assurance_configuration.kujo:10"
+      ]
+    },
+    {
+      "code": "assurance_continuation_target_mismatch",
+      "sources": [
+        "src/core/assurance_admission.kujo:73",
+        "src/core/effect_assurance.kujo:106"
+      ]
+    },
+    {
+      "code": "assurance_contract_invalid",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:67",
+        "src/core/effect_assurance.kujo:69"
+      ]
+    },
+    {
+      "code": "assurance_controller_incompatible",
+      "sources": [
+        "src/core/assurance_configuration.kujo:33",
+        "src/core/assurance_state.kujo:33",
+        "src/core/assurance_state.kujo:34",
+        "src/core/assurance_state.kujo:35"
+      ]
+    },
+    {
+      "code": "assurance_current_state_mismatch",
+      "sources": [
+        "src/core/assurance_admission.kujo:76",
+        "src/core/assurance_configuration.kujo:55",
+        "src/core/assurance_configuration.kujo:87",
+        "src/core/effect_assurance.kujo:107",
+        "src/core/effect_assurance.kujo:110",
+        "src/core/effect_assurance.kujo:114"
+      ]
+    },
+    {
+      "code": "assurance_denial_audit_unavailable",
+      "sources": [
+        "src/core/runner.kujo:1827"
+      ]
+    },
+    {
+      "code": "assurance_digest_invalid",
+      "sources": [
+        "src/core/effect_assurance.kujo:56"
+      ]
+    },
+    {
+      "code": "assurance_digest_mismatch",
+      "sources": [
+        "src/core/assurance_configuration.kujo:62",
+        "src/core/effect_assurance.kujo:58"
+      ]
+    },
+    {
+      "code": "assurance_effect_mismatch",
+      "sources": [
+        "src/core/effect_assurance.kujo:78"
+      ]
+    },
+    {
+      "code": "assurance_enforcement_mismatch",
+      "sources": [
+        "src/core/effect_assurance.kujo:80"
+      ]
+    },
+    {
+      "code": "assurance_existing_policy_denied",
+      "sources": [
+        "src/core/effect_assurance.kujo:79",
+        "src/core/effect_assurance.kujo:98"
+      ]
+    },
+    {
+      "code": "assurance_expired_or_future",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:69",
+        "src/core/effect_assurance.kujo:71"
+      ]
+    },
+    {
+      "code": "assurance_import_identity_conflict",
+      "sources": [
+        "src/core/state.kujo:1717"
+      ]
+    },
+    {
+      "code": "assurance_input_bound",
+      "sources": [
+        "src/core/effect_assurance.kujo:67"
+      ]
+    },
+    {
+      "code": "assurance_issuer_untrusted",
+      "sources": [
+        "src/core/effect_assurance.kujo:87"
+      ]
+    },
+    {
+      "code": "assurance_journal_state_mismatch",
+      "sources": [
+        "src/core/control_journal.kujo:91"
+      ]
+    },
+    {
+      "code": "assurance_live_evidence_mismatch",
+      "sources": [
+        "src/core/effect_assurance.kujo:96"
+      ]
+    },
+    {
+      "code": "assurance_negotiation",
+      "sources": [
+        "src/core/assurance_state.kujo:32",
+        "src/core/runner.kujo:1771",
+        "src/core/state.kujo:920"
+      ]
+    },
+    {
+      "code": "assurance_policy_immutable",
+      "sources": [
+        "src/core/state.kujo:920"
+      ]
+    },
+    {
+      "code": "assurance_policy_invalid",
+      "sources": [
+        "src/core/assurance_configuration.kujo:13",
+        "src/core/state.kujo:894"
+      ]
+    },
+    {
+      "code": "assurance_policy_required",
+      "sources": [
+        "src/core/assurance_admission.kujo:66"
+      ]
+    },
+    {
+      "code": "assurance_policy_revision_missing",
+      "sources": [
+        "src/core/assurance_configuration.kujo:36"
+      ]
+    },
+    {
+      "code": "assurance_policy_revision_revoked",
+      "sources": [
+        "src/core/assurance_configuration.kujo:37"
+      ]
+    },
+    {
+      "code": "assurance_policy_tampered",
+      "sources": [
+        "src/core/assurance_state.kujo:32",
+        "src/core/control_journal.kujo:53",
+        "src/core/runner.kujo:1284",
+        "src/core/state.kujo:1050",
+        "src/core/state.kujo:914"
+      ]
+    },
+    {
+      "code": "assurance_profile_unavailable",
+      "sources": [
+        "src/core/assurance_configuration.kujo:38"
+      ]
+    },
+    {
+      "code": "assurance_read_rejected",
+      "sources": [
+        "src/core/effect_assurance.kujo:60"
+      ]
+    },
+    {
+      "code": "assurance_reference_mismatch",
+      "sources": [
+        "src/core/effect_assurance.kujo:97"
+      ]
+    },
+    {
+      "code": "assurance_replay",
+      "sources": [
+        "src/core/control_journal.kujo:91"
+      ]
+    },
+    {
+      "code": "assurance_replay_authority_missing",
+      "sources": [
+        "src/core/assurance_configuration.kujo:83"
+      ]
+    },
+    {
+      "code": "assurance_resolution_denied",
+      "sources": [
+        "src/core/runner.kujo:1771"
+      ]
+    },
+    {
+      "code": "assurance_resolution_failed",
+      "sources": [
+        "src/core/effect_assurance.kujo:100",
+        "src/core/effect_assurance.kujo:123"
+      ]
+    },
+    {
+      "code": "assurance_result_digest_mismatch",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:34",
+        "src/core/effect_assurance.kujo:74"
+      ]
+    },
+    {
+      "code": "assurance_result_invalid",
+      "sources": [
+        "src/core/effect_assurance.kujo:73"
+      ]
+    },
+    {
+      "code": "assurance_selected_evidence_unavailable",
+      "sources": [
+        "src/core/assurance_configuration.kujo:72"
+      ]
+    },
+    {
+      "code": "assurance_selection",
+      "sources": [
+        "src/core/control_journal.kujo:91"
+      ]
+    },
+    {
+      "code": "assurance_selection_invalid",
+      "sources": [
+        "src/core/assurance_admission.kujo:31",
+        "src/core/assurance_admission.kujo:59"
+      ]
+    },
+    {
+      "code": "assurance_selection_mismatch",
+      "sources": [
+        "src/core/assurance_configuration.kujo:59"
+      ]
+    },
+    {
+      "code": "assurance_sha256",
+      "sources": [
+        "src/core/effect_assurance.kujo:99"
+      ]
+    },
+    {
+      "code": "assurance_state_invalid",
+      "sources": [
+        "src/core/assurance_state.kujo:31"
+      ]
+    },
+    {
+      "code": "assurance_state_unavailable",
+      "sources": [
+        "src/core/state.kujo:916"
+      ]
+    },
+    {
+      "code": "assurance_state_unreadable",
+      "sources": [
+        "src/core/state.kujo:918",
+        "src/core/state_store.kujo:68"
+      ]
+    },
+    {
+      "code": "assurance_store",
+      "sources": [
+        "src/core/assurance_state.kujo:36",
+        "src/core/state.kujo:1045",
+        "src/core/state.kujo:919"
+      ]
+    },
+    {
+      "code": "assurance_store_invalid",
+      "sources": [
+        "src/core/assurance_state.kujo:36"
+      ]
+    },
+    {
+      "code": "assurance_subject_mismatch",
+      "sources": [
+        "src/core/effect_assurance.kujo:76"
+      ]
+    },
+    {
+      "code": "assurance_verification_failed",
+      "sources": [
+        "src/core/effect_assurance.kujo:93"
+      ]
+    },
+    {
+      "code": "assurance_verified",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:8"
+      ]
+    },
+    {
+      "code": "assurance_verifier_invalid",
+      "sources": [
+        "src/core/assurance_configuration.kujo:18"
+      ]
+    },
+    {
+      "code": "assurance_verifier_revision_mismatch",
+      "sources": [
+        "src/core/assurance_configuration.kujo:42"
+      ]
+    },
+    {
+      "code": "assurance_workflow_mismatch",
+      "sources": [
+        "src/core/runner.kujo:1285"
+      ]
+    },
+    {
+      "code": "assurance_workflow_unsupported",
+      "sources": [
+        "src/core/assurance_admission.kujo:14"
+      ]
+    },
+    {
+      "code": "compat_assurance_absent",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:76"
+      ]
+    },
+    {
+      "code": "compat_assurance_invalid",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:62",
+        "src/core/assurance_compatibility.kujo:64"
+      ]
+    },
+    {
+      "code": "compat_authority_mismatch",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:57"
+      ]
+    },
+    {
+      "code": "compat_effect_out_of_scope",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:39"
+      ]
+    },
+    {
+      "code": "compat_envelope_unsupported",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:77"
+      ]
+    },
+    {
+      "code": "compat_input_or_resolution_invalid",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:82"
+      ]
+    },
+    {
+      "code": "compat_policy_invalid",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:28",
+        "src/core/assurance_compatibility.kujo:29"
+      ]
+    },
+    {
+      "code": "compat_profile_disabled",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:54"
+      ]
+    },
+    {
+      "code": "compat_profile_mismatch",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:66"
+      ]
+    },
+    {
+      "code": "compat_profile_revoked",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:53"
+      ]
+    },
+    {
+      "code": "compat_profile_unsupported",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:75"
+      ]
+    },
+    {
+      "code": "compat_registry_duplicate",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:48"
+      ]
+    },
+    {
+      "code": "compat_registry_invalid",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:40",
+        "src/core/assurance_compatibility.kujo:43",
+        "src/core/assurance_compatibility.kujo:44",
+        "src/core/assurance_compatibility.kujo:45",
+        "src/core/assurance_compatibility.kujo:46"
+      ]
+    },
+    {
+      "code": "compat_result_invalid",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:30",
+        "src/core/assurance_compatibility.kujo:32"
+      ]
+    },
+    {
+      "code": "compat_single_effect_required",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:37"
+      ]
+    },
+    {
+      "code": "compat_v1_denied",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:11",
+        "src/core/assurance_compatibility.kujo:38"
+      ]
+    },
+    {
+      "code": "compat_verified_v1_eligible",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:81"
+      ]
+    },
+    {
+      "code": "compat_verifier_unconfigured",
+      "sources": [
+        "src/core/assurance_compatibility.kujo:56"
+      ]
+    },
+    {
+      "code": "verified_sink_idempotency",
+      "sources": [
+        "src/core/effect_assurance.kujo:99"
+      ]
+    }
+  ]
+}

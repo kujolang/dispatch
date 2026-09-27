@@ -1,0 +1,29 @@
+[
+  {
+    "family": "sqlite",
+    "required": true,
+    "fresh_controller": true,
+    "checkpoint": true,
+    "descendant": true,
+    "logical_effects": 1,
+    "config_revision": "ea4f8f553342b9ac0fc93732c94420e5f3d4beaf3726a4789f655ee5a6228bca"
+  },
+  {
+    "family": "git",
+    "required": true,
+    "fresh_controller": true,
+    "checkpoint": true,
+    "descendant": true,
+    "logical_effects": 1,
+    "config_revision": "e504b2062610c916f56a17bfdc669c9816fab7fe59ded262d6f9fea776b760eb"
+  },
+  {
+    "family": "ability",
+    "required": true,
+    "fresh_controller": true,
+    "checkpoint": true,
+    "descendant": true,
+    "logical_effects": 1,
+    "config_revision": "5caed50d48a3b415c5fbcdd69c52e631ef08773cba511eb6bbc195a7c7fdbc6a"
+  }
+]

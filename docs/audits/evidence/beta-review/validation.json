@@ -1,0 +1,33 @@
+{
+  "schema": "dispatch.local-validation-evidence/v1",
+  "dispatch_release_gate": "passed",
+  "legacy_tests": 101,
+  "shards": 24,
+  "offline_release_workloads": {
+    "passed": 3,
+    "total": 3
+  },
+  "common_conformance": {
+    "sqlite": 69,
+    "git": 69,
+    "ability": 69
+  },
+  "persisted_scenarios": 25,
+  "required_persisted_families": [
+    "sqlite",
+    "git",
+    "ability"
+  ],
+  "kujo_docs": {
+    "fmt": "passed",
+    "readme_contracts": {
+      "passed": 1,
+      "failed": 0
+    }
+  },
+  "runtime_source": "5d72aab4b99e7f8c01e4c208d6c97061934c7447",
+  "runtime_sha256": "4ef726d0020b6df0be78da4b7e96a79d099d414efa83874676038da501a72a93",
+  "release_gate_sha256": "faa65353af44c4b1c53d814a53dd374821f92386cff775216d513ef3625eb916",
+  "hosted_ci": "not observed",
+  "beta_promoted": false
+}
