@@ -1,0 +1,20 @@
+[
+  {
+    "checks": 62,
+    "historical_result_sha256": "458e3b8413a4b5edb7ab25219d96270f2e5475f9d972583b187d71011ee027f6",
+    "live_verification": true,
+    "profile": "dispatch.sqlite-unique"
+  },
+  {
+    "checks": 62,
+    "historical_result_sha256": "2274083941257af5a4163e5d0173188db217aba012f787d7adfebb1cc137c3d2",
+    "live_verification": true,
+    "profile": "workcell.git-cas"
+  },
+  {
+    "checks": 62,
+    "historical_result_sha256": "c40efd07b2505e0655ee3ee72e6eac3e3b46e0e49885b6993434fe68c3ba1c59",
+    "live_verification": true,
+    "profile": "ability.application-gateway"
+  }
+]

@@ -1,0 +1,47 @@
+[
+  {
+    "scenario": "absent",
+    "code": "REPLAY_COMPLETED",
+    "business": 1
+  },
+  {
+    "scenario": "commit-failed",
+    "code": "REPLAY_COMPLETED",
+    "business": 1
+  },
+  {
+    "scenario": "complete",
+    "code": "REPLAY_COMPLETED",
+    "business": 1
+  },
+  {
+    "scenario": "revoked",
+    "code": "ability_assurance_revoked",
+    "business": 0
+  },
+  {
+    "scenario": "expired",
+    "code": "assurance_expired_or_future",
+    "business": 0
+  },
+  {
+    "scenario": "corrupt",
+    "code": "ability_business_receipt_mismatch",
+    "business": 0
+  },
+  {
+    "scenario": "unavailable",
+    "code": "ability_business_effect_unverified",
+    "business": null
+  },
+  {
+    "controllers": 2,
+    "admitted": 1,
+    "rejected": 1
+  },
+  {
+    "scenario": "controller-contention",
+    "code": "REPLAY_COMPLETED",
+    "business": 1
+  }
+]

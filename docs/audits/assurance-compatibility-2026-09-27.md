@@ -58,3 +58,52 @@ selection, mixed-version worker scheduling, restart/rollback enforcement and aud
 integration are not yet deployed. The specification requires them before beta and
 before production required-policy adoption. The stateless evaluator is not a cached
 permission token. Remote authority and multi-effect admission remain unsupported.
+
+## Fresh review corrections
+
+- A failed read of an already selected sidecar is a verification failure, not the
+  `null`/unselected input accepted by optional fallback. The normative host contract
+  now preserves that distinction explicitly.
+- New producers must keep v1 classification/enforcement claims truthful independently
+  of sidecar support; an older consumer cannot supply a missing enforcement mechanism.
+- Strengthened the common non-idempotent rejection test to update the authoritative
+  result digest and assert `compat_v1_denied`. The earlier assertion could have
+  succeeded on a digest mismatch without exercising that policy boundary. This was
+  a test precision issue, not a discovered admission bypass. All three real fixtures
+  are rerun after the correction.
+
+No provider policy, runtime code, existing execution-result/envelope schema,
+application identity logic or global assurance default was changed.
+
+## Validation and retained evidence
+
+All checks passed. See `../evidence/assurance-compatibility-2026-09-27/validation.json`
+for commands, exit codes, runtime provenance and SHA-256 hashes of retained logs.
+
+- Dispatch canonical full release gate: 101 tests across 24 shards, all focused
+  suites (including failure gates, durable review, reexecution, SQLite/Git/Ability),
+  command smoke and 3/3 offline release workloads.
+- Common live conformance: 62 checks per family; 60 legacy class/state comparisons.
+- Post-review SQLite/Git and Ability integration reruns: passed after the strengthened
+  policy assertion. Full gate started before that test-only refinement; no runtime
+  implementation or running shell gate was changed.
+- SQLite/Git: two simultaneous retry subprocesses per before/after-commit case,
+  one logical effect. Ability final run: six contenders, one admitted, zero replayed,
+  five in-progress, one business effect; two Dispatch controllers, one admitted and
+  one rejected. Real crash boundaries and privacy checks passed.
+- Kujo documentation: cargo fmt --check and readme_contracts (1 test) passed.
+  Cold compilation completed successfully; existing vendored tiny_http warnings
+  were not suppressed. No runtime code changed, so full runtime gates were not rerun.
+- Node syntax and git diff whitespace checks passed. Read-only adapter repositories
+  did not require full unrelated gates. Wave A was not rerun: its paths are unchanged.
+
+The runtime used is the recorded optimized source build, not the published 1.5.0
+archive. Retained evidence contains bounded metadata/digests and test logs; no private
+application database or business payload is included.
+
+Implementation commits: 5a605a6 (canonical specification/catalog/audit), 35e137d
+(reference evaluator/shared conformance), bbc3044 (review assertion refinement).
+Kujo f63d662 updates the roadmap and direction only. Final documentation/evidence
+is committed separately. No outstanding implementation defect was found in review.
+The next task is section 16 of the canonical specification: implement persisted
+compatibility negotiation and downgrade-resistant admission, not another adapter.

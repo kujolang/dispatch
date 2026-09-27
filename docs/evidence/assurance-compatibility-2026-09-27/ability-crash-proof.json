@@ -1,0 +1,63 @@
+{
+  "proof": [
+    {
+      "boundary": "before_business",
+      "businessBefore": 0,
+      "businessAfter": 1,
+      "receiptBefore": false
+    },
+    {
+      "boundary": "before_business_commit",
+      "businessBefore": 0,
+      "businessAfter": 1,
+      "receiptBefore": false
+    },
+    {
+      "boundary": "after_business_commit",
+      "businessBefore": 1,
+      "businessAfter": 1,
+      "receiptBefore": false
+    },
+    {
+      "boundary": "before_receipt_commit",
+      "businessBefore": 1,
+      "businessAfter": 1,
+      "receiptBefore": false
+    },
+    {
+      "boundary": "after_receipt_commit",
+      "businessBefore": 1,
+      "businessAfter": 1,
+      "receiptBefore": true
+    },
+    {
+      "boundary": "before_reply",
+      "businessBefore": 1,
+      "businessAfter": 1,
+      "receiptBefore": true
+    },
+    {
+      "contenders": 6,
+      "admitted": 1,
+      "replayed": 0,
+      "in_progress": 5,
+      "business": 1
+    },
+    {
+      "delayedAdmission": "revoked",
+      "business": 0,
+      "receipt": 0
+    },
+    {
+      "delayedAdmission": "expired",
+      "business": 0,
+      "receipt": 0
+    },
+    {
+      "fencedOldOwner": true,
+      "business": 1
+    }
+  ],
+  "commitFailed": "ability_idempotency_commit_failed",
+  "privacy": true
+}

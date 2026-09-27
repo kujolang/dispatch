@@ -1,0 +1,85 @@
+{
+  "privacy": "canary absent from assurance and diagnostics",
+  "proofs": [
+    {
+      "family": "sqlite",
+      "boundary": "before_commit",
+      "cases": 45,
+      "logical_effects": 1,
+      "concurrent_retries": 2,
+      "replay": "REPLAY_COMPLETED",
+      "common": {
+        "checks": 62,
+        "historical_result_sha256": "b5f4be3a220e5b00afa31a204e5770c88944b236a1a44a6876be7d4e1094cced",
+        "live_verification": true,
+        "profile": "dispatch.sqlite-unique"
+      }
+    },
+    {
+      "family": "sqlite",
+      "boundary": "after_commit",
+      "cases": 45,
+      "logical_effects": 1,
+      "concurrent_retries": 2,
+      "replay": "REPLAY_COMPLETED",
+      "common": {
+        "checks": 62,
+        "historical_result_sha256": "458e3b8413a4b5edb7ab25219d96270f2e5475f9d972583b187d71011ee027f6",
+        "live_verification": true,
+        "profile": "dispatch.sqlite-unique"
+      }
+    },
+    {
+      "family": "sqlite",
+      "scenario": "expired",
+      "decision": "assurance_expired_or_future",
+      "state_unchanged": true
+    },
+    {
+      "family": "sqlite",
+      "scenario": "non-idempotent",
+      "decision": "assurance_existing_policy_denied",
+      "state_unchanged": true
+    },
+    {
+      "family": "git",
+      "boundary": "before_commit",
+      "cases": 45,
+      "logical_effects": 1,
+      "concurrent_retries": 2,
+      "replay": "REPLAY_COMPLETED",
+      "common": {
+        "checks": 62,
+        "historical_result_sha256": "642cd590b16556321d0a9a15e9eca354327eebcdf66e59f816c4fc08707abedf",
+        "live_verification": true,
+        "profile": "workcell.git-cas"
+      }
+    },
+    {
+      "family": "git",
+      "boundary": "after_commit",
+      "cases": 45,
+      "logical_effects": 1,
+      "concurrent_retries": 2,
+      "replay": "REPLAY_COMPLETED",
+      "common": {
+        "checks": 62,
+        "historical_result_sha256": "2274083941257af5a4163e5d0173188db217aba012f787d7adfebb1cc137c3d2",
+        "live_verification": true,
+        "profile": "workcell.git-cas"
+      }
+    },
+    {
+      "family": "git",
+      "scenario": "expired",
+      "decision": "assurance_expired_or_future",
+      "state_unchanged": true
+    },
+    {
+      "family": "git",
+      "scenario": "non-idempotent",
+      "decision": "assurance_existing_policy_denied",
+      "state_unchanged": true
+    }
+  ]
+}

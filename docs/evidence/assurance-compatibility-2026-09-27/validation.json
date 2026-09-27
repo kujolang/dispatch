@@ -1,0 +1,77 @@
+{
+  "date": "2026-09-27",
+  "implementation_commit": "35e137df26dfe365a40a8c3033532ebb6816c5d0",
+  "review_test_commit": "bbc3044fe21a2ba0dc7dfa620fe649ae17a12cd6",
+  "kujo_docs_commit": "f63d6620b13de092c76912c6a8a8a324718ea97d",
+  "runtime": {
+    "path": "/tmp/kujo-wave-a-release-candidate-bin",
+    "source_commit": "5d72aab4b99e7f8c01e4c208d6c97061934c7447",
+    "sha256": "4ef726d0020b6df0be78da4b7e96a79d099d414efa83874676038da501a72a93",
+    "published_artifact": false
+  },
+  "toolchain": {
+    "rustc": "1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "1.96.0 (30a34c682 2026-05-25)"
+  },
+  "gates": [
+    {
+      "command": "KUJO_BIN=/tmp/kujo-wave-a-release-candidate-bin DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+      "exit": 0,
+      "sharded_tests": 101,
+      "shards": 24,
+      "workload_runs": 3
+    },
+    {
+      "command": "KUJO_BIN=/tmp/kujo-wave-a-release-candidate-bin node tests/effect_assurance_integration.mjs",
+      "exit": 0,
+      "post_review": true
+    },
+    {
+      "command": "KUJO_BIN=/tmp/kujo-wave-a-release-candidate-bin bash tests/ability_assurance_integration.sh",
+      "exit": 0,
+      "post_review": true
+    },
+    {
+      "repository": "kujo",
+      "command": "cargo fmt --check",
+      "exit": 0
+    },
+    {
+      "repository": "kujo",
+      "command": "cargo test --test readme_contracts",
+      "exit": 0,
+      "tests": 1
+    },
+    {
+      "command": "node --check tests/effect_assurance_integration.mjs",
+      "exit": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "common_checks_per_profile": 62,
+  "legacy_comparisons": 60,
+  "notes": [
+    "Full gate started before test-only review refinement; all three live fixtures reran after refinement. Runtime implementation unchanged during the gate.",
+    "Kujo changes are documentation only; runtime full cargo/release gates were not rerun.",
+    "Ability, Workcell, Agents SDK and MCP source unchanged; adapter integration paths rerun, full unrelated repository gates not rerun.",
+    "Wave A consumers and runtime unchanged; Wave A integration not rerun.",
+    "No live provider credentials required; no failed checks suppressed."
+  ],
+  "sha256": {
+    "ability-crash-proof.json": "7cf55f24d09947828e6d5f273ac3cc73a6f4ef67f69b45c561cce7204827e466",
+    "ability-dispatch-proof.json": "c8ccd1a880fd8e9a764dcbbfb02f378e85e32121ddfbdb5bc863771c03135a83",
+    "ability-integration.log": "56de407bbcd16a6430f2bfb66b2a6ed6b989505a0aa7ec13018f18eac5910dff",
+    "assurance_capabilities.log": "59e2d9253c4c80fec2597c57607cc743a2484ad79f959893db24d0c409450f93",
+    "assurance_compatibility.log": "24ea6fa02433c4e78ab02b0a54b1983390fdc037dee2167a1b138794acf52715",
+    "common-conformance.json": "2847ba1108439daddc5938fa1ab92ec1622e4fdb08ad4a4f0bb965e7d4e1b6e1",
+    "concurrency.json": "253ae5ce44772266fe613c73a83311d84b93fa30fe07402ba2e04d92c35f892e",
+    "dispatch-full-gate.log": "8113b1aa6200f9d98ccda8eb4bc3f202afd186c120becbb12086efaf04798852",
+    "kujo-doc-gates.log": "89b4887df838a15b36c4d071b37d3eff023f959ae05a6429164944f0f5e8432c",
+    "release-workloads.json": "51d509f106cc71bc9dfa7b0c0b3d04c212eec44a988f7e39062351b915b90828",
+    "sink-crash-proof.json": "108ec817697113d142ec9209457d3076037b54e76785b41f1055488ebba85669",
+    "sink-integration.log": "877051973abace7cafad55853d4d8c4c5f0097d5abf9e1b2161d077e811e8251"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "sinkRetries": [
+    {
+      "family": "sqlite",
+      "boundary": "before_commit",
+      "retries": 2,
+      "logical_effects": 1
+    },
+    {
+      "family": "sqlite",
+      "boundary": "after_commit",
+      "retries": 2,
+      "logical_effects": 1
+    },
+    {
+      "family": "git",
+      "boundary": "before_commit",
+      "retries": 2,
+      "logical_effects": 1
+    },
+    {
+      "family": "git",
+      "boundary": "after_commit",
+      "retries": 2,
+      "logical_effects": 1
+    }
+  ],
+  "ability": [
+    {
+      "controllers": 2,
+      "admitted": 1,
+      "rejected": 1
+    },
+    {
+      "scenario": "controller-contention",
+      "code": "REPLAY_COMPLETED",
+      "business": 1
+    }
+  ]
+}

@@ -161,6 +161,11 @@ in a known envelope, expiry, future validity, revocation, contradictory evidence
 missing evidence, failed verification, unavailable executable/sink, or bad registry
 configuration. These are recognized verification failures, not harmless absence.
 
+In the reference API, null means no sidecar was selected or expected. A host MUST
+NOT convert a failed read, missing selected artifact, digest error or verifier
+failure into null. Keep the controlled artifact association so deletion cannot
+masquerade as absence. Those failures block before calling optional fallback.
+
 Optional mode intentionally retains the operator's legacy trust assumptions for
 unsupported metadata; selecting it accepts this limited downgrade. It cannot
 meet an assurance-required security objective. Even when fallback occurs, no
@@ -209,7 +214,11 @@ optional fallback possible, required missing assurance blocked. Old consumers MA
 ignore sidecars, preserving their pre-existing v1 behavior, but cannot enforce new
 requirements. Hosts MUST NOT schedule assurance-required continuations onto such
 consumers, including rollback deployments. Producer-supplied strings remain
-historical integration assertions, never retrospectively verified facts.
+historical integration assertions, never retrospectively verified facts. A new
+producer MUST keep v1 effect class, completion and enforcement references truthful
+under v1 assumptions independently of sidecar support. It MUST NOT label an
+otherwise unsafe effect external_idempotent merely because a newer consumer is
+expected to apply additional policy. Consumer ignorance cannot supply enforcement.
 
 ## 8. Exact bytes, history and upgrade
 

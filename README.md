@@ -1,6 +1,8 @@
 # Dispatch
 
-Unreleased experimental addition: [effect assurance validation](docs/effect-assurance.md) with SQLite and Git adapters; legacy v1 replay behavior is unchanged.
+Unreleased experimental addition: [effect assurance validation](docs/effect-assurance.md) with SQLite, Git and Ability adapters; legacy v1 replay behavior is unchanged.
+
+Compatibility authority: [effect assurance compatibility and migration](docs/effect-assurance-compatibility.md). This defines experimental profile negotiation, explicit fallback and required-policy boundaries. Existing audit documents remain historical evidence; global admission is unchanged.
 
 Source-main addition: [durable review checkpoints](docs/review-checkpoints.md)
 bind paused authority and journal evidence before a fresh controller continues.

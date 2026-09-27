@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased — application effect assurance prototype
+## Unreleased — effect assurance prototype and compatibility
+
+- Add the canonical compatibility/migration specification, opt-in reference policy evaluator, bounded advisory capability catalog and shared live-adapter conformance. No global enablement or v1 result change.
 
 - Validate application-owned Ability identity, dual business/receipt commits, live revocation and expiry through the opt-in Wave C resolver. Stable Ability and execution-result/v1 contracts remain unchanged.
 

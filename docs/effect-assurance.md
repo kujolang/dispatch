@@ -196,3 +196,5 @@ Set ABILITY_ROOT for a non-sibling checkout. The canonical release gate includes
 this test alongside existing SQLite/Git assurance, failure and durable-review tests.
 See Ability `docs/audits/application-assurance.md` for the dual-commit matrix,
 authentication boundary, bounded profile and compatibility recommendation.
+
+Compatibility authority: [effect assurance compatibility and migration](effect-assurance-compatibility.md). This defines experimental profile negotiation, explicit fallback and required-policy boundaries. Existing audit documents remain historical evidence; global admission is unchanged.
