@@ -1,0 +1,18 @@
+# Schema syntax checks supplement, never replace, live semantic binding tests.
+schema := parse_json(read_file("schemas/effect-assurance-v1alpha1.schema.json"))
+doc := parse_json(read_file("tests/fixtures/effect-assurance/example.json"))
+assert(json_schema_validate(doc, schema)["valid"])
+for field in keys(doc) {
+    copy := {}
+    for key in keys(doc) {if key != field {copy[key] := doc[key]}}
+    assert(json_schema_validate(copy, schema)["valid"] == false)
+}
+for field in ["target_sha256", "result_sha256", "key_sha256"] {
+    copy := doc
+    copy[field] := "not-a-digest"
+    assert(json_schema_validate(copy, schema)["valid"] == false)
+}
+copy := doc
+copy["extra"] := "payload"
+assert(json_schema_validate(copy, schema)["valid"] == false)
+print("PASS assurance schema: valid example, required fields, digests, closed properties")

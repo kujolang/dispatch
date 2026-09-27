@@ -1,0 +1,6 @@
+from src.adapters.sqlite_effect import sqlite_effect_init, sqlite_effect_apply, sqlite_effect_observe
+args := args()
+config := parse_json(read_file_beneath(args[0], "config.json", 8192))
+if args[1] == "init" {sqlite_effect_init(config["db"]); print("INITIALIZED")}
+else if args[1] == "observe" {print(to_json(sqlite_effect_observe(config["db"], config["intent"])))}
+else {print(to_json(sqlite_effect_apply(config["db"], config["intent"], args[1])))}

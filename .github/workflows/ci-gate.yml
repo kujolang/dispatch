@@ -45,6 +45,20 @@ jobs:
           path: .ci/kujo
           fetch-depth: 1
 
+      - name: Checkout reviewed Workcell effect adapter
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/workcell
+          ref: b34c26c90a8626c988a4234fd2610dcf11df1634
+          path: .ci/workcell
+          fetch-depth: 1
+
+      - name: Configure offline effect assurance adapters
+        run: |
+          command -v node
+          command -v sqlite3
+          echo "WORKCELL_ROOT=$GITHUB_WORKSPACE/.ci/workcell" >> "$GITHUB_ENV"
+
       - name: Checkout original Dispatch 1.2 Kujo runtime
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:

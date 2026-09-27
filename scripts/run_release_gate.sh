@@ -89,6 +89,8 @@ run_suite control_boundary "$KUJO_BIN" test-run tests/control_boundary_tests.kuj
 run_suite failure_gate_safety "$KUJO_BIN" test-run tests/failure_gate_safety_tests.kujo -v
 run_suite failure_gate_execution "$KUJO_BIN" test-run tests/failure_gate_execution_tests.kujo -v
 run_suite review_checkpoint "$KUJO_BIN" test-run tests/review_checkpoint_tests.kujo -v
+run_suite effect_assurance_schema "$KUJO_BIN" run tests/effect_assurance_schema.kujo
+run_suite effect_assurance env KUJO_BIN="$KUJO_BIN" node tests/effect_assurance_integration.mjs
 run_suite reexecution_lifecycle "$KUJO_BIN" run tests/reexecution_lifecycle_fixture.kujo
 run_suite decision_claim env KUJO_BIN="$KUJO_BIN" bash tests/decision_claim_contract.sh
 run_suite sdk_adapter "$KUJO_BIN" test-run tests/sdk_adapter_tests.kujo -v
