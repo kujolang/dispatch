@@ -42,7 +42,7 @@ func valid_document(doc) {
     if contains(["none", "local_reversible", "external_idempotent", "external_non_idempotent", "destructive"], doc["replay_class"]) == false {return false}
     if contains(["not_started", "started", "committed", "compensated", "failed_before_commit", "unknown"], doc["reported_state"]) == false {return false}
     if contains(["not_started", "committed"], doc["observed_state"]) == false {return false}
-    if contains(["sqlite_unique_transaction", "git_ref_cas_transaction"], doc["mechanism"]) == false {return false}
+    if contains(["sqlite_unique_transaction", "git_ref_cas_transaction", "ability_application_gateway"], doc["mechanism"]) == false {return false}
     if type(doc["evidence_ref"]) != "string"||regex_match(doc["evidence_ref"], "^sha256:[0-9a-f]{64}$") == false {return false}
     for field in ["valid_from", "valid_until"] {if type(doc[field]) != "int"||doc[field] < 0||doc[field] > 253402300799 {return false}}
     return doc["valid_until"] > doc["valid_from"]&&doc["valid_until"] - doc["valid_from"] <= 3600
@@ -84,7 +84,11 @@ export func resolve_effect_assurance(result_raw, assurance_raw, expected, regist
         if type(adapter) != "dict"||dict_get_or(adapter, "assurance", "") != expected["assurance"]||type(dict_get_or(adapter, "verify", null)) != "function" {return denied("assurance_issuer_untrusted")}
         verify := adapter["verify"]
         live := verify(expected)
-        if type(live) != "dict"||dict_get_or(live, "ok", false) != true {return denied("assurance_verification_failed")}
+        if type(live) != "dict"||dict_get_or(live, "ok", false) != true {
+            code := dict_get_or(live, "code", "")
+            if contains(["ability_principal_mismatch", "ability_request_mismatch", "ability_idempotency_conflict", "ability_business_receipt_mismatch", "ability_business_effect_unverified", "ability_assurance_revoked", "ability_assurance_expired", "ability_transaction_mismatch"], code) {return denied(code)}
+            return denied("assurance_verification_failed")
+        }
         reconstructed := assurance_document(expected, live["observation"])
         if valid_document(reconstructed) == false||to_json(doc) != to_json(reconstructed) {return denied("assurance_live_evidence_mismatch")}
         if dict_get_or(effect, "enforcement_evidence_ref", "") != doc["evidence_ref"] {return denied("assurance_reference_mismatch")}

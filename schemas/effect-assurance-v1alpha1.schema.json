@@ -138,7 +138,7 @@
     "mechanism": {
       "enum": [
         "sqlite_unique_transaction",
-        "git_ref_cas_transaction"
+        "git_ref_cas_transaction", "ability_application_gateway"
       ]
     },
     "evidence_ref": {
