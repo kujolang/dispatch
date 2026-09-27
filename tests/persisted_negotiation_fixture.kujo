@@ -1,3 +1,4 @@
+from src.adapters.agents_ability_handoff import load_agents_ability_handoff
 from tests.beta_conformance import beta_conformance
 from src.core.effect_assurance_beta import beta_assurance_document, resolve_beta_assurance
 from src.core.portable_commitments import portable_json
@@ -51,11 +52,39 @@ func delayed_admission_hook(event) {
     }
 }
 
+func sdk_process(config, root, attempt, mode) {
+    response := spawn_process([config["runtime"], "run", "examples/controlled-ability/participant.kujo", "--interpreter", root, to_string(attempt), mode], {"cwd": config["sdk_root"], "inherit_env": false, "env": {"ABILITY_GATEWAY_SESSION": env("ABILITY_GATEWAY_SESSION")}, "max_output_bytes": 8192, "timeout_ms": 30000})
+    require(response.success&&response.stderr == ""&&response.stdout_truncated == false)
+    return parse_json(response.stdout)
+}
+func sdk_expected(config, root, result) {
+    invocation := parse_json(read_file_beneath(root, "invocation.json", 4096))
+    return {"sdk_run_id": "sdk-" + result["subject"]["run_id"] + "-" + result["subject"]["attempt_id"], "tool_call_id": "model-call-" + result["subject"]["attempt_id"], "tool_name": "publish", "ability_id": invocation["ability_id"], "ability_version": invocation["ability_version"], "definition_digest": invocation["definition_digest"], "ability_invocation_id": invocation["invocation_id"], "dispatch_run_id": result["subject"]["run_id"], "dispatch_step_id": result["subject"]["step_id"], "dispatch_attempt_id": result["subject"]["attempt_id"], "dispatch_effect_id": "effect-1", "transaction_sha256": config["transaction_sha256"]}
+}
+func sdk_check(config, root, raw, assurance_raw) {
+    result := parse_json(raw); prefix := "sdk-bound-handoff-"
+    if assurance_raw == "" {prefix = "sdk-handoff-"}
+    reference := trim(read_file_beneath(root, prefix + result["subject"]["attempt_id"] + ".ref", 128))
+    return load_agents_ability_handoff(root, reference, sdk_expected(config, root, result), raw, assurance_raw)
+}
 func action(input, context) {
     root := context["input"]["root"]
     config := parse_json(read_file_beneath(root, "config.json", 8192))
     attempt := context["control_attempt"]
     append_file(root + "/action-invocations", to_string(attempt) + "\n")
+    if has_key(config, "sdk_root") {
+        if attempt > 1 {require(adapter(config, root, "recover")["ok"])}
+        stamp := format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
+        subject := {"run_id": context["run_id"], "step_id": context["step_id"], "attempt_id": to_string(attempt)}
+        preservation := {"schema": "kujo.preservation-outcome/v1", "result_id": "preserved", "subject": subject, "requested_mode": "filesystem", "actual_mode": "filesystem", "status": "satisfied", "provider": {"name": "local"}, "reconstructability": "same_filesystem", "evidence": [], "created_at": stamp, "retain_until": "2099-01-01T00:00:00Z", "cleanup": {"owner": "fixture", "handle": "opaque"}}
+        ticket := {"sdk_run_id": "sdk-" + context["run_id"] + "-" + to_string(attempt), "tool_call_id": "model-call-" + to_string(attempt), "dispatch_run_id": context["run_id"], "dispatch_step_id": context["step_id"], "dispatch_attempt_id": to_string(attempt), "dispatch_effect_id": "effect-1", "preservation": preservation}
+        write_file_atomic_beneath(root, "sdk-ticket-" + to_string(attempt) + ".json", to_json(ticket), false)
+        require(sdk_process(config, root, attempt, "run")["ok"])
+        raw := read_file_beneath(root, "result-" + to_string(attempt) + ".json", 1048576)
+        require(sdk_check(config, root, raw, "")["ok"])
+        return {"ok": true, "data": parse_json(raw)}
+    }
+
     if config["issuer"] == "ability-local" {if attempt > 1 {require(adapter(config, root, "recover")["ok"]); require(adapter(config, root, "execute")["ok"])}}
     else if attempt == 1 {require(adapter(config, root, config["boundary"])["ok"])}
     else {require(adapter(config, root, "apply")["ok"])}
@@ -82,6 +111,7 @@ func installed_files(config) {
     if config["issuer"] == "sqlite-local" {files = push(files, {"root": os_getcwd(), "path": "src/adapters/sqlite_effect.kujo"})}
     if config["issuer"] == "git-local" {files = push(files, {"root": config["cwd"], "path": "src/evidence/git_effect.kujo"})}
     if config["issuer"] == "ability-local" {files = push(files, {"root": config["cwd"], "path": "examples/application-assurance/gateway.kujo"})}
+    if has_key(config, "sdk_root") {files = push(files, {"root": os_getcwd(), "path": "src/adapters/agents_ability_handoff.kujo"})}
     return files
 }
 func host(config, root, expected, raw, verifier) {
@@ -89,7 +119,17 @@ func host(config, root, expected, raw, verifier) {
         installed := parse_json(read_file_beneath(root, "operator-store.json", 16384))
         item := dict_get_or(installed["revisions"], revision, null)
         if item == null {return {"status": "missing"}}
-        return {"status": item["status"], "descriptor": item["descriptor"], "authority_sha256": sha256(root), "implementation": dict_get_or(item, "implementation", installed_files(config)), "verify": verifier, "expected": expected, "result_raw": raw}
+        active_verifier := verifier
+        if has_key(config, "sdk_root")&&raw != "" {
+            active_verifier = func(subject) {
+                selected := state["assurance_selection"]
+                sidecar := read_file_beneath(state["run_dir"], selected["sidecar_ref"], 8192)
+                checked := sdk_check(config, root, raw, sidecar)
+                if checked["ok"] == false {return checked}
+                return verifier(subject)
+            }
+        }
+        return {"status": item["status"], "descriptor": item["descriptor"], "authority_sha256": sha256(root), "implementation": dict_get_or(item, "implementation", installed_files(config)), "verify": active_verifier, "expected": expected, "result_raw": raw}
     }
 }
 func make_verifier(config, root) {
@@ -168,7 +208,12 @@ if phase == "install" {
             }
         }
         if phase == "assure-oversized-subject" {expected["step_id"] := "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
-        print(to_json(select_run_assurance(options["output_root"], state["run_id"], expected, document)))
+        selection := select_run_assurance(options["output_root"], state["run_id"], expected, document)
+        if has_key(config, "sdk_root")&&selection["ok"] {
+            write_file_atomic_beneath(root, "sdk-assurance.json", document, false)
+            require(sdk_process(config, root, 1, "attach")["ok"])
+        }
+        print(to_json(selection))
     } else {
         request := state["human_intervention"]
         decision := {"schema": "kujo.intervention-decision/v2", "decision_id": "persisted-review", "request_id": request["request_id"], "boundary_id": request["boundary_id"], "expected_state_revision": state["revision"], "action": "retry_step", "continuation": {"target_step_id": "action", "source": "preserved_workspace", "new_attempt": true}, "actor": {"id": "local-controller", "type": "system", "authenticated_by": "operator-process", "authorization": "review"}, "reason": "Verify persisted policy", "decided_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")}

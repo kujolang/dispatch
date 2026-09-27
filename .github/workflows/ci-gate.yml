@@ -141,6 +141,20 @@ jobs:
       - name: Configure application assurance fixture
         run: echo "ABILITY_ROOT=$GITHUB_WORKSPACE/.ci/ability" >> "$GITHUB_ENV"
 
+      - name: Checkout controlled Agents SDK participant
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: kujolang/agents-sdk
+          ref: af0aa28f5960232cbafa7cf528a32db8cb36c7a9
+          path: .ci/agents-sdk-wave-d
+
+      - name: Install controlled participant dependencies
+        run: |
+          git clone --filter=blob:none https://github.com/kujolang/kennel.git .ci/kennel-wave-d
+          git -C .ci/kennel-wave-d checkout --detach b5e0cf290aa2af7a90b637a7c3bdb4324ea4f66d
+          "$KUJO_BIN" run .ci/kennel-wave-d/kennel.kujo --interpreter -- install --project-dir "$GITHUB_WORKSPACE/.ci/agents-sdk-wave-d"
+          echo "AGENTS_SDK_ROOT=$GITHUB_WORKSPACE/.ci/agents-sdk-wave-d" >> "$GITHUB_ENV"
+
       - name: Run Dispatch release gate
         timeout-minutes: 45
         run: bash scripts/run_release_gate.sh
