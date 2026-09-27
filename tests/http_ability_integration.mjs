@@ -26,6 +26,12 @@ const calls=()=>fs.existsSync(path.join(root,'http-gateway-invocations'))?fs.rea
 phase('install');const started=phase('start');assert.equal(started.ok,true,JSON.stringify(started));
 const committed=scenario==='response-loss',expectedCount=committed?'1':'0';
 assert.equal(sql('SELECT count(*) FROM business_effects;'),expectedCount);assert.equal(sql('SELECT count(*) FROM receipts;'),expectedCount);
+if(scenario==='application-error'){
+ const failed=read('http-private-1.json').receipt;
+ assert.equal(failed.error.code,'ability_idempotency_commit_failed');
+ assert.equal(failed.error.details.execution_status,'failed');
+ assert.equal(gateway('observe','portable-v1').observation.observed_state,'not_started');
+}
 const first=read('result-1.json');assert.equal(first.status,'indeterminate');
 assert.equal(first.http_correlation.outcome,scenario==='response-loss'?'response_lost':scenario==='timeout-before'?'timeout':'application_error');
 const firstPublic=read('http-public-1.json');assert.equal(firstPublic.concurrent_denied,1);assert.equal(firstPublic.invalid_requests_denied,21);
