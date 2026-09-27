@@ -129,6 +129,16 @@ jobs:
       - name: Verify default run path is warning-free
         run: bash scripts/check_vm_smoke.sh
 
+      - name: Checkout reviewed Ability assurance gateway
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: kujolang/ability
+          ref: 63aae76af31633dd6925931e0b910522e7bd40dd
+          path: .ci/ability
+
+      - name: Configure application assurance fixture
+        run: echo "ABILITY_ROOT=$GITHUB_WORKSPACE/.ci/ability" >> "$GITHUB_ENV"
+
       - name: Run Dispatch release gate
         timeout-minutes: 45
         run: bash scripts/run_release_gate.sh

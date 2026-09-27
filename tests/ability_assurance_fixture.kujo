@@ -1,0 +1,132 @@
+from src.adapters.ability_assurance import ability_assurance_verifier
+from src.core.control_journal import append_control_event, reconcile_control_journal
+from src.core.effect_assurance import assurance_document, resolve_effect_assurance, load_effect_assurance, prepare_assured_continuation
+from src.core.runner import run_workflow, run_workflow_with_admission
+from src.core.state import create_run_state, persist_run_state, acquire_run_lock, release_run_lock
+from src.core.step import create_step
+from src.tools.tool import create_tool_registry, create_tool, register_tool
+from src.workflows.workflow import create_workflow
+
+func require(value) {if value == false {throw("Effect assurance fixture assertion failed")}}
+func adapter(config, root, mode) {
+    options := {"cwd": config["cwd"], "max_output_bytes": 8192, "timeout_ms": 20000, "inherit_env": false, "env": {"ABILITY_GATEWAY_SESSION": env("ABILITY_GATEWAY_SESSION")}}
+    response := spawn_process([config["runtime"], "run", "examples/application-assurance/gateway.kujo", root, mode, ""], options)
+    if response.success == false||response.stderr != ""||response.stdout_truncated {return {"ok": false}}
+    return parse_json(response.stdout)
+}
+
+func action(input, context) {
+    root := context["input"]["root"]
+    config := parse_json(read_file_beneath(root, "config.json", 8192))
+    attempt := context["control_attempt"]
+    if attempt > 1 {require(adapter(config, root, "recover")["ok"]); require(adapter(config, root, "execute")["ok"])}
+    observed := adapter(config, root, "observe")
+    require(observed["ok"])
+    stamp := format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
+    result := {"schema": "kujo.execution-result/v1", "result_id": context["run_id"] + ":" + to_string(attempt), "subject": {"run_id": context["run_id"], "step_id": context["step_id"], "attempt_id": to_string(attempt)}, "producer": {"name": "effect-assurance-fixture", "version": "1"}, "status": "indeterminate", "classification": "unknown", "started_at": stamp, "finished_at": stamp, "attempt": attempt, "effects": [{"effect_id": "effect-1", "class": config["effect_class"], "state": "unknown", "idempotency_key": config["application_key_digest"], "enforced_by": config["issuer"], "enforcement_evidence_ref": observed["observation"]["evidence_ref"]}], "evidence": []}
+    if attempt > 1 {result["status"] := "success"}
+    result["preservation_outcome"] := {"schema": "kujo.preservation-outcome/v1", "result_id": "preserved", "subject": result["subject"], "requested_mode": "filesystem", "actual_mode": "filesystem", "status": "satisfied", "provider": {"name": "local"}, "reconstructability": "same_filesystem", "evidence": [], "created_at": stamp, "retain_until": "2099-01-01T00:00:00Z", "cleanup": {"owner": "fixture", "handle": "opaque"}}
+    write_file(root + "/result-" + to_string(attempt) + ".json", to_json(result), true)
+    return {"ok": true, "data": result}
+}
+func descendant(input, context) {return {"ok": true, "data": {"ran": true}}}
+func workflow() {
+    return create_workflow({"id": "assurance", "name": "Assurance", "description": "Experimental assurance", "input_schema": {"type": "dict"}, "agents": {}, "tools": ["action", "descendant"], "steps": [create_step("action", "Effect", "tool", {"tool_name": "action", "input_from": ["input"], "output_key": "action", "effect_class": "external_idempotent", "reexecution_modes": ["same_workspace"]}), create_step("descendant", "After review", "tool", {"tool_name": "descendant", "depends_on": ["action"], "output_key": "descendant", "effect_class": "none"})], "routing": {"enabled": false}, "control": {"policy_id": "assurance", "policy_version": "1", "policies": [{"when": {"result": "execution", "status": "indeterminate"}, "decide": {"disposition": "require_intervention", "reason": "Uncertain effect", "allowed_actions": ["retry_step", "abort"]}}]}, "default_retry_policy": {"max_attempts": 1}, "approval_config": {"auto_approve": false}, "memory_config": {}, "budgets": {}, "max_parallel_steps": 1, "output_schema": {"type": "dict"}})
+}
+func registry() {
+    tools := create_tool_registry()
+    tools = register_tool(tools, create_tool("action", "Local effect", {"type": "dict"}, {"type": "dict"}, action, null))
+    return register_tool(tools, create_tool("descendant", "After review", {"type": "dict"}, {"type": "dict"}, descendant, null))
+}
+args := args()
+root := args[0]
+phase := args[1]
+config := parse_json(read_file_beneath(root, "config.json", 8192))
+options := {"output_root": root + "/runs", "auto_approve": false, "interactive": false}
+if phase == "file_cases" {
+    cases := parse_json(read_file_beneath(root, "file-cases.json", 8192))
+    answers := []
+    for item in cases {answers = push(answers, load_effect_assurance(root, item["path"], item["digest"]))}
+    print(to_json(answers))
+} else if phase == "start" {
+    first := run_workflow(workflow(), create_run_state(workflow(), {"root": root}, options["output_root"], options), registry(), options)
+    require(first["ok"]&&first["paused"]&&first["run_state"]["steps"][1]["status"] == "pending")
+    write_file(root + "/state-pointer.json", to_json({"run_dir": first["run_state"]["run_dir"]}))
+    print("PAUSED_AFTER_REAL_CRASH")
+} else {
+    pointer := parse_json(read_file_beneath(root, "state-pointer.json", 8192))
+    state := parse_json(read_file_beneath(pointer["run_dir"], "state.json", 1048576))
+    lock := acquire_run_lock(state)
+    require(lock["ok"])
+    state = parse_json(read_file_beneath(pointer["run_dir"], "state.json", 1048576))
+    require(reconcile_control_journal(state)["ok"])
+    raw := read_file_beneath(root, "result-1.json", 1048576)
+    result := parse_json(raw)
+    expected := {"issuer": config["issuer"], "assurance": "independently_verified", "run_id": state["run_id"], "step_id": "action", "attempt_id": "1", "effect_id": "effect-1", "result_sha256": sha256(raw), "transaction_sha256": config["transaction_sha256"], "reported_state": "unknown", "replay_class": result["effects"][0]["class"]}
+    for field in ["operation", "target_sha256", "scope_sha256", "key_sha256", "request_sha256", "precondition_sha256"] {expected[field] := config["intent"][field]}
+    verifier_config := config["intent"]
+    verifier_config["transaction_sha256"] := config["transaction_sha256"]
+    verifier_config["profile_sha256"] := config["profile_sha256"]
+    verifier := ability_assurance_verifier(verifier_config, config["runtime"], config["cwd"], root, env("ABILITY_GATEWAY_SESSION"))
+    mapping := {}
+    mapping[config["issuer"]] := {"assurance": "independently_verified", "verify": verifier}
+    if state["human_intervention"] == null {require(release_run_lock(lock)["ok"]); print(to_json({"ok": false, "code": "assurance_current_state_mismatch"})); exit(0)}
+    request := state["human_intervention"]
+    decision := {"schema": "kujo.intervention-decision/v2", "decision_id": "assured-review", "request_id": request["request_id"], "boundary_id": request["boundary_id"], "expected_state_revision": state["revision"], "action": "retry_step", "continuation": {"target_step_id": "action", "source": "preserved_workspace", "new_attempt": true}, "actor": {"id": "local-controller", "type": "system", "authenticated_by": "operator-process", "authorization": "review"}, "reason": "Verify exact sink before replay", "decided_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")}
+    if phase == "assure" {
+        observed := verifier(expected)
+        require(observed["ok"])
+        document := to_json(assurance_document(expected, observed["observation"]))
+        write_file(root + "/assurance.json", document, true)
+        write_file(root + "/assurance.sha256", sha256(document), true)
+        print("ASSURANCE_RECORDED")
+    } else if phase == "cases" {
+        cases := parse_json(read_file_beneath(root, "cases.json", 1048576))
+        answers := []
+        for item in cases {
+            case_expected := expected
+            if has_key(item, "expected") {for key in keys(item["expected"]) {case_expected[key] := item["expected"][key]}}
+            case_raw := raw
+            if has_key(item, "result_raw") {case_raw = item["result_raw"]}
+            case_mapping := mapping
+            if has_key(item, "no_adapter") {case_mapping = {}}
+            answer := resolve_effect_assurance(case_raw, item["raw"], case_expected, case_mapping, item["at"])
+            answers = push(answers, {"name": item["name"], "answer": answer})
+        }
+        print(to_json(answers))
+    } else if phase == "continuation_cases" {
+        doc := read_file_beneath(root, "assurance.json", 8192)
+        wrong := decision
+        continuation := wrong["continuation"]
+        continuation["target_step_id"] := "descendant"
+        wrong["continuation"] := continuation
+        denied := prepare_assured_continuation(state, wrong, raw, doc, expected, mapping, parse_int(to_string(floor(now_utc_seconds()))))
+        require(denied["ok"] == false&&denied["code"] == "assurance_continuation_target_mismatch")
+        print("CONTINUATION_TARGET_REJECTED")
+    } else {
+        loaded := load_effect_assurance(root, "assurance.json", trim(read_file_beneath(root, "assurance.sha256", 64)))
+        if loaded["ok"] == false {print(to_json(loaded))}
+        else {
+            require(release_run_lock(lock)["ok"])
+            admit := func(current) {
+                prepared := prepare_assured_continuation(current, decision, raw, loaded["raw"], expected, mapping, parse_int(to_string(floor(now_utc_seconds()))))
+                if prepared["ok"] == false {return prepared}
+                next_state := prepared["run_state"]
+                boundary := next_state["current_control_boundary"]
+                boundary["status"] := "closed"
+                next_state["current_control_boundary"] := boundary
+                next_state["control_barrier"] := {"status": "released"}
+                next_state["human_intervention"] := null
+                logged := append_control_event(next_state, "intervention_decided", "action", [], {"decision": decision, "effect_assurance": prepared["effect_assurance"]})
+                return {"ok": true, "run_state": persist_run_state(logged["run_state"])}
+            }
+            second := run_workflow_with_admission(workflow(), state, registry(), options, admit)
+            if second["ok"] == false {print(to_json(second))}
+            else {
+                require(second["paused"] == false&&second["run_state"]["steps"][1]["status"] == "completed")
+                require(reconcile_control_journal(second["run_state"])["ok"])
+                print(to_json({"ok": true, "code": "REPLAY_COMPLETED"}))
+            }
+        }
+    }
+}
