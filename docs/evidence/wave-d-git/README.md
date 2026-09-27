@@ -17,7 +17,8 @@ through Dispatch, not treat archived proofs as permission.
 - `http-timeout-isolated.log`: unchanged isolated rerun passed.
 - `dispatch-release-gate.log`: final full-gate result (added after completion).
 
-Log checkout prefixes are replaced with `<kujo-repos>`; logs are not commitment
+Log checkout prefixes are replaced with `<kujo-repos>` and trailing blank lines
+are trimmed; logs are not commitment
 preimages. No application payload, credential, Git repository path/ref or source
 content is added to the handoff. See the [audit](../../audits/wave-d-git.md) for
 limits, ownership and the four-participant comparison.

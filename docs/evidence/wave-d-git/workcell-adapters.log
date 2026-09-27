@@ -38,4 +38,3 @@ npm warn Unknown user config "python". This will stop working in the next major 
 
 > @kujolang/workcell-official-adapters@0.1.0 integrity:check
 > node scripts/update-integrity.mjs --check
-

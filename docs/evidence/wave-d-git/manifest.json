@@ -2,8 +2,8 @@
   "schema": "dispatch.local-evidence-manifest/v1",
   "files": {
     "README.md": {
-      "bytes": 1480,
-      "sha256": "b7fd9610bbcb11bc8145969adafdb1834e0c07730babb2a7587145a6efb109b0"
+      "bytes": 1517,
+      "sha256": "6e32a4a325a17d19e7d57e208809b766198970f4824dd54507ac553d1eebe626"
     },
     "ability_assurance.log": {
       "bytes": 1710,
@@ -74,8 +74,8 @@
       "sha256": "507dd83a881b3c783087cdcf2e2dfbd9be146e1bc2a320ba3e15331e7a455478"
     },
     "kujo-docs.log": {
-      "bytes": 1020,
-      "sha256": "c8e15cd0a8552d220edf86c176df66c7e35ab1d35db3e2130b108c75370ad829"
+      "bytes": 1019,
+      "sha256": "94fc9c8b76e9741336c99be7fb07328870af4d6244a3dc21cafdbb091ebd8887"
     },
     "mcp_ability.log": {
       "bytes": 1017,
@@ -90,8 +90,8 @@
       "sha256": "ea0b622ad2534c549498082138a18d5eb461c2318f99f1eaa8004b158bea9a85"
     },
     "workcell-adapters.log": {
-      "bytes": 2369,
-      "sha256": "92aca3bfd685636b75c061006d6318a082124c7d496a2a5adc287f0502b756a1"
+      "bytes": 2368,
+      "sha256": "73ea7cff29b07e38ade26186de87321b88a5e9956dc3028f364f5d14bbff7c07"
     },
     "workcell-effects.log": {
       "bytes": 184,
