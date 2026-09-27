@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "http.operation-correlation/v1alpha1",
+  "type": "object",
+  "required": [
+    "schema",
+    "values"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "http.operation-correlation/v1alpha1"
+    },
+    "values": {
+      "type": "object",
+      "required": [
+        "client_request_id",
+        "method",
+        "route_id",
+        "operation_id",
+        "outcome"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "client_request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "method": {
+          "const": "POST"
+        },
+        "route_id": {
+          "const": "publication_run"
+        },
+        "operation_id": {
+          "const": "publication_create"
+        },
+        "outcome": {
+          "enum": [
+            "receipt_succeeded",
+            "response_lost",
+            "timeout",
+            "application_error",
+            "application_unavailable"
+          ]
+        }
+      }
+    }
+  }
+}

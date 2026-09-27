@@ -4,6 +4,8 @@ and restart behavior. Alpha retained; no core admission/schema behavior changed.
 
 # Changelog
 
+Unreleased: experimental `kujo.interop-handoff/v1alpha1` correlation core with closed participant/family extensions. Four existing readers validate historical handoffs then share subject and exact-reference checks; historical bytes, beta verification and replay policy remain unchanged. Frozen-reader differential and real restart/replay regressions cover migration.
+
 Unreleased: bounded non-Ability Workcell Git process correlation reader, real pre/post-CAS SIGKILL and checkpoint/replay fixtures, and four-participant comparison. Existing Git verifier, beta policy and v1 execution-result remain unchanged.
 
 Unreleased: local HTTP Ability correlation reader, real socket timeout/loss/duplicate fixtures and locked beta review/replay. No core replay policy changes.

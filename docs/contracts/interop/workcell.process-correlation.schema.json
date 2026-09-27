@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "workcell.process-correlation/v1alpha1",
+  "type": "object",
+  "required": [
+    "schema",
+    "values"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "workcell.process-correlation/v1alpha1"
+    },
+    "values": {
+      "type": "object",
+      "required": [
+        "participant_id",
+        "participant_call_id",
+        "outcome"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "participant_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "participant_call_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "outcome": {
+          "enum": [
+            "completion_lost",
+            "completed"
+          ]
+        }
+      }
+    }
+  }
+}

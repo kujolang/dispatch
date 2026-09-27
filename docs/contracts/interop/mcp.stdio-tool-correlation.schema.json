@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mcp.stdio-tool-correlation/v1alpha1",
+  "type": "object",
+  "required": [
+    "schema",
+    "values"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "mcp.stdio-tool-correlation/v1alpha1"
+    },
+    "values": {
+      "type": "object",
+      "required": [
+        "mcp_server_id",
+        "mcp_session_id",
+        "rpc_request_id",
+        "mcp_request_id",
+        "tool_name",
+        "outcome"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "mcp_server_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "mcp_session_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "rpc_request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "mcp_request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "tool_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "outcome": {
+          "enum": [
+            "receipt_succeeded",
+            "receipt_failed",
+            "receipt_unavailable",
+            "transport_failed",
+            "application_failed"
+          ]
+        }
+      }
+    }
+  }
+}

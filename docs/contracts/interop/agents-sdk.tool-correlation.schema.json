@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agents-sdk.tool-correlation/v1alpha1",
+  "type": "object",
+  "required": [
+    "schema",
+    "values"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "agents-sdk.tool-correlation/v1alpha1"
+    },
+    "values": {
+      "type": "object",
+      "required": [
+        "sdk_run_id",
+        "tool_call_id",
+        "tool_name",
+        "outcome"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sdk_run_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "tool_call_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "tool_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "outcome": {
+          "enum": [
+            "receipt_succeeded",
+            "receipt_failed",
+            "receipt_unavailable",
+            "transport_failed"
+          ]
+        }
+      }
+    }
+  }
+}

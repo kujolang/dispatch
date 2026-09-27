@@ -714,3 +714,7 @@ transports bounded evidence into the existing beta review/replay path. Dispatch
 retains replay authority; standalone SDK tools remain independent.
 
 Experimental Wave D: [controlled Workcell Git process interoperability](docs/git-process-participant.md) exercises a non-Ability effect with existing beta review/replay authority.
+
+Experimental Wave D [interoperability correlation core](docs/interop-handoff.md)
+retains SDK/MCP/HTTP/Workcell handoffs through explicit adapters. Correlation never
+authorizes replay; existing persisted beta admission remains authoritative.
