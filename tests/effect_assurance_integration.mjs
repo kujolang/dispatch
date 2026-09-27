@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import {spawnSync} from 'node:child_process';
+import {spawn,spawnSync} from 'node:child_process';
 const cwd=process.cwd(), runtime=process.env.KUJO_BIN||'kujo', workcell=path.resolve(process.env.WORKCELL_ROOT||'../workcell');
 const root=path.resolve('tests/tmp/effect-assurance-'+Date.now());fs.mkdirSync(root,{recursive:true});
 const sha=x=>crypto.createHash('sha256').update(x).digest('hex');
@@ -11,6 +11,7 @@ const canary='SECRET_CUSTOMER_MESSAGE_sk-wave-c-do-not-copy';
 const logs=[];
 function run(command,args,dir=cwd,input){const r=spawnSync(command,args,{cwd:dir,input,encoding:'utf8',timeout:120000,maxBuffer:4*1024*1024,env:{...process.env,DISPATCH_OFFLINE_FIXTURE:'true',DISPATCH_ALLOW_ANY_OUTPUT_ROOT:'true'}});logs.push(r.stdout||'',r.stderr||'');assert.equal(r.status,0,`${command} ${args.join(' ')}\n${r.stdout}\n${r.stderr}`);assert.equal(r.stderr,'');return r.stdout.trim();}
 const kujo=(entry,args,dir=cwd)=>run(runtime,['run',entry,...args],dir);
+async function concurrentApply(config,dir){return await new Promise((resolve,reject)=>{const child=spawn(runtime,['run',config.entry,dir,'apply'],{cwd:config.cwd});let out='',err='';const timer=setTimeout(()=>{child.kill('SIGKILL');reject(new Error('concurrent adapter timeout'));},15000);child.stdout.on('data',x=>out+=x);child.stderr.on('data',x=>err+=x);child.on('exit',code=>{clearTimeout(timer);try{assert.equal(code,0,err);assert.equal(err,'');logs.push(out);resolve(JSON.parse(out));}catch(e){reject(e);}});});}
 const proofs=[];
 for(const family of ['sqlite','git'])for(const scenario of ['before_commit','after_commit','expired','non-idempotent']){
  const boundary=scenario==='before_commit'?'before_commit':'after_commit';
@@ -96,6 +97,8 @@ for(const family of ['sqlite','git'])for(const scenario of ['before_commit','aft
  assert.equal(JSON.parse(kujo('tests/effect_assurance_fixture.kujo',[dir,'resume'])).code,'assurance_digest_mismatch');
  write(dir,'assurance.sha256',sha(raw));
  const replay=JSON.parse(kujo('tests/effect_assurance_fixture.kujo',[dir,'resume']));assert.equal(replay.code,'REPLAY_COMPLETED');
+ const concurrent=await Promise.all([concurrentApply(config,dir),concurrentApply(config,dir)]);assert.ok(concurrent.every(x=>x.ok));
+ const common=JSON.parse(fs.readFileSync(path.join(dir,'common-conformance.json'),'utf8'));assert.ok(common.checks>=60);assert.equal(common.profile,family==='sqlite'?'dispatch.sqlite-unique':'workcell.git-cas');
  if(family==='sqlite'){
    const count=run('sqlite3',[config.db,'SELECT count(*) FROM logical_effects;']);assert.equal(count,'1');
  }else{
@@ -111,7 +114,7 @@ for(const family of ['sqlite','git'])for(const scenario of ['before_commit','aft
    assert.equal(JSON.parse(kujo(original.entry,[dir,'apply'],original.cwd)).ok,false);
  }
  assert.ok(!raw.includes(canary));assert.ok(!JSON.stringify(answers).includes(canary));
- proofs.push({family,boundary,cases:cases.length,checks:answers,assurance:doc,replay,logical_effects:1});
+ proofs.push({family,boundary,cases:cases.length,checks:answers,assurance:doc,replay,logical_effects:1,concurrent_retries:concurrent.length,common});
  console.log(`PASS ${family} ${boundary}: real SIGKILL, ${cases.length} assurance cases, Dispatch replay, one logical effect`);
 }
 assert.ok(!logs.join('').includes(canary));

@@ -1,0 +1,20 @@
+from src.core.assurance_compatibility import evaluate_assurance_compatibility
+from src.core.intervention import retry_is_effect_safe
+raw := read_file("docs/evidence/application-assurance-2026-09-26/result-1.json")
+result := parse_json(raw)
+count := 0
+for kind in ["none", "local_reversible", "external_idempotent", "external_non_idempotent", "destructive"] {
+    for state in ["not_started", "started", "committed", "compensated", "failed_before_commit", "unknown"] {
+        candidate := result; effects := candidate["effects"]; effect := effects[0]
+        effect["class"] := kind; effect["state"] := state; effects[0] := effect; candidate["effects"] := effects
+        old := retry_is_effect_safe({"execution_result": candidate})
+        answer := evaluate_assurance_compatibility(to_json(candidate), null, {}, {"mode": "legacy", "fallback": "deny"}, {}, [], 0)
+        assert(answer["ok"] == old, "legacy v1 decision drift")
+        answer = evaluate_assurance_compatibility(to_json(candidate), "invalid ignored sidecar", {}, {"mode": "legacy", "fallback": "deny"}, {}, [], 0)
+        assert(answer["ok"] == old&&answer["assurance_verified"] == false, "legacy fabricated trust")
+        count = count + 2
+    }
+}
+answer := evaluate_assurance_compatibility(raw, null, {}, {"mode": "required", "fallback": "legacy_unavailable"}, {}, [], 0)
+assert(answer["action"] == "configuration_error", "required downgrade configuration")
+print("PASS compatibility: " + to_string(count) + " legacy comparisons and required downgrade rejection")

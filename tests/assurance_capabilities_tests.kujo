@@ -1,0 +1,17 @@
+schema := parse_json(read_file("schemas/assurance-capabilities-v1alpha1.schema.json"))
+raw := read_file("schemas/capabilities/assurance-reference.json")
+assert(byte_length(raw) <= 8192)
+value := parse_json(raw)
+assert(json_schema_validate(value, schema)["valid"], to_json(json_schema_validate(value, schema)))
+assert(len(value["profiles"]) == 3)
+seen := {}
+for profile in value["profiles"] {
+    key := to_json([profile["id"], profile["version"]])
+    assert(has_key(seen, key) == 0, "duplicate profile")
+    seen[key] := true
+}
+bad := value; bad["executable"] := "untrusted"
+assert(json_schema_validate(bad, schema)["valid"] == false)
+bad = value; bad["multi_effect"] := true
+assert(json_schema_validate(bad, schema)["valid"] == false)
+print("PASS advisory capability schema: bounded, closed, three profiles, no executable authority")

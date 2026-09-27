@@ -1,0 +1,65 @@
+# Reusable common suite: called with EACH real adapter's live verifier.
+from src.core.assurance_compatibility import evaluate_assurance_compatibility
+from src.core.intervention import retry_is_effect_safe
+
+export func common_assurance_conformance(raw, document, expected, mapping, at) {
+    doc := parse_json(document)
+    profiles := {"sqlite_unique_transaction": "dispatch.sqlite-unique", "git_ref_cas_transaction": "workcell.git-cas", "ability_application_gateway": "ability.application-gateway"}
+    selected := {"profile": profiles[doc["mechanism"]], "version": "1alpha1"}
+    entry := {"profile": selected["profile"], "version": "1alpha1", "issuer": expected["issuer"], "envelope": "dispatch.effect-assurance/v1alpha1", "status": "active", "assurance": expected["assurance"], "verify": mapping[expected["issuer"]]["verify"]}
+    required := {"mode": "required", "fallback": "deny"}
+    optional := {"mode": "optional", "fallback": "legacy_unavailable"}
+    old := {"mode": "legacy", "fallback": "deny"}
+    checks := 0
+    evaluate := func(value, policy, selection, entries, stamp) {return evaluate_assurance_compatibility(raw, value, expected, policy, selection, entries, stamp)}
+    for policy in [required, optional] {assert(evaluate(document, policy, selected, [entry], at)["action"] == "verified"); checks = checks + 1}
+    assert(evaluate(null, old, selected, [], at)["ok"] == retry_is_effect_safe({"execution_result": parse_json(raw)})); checks = checks + 1
+    assert(evaluate(null, required, selected, [entry], at)["action"] == "blocked"); checks = checks + 1
+    assert(evaluate(null, optional, selected, [entry], at)["action"] == "legacy"); checks = checks + 1
+    assert(evaluate(null, {"mode": "optional", "fallback": "deny"}, selected, [entry], at)["action"] == "blocked"); checks = checks + 1
+    future := doc; future["schema"] := "dispatch.effect-assurance/v999"
+    assert(evaluate(to_json(future), required, selected, [entry], at)["code"] == "compat_envelope_unsupported"); checks = checks + 1
+    answer := evaluate(to_json(future), optional, selected, [entry], at)
+    assert(answer["action"] == "legacy"&&answer["assurance_verified"] == false); checks = checks + 1
+    unknown := {"profile": "future.profile", "version": "1alpha1"}
+    assert(evaluate(document, required, unknown, [entry], at)["code"] == "compat_profile_unsupported"); checks = checks + 1
+    assert(evaluate(document, optional, unknown, [entry], at)["action"] == "legacy"); checks = checks + 1
+    revoked := entry; revoked["status"] := "revoked"
+    disabled := entry; disabled["status"] := "disabled"
+    for policy in [required, optional] {
+        assert(evaluate(document, policy, selected, [revoked], at)["code"] == "compat_profile_revoked"); checks = checks + 1
+        assert(evaluate(null, policy, selected, [revoked], at)["code"] == "compat_profile_revoked"); checks = checks + 1
+        assert(evaluate(document, policy, selected, [disabled], at)["action"] == "configuration_error"); checks = checks + 1
+        assert(evaluate(document, policy, selected, [entry], doc["valid_until"])["action"] == "blocked"); checks = checks + 1
+        assert(evaluate(document, policy, selected, [entry], doc["valid_from"] - 1)["action"] == "blocked"); checks = checks + 1
+    }
+    assert(evaluate(document, required, selected, [entry, entry], at)["code"] == "compat_registry_duplicate"); checks = checks + 1
+    assert(evaluate(document, required, selected, [], at)["code"] == "compat_verifier_unconfigured"); checks = checks + 1
+    for field in ["run_id", "step_id", "attempt_id", "effect_id", "result_sha256", "target_sha256", "scope_sha256", "key_sha256", "request_sha256", "precondition_sha256", "transaction_sha256", "issuer"] {
+        bad := doc
+        bad[field] := "other"
+        if contains(["result_sha256", "target_sha256", "scope_sha256", "key_sha256", "request_sha256", "precondition_sha256", "transaction_sha256"], field) {bad[field] := sha256("other")}
+        for policy in [required, optional] {assert(evaluate(to_json(bad), policy, selected, [entry], at)["action"] == "blocked"); checks = checks + 1}
+    }
+    for field in ["future_profile_field", "profile_version", "algorithm"] {
+        bad := doc; bad[field] := "unrecognized"
+        assert(evaluate(to_json(bad), optional, selected, [entry], at)["action"] == "blocked"); checks = checks + 1
+    }
+    bad := doc; bad["mechanism"] := "different_profile"
+    assert(evaluate(to_json(bad), optional, selected, [entry], at)["code"] == "compat_profile_mismatch"); checks = checks + 1
+    bad = doc; bad["evidence_ref"] := "https://secret:credential@invalid.example"
+    assert(evaluate(to_json(bad), optional, selected, [entry], at)["action"] == "blocked"); checks = checks + 1
+    assert(evaluate("{", optional, selected, [entry], at)["action"] == "blocked"); checks = checks + 1
+    assert(evaluate(to_json([doc, doc]), optional, selected, [entry], at)["action"] == "blocked"); checks = checks + 1
+    assert(evaluate_assurance_compatibility(raw + "\n", document, expected, required, selected, [entry], at)["code"] == "assurance_result_digest_mismatch"); checks = checks + 1
+    assert(evaluate_assurance_compatibility(raw + "\n", to_json(future), expected, optional, selected, [entry], at)["action"] == "blocked"); checks = checks + 1
+    assert(sha256(raw) == expected["result_sha256"]); checks = checks + 1
+    denied_result := parse_json(raw); effects := denied_result["effects"]; effect := effects[0]; effect["class"] := "external_non_idempotent"; effects[0] := effect; denied_result["effects"] := effects
+    for policy in [old, optional, required] {assert(evaluate_assurance_compatibility(to_json(denied_result), null, expected, policy, selected, [entry], at)["ok"] == false); checks = checks + 1}
+    oversized := ""
+    for index in range(0, 8193) {oversized = oversized + " "}
+    assert(evaluate(oversized, optional, selected, [entry], at)["action"] == "blocked"); checks = checks + 1
+    assert(evaluate(document, required, selected, [entry], at)["action"] == "verified"); checks = checks + 1
+    assert(evaluate(document, required, selected, [revoked], at)["action"] == "blocked"); checks = checks + 1
+    return {"profile": selected["profile"], "checks": checks, "historical_result_sha256": sha256(raw), "live_verification": true}
+}

@@ -1,3 +1,4 @@
+from tests.assurance_conformance import common_assurance_conformance
 from src.core.control_journal import append_control_event, reconcile_control_journal
 from src.core.effect_assurance import assurance_document, resolve_effect_assurance, load_effect_assurance, prepare_assured_continuation
 from src.core.runner import run_workflow
@@ -80,6 +81,10 @@ if phase == "file_cases" {
         document := to_json(assurance_document(expected, observed["observation"]))
         write_file(root + "/assurance.json", document, true)
         write_file(root + "/assurance.sha256", sha256(document), true)
+        if result["effects"][0]["class"] == "external_idempotent"&&observed["observation"]["valid_until"] - now_utc_seconds() > 30 {
+            proof := common_assurance_conformance(raw, document, expected, mapping, parse_int(to_string(floor(now_utc_seconds()))))
+            write_file(root + "/common-conformance.json", to_json(proof), true)
+        }
         print("ASSURANCE_RECORDED")
     } else if phase == "cases" {
         cases := parse_json(read_file_beneath(root, "cases.json", 1048576))
