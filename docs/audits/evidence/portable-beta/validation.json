@@ -1,0 +1,32 @@
+{
+  "schema": "dispatch.portable-beta-validation/v1",
+  "local_only": true,
+  "full_dispatch_gate_exit": 0,
+  "workcell_gate_exit": 0,
+  "ability_gate_exit": 0,
+  "kujo_docs_exit": 0,
+  "vectors": 58,
+  "clean_room_artifacts": 6,
+  "real_migration_scenarios": 12,
+  "runtime_source": "5d72aab4b99e7f8c01e4c208d6c97061934c7447",
+  "runtime_binary_sha256": "4ef726d0020b6df0be78da4b7e96a79d099d414efa83874676038da501a72a93",
+  "commits": {
+    "dispatch": "6c5323a00fedf1caad62301507a628cab219813e",
+    "workcell": "e66689a8cac6577c22dfaa6c8c5401123f362ce6",
+    "ability": "ca9acea544e9a8a806f1f09d42b4ca7b5299bd18",
+    "kujo": "4ccd023c150835c46acc1a023cf8cffc897939fa"
+  },
+  "evidence_sha256": {
+    "ability-beta-conformance.json": "1633fd7af451f17cf8beb8de0af6be835e97df3f8aa2e346a0f4a6d7e0e1ce3b",
+    "ability-gate.txt": "18bbef7b6e027075a51edeca1f1c0641329a51e4d971fe6ac1b8a555d370dc97",
+    "clean-room.txt": "287e1de8d912177b62d84305c4e6d5a893613da277105b872202c3346a8dfc62",
+    "dispatch-gate.txt": "2ff34cbb50fbae645b1e463b482c97adf85f1f4d940dda94b35e7e778c42c0f8",
+    "git-beta-conformance.json": "4abbffc840415f6fb3473cc4b2187724db74adcf45ddf515975a05adeebd4843",
+    "kujo-docs.txt": "401bdee32bb15c48d0a257cd82d035026d2b32abcf884d2dd67702fd8b93ed2d",
+    "migration-log.txt": "7ad03ef2e0cc8fb6605f06c7ab1f8e1784f8f306039c365567374d73a6dd9f77",
+    "migration-matrix.json": "7ba4a153036afe019796af5968f86da92bd3c7e3e7315ae82842fffb20653a9f",
+    "schema-validation.txt": "8e56eb71e3506339608c0810a9ce46a2259db64f832702c5a2dc06a0fc8dcef3",
+    "sqlite-beta-conformance.json": "07403521497b43966d2bd35a274ef96d0b6e313fdc728994b9d55e207b8c7716",
+    "workcell-gate.txt": "6dbc2911d7081883aa9ed2f80bdd6162ebe14336a986b0eb50b7de42dbb33b6b"
+  }
+}

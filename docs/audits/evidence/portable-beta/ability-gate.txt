@@ -1,0 +1,98 @@
+PASS Ability historical/v2 commitment vectors
+ability contract tests: all assertions passed
+ability runtime contract tests: all assertions passed
+Kujo/TypeScript/Python Ability SDK conformance passed
+Ability registry signature, revocation, compatibility, and isolation checks passed
+Ability fixture devkit validation, approval, idempotency, and receipt checks passed
+check passed: ability.kujo
+
+============================================================
+Test Results
+============================================================
+  ✓ atomic content workflow helpers validate slugs and bounded term IDs (445ms)
+  ✓ media storage recognizes supported signatures instead of trusting extensions (422ms)
+  ✓ extension package receipts are bounded and tied to their manifest type (414ms)
+  ✓ portable theme manifests are strict, distributable, and secret-free (430ms)
+  ✓ portable plugin manifests declare bounded external runtimes (417ms)
+  ✓ WebMCP ships enabled with four bounded read-only browser tools (421ms)
+  ✓ WebMCP exposes only bounded published content and honors exclusions (426ms)
+  ✓ abilities are discoverable, namespaced, schema-described, and MCP-ready (487ms)
+  ✓ ability definitions enforce the portable semantic contract (418ms)
+  ✓ ability invocation preflight enforces schemas while approval remains runtime policy (430ms)
+  ✓ plugin ability descriptors reject unsafe bindings and unsupported schemas (418ms)
+  ✓ connector registry reports configuration without returning endpoint values (408ms)
+  ✓ slug validation enforces lowercase-safe keys (420ms)
+  ✓ slug fallback normalization can produce invalid short slug (424ms)
+  ✓ SEO audit helper exposes granular readiness evidence (432ms)
+  ✓ parse positive integer helper honors defaults (418ms)
+  ✓ media size parser rejects negative and malformed values (434ms)
+  ✓ list query parser bounds malformed pagination and sort input (432ms)
+  ✓ config applies enterprise bootstrap defaults in production (441ms)
+  ✓ socket peer identity and production rate-limit policy fail closed (436ms)
+  ✓ config wrapper delegates to backend implementation without shape drift (441ms)
+  ✓ config defaults api host to localhost and honors override (438ms)
+  ✓ bounded int parser supports zero offset (429ms)
+  ✓ permission matcher supports exact and wildcard scopes (444ms)
+  ✓ identity sessions carry core permissions and framework-neutral capabilities (898ms)
+  ✓ typed webhook schemas are published for supported events (518ms)
+  ✓ webhook payload validator enforces required schema fields (488ms)
+  ✓ delivery helpers generate machine-readable documents (429ms)
+  ✓ database bootstrap applies schema version and auth seeds (513ms)
+  ✓ workspace keys are unique within a tenant instead of globally (480ms)
+  ✓ schema v8 webhook outbox upgrades before new-column indexes are created (464ms)
+  ✓ auth contract keeps read-open and write-guarded behavior (473ms)
+  ✓ anonymous entry visibility is limited to published content (417ms)
+  ✓ auth token expiry parsing supports epoch and ISO and rejects invalid format (469ms)
+  ✓ entry lock expiry cleanup removes expired epoch locks (489ms)
+  ✓ request actor hashing does not disclose bearer secrets (419ms)
+
+Tests: 36 total, 36 passed, 0 failed
+Time:  17028ms
+============================================================
+
+All tests passed! ✨
+
+============================================================
+Test Results
+============================================================
+  ✓ Ability definitions satisfy the shared executable schema (144ms)
+  ✓ Ability tool projection preserves semantic identity and separates policy (131ms)
+  ✓ Ability projection registers in the standard tool registry (130ms)
+  ✓ Ability gateway tools validate identity and preserve receipts as execution evidence (147ms)
+  ✓ Ability gateway tools reject receipts with mismatched semantic identity (139ms)
+  ✓ Ability tool handlers enforce full input and output schemas (121ms)
+  ✓ Ability effects produce conservative tool risk hints (130ms)
+
+Tests: 7 total, 7 passed, 0 failed
+Time:  1005ms
+============================================================
+
+All tests passed! ✨
+test_07_ability_projection: all assertions passed
+ability consumer conformance: all checks passed
+Config is valid: fence.toml
+Fence Report
+============
+
+Status: PASSED
+Files scanned: 7
+Imports checked: 18
+Violations: 0
+Errors: 0
+Warnings: 0
+Skipped files: 0
+Ignored violations: 0
+
+No violations found.
+
+Summary by zone
+---------------
+definition: 0
+execution_contracts: 0
+internal: 0
+profiles: 0
+public: 0
+registry: 0
+runtime: 0
+
+ability release verification: all checks passed

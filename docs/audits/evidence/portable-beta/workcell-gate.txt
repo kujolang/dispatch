@@ -1,0 +1,722 @@
+Workcell v1.1.0 — Kujo-native disposable Docker/Podman execution
+
+Usage:
+  workcell --help
+  workcell --version
+  workcell doctor [--repo <path>] [--backend docker|podman] [--json]
+  workcell init [--file <path>] [--force]
+  workcell validate [--file <path>] [--json] [--schema]
+  workcell inspect [--file <path>] [--repo <path>] [--json|--summary]
+  workcell run [--file <path>] [--repo <path>] [--output <dir>] [options]
+  workcell verify --run <dir> [--json]
+  workcell clean [--json] [--dry-run] [--prune-images] [--backend docker|podman]
+  workcell clean --preservation <preservation.json> [--at ISO8601] [--dry-run] [--json]
+  workcell backends [--manifest <path>] [--json]
+  workcell recover --journal <path> --manifest <path> [--profile <path>] [--dry-run] [--json]
+
+Run options:
+  --dry-run       Resolve and record the policy without starting a container
+  --keep-failed   Preserve a failed disposable workspace
+  --preserve-until-evaluated  Retain/export before cleanup, including successful actions (requires deadline)
+  --preservation-mode MODE  none, filesystem, handoff_bundle, snapshot, or live_pause
+  --retain-until ISO8601    Record the operator-owned preservation deadline
+  --no-pull       Do not pull a missing image
+  --rebuild       Rebuild a configured build context
+  --manifest      Explicit external backend manifest (v2)
+  --profiles      Explicit host profiles file (v2)
+  --profile       Host profile ID (v2)
+  --backend       Optional assertion matching the selected profile (v2)
+  --cancel-file   Cancel execution when this operator-owned path appears
+  --context       Bounded caller correlation JSON (v2 only)
+  --json          Emit one machine-readable JSON object
+  --summary       Emit a compact machine summary for inspect or run
+  --schema        Emit the versioned Workcell definition schema (validate only)
+
+Security defaults:
+  Docker default or explicit Podman backend, non-root identity, network none,
+  no-new-privileges, dropped capabilities, bounded resources, and declared artifacts only.
+  Dirty source repositories and unsafe mounts are rejected by default.
+Workcell 1.1.0
+Version consistency passed: Workcell 1.1.0; release pin 692512a9070fdba713f160d795bbddb8077db7b5; tested Kujo 1.5.0
+PASS Git intent/evidence commitment vectors
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/main.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/artifacts/archive.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/artifacts/exporter.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/backend/client.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/backend/conformance.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/backend/fixture.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/backend/oci/docker.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/backend/oci/driver.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/backend/oci/podman.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/backend/oci/shared.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/backend/registry.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/backend/resolution.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/backend/types.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/cli/cli.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/doctor/doctor.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/domain/caller_context.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/domain/definition.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/domain/portable_definition.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/evidence/controls.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/evidence/execution_result.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/evidence/git_effect.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/evidence/preservation.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/evidence/retention.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/execution/coordinator.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/execution/portable_coordinator.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/execution/portable_oci.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/integrations/integrations.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/policy/policy.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/receipts/manifest.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/receipts/receipt.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/receipts/v2.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/recovery/recovery.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/report/report.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/runtime/docker.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/util.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/verification/verification.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/workspace/package.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/workspace/workspace.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/workcell_test.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/workspace_test.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/performance_test.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/stress_test.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/podman_security_contract.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/verification_cleanup_contract.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/runtime_cleanup_contract.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/backend_test.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/package_test.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/artifact_archive_test.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/evidence_recovery_test.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/preservation_test.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/execution_result_test.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/retention_test.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/conformance_test.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/portable_definition_test.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/portable_coordinator_test.kujo
+check passed: /Users/robertdevore/2026/Kujolang/kujo-repos/workcell/tests/official_adapters_test.kujo
+Quality gates passed
+PASS default definition validates
+PASS partial sections receive nested defaults
+PASS invalid network type reaches validation without resolver crash
+PASS host networking rejected
+PASS custom internal network accepted
+PASS custom network requires a name
+PASS legacy custom network receives explicit unmanaged egress
+PASS managed egress contract is accepted
+PASS managed egress requires an enforcement profile
+PASS managed egress cannot inherit DNS
+PASS unmanaged egress is explicit
+PASS artifact traversal rejected
+PASS absolute artifact rejected
+PASS non-normalized artifact declaration rejected during validation
+PASS image shell metacharacter rejected
+PASS podman backend accepted
+PASS valid image digest accepted
+PASS invalid image digest rejected
+PASS required digest fails closed without a digest
+PASS required digest accepts a valid digest
+PASS relative signature key accepted
+PASS absolute signature key rejected
+PASS required signature fails closed without a key
+PASS required signature accepts a relative key
+PASS registry allowlist accepts Docker Hub
+PASS registry allowlist rejects an unapproved registry
+PASS unknown fields rejected
+PASS invalid timeout rejected
+PASS fractional timeout rejected
+PASS overflow timeout rejected without runtime crash
+PASS multiplication overflow timeout rejected without runtime crash
+PASS repository build context is allowed
+PASS tmpfs outside /tmp rejected
+PASS custom security profiles accepted
+PASS unconfined security profile rejected
+PASS workspace mount outside /workspace rejected
+PASS secret assignment rejected
+PASS duplicate secret rejected
+PASS duplicate artifact rejected
+PASS artifact max bytes is bounded
+PASS artifact non-normalized limit paths rejected
+PASS artifact extension policy is validated
+PASS artifact secret action is validated
+PASS verification command is accepted
+PASS verification command must be non-empty
+PASS argv validation permits empty non-executable arguments
+PASS verification command names must be unique
+PASS optional integrations default disabled
+PASS optional integration command is bounded
+PASS workspace scan file limit is bounded
+PASS workspace scan depth limit is bounded
+PASS partial resource section is rejected without runtime crash
+PASS partial workspace scan is rejected without runtime crash
+PASS fixed non-root workspace identity is accepted
+PASS rootless workspace identity is accepted
+PASS root workspace identity is rejected
+PASS overflow workspace identity rejected without runtime crash
+PASS CPU limit is bounded
+PASS memory limit is bounded
+PASS overflow memory limit rejected without runtime crash
+PASS PID limit is bounded
+PASS environment names are validated
+PASS environment values are strings
+PASS host-control environment set rejected
+PASS host-control environment allow rejected
+PASS proxy environment allow rejected
+PASS lowercase proxy environment allow rejected
+PASS cloud credential environment allow rejected
+PASS runtime control environment allow rejected
+PASS null secrets with configured environment is handled without runtime crash
+PASS container environment is explicit
+PASS secret is passed by name only
+PASS rootless workspace identity maps to container root
+PASS launch cannot implicitly pull an unverified image
+PASS existing workspace mount uses canonical host path
+PASS partial policy definition is rejected without runtime crash
+PASS partial policy inspection is rejected without runtime crash
+PASS partial spawn options are rejected without runtime crash
+PASS partial labels definition is rejected without runtime crash
+PASS partial definition summary is rejected without runtime crash
+PASS partial daemon security definition is rejected without runtime crash
+PASS partial verification definition is rejected without runtime crash
+PASS partial integrations definition is rejected without runtime crash
+PASS partial dry-run integrations definition is rejected without runtime crash
+PASS partial image build definition is rejected without runtime crash
+PASS partial image ensure definition is rejected without runtime crash
+PASS partial receipt definition is rejected without runtime crash
+PASS partial receipt path input is rejected without runtime crash
+PASS partial container policy is rejected without runtime crash
+PASS partial receipt state input is rejected without runtime crash
+PASS partial receipt error input is rejected without runtime crash
+PASS partial receipt finish input is rejected without runtime crash
+PASS null lines input is handled without runtime crash
+PASS null process result is handled without runtime crash
+PASS null process error is handled without runtime crash
+PASS invalid redaction secrets are handled without runtime crash
+PASS invalid environment secrets are handled without runtime crash
+PASS null first-line input is handled without runtime crash
+PASS invalid directory input is handled without runtime crash
+PASS invalid parent input is handled without runtime crash
+PASS invalid base input is handled without runtime crash
+PASS invalid join input is handled without runtime crash
+PASS invalid relative path input is handled without runtime crash
+PASS invalid boundary path input is handled without runtime crash
+PASS invalid symlink path input is handled without runtime crash
+PASS invalid mount path input is handled without runtime crash
+PASS invalid text path input is handled without runtime crash
+PASS invalid JSON path input is handled without runtime crash
+PASS invalid JSON output path is handled without runtime crash
+PASS invalid text search input is handled without runtime crash
+PASS invalid artifact export input is handled without runtime crash
+PASS malformed artifact policy input is handled without runtime crash
+PASS malformed artifact limit input is handled without runtime crash
+PASS invalid execution log input is handled without runtime crash
+PASS invalid manifest write input is handled without runtime crash
+PASS missing manifest directory is handled without runtime crash
+PASS invalid manifest verify input is handled without runtime crash
+PASS invalid image metadata input is handled without runtime crash
+PASS invalid image existence input is handled without runtime invocation
+PASS invalid image pull input is handled without runtime crash
+PASS invalid container log input is handled without runtime invocation
+PASS invalid container stop input is handled without runtime crash
+PASS invalid container removal input is handled without runtime crash
+PASS invalid resource inventory input is handled without runtime invocation
+PASS invalid resource cleanup input is handled without runtime invocation
+PASS invalid image prune input is handled without runtime invocation
+PASS invalid repository inspection input is handled without runtime crash
+PASS invalid symlink scan input is handled without runtime crash
+PASS invalid workspace creation input is handled without runtime crash
+PASS malformed change details input is handled without runtime crash
+PASS invalid change report output input is handled without runtime crash
+PASS invalid patch output input is handled without runtime crash
+PASS invalid patch secret names are handled without runtime crash
+PASS invalid patch secret action is rejected
+PASS invalid doctor input is handled without runtime crash
+PASS invalid doctor backend is rejected before runtime invocation
+PASS invalid policy construction input is handled without runtime crash
+PASS null coordinator output input is handled without runtime crash
+PASS occupied directory creation input is handled without runtime crash
+PASS occupied coordinator output input is handled without runtime crash
+PASS occupied JSON parent input is handled without runtime crash
+error: arguments must be an array
+PASS invalid CLI argument input is handled without runtime crash
+error: option --json is not valid for command version
+error: option --force is not valid for command help
+error: option --version is not valid for command help
+PASS global CLI modes reject unsupported or conflicting options
+error: arguments must contain only strings
+PASS non-string CLI argument input is handled without runtime crash
+error: arguments must contain only strings
+PASS non-string CLI value input is handled without runtime crash
+PASS invalid integration path input is handled without runtime crash
+PASS invalid image source input is handled without runtime crash
+PASS invalid image ensure options are rejected without runtime invocation
+PASS invalid image build input is handled without runtime invocation
+PASS invalid verification execution input is handled without runtime crash
+PASS invalid runtime doctor input is handled without runtime invocation
+PASS policy includes network mode
+PASS policy attaches custom network by name
+PASS none network records deny-by-default egress
+PASS unmanaged egress emits a deployment warning
+PASS managed egress records host enforcement profile
+PASS policy includes read-only root
+PASS policy drops capabilities
+PASS policy never enables privileged
+PASS policy never mounts Docker socket
+PASS policy labels ownership
+PASS policy labels product version
+PASS policy enables init and private namespaces
+PASS policy attaches selected security profiles
+PASS podman policy uses OCI engine and runtime class
+PASS invalid receipt run identifier is handled without runtime crash
+PASS invalid receipt source types are handled without runtime crash
+PASS unreadable receipt definition fails without runtime crash
+PASS receipt separates product and definition versions
+PASS receipt records egress policy and enforcement profile
+PASS empty verification plan succeeds without Docker work
+PASS skipped verification receipt redacts command literals
+PASS relative path normalizes
+PASS parent traversal rejected
+PASS absolute path rejected
+PASS secret redaction replaces values
+PASS base64-derived secret redaction replaces values
+PASS null process output is normalized
+PASS receipt command redacts secret literals
+PASS receipt errors redact secret values
+PASS empty secret does not corrupt logs
+PASS opt-in integration writes a separate redacted report
+PASS RunLedger adapter links start and finish evidence
+PASS RunLedger finish failure is explicit
+PASS all standard adapters have fixture contracts
+PASS integration timeout is explicit and bounded
+PASS integration failure is explicit and bounded
+PASS dry-run integrations are explicit skips
+PASS base64-derived secret is redacted from execution logs
+PASS declared secret is redacted from the persisted Git patch
+PASS base64-derived secret is redacted from the persisted Git patch
+PASS Git patch reports post-redaction byte counts
+PASS Git patch redaction does not depend on the artifact secret action
+PASS Git patch secret reject hook fails the run without persisting the patch
+PASS secret-free Git patch is still persisted under reject
+PASS fixture write is readable by exporter
+PASS symlink artifact source rejected
+PASS artifact byte limit rejects oversized export
+PASS artifact exporter applies normalized per-path limits
+PASS artifact exporter rejects duplicate declarations
+PASS artifact extension policy rejects wrong content type
+PASS artifact secret reject hook blocks declared secret
+PASS artifact secret redaction hook changes exported content
+PASS artifact export reports post-redaction byte counts
+PASS artifact exporter rejects overlapping declarations
+PASS binary artifact secret inspection fails closed
+PASS binary artifact redaction fails closed
+PASS permission-denied artifact scan fails without runtime crash
+PASS integrity manifest records versioned hashes and includes receipt
+PASS integrity manifest rejects non-normalized file entries
+PASS integrity manifest detects tampering
+PASS integrity manifest rejects duplicate file entries
+PASS integrity manifest rejects omitted file entries
+PASS permission-denied manifest scan fails without runtime crash
+Passed: 214
+Failed: 0
+PASS partial change details workspace is rejected without runtime crash
+PASS partial changed files workspace is rejected without runtime crash
+PASS partial changed details input is rejected without runtime crash
+PASS partial change report input is rejected without runtime crash
+PASS partial patch workspace is rejected without runtime crash
+PASS partial cleanup workspace is rejected without runtime crash
+PASS partial workspace scan limits are rejected without runtime crash
+PASS permission-denied workspace scan is handled without runtime crash
+PASS fixture repository detected
+PASS disposable worktree created
+PASS invalid workspace strategy is rejected
+PASS workspace run identifier traversal is rejected
+PASS invalid cleanup strategy is rejected
+PASS workspace remains cleanable after invalid cleanup strategy
+PASS patch generated
+PASS untracked file appears in patch
+PASS structured change report generated
+PASS change report summarizes patch
+PASS change report preserves tabs and newlines in Git paths
+PASS worktree cleanup succeeded
+PASS spoofed workspace marker is not removed
+PASS symlinked ownership marker cannot authorize direct cleanup
+PASS symlinked ownership marker cannot authorize stale cleanup
+PASS workspace inventory identifies symlinked ownership markers
+PASS active workspace is preserved during cleanup
+PASS empty orphan workspace is safely recovered
+PASS permission-denied orphan cleanup is handled without runtime crash
+PASS missing workspace scan fails with a structured result
+Passed: 28
+Failed: 0
+Performance signal: changed_files=200 elapsed_ms=2152 batched_binary_probe=true
+PASS workspace file limit fails closed
+PASS workspace byte limit fails closed
+PASS workspace depth limit fails closed
+PASS workspace scan reports observed depth
+PASS workspace file depth limit fails closed
+PASS process output truncation is explicit
+PASS process timeout is bounded
+Passed: 7
+Failed: 0
+PASS backend identity validates
+PASS backend identity rejects missing provider
+PASS docker is a built-in backend
+PASS podman is a built-in backend
+PASS unknown backend is not built in
+PASS docker adapter identity separates provider and substrate
+PASS podman adapter identity records selected substrate
+PASS built-in identity dispatches by backend
+PASS capability state validates
+PASS capability state rejects invalid enforcement
+PASS accepted capability rejects unknown enforcement
+PASS backend handle validates ownership
+PASS backend handle rejects run mismatch
+PASS backend handle rejects signed transport material
+PASS backend handle rejects mixed-case bearer material
+PASS backend handle rejects signed URL resource ids
+PASS backend handle rejects oversized provider state
+PASS terminal result validates
+PASS unknown status cannot claim terminal certainty
+PASS supported strict capability resolves
+PASS capability resolution preserves requested semantic value
+PASS unknown required capability fails closed
+PASS explicit metrics degradation is visible
+PASS security control cannot use evidence degradation
+PASS pause requires resume
+PASS protocol request validates
+PASS protocol request rejects unknown envelope fields
+PASS fixture describe succeeds offline
+PASS fixture resolves required capability
+PASS fixture provisions owned handle
+PASS fixture verifies workspace package digest
+PASS fixture preserves workload non-zero exit as protocol success
+PASS fixture exports only declarations
+PASS fixture destroy is itemized
+PASS external backend manifest validates
+PASS registry resolves explicit manifest
+PASS registry resolves executable relative to manifest
+PASS registry rejects duplicate backend ids
+PASS registry accepts an explicitly advertised credential reference
+PASS registry rejects an unadvertised credential-store bridge
+PASS backend manifest rejects unknown fields
+PASS external JSONL adapter executes through bounded client
+PASS external adapter stdout noise is a protocol violation
+PASS external adapter duplicate result is rejected
+PASS protocol parser rejects request echo mismatch
+PASS protocol validator rejects invalid operation result data
+PASS protocol parser rejects invalid operation result data
+PASS protocol validator requires structured failure error
+PASS protocol parser redacts decoded workload logs
+PASS protocol parser redacts result diagnostics recursively
+PASS protocol parser redacts secrets split across log events
+PASS protocol parser rejects non-UTF-8 log bytes
+PASS backend client classifies operator cancellation
+PASS backend client classifies adapter timeout
+Passed: 54
+Failed: 0
+PASS clean repository creates portable package
+PASS portable package has versioned schema
+PASS portable package records exact source commit
+PASS portable package archive and manifest exist
+PASS portable package materializes and verifies
+PASS materialized workspace preserves commit
+PASS materialized workspace omits provider remote
+PASS materialized workspace remains clean
+PASS workspace archive digest mismatch fails before extraction
+PASS portable package refuses dirty source
+Passed: 10
+Failed: 0
+PASS declared artifacts create bounded archive
+PASS artifact archive uses versioned schema
+PASS artifact manifest contains only declared path
+PASS artifact staging is removed after archive
+PASS artifact archive materializes and verifies
+PASS materialized artifact content exists
+PASS undeclared workspace content is absent
+PASS remote archive is re-exported through core policy
+PASS remote archive receives a local integrity digest
+PASS artifact materialization rejects declaration mismatch
+PASS artifact archive digest mismatch fails before extraction
+Passed: 11
+Failed: 0
+PASS v1 definition maps to semantic requirements
+PASS fixture resolves complete portable default
+PASS controls ledger preserves all requested controls
+PASS controls ledger has no false enforcement claim
+PASS controls ledger rejects semantic resolution drift
+PASS receipt v2 initializes normalized sections
+PASS receipt v2 checkpoint persists atomically
+PASS receipt v2 finalizes cleanup and status
+PASS receipt v2 verifies fully offline
+PASS receipt v2 rejects invented amount for unknown cost
+PASS receipt v2 rejects persisted signed transport URL
+PASS provision intent is durable before a handle exists
+PASS provision intent can reconcile an inventory-owned orphan
+PASS provision intent reloads before handle attachment
+PASS attached recovery test handle is valid
+PASS provisioned handle attaches to its durable intent
+PASS provisioned handle creates durable recovery journal
+PASS recovery journal reload validates ownership
+PASS recovery plan refuses ownership mismatch
+PASS recovery includes every inventoried resource with exact ownership
+PASS recovery destroys an orphan found from provision intent
+PASS recovery dry run inventories without deleting
+PASS recovery invokes ownership-scoped destroy
+PASS recovery never destroys a handle resource absent from verified inventory
+PASS recovery journal preserves attempt timeline
+Passed: 25
+Failed: 0
+PASS filesystem preservation is honest about same-filesystem reconstruction
+PASS filesystem preservation distinguishes live runtime
+PASS remote unsupported filesystem preservation is explicit
+PASS handoff bundle records clean source plus patch reconstructability
+PASS retention deadline can be evaluated deterministically
+PASS provider snapshot is not invented
+PASS late-evaluation intent needs future deadline
+PASS invalid dates cannot retain workspaces
+PASS valid bounded intent accepted
+PASS invalid or expired UTC deadline rejected: 2099-02-29T00:00:00Z
+PASS invalid or expired UTC deadline rejected: 2099-01-01T24:00:00Z
+PASS invalid or expired UTC deadline rejected: 2099-01-01T00:60:00Z
+PASS invalid or expired UTC deadline rejected: 2099-01-01T00:00:60Z
+PASS invalid or expired UTC deadline rejected: 2099-01-01T00:00:00+00:00
+PASS invalid or expired UTC deadline rejected: 2000-01-01T00:00:00Z
+PASS valid leap day accepted
+PASS fractional UTC deadline accepted
+PASS non-string deadline rejected
+PASS none cannot satisfy pre-evaluation retention
+Passed: 19
+Failed: 0
+PASS execution result is emitted
+PASS verification failure remains distinct
+PASS offline workspace-only run permits policy retry
+PASS secret values are represented only by references
+PASS live dependency disables automatic retry
+PASS external effects remain unknown and operator controlled
+PASS normalized definition is retained without a credential value
+Passed: 7
+Failed: 0
+PASS retention fixture is preserved
+PASS cleanup refuses before expiry
+PASS expired cleanup has a non-mutating preview
+PASS expired owned workspace is deleted
+PASS deletion receipt is outside immutable run evidence
+PASS duplicate cleanup is safely rejected
+Passed: 6
+Failed: 0
+PASS external fixture passes base conformance
+PASS conformance report is versioned
+PASS conformance covers complete mandatory lifecycle
+PASS conformance identifies adapter
+PASS conformance fails safely for missing manifest
+Passed: 5
+Failed: 0
+PASS portable definition validates
+PASS portable defaults resolve
+PASS portable requirements become semantic capabilities
+PASS portable workload translates to the stable Docker contract
+PASS portable Docker capability resolution preserves semantic controls
+PASS built-in OCI profiles reject remote credential routing
+PASS domain allowlist uses a distinct semantic capability
+PASS Docker never downgrades a domain allowlist to a custom network
+PASS portable artifact exports require explicit bounds
+PASS portable compute bounds reject excessive memory
+PASS bounded caller correlation context validates
+PASS caller context rejects provider data and secret-shaped extensions
+PASS caller context rejects oversized identifiers
+PASS provider blocks are rejected
+PASS portable receipt path traversal is rejected
+PASS explicit host profile loads
+PASS profile budgets accept bounded workload
+PASS profile budgets reject excessive workload before resolve
+PASS backend override conflict fails
+PASS remote profile rejects insecure arbitrary endpoint
+PASS profile permits explicit insecure loopback development endpoint
+PASS profile rejects unknown operator policy fields
+Passed: 22
+Failed: 0
+PASS fixture repository commits
+PASS portable inspect negotiates before execution
+PASS portable inspect resolves region project and endpoint like run
+PASS portable inspect resolves built-in Docker without a manifest
+PASS portable lifecycle succeeds
+PASS portable lifecycle uses receipt v2
+PASS portable lifecycle records complete cleanup
+PASS portable lifecycle executes declarative verification
+PASS portable lifecycle records phase-separated monotonic timings
+PASS portable receipt verifies offline
+PASS portable manifest verifies offline
+PASS successful action exports evidence for later evaluation before finalization
+PASS pre-evaluation preservation is covered by manifest
+PASS portable dry run resolves without provisioning
+PASS portable Docker dry run uses normalized v2 evidence
+PASS unknown provision result preserves a recovery-required intent
+PASS failed provision receipt remains offline-verifiable
+PASS portable cancellation is classified and cleans the owned resource
+Passed: 18
+Failed: 0
+PASS e2b official manifest validates
+PASS e2b passes offline conformance
+PASS vercel-sandbox official manifest validates
+PASS vercel-sandbox passes offline conformance
+PASS daytona official manifest validates
+PASS daytona passes offline conformance
+Passed: 6
+Failed: 0
+Path-safety tests passed
+PASS host-network
+PASS docker-socket-mount-field
+PASS privileged-field
+PASS artifact-traversal
+PASS absolute-artifact
+PASS image-injection
+PASS unsafe-runtime-class
+PASS invalid-timeout
+PASS unbounded-memory
+PASS host-control-secret
+PASS host-control-set
+PASS lowercase-proxy-allow
+PASS build-context-traversal
+PASS required-digest-without-pin
+PASS unapproved-registry
+PASS restrictive inspect policy
+PASS missing Podman doctor diagnostics
+Adversarial tests passed
+Dry-run lifecycle tests passed
+Example definition validation passed
+Created /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/tmp.hRAGoFPW1z/workcell.json
+Next: edit the definition, then run `workcell validate --file /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/tmp.hRAGoFPW1z/workcell.json`.
+CLI smoke tests passed
+Schema compatibility contract passed
+Report contract passed
+Podman security contract passed
+portable OCI contract skipped (set WORKCELL_LIVE_PORTABLE_OCI=1 to enable)
+Live certification contract passed.
+Cloudflare Sandbox preflight contract passed.
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+added 225 packages, and audited 226 packages in 12s
+
+24 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+kujolang-workcell-official-adapters-0.1.0.tgz: OK
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+added 1 package in 52s
+Official adapter release candidate passed clean-install and integrity checks.
+Adapter workload secrets are scoped to execute only.
+verification cleanup contract passed
+verification cleanup integration passed
+PASS missing container removal accepts no-such variant
+PASS missing container removal accepts no-container variant
+PASS missing container removal accepts not-found variant
+PASS missing container stop accepts no-such variant
+PASS missing container stop accepts no-container variant
+PASS missing container stop accepts not-found variant
+Passed: 6
+Failed: 0
+runtime cleanup integration passed
+startup failure contract passed
+Docker endpoint: both engines, explicit/default config, no implicit pull or undeclared environment passed
+Lifecycle failure contract passed
+Runtime-failure cleanup contract passed
+Version consistency passed: Workcell 1.1.0; release pin 692512a9070fdba713f160d795bbddb8077db7b5; tested Kujo 1.5.0
+Markdown link audit passed: 63 tracked files
+Quality gates passed
+{
+  "deployment_gates": {
+    "docker_integration": "skipped",
+    "ecosystem_tools": "skipped",
+    "podman_matrix": "skipped"
+  },
+  "ok": true,
+  "schema_version": "workcell-report/v1",
+  "suites": [
+    {
+      "elapsed_ms": 9000,
+      "exit_code": 0,
+      "failed": 0,
+      "name": "policy-artifact-verification",
+      "ok": true,
+      "passed": 214
+    },
+    {
+      "elapsed_ms": 3000,
+      "exit_code": 0,
+      "failed": 0,
+      "name": "workspace-change-report",
+      "ok": true,
+      "passed": 28
+    },
+    {
+      "elapsed_ms": 8000,
+      "exit_code": 0,
+      "failed": 0,
+      "name": "performance",
+      "ok": true,
+      "passed": 0
+    },
+    {
+      "elapsed_ms": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "name": "stress-limits",
+      "ok": true,
+      "passed": 7
+    }
+  ],
+  "totals": {
+    "elapsed_ms": 20000,
+    "failed": 0,
+    "passed": 249
+  },
+  "workcell_version": "1.1.0"
+}
+Markdown link audit passed: 63 tracked files
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/workcell-official-adapters@0.1.0 test
+> node --test test/*.test.mjs
+
+✔ e2b describes and resolves offline (3835.847957ms)
+✔ e2b fixture lifecycle preserves ownership (5673.97963ms)
+✔ vercel-sandbox describes and resolves offline (3748.654428ms)
+✔ vercel-sandbox fixture lifecycle preserves ownership (5805.40067ms)
+✔ daytona describes and resolves offline (3784.822666ms)
+✔ daytona fixture lifecycle preserves ownership (5629.912326ms)
+✔ live mode never accepts missing provider credentials (2148.890382ms)
+✔ profile validation rejects unknown provider fields before provisioning (1905.234442ms)
+✔ profile validation rejects routing fields an adapter does not implement (1858.842003ms)
+✔ live resolution keeps operator guarantees claimed and unobserved (1949.752081ms)
+✔ vercel memory requires an exact operator guarantee (3816.171971ms)
+✔ adapter errors redact workload and provider secrets (2163.900612ms)
+✔ adapter log events redact raw and encoded workload secrets (1972.430915ms)
+✔ artifact transport streams within an explicit bound (43.036461ms)
+✔ artifact transport aborts and removes an oversized partial file (5.564493ms)
+✔ provider log normalization enforces one combined byte bound (0.462547ms)
+✔ workspace delta parser preserves modified, untracked, and rename paths (0.510863ms)
+✔ recovery inventory requires both run and nonce ownership markers (0.224818ms)
+✔ official destroy rejects a mismatched ownership tuple before deletion (5814.262623ms)
+✔ official manifests pin their executable wrapper digests (8.995019ms)
+✔ official runtime integrity verification fails closed on tampering (1901.359186ms)
+✔ protocol parser fails closed for a deterministic malformed corpus (2589.080003ms)
+✔ concurrent fixture lifecycles remain ownership-isolated and leak-free (1300.103567ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 56207.806894
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/workcell-official-adapters@0.1.0 integrity:check
+> node scripts/update-integrity.mjs --check
+

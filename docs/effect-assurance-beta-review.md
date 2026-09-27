@@ -1,5 +1,8 @@
 # Effect assurance beta contract review
 
+Historical review outcome below. The subsequent [portable commitment and migration implementation](contracts/beta-migration.md) closes B1–B3 for its explicitly bounded candidate domain; it does not rewrite this review or promote stable assurance.
+
+
 Review date: 2026-09-27. **Decision: retain alpha; one more bounded contract
 hardening and migration rehearsal is required.** No beta schema is registered or
 accepted by this change. Runtime, execution-result/v1, default admission and the

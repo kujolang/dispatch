@@ -1,5 +1,8 @@
 # Persisted effect-assurance negotiation
 
+Proposed beta adoption work: [portable commitments and alpha/beta coexistence](contracts/beta-migration.md). Alpha rules below remain supported; beta is a separate opt-in required-policy path, not an automatic upgrade.
+
+
 Experimental, opt-in, unreleased. The canonical policy semantics remain in
 [effect-assurance-compatibility.md](effect-assurance-compatibility.md). This document
 specifies the local persistence/admission implementation, not a new effect envelope.

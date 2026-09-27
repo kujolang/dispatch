@@ -1,5 +1,8 @@
 # Changelog
 
+Unreleased: prepare opt-in v1beta1 assurance with portable commitment vectors, owner profile specifications and real alpha/beta migration rehearsal. Keep alpha parsing and immutable alpha runs; new beta runs require explicit required/deny policy and a beta controller feature. No execution-result/v1 or global enablement change.
+
+
 Unreleased: reject malformed, oversized, expired or binding-invalid selected alpha assurance before optional unsupported-profile fallback. Add seven shared live-profile regressions and a beta contract inventory/review/profile template. Alpha remains opt-in; portable commitment vectors and migration rehearsal block beta freeze. No runtime or execution-result schema changes.
 
 Unreleased: opt-in persisted effect-assurance negotiation binds mode/fallback, exact profile/version and trusted configuration revision to run state and journal. Locked admission rechecks installed authority, verifier bytes, freshness and revocation. Protected storage refuses old controllers; checkpoints and signed bundles retain policy, and imported runs without surviving journal authority cannot resume. Legacy v1 replay rules and effect/result schemas are unchanged. See docs/persisted-assurance-negotiation.md and its audit evidence.

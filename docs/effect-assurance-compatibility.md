@@ -1,5 +1,8 @@
 # Effect assurance compatibility and migration
 
+Proposed beta adoption work: [portable commitments and alpha/beta coexistence](contracts/beta-migration.md). Alpha rules below remain supported; beta is a separate opt-in required-policy path, not an automatic upgrade.
+
+
 **Status:** normative experimental compatibility specification; alpha, opt-in,
 unreleased. Three local families are validated. This does not enable assurance
 in CLI/workflow defaults, stabilize alpha1, or change execution-result/v1.

@@ -1,0 +1,1 @@
+{"draft202012_artifacts": 6, "beta_configuration_policy": true, "newline_identifiers_rejected": true, "ok": true}

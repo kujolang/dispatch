@@ -1,5 +1,8 @@
 # Dispatch
 
+Proposed beta adoption work: [portable commitments and alpha/beta coexistence](docs/contracts/beta-migration.md). Alpha rules below remain supported; beta is a separate opt-in required-policy path, not an automatic upgrade.
+
+
 Unreleased experimental addition: [effect assurance validation](docs/effect-assurance.md) with SQLite, Git and Ability adapters; legacy v1 replay behavior is unchanged.
 
 Compatibility authority: [effect assurance compatibility and migration](docs/effect-assurance-compatibility.md). This defines experimental profile negotiation, explicit fallback and required-policy boundaries. [Persisted negotiation](docs/persisted-assurance-negotiation.md) now binds opt-in run authority to immutable operator policy/configuration revisions across controller replacement. Existing audit documents remain historical evidence; global admission is unchanged.
