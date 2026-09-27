@@ -1,0 +1,41 @@
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/workcell-official-adapters@0.1.0 test
+> node --test test/*.test.mjs
+
+✔ e2b describes and resolves offline (4175.355175ms)
+✔ e2b fixture lifecycle preserves ownership (4616.425269ms)
+✔ vercel-sandbox describes and resolves offline (2998.327804ms)
+✔ vercel-sandbox fixture lifecycle preserves ownership (4735.974321ms)
+✔ daytona describes and resolves offline (2941.467508ms)
+✔ daytona fixture lifecycle preserves ownership (5116.508583ms)
+✔ live mode never accepts missing provider credentials (1694.276648ms)
+✔ profile validation rejects unknown provider fields before provisioning (1543.304245ms)
+✔ profile validation rejects routing fields an adapter does not implement (1480.952963ms)
+✔ live resolution keeps operator guarantees claimed and unobserved (1622.095013ms)
+✔ vercel memory requires an exact operator guarantee (2981.697279ms)
+✔ adapter errors redact workload and provider secrets (1586.166462ms)
+✔ adapter log events redact raw and encoded workload secrets (1501.22276ms)
+✔ artifact transport streams within an explicit bound (61.626581ms)
+✔ artifact transport aborts and removes an oversized partial file (39.955785ms)
+✔ provider log normalization enforces one combined byte bound (0.410417ms)
+✔ workspace delta parser preserves modified, untracked, and rename paths (0.385613ms)
+✔ recovery inventory requires both run and nonce ownership markers (0.173717ms)
+✔ official destroy rejects a mismatched ownership tuple before deletion (4718.869314ms)
+✔ official manifests pin their executable wrapper digests (5.933461ms)
+✔ official runtime integrity verification fails closed on tampering (1487.245384ms)
+✔ protocol parser fails closed for a deterministic malformed corpus (1985.834187ms)
+✔ concurrent fixture lifecycles remain ownership-isolated and leak-free (1040.192898ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 46537.433012
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/workcell-official-adapters@0.1.0 integrity:check
+> node scripts/update-integrity.mjs --check
+

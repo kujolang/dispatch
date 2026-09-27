@@ -1,0 +1,52 @@
+Runtime directory durability contract passed.
+Dispatch release gate
+Runtime: /tmp/kujo-wave-a-release-candidate-bin
+Shards: 24
+Source tests: 101
+
+Running smoke-gate regression checks...
+Source layout passed.
+Smoke gate tests passed (success, silent failure, diagnostics).
+Run locking, at-least-once crash replay, and external idempotency passed.
+Webhook JSONL validated: 150 unique events.
+Pinned installer bridge path resolved.
+Isolated bridge package smoke passed.
+First workflow and scoped plugin walkthrough passed.
+Running focused integration suites...
+control_boundary passed. Tests: 14 total, 14 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/control_boundary.log
+failure_gate_safety passed. Tests: 20 total, 20 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/failure_gate_safety.log
+failure_gate_execution passed. Tests: 6 total, 6 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/failure_gate_execution.log
+review_checkpoint passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/review_checkpoint.log
+persisted_negotiation_legacy passed.  Evidence: tests/tmp/dispatch-test-shards/logs/persisted_negotiation_legacy.log
+persisted_negotiation_schemas passed.  Evidence: tests/tmp/dispatch-test-shards/logs/persisted_negotiation_schemas.log
+persisted_negotiation_contracts passed.  Evidence: tests/tmp/dispatch-test-shards/logs/persisted_negotiation_contracts.log
+persisted_negotiation passed.  Evidence: tests/tmp/dispatch-test-shards/logs/persisted_negotiation.log
+persisted_negotiation_adapters passed.  Evidence: tests/tmp/dispatch-test-shards/logs/persisted_negotiation_adapters.log
+beta_contracts passed.  Evidence: tests/tmp/dispatch-test-shards/logs/beta_contracts.log
+portable_commitments passed.  Evidence: tests/tmp/dispatch-test-shards/logs/portable_commitments.log
+portable_clean_room passed.  Evidence: tests/tmp/dispatch-test-shards/logs/portable_clean_room.log
+git_participant_after passed.  Evidence: tests/tmp/dispatch-test-shards/logs/git_participant_after.log
+git_participant_before passed.  Evidence: tests/tmp/dispatch-test-shards/logs/git_participant_before.log
+http_response_loss passed.  Evidence: tests/tmp/dispatch-test-shards/logs/http_response_loss.log
+http_timeout_before failed (exit 1). Full evidence: tests/tmp/dispatch-test-shards/logs/http_timeout_before.log
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"error":{"code":"workflow_runtime_error","message":"Workflow execution failed unexpectedly.","retryable":false},"ok":false,"paused":false,"run_state":{"approvals":[],"artifact_contract_version":1,"assurance_negotiation":{"config_revision":"0044ff63a06eb8c36d1be7bbd96becc624718845698ca1670ea7a3b276782d53","fallback":"deny","mode":"required","policy_sha256":"76d96cb7577f4862e1c3f0d17ceb92d8a06b54aad4d2530c9539a55fae69b972","profile":"ability.application-gateway","profile_version":"1beta1","schema":"dispatch.assurance-negotiation/v1beta1"},"assurance_store":"filesystem","budget_usage":{"elapsed_ms":0,"estimated_cost_usd":0,"input_tokens":0,"output_tokens":0,"steps":0,"total_tokens":0},"control_boundaries":[],"control_decisions":[],"control_journal":{"last_sha256":"ec58f42f93e6485c2f966a07becbcb09502926cc265d0fff0b87c75ff1fd9d8c","path":"<kujo-repos>/dispatch/tests/tmp/http-ability-1790539852291/runs/run-1790539853333-9916/control-events.jsonl","schema":"kujo.control-journal/v1","sequence":1},"created_at":"2026-09-27 20:10:53","current_step_index":0,"data":{"input":{"root":"<kujo-repos>/dispatch/tests/tmp/http-ability-1790539852291"}},"errors":[],"final_output":null,"handoffs":[],"health":{"artifacts":{"otel_traces_json":true,"report_json":false,"report_md":false,"state_json":true,"trace_json":true,"trace_md":true},"issues":[],"step_status_counts":{"completed":0,"failed":0,"other":0,"paused":0,"pending":2,"running":0}},"idempotency":{},"input":{"root":"<kujo-repos>/dispatch/tests/tmp/http-ability-1790539852291"},"memory":{"agents":{},"history":[],"step_outputs":{},"workflow":{"created_at":"2026-09-27 20:10:53","topic":""}},"migrations":[],"options":{"assurance_negotiation":{"config_revision":"0044ff63a06eb8c36d1be7bbd96becc624718845698ca1670ea7a3b276782d53","fallback":"deny","mode":"required","policy_sha256":"76d96cb7577f4862e1c3f0d17ceb92d8a06b54aad4d2530c9539a55fae69b972","profile":"ability.application-gateway","profile_version":"1beta1","schema":"dispatch.assurance-negotiation/v1beta1"},"auto_approve":false,"interactive":false,"output_root":"<kujo-repos>/dispatch/tests/tmp/http-ability-1790539852291/runs"},"output_root":"<kujo-repos>/dispatch/tests/tmp/http-ability-1790539852291/runs","provider_health":{},"required_features":["effect-assurance-negotiation/v1beta1"],"retry_counts":{},"revision":1,"route_attempts":{},"route_decisions":{},"run_dir":"<kujo-repos>/dispatch/tests/tmp/http-ability-1790539852291/runs/run-1790539853333-9916","run_id":"run-1790539853333-9916","schema_name":"dispatch-run-state","schema_version":2,"started_at_ms":1790539853355,"status":"running","steps":[{"agent_id":"","approval_gate":{},"approval_required":false,"attempts":0,"compensation":null,"config":{"effect_class":"external_idempotent","input_from":["input"],"output_key":"action","reexecution_modes":["same_workspace"],"tool_name":"action"},"depends_on":[],"effect_class":"external_idempotent","error":null,"evaluation":{},"evaluation_result_path":"","finished_at":"","handoff":{},"id":"action","idempotency_key":"","input":null,"input_from":["input"],"input_schema":null,"metadata":{},"name":"Effect","optional":false,"output":null,"output_key":"action","output_schema":null,"parallel_safe":false,"retry_policy":null,"route_decision":null,"route_evaluation":null,"routing":{},"routing_constraints":{},"started_at":"","status":"pending","timeout_ms":0,"tool_name":"action","type":"tool"},{"agent_id":"","approval_gate":{},"approval_required":false,"attempts":0,"compensation":null,"config":{"depends_on":["action"],"effect_class":"none","output_key":"descendant","tool_name":"descendant"},"depends_on":["action"],"effect_class":"none","error":null,"evaluation":{},"evaluation_result_path":"","finished_at":"","handoff":{},"id":"descendant","idempotency_key":"","input":null,"input_from":[],"input_schema":null,"metadata":{},"name":"After review","optional":false,"output":null,"output_key":"descendant","output_schema":null,"parallel_safe":false,"retry_policy":null,"route_decision":null,"route_evaluation":null,"routing":{},"routing_constraints":{},"started_at":"","status":"pending","timeout_ms":0,"tool_name":"descendant","type":"tool"}],"tags":[],"trace":{"artifact_contract_version":1,"event_count_total":0,"events":[],"finished_at":"","limits":{"max_events":400,"max_payload_chars":2400},"run_id":"run-1790539853333-9916","schema_name":"dispatch-trace","schema_version":1,"started_at":"2026-09-27 20:10:53","status":"running","trace_id":"2a8caa9cc07d2ba41af0eea4677932f5","truncated":{"events_dropped":0,"max_events":400,"max_payload_chars":2400,"payloads_truncated":0},"workflow_name":"Assurance"},"updated_at":"2026-09-27 20:10:53","workflow_definition":{"active_plugins":[],"agents":{},"approval_config":{"auto_approve":false},"budgets":{},"control":{"policies":[{"decide":{"allowed_actions":["retry_step","abort"],"disposition":"require_intervention","reason":"Uncertain effect"},"when":{"result":"execution","status":"indeterminate"}}],"policy_id":"assurance","policy_version":"1"},"default_retry_policy":{"max_attempts":1},"description":"Experimental assurance","id":"assurance","input_schema":{"type":"dict"},"max_parallel_steps":1,"memory_config":{},"metadata":{},"name":"Assurance","output_schema":{"type":"dict"},"routing":{"enabled":false},"steps":[{"agent_id":"","approval_gate":{},"approval_required":false,"attempts":0,"compensation":null,"config":{"effect_class":"external_idempotent","input_from":["input"],"output_key":"action","reexecution_modes":["same_workspace"],"tool_name":"action"},"depends_on":[],"effect_class":"external_idempotent","error":null,"evaluation":{},"evaluation_result_path":"","finished_at":"","handoff":{},"id":"action","idempotency_key":"","input":null,"input_from":["input"],"input_schema":null,"metadata":{},"name":"Effect","optional":false,"output":null,"output_key":"action","output_schema":null,"parallel_safe":false,"retry_policy":null,"route_decision":null,"route_evaluation":null,"routing":{},"routing_constraints":{},"started_at":"","status":"pending","timeout_ms":0,"tool_name":"action","type":"tool"},{"agent_id":"","approval_gate":{},"approval_required":false,"attempts":0,"compensation":null,"config":{"depends_on":["action"],"effect_class":"none","output_key":"descendant","tool_name":"descendant"},"depends_on":["action"],"effect_class":"none","error":null,"evaluation":{},"evaluation_result_path":"","finished_at":"","handoff":{},"id":"descendant","idempotency_key":"","input":null,"input_from":[],"input_schema":null,"metadata":{},"name":"After review","optional":false,"output":null,"output_key":"descendant","output_schema":null,"parallel_safe":false,"retry_policy":null,"route_decision":null,"route_evaluation":null,"routing":{},"routing_constraints":{},"started_at":"","status":"pending","timeout_ms":0,"tool_name":"descendant","type":"tool"}],"tools":["action","descendant"]},"workflow_id":"assurance","workflow_name":"Assurance"}}
+
+false !== true
+
+    at file://<kujo-repos>/dispatch/tests/http_ability_integration.mjs:26:54
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
