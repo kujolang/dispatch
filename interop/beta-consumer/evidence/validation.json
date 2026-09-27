@@ -1,0 +1,26 @@
+{
+  "schema": "independent-beta-adoption-evidence/v1",
+  "adoption": "YES",
+  "semantic_changes": false,
+  "independent_test_groups": 8,
+  "matrix_denials": 126,
+  "portable_vectors": 58,
+  "real_profiles": 3,
+  "historical_artifacts": 6,
+  "dispatch_release_gate_exit": 0,
+  "kujo_fmt_exit": 0,
+  "kujo_readme_contracts_exit": 0,
+  "hosted_ci_observed": false,
+  "runtime_binary_sha256": "4ef726d0020b6df0be78da4b7e96a79d099d414efa83874676038da501a72a93",
+  "implementation_commit": "91c7be2d94863b90b7e57b6f7aa49aaac0dd956f",
+  "evidence_sha256": {
+    "capture-provenance.json": "49806044828e7d0e5f085cd4e2e8a90e2ad4d3fd74a1511d4bd60b68d60ed1b3",
+    "capture.txt": "f7fb9ca1a08c421245c284876f163dc12e0dc06c25326b6082fec07351b1c9d8",
+    "decisions.json": "463e884e98e90ed6977dff9fae7ce732cff986e8734001e998ee09ac2a904413",
+    "dispatch-release-gate.txt": "8f80a1efc0cbc84fe5c3833cc2b04f2ed207bebf90cfe96c65c01e035fcbba04",
+    "independence.json": "0b9a9b540a4f99d67e0027b0bd6da9e879e5427987157bf480a9f9e8a3da1046",
+    "isolated-tests.txt": "d52660c7e427a512475a29af7ea4422e7264cec6cdd60672207887a0d9f71cc8",
+    "kujo-docs.txt": "fe9d0ac49ebf0c7e92130d32783c6ec9278c561942398bee4bd18d21167ea858",
+    "retention-recheck.json": "23649d9dbf0c48ee43e1eab59b571e7a249a440d8e2b9d90a7b57716b13dc6c1"
+  }
+}

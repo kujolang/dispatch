@@ -1,3 +1,5 @@
+Independent beta consumer adoption: [rehearsal and evidence](docs/audits/independent-beta-adoption.md). Beta is preferred for new experimental integrations within its explicit required/deny domain; existing alpha runs remain alpha. Global enablement is unchanged.
+
 # Dispatch
 
 Proposed beta adoption work: [portable commitments and alpha/beta coexistence](docs/contracts/beta-migration.md). Alpha rules below remain supported; beta is a separate opt-in required-policy path, not an automatic upgrade.
