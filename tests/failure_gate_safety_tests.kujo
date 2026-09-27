@@ -160,3 +160,10 @@ test "policy action availability work is bounded and duplicate actions reject" {
         assert_equal(result["error"]["code"], "invalid_policy_decision")
     }
 }
+
+test "compensation metadata does not prove external reversal or admit replay" {
+    effect := {"effect_id": "external", "class": "external_non_idempotent", "state": "committed", "compensation": {"supported": true, "requested": true, "executed": true, "verified": true}}
+    assert_false(retry_is_effect_safe({"execution_result": {"effects": [effect]}}))
+    effect["state"] := "compensated"
+    assert_false(retry_is_effect_safe({"execution_result": {"effects": [effect]}}))
+}

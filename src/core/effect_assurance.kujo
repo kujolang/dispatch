@@ -4,7 +4,19 @@ from src.core.control import validate_execution_result
 from src.core.intervention import retry_is_effect_safe, validate_intervention_decision, prepare_intervention_continuation
 
 func denied(code) {
-    return {"ok": false, "code": code, "message": "Effect assurance rejected; replay remains blocked.", "retryable": false}
+    messages := {
+        "assurance_claim_insufficient": "Producer claims or observations do not establish trusted sink enforcement.",
+        "assurance_binding_mismatch": "Assurance identity, scope or result binding does not match this effect.",
+        "assurance_expired_or_future": "Assurance is outside its validity interval; replay remains blocked.",
+        "assurance_issuer_untrusted": "No configured adapter is authorized to verify this assurance.",
+        "assurance_verification_failed": "The trusted adapter could not verify this exact scoped transaction.",
+        "assurance_live_evidence_mismatch": "Live sink facts conflict with the supplied assurance.",
+        "assurance_existing_policy_denied": "Existing v1 replay policy rejects this effect class.",
+        "assurance_result_digest_mismatch": "Exact execution-result bytes differ from the authoritative digest.",
+        "assurance_current_state_mismatch": "Assurance does not bind the current authoritative attempt.",
+        "assurance_continuation_target_mismatch": "Assured effect and requested control-boundary step differ."
+    }
+    return {"ok": false, "code": code, "message": dict_get_or(messages, code, "Effect assurance rejected; replay remains blocked."), "retryable": false}
 }
 
 func digest(value) {return type(value) == "string"&&regex_match(value, "^[0-9a-f]{64}$")}
