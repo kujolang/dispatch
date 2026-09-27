@@ -1,0 +1,32 @@
+from src.core.effect_assurance_beta import resolve_beta_assurance
+from src.core.portable_commitments import portable_json, portable_digest
+export func beta_conformance(result, raw, expected, descriptor, verifier, stamp) {
+    checks := 0
+    doc := parse_json(raw)
+    verify := func(body) {return resolve_beta_assurance(result, body, expected, descriptor, verifier, stamp)}
+    assert(verify(raw)["ok"]); checks = checks + 1
+    for key in ["kind", "run_id", "step_id", "attempt_id", "effect_id", "result_sha256"] {
+        bad := doc; subject := bad["subject"]; subject[key] := "other"; bad["subject"] := subject
+        assert(verify(portable_json(bad))["ok"] == false); checks = checks + 1
+    }
+    for key in keys(doc["bindings"]) {
+        bad := doc; bindings := bad["bindings"]; bindings[key] := "other"; bad["bindings"] := bindings; bad["profile_sha256"] := portable_digest(bindings)
+        assert(verify(portable_json(bad))["ok"] == false); checks = checks + 1
+    }
+    for key in ["schema", "issuer", "verification_method", "profile_sha256", "evidence_ref"] {
+        bad := doc; bad[key] := "other"
+        assert(verify(portable_json(bad))["ok"] == false); checks = checks + 1
+    }
+    for key in ["id", "version"] {
+        bad := doc; profile := bad["profile"]; profile[key] := "other"; bad["profile"] := profile
+        assert(verify(portable_json(bad))["ok"] == false); checks = checks + 1
+    }
+    for raw_bad in [raw + "\n", "{", "null", "{\"schema\":\"wrong\"," + substring(raw, 1, len(raw))] {assert(verify(raw_bad)["ok"] == false); checks = checks + 1}
+    bad := doc; bad["future"] := true
+    assert(verify(portable_json(bad))["ok"] == false); checks = checks + 1
+    assert(resolve_beta_assurance(result + "\n", raw, expected, descriptor, verifier, stamp)["ok"] == false); checks = checks + 1
+    assert(resolve_beta_assurance(result, raw, expected, descriptor, verifier, doc["validity"]["until"])["ok"] == false); checks = checks + 1
+    assert(resolve_beta_assurance(result, raw, expected, descriptor, verifier, doc["validity"]["from"] - 1)["ok"] == false); checks = checks + 1
+    assert(resolve_beta_assurance(result, raw, expected, descriptor, func(value) {return {"ok": false}}, stamp)["ok"] == false); checks = checks + 1
+    return checks
+}

@@ -40,12 +40,12 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/workcell
-          ref: b34c26c90a8626c988a4234fd2610dcf11df1634
+          ref: e66689a8cac6577c22dfaa6c8c5401123f362ce6
           path: .release/workcell
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/ability
-          ref: f103ac5904c69ad7a1c6dffb262200f986d734d4
+          ref: ca9acea544e9a8a806f1f09d42b4ca7b5299bd18
           path: .release/ability
       - name: Check offline adapter tools
         run: |

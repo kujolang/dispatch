@@ -1,3 +1,6 @@
+from tests.beta_conformance import beta_conformance
+from src.core.effect_assurance_beta import beta_assurance_document, resolve_beta_assurance
+from src.core.portable_commitments import portable_json
 from src.core.assurance_admission import create_negotiated_run, select_run_assurance, resume_negotiated_review
 from src.core.assurance_configuration import configuration_revision, implementation_digest, evaluate_run_assurance
 from src.core.assurance_state import decode_authoritative_state
@@ -90,7 +93,7 @@ func host(config, root, expected, raw, verifier) {
     }
 }
 func make_verifier(config, root) {
-    if config["issuer"] == "ability-local" {context := config["intent"]; context["transaction_sha256"] := config["transaction_sha256"]; context["profile_sha256"] := config["profile_sha256"]; return ability_assurance_verifier(context, config["runtime"], config["cwd"], root, env("ABILITY_GATEWAY_SESSION"))}
+    if config["issuer"] == "ability-local" {context := config["intent"]; context["transaction_sha256"] := config["transaction_sha256"]; context["profile_sha256"] := config["profile_sha256"]; context["portable_commitments"] := true; return ability_assurance_verifier(context, config["runtime"], config["cwd"], root, env("ABILITY_GATEWAY_SESSION"))}
     return func(subject) {return verify_subject(config, root, subject)}
 }
 func verify_subject(config, root, subject) {
@@ -107,6 +110,7 @@ if phase == "install" {
     profiles := {"sqlite-local": ["dispatch.sqlite-unique", "sqlite_unique_transaction"], "git-local": ["workcell.git-cas", "git_ref_cas_transaction"], "ability-local": ["ability.application-gateway", "ability_application_gateway"]}
     profile := profiles[config["issuer"]]
     descriptor := {"schema": "dispatch.assurance-configuration/v1alpha1", "mode": dict_get_or(config, "mode", "required"), "fallback": dict_get_or(config, "fallback", "deny"), "profile": dict_get_or(config, "profile", profile[0]), "profile_version": "1alpha1", "issuer": config["issuer"], "mechanism": profile[1], "verifier_id": "installed-local", "verifier_version": "1", "verifier_sha256": implementation_digest(installed_files(config)), "authority_sha256": sha256(root)}
+    if dict_get_or(config, "beta", false) {descriptor["schema"] := "dispatch.assurance-configuration/v1beta1"; descriptor["profile_version"] := "1beta1"}
     first := configuration_revision(descriptor); revisions := {}; revisions[first] := {"status": "active", "descriptor": descriptor}
     descriptor["verifier_version"] := "2"; second := configuration_revision(descriptor); revisions[second] := {"status": "active", "descriptor": descriptor}
     write_file(root + "/operator-store.json", to_json({"selected": first, "revisions": revisions}), true)
@@ -142,12 +146,27 @@ if phase == "install" {
     if phase == "execute-existing" {print(to_json(run_workflow(workflow(), state, registry(), options))); exit(0)}
     if phase == "resume-revoke-hook"||phase == "resume-expire-hook" {options["event_hook"] := delayed_admission_hook}
     if phase == "eval" {print(to_json(evaluate_run_assurance(state, options))); exit(0)}
-    if starts_with(phase, "assure") {
+    if starts_with(phase, "assure")||phase == "historical-beta" {
         observed := verifier(expected); require(observed["ok"])
         assurance := assurance_document(expected, observed["observation"])
         if phase == "assure-future" {assurance["schema"] := "dispatch.effect-assurance/v999"}
         if phase == "assure-invalid" {assurance["future_field"] := "unsupported"}
         document := to_json(assurance)
+        beta := dict_get_or(config, "beta", false)
+        if phase == "assure-alpha" {beta = false}
+        if phase == "assure-beta"||phase == "historical-beta" {beta = true}
+        if beta {
+            profiles := {"sqlite-local": "dispatch.sqlite-unique", "git-local": "workcell.git-cas", "ability-local": "ability.application-gateway"}
+            document = portable_json(beta_assurance_document(expected, observed["observation"], profiles[config["issuer"]]))
+            if phase == "historical-beta" {
+                descriptor := {"issuer": config["issuer"], "profile": profiles[config["issuer"]], "profile_version": "1beta1", "mechanism": observed["observation"]["mechanism"]}
+                checked := resolve_beta_assurance(raw, document, expected, descriptor, verifier, parse_int(to_string(floor(now_utc_seconds()))))
+                require(checked["ok"])
+                checks := beta_conformance(raw, document, expected, descriptor, verifier, parse_int(to_string(floor(now_utc_seconds()))))
+                write_file(root + "/historical-beta.json", document, true)
+                print(to_json({"ok": true, "result_sha256": sha256(raw), "schema": "dispatch.effect-assurance/v1beta1", "checks": checks})); exit(0)
+            }
+        }
         if phase == "assure-oversized-subject" {expected["step_id"] := "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
         print(to_json(select_run_assurance(options["output_root"], state["run_id"], expected, document)))
     } else {

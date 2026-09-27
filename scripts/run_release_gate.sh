@@ -94,6 +94,10 @@ run_suite persisted_negotiation_schemas "$KUJO_BIN" run tests/persisted_negotiat
 run_suite persisted_negotiation_contracts "$KUJO_BIN" run tests/persisted_negotiation_contracts.kujo
 run_suite persisted_negotiation env KUJO_BIN="$KUJO_BIN" node tests/persisted_negotiation_integration.mjs
 run_suite persisted_negotiation_adapters env KUJO_BIN="$KUJO_BIN" node tests/persisted_negotiation_adapters.mjs
+run_suite beta_contracts "$KUJO_BIN" run tests/beta_contracts.kujo
+run_suite portable_commitments "$KUJO_BIN" run tests/portable_commitments.kujo tests/vectors/commitments.json tests/vectors/sqlite-commitments.json "${WORKCELL_ROOT:-../workcell}/tests/vectors/git-assurance-commitments.json" "${ABILITY_ROOT:-../ability}/tests/vectors/application-assurance-commitments.json"
+run_suite portable_clean_room node tests/portable_clean_room.mjs
+run_suite beta_migration env KUJO_BIN="$KUJO_BIN" node tests/beta_migration.mjs
 run_suite assurance_compatibility "$KUJO_BIN" run tests/assurance_compatibility_tests.kujo
 run_suite assurance_capabilities "$KUJO_BIN" run tests/assurance_capabilities_tests.kujo
 run_suite effect_assurance_schema "$KUJO_BIN" run tests/effect_assurance_schema.kujo
