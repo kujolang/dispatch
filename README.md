@@ -708,3 +708,7 @@ dispatch/
 ## Language-aware documentation queries
 
 The optional `rag` plugin retrieves source-cited documentation from a configured Kujo RAG server. [Task preferences](docs/RETRIEVAL_PREFERENCES.md) select equivalent code examples upstream and persist across retries and approval resume. Use `examples/workflows/documentation-query.json` for a copyable workflow; no model-provider call is required by that workflow.
+
+An experimental [Agents SDK → Ability interoperability slice](docs/agents-sdk-ability.md)
+transports bounded evidence into the existing beta review/replay path. Dispatch
+retains replay authority; standalone SDK tools remain independent.

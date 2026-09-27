@@ -201,3 +201,10 @@ Each release section should include only shipped changes and use these headings 
 
 ### Added
 - Initial public Dispatch package metadata, core workflow orchestration engine, CLI commands, and baseline documentation.
+
+## Unreleased — Agents SDK Ability handoff
+
+- Add opt-in bounded content-addressed SDK/Ability correlation validation before
+  existing beta admission. Matching references do not authorize replay.
+- Add a real multi-process SDK publication/receipt-failure/review/replay fixture
+  to the release gate, with identity substitutions and standalone SDK coverage.

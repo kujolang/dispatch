@@ -1,0 +1,82 @@
+{
+  "schema": "wave-d-local-validation/v1",
+  "date": "2026-09-27",
+  "runtime_source": "5d72aab4b99e7f8c01e4c208d6c97061934c7447",
+  "runtime_sha256": "4ef726d0020b6df0be78da4b7e96a79d099d414efa83874676038da501a72a93",
+  "checks": [
+    {
+      "name": "SDK offline",
+      "command": "KUJO_BIN=<source-runtime> bash scripts/ci_no_network_enforcement.sh",
+      "result": "41 checks, 0 failed",
+      "exit_code": 0
+    },
+    {
+      "name": "SDK controlled",
+      "command": "kujo test-run tests/controlled_ability_tests.kujo -v",
+      "result": "3 groups passed; includes schema validation",
+      "exit_code": 0
+    },
+    {
+      "name": "SDK exports",
+      "command": "kujo run examples/module_exports_smoke.kujo --interpreter",
+      "result": "passed",
+      "exit_code": 0
+    },
+    {
+      "name": "SDK examples",
+      "command": "kujo run examples/examples_smoke_runner.kujo --interpreter",
+      "result": "7 expected outcomes passed",
+      "exit_code": 0
+    },
+    {
+      "name": "SDK context",
+      "command": "KUJO_BIN=<source-runtime> bash scripts/verify_context.sh",
+      "result": "contracts, 20 paired repetitions, 14 dual-runtime executions passed",
+      "exit_code": 0
+    },
+    {
+      "name": "SDK ratchet",
+      "command": "kujo run scripts/context_token_ratchet.kujo --interpreter -- --check",
+      "result": "passed, no regressions",
+      "exit_code": 0
+    },
+    {
+      "name": "Ability",
+      "command": "KUJO_BIN=<source-runtime> bash scripts/verify-release.sh",
+      "result": "full release verification passed",
+      "exit_code": 0
+    },
+    {
+      "name": "Dispatch",
+      "command": "KUJO_BIN=<source-runtime> DISPATCH_OFFLINE_FIXTURE=true AGENTS_SDK_ROOT=<isolated-sdk> bash scripts/run_release_gate.sh",
+      "result": "full gate passed; 24 shards/101 tests, focused suites, 3/3 workloads",
+      "exit_code": 0
+    },
+    {
+      "name": "Dispatch final admission",
+      "command": "KUJO_BIN=<source-runtime> AGENTS_SDK_ROOT=<isolated-sdk> node tests/sdk_ability_integration.mjs",
+      "result": "strengthened locked denial and stale checkpoint rejection passed after main gate started",
+      "exit_code": 0
+    },
+    {
+      "name": "Kujo formatting",
+      "command": "cargo fmt --check",
+      "result": "passed",
+      "exit_code": 0
+    },
+    {
+      "name": "Kujo docs",
+      "command": "cargo test --test readme_contracts",
+      "result": "1 passed",
+      "exit_code": 0
+    },
+    {
+      "name": "CI syntax/pins",
+      "command": "YAML parse plus bash -n on every run block and explicit source/release pin assertions",
+      "result": "passed; hosted CI not observed",
+      "exit_code": 0
+    }
+  ],
+  "hosted_ci_observed": false,
+  "initial_failures": "SDK unset metadata regression corrected; fixture callback/invocation mistakes corrected; denied admission required a new checkpoint, preserved rather than bypassed."
+}

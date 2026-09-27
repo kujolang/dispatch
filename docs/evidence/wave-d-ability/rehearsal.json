@@ -1,0 +1,27 @@
+{
+  "schema": "dispatch.sdk-ability-rehearsal/v1",
+  "ok": true,
+  "negative_correlations": 14,
+  "business_effects": 1,
+  "receipt_rows": 1,
+  "sdk_processes": 5,
+  "duplicate_admission_denied": true,
+  "locked_replay_denial": true,
+  "controller_restart": true,
+  "beta_required": true,
+  "checkpoint": true,
+  "standalone": true,
+  "receipt_commit_failed": true,
+  "dispatch_policy": {
+    "config_revision": "1bcbc4dd1806709d589bcc0f5f8e1969a808147f36dea283d9ff531a4acff262",
+    "fallback": "deny",
+    "mode": "required",
+    "policy_sha256": "c01618503652e70ad9d23f8944a519b6170060e431aafc11cbb73b62e88b9b24",
+    "profile": "ability.application-gateway",
+    "profile_version": "1beta1",
+    "schema": "dispatch.assurance-negotiation/v1beta1"
+  },
+  "first_result_sha256": "be6ce97d74a1fdb1fe97bd3234fb603f78a4b24de4ffe34cb3216ce8691d2846",
+  "second_result_sha256": "21fb58b09633f0c60fc22b0901cb9265c0547ed52fb358242f00be11ea1c8fd5",
+  "artifact_directory": "tests/tmp/sdk-ability-1790530316731"
+}
