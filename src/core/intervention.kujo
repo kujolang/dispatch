@@ -92,7 +92,8 @@ func find_step_index(steps, step_id) {
     return - 1
 }
 
-# A submitted key is not evidence of sink enforcement. Unknown effects fail closed.
+# Legacy v1 trusted-adapter boundary: nonempty enforcement references permit
+# external_idempotent even with unknown completion. Other unknown effects reject.
 func retry_is_effect_safe(step) {
     observed := dict_get_or(step, "execution_result", {})
     effects := dict_get_or(observed, "effects", null)
