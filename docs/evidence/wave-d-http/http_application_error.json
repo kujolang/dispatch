@@ -1,0 +1,26 @@
+{
+  "schema": "dispatch.http-ability-rehearsal/v1",
+  "scenario": "application-error",
+  "ok": true,
+  "initial_business_effects": 0,
+  "business_effects": 1,
+  "receipt_rows": 1,
+  "negative_correlations": 24,
+  "invalid_http_requests_per_attempt": 21,
+  "concurrent_denied_per_attempt": 1,
+  "controller_restart": true,
+  "server_restart": true,
+  "standalone": true,
+  "expired_stale_reuse_denied": true,
+  "locked_replay_denial": true,
+  "policy": {
+    "config_revision": "4059838c900d9d2a12b1cad1aac981ab09424b8a1444675008ab58e4e8b4d802",
+    "fallback": "deny",
+    "mode": "required",
+    "policy_sha256": "94a78bbf33de65ecd17a7fae3af1b0c49f683324ab09efe2949513603e256217",
+    "profile": "ability.application-gateway",
+    "profile_version": "1beta1",
+    "schema": "dispatch.assurance-negotiation/v1beta1"
+  },
+  "initial_outcome": "application_error"
+}

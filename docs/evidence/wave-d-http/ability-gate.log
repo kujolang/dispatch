@@ -1,0 +1,99 @@
+PASS Ability historical/v2 commitment vectors
+ability contract tests: all assertions passed
+ability runtime contract tests: all assertions passed
+Kujo/TypeScript/Python Ability SDK conformance passed
+Ability registry signature, revocation, compatibility, and isolation checks passed
+Ability fixture devkit validation, approval, idempotency, and receipt checks passed
+controlled HTTP OpenAPI/handoff contract checks passed
+check passed: ability.kujo
+
+============================================================
+Test Results
+============================================================
+  ✓ atomic content workflow helpers validate slugs and bounded term IDs (394ms)
+  ✓ media storage recognizes supported signatures instead of trusting extensions (372ms)
+  ✓ extension package receipts are bounded and tied to their manifest type (358ms)
+  ✓ portable theme manifests are strict, distributable, and secret-free (366ms)
+  ✓ portable plugin manifests declare bounded external runtimes (368ms)
+  ✓ WebMCP ships enabled with four bounded read-only browser tools (360ms)
+  ✓ WebMCP exposes only bounded published content and honors exclusions (364ms)
+  ✓ abilities are discoverable, namespaced, schema-described, and MCP-ready (420ms)
+  ✓ ability definitions enforce the portable semantic contract (363ms)
+  ✓ ability invocation preflight enforces schemas while approval remains runtime policy (362ms)
+  ✓ plugin ability descriptors reject unsafe bindings and unsupported schemas (357ms)
+  ✓ connector registry reports configuration without returning endpoint values (361ms)
+  ✓ slug validation enforces lowercase-safe keys (360ms)
+  ✓ slug fallback normalization can produce invalid short slug (352ms)
+  ✓ SEO audit helper exposes granular readiness evidence (363ms)
+  ✓ parse positive integer helper honors defaults (352ms)
+  ✓ media size parser rejects negative and malformed values (360ms)
+  ✓ list query parser bounds malformed pagination and sort input (370ms)
+  ✓ config applies enterprise bootstrap defaults in production (369ms)
+  ✓ socket peer identity and production rate-limit policy fail closed (349ms)
+  ✓ config wrapper delegates to backend implementation without shape drift (362ms)
+  ✓ config defaults api host to localhost and honors override (353ms)
+  ✓ bounded int parser supports zero offset (346ms)
+  ✓ permission matcher supports exact and wildcard scopes (342ms)
+  ✓ identity sessions carry core permissions and framework-neutral capabilities (404ms)
+  ✓ typed webhook schemas are published for supported events (349ms)
+  ✓ webhook payload validator enforces required schema fields (345ms)
+  ✓ delivery helpers generate machine-readable documents (380ms)
+  ✓ database bootstrap applies schema version and auth seeds (730ms)
+  ✓ workspace keys are unique within a tenant instead of globally (435ms)
+  ✓ schema v8 webhook outbox upgrades before new-column indexes are created (394ms)
+  ✓ auth contract keeps read-open and write-guarded behavior (420ms)
+  ✓ anonymous entry visibility is limited to published content (358ms)
+  ✓ auth token expiry parsing supports epoch and ISO and rejects invalid format (376ms)
+  ✓ entry lock expiry cleanup removes expired epoch locks (373ms)
+  ✓ request actor hashing does not disclose bearer secrets (326ms)
+
+Tests: 36 total, 36 passed, 0 failed
+Time:  14121ms
+============================================================
+
+All tests passed! ✨
+
+============================================================
+Test Results
+============================================================
+  ✓ Ability definitions satisfy the shared executable schema (115ms)
+  ✓ Ability tool projection preserves semantic identity and separates policy (98ms)
+  ✓ Ability projection registers in the standard tool registry (103ms)
+  ✓ Ability gateway tools validate identity and preserve receipts as execution evidence (113ms)
+  ✓ Ability gateway tools reject receipts with mismatched semantic identity (114ms)
+  ✓ Ability tool handlers enforce full input and output schemas (102ms)
+  ✓ Ability effects produce conservative tool risk hints (95ms)
+
+Tests: 7 total, 7 passed, 0 failed
+Time:  787ms
+============================================================
+
+All tests passed! ✨
+test_07_ability_projection: all assertions passed
+ability consumer conformance: all checks passed
+Config is valid: fence.toml
+Fence Report
+============
+
+Status: PASSED
+Files scanned: 7
+Imports checked: 18
+Violations: 0
+Errors: 0
+Warnings: 0
+Skipped files: 0
+Ignored violations: 0
+
+No violations found.
+
+Summary by zone
+---------------
+definition: 0
+execution_contracts: 0
+internal: 0
+profiles: 0
+public: 0
+registry: 0
+runtime: 0
+
+ability release verification: all checks passed
