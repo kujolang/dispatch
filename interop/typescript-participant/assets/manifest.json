@@ -1,0 +1,8 @@
+{
+  "interop-handoff.md": "5dde1e35d3b23fb7ae5229fb4816890094f142ab1402a6354fc8a9d1a469af69",
+  "git.schema.json": "a3c3672eba53b95d11af5a124f61b7b58299ebc594b6a016c031b2161482ad60",
+  "portable-commitments.md": "578448779c162bd976fe7399a9a111fbc1962a335495be7391a1b54c4bee45dd",
+  "participant.schema.json": "73fcc1a632aa1c751b33ca76052dcba59755983b95f0f799482f57de1d813fff",
+  "core.schema.json": "e7ca18d1bd949d0a649905c122fb8d1d167b1e5a92437f3cf124156459846608",
+  "commitment-vectors.json": "6ba4de9c599eb0c0abcf03ca7576dca1772dbf2d6f765f1f6274dd63275aae7b"
+}

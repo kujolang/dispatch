@@ -1,0 +1,1 @@
+{"name":"@kujolang/interop-typescript-rehearsal","version":"0.0.0-experimental","private":true,"type":"module","scripts":{"build":"tsc","test":"npm run build && node --test test/*.mjs"},"dependencies":{"ajv":"8.20.0"},"devDependencies":{"@types/node":"22.19.0","typescript":"5.9.3"},"engines":{"node":">=22"}}

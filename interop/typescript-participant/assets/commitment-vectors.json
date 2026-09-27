@@ -1,0 +1,255 @@
+{
+  "schema": "dispatch.commitment-vectors/v1",
+  "algorithm": "sha256",
+  "encoding": "utf-8",
+  "output": "lowercase-hex-unprefixed",
+  "vectors": [
+    {
+      "name": "result",
+      "recipe": "exact_utf8",
+      "purpose": "Exact authoritative execution-result/v1 example bytes",
+      "input": "{\"attempt\":1,\"classification\":\"unknown\",\"effects\":[{\"class\":\"external_idempotent\",\"effect_id\":\"effect-1\",\"enforced_by\":\"local-authority\",\"enforcement_evidence_ref\":\"sha256:a259359d5a74e047ba66450713af4887dd9d0ded4d24962981760757e6d2af5c\",\"idempotency_key\":\"request-key\",\"state\":\"unknown\"}],\"evidence\":[],\"finished_at\":\"2026-09-27T00:00:00Z\",\"producer\":{\"name\":\"portable-example\",\"version\":\"1\"},\"result_id\":\"result-1\",\"schema\":\"kujo.execution-result/v1\",\"started_at\":\"2026-09-27T00:00:00Z\",\"status\":\"indeterminate\",\"subject\":{\"attempt_id\":\"1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "preimage_utf8": "{\"attempt\":1,\"classification\":\"unknown\",\"effects\":[{\"class\":\"external_idempotent\",\"effect_id\":\"effect-1\",\"enforced_by\":\"local-authority\",\"enforcement_evidence_ref\":\"sha256:a259359d5a74e047ba66450713af4887dd9d0ded4d24962981760757e6d2af5c\",\"idempotency_key\":\"request-key\",\"state\":\"unknown\"}],\"evidence\":[],\"finished_at\":\"2026-09-27T00:00:00Z\",\"producer\":{\"name\":\"portable-example\",\"version\":\"1\"},\"result_id\":\"result-1\",\"schema\":\"kujo.execution-result/v1\",\"started_at\":\"2026-09-27T00:00:00Z\",\"status\":\"indeterminate\",\"subject\":{\"attempt_id\":\"1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "preimage_hex": "7b22617474656d7074223a312c22636c617373696669636174696f6e223a22756e6b6e6f776e222c2265666665637473223a5b7b22636c617373223a2265787465726e616c5f6964656d706f74656e74222c226566666563745f6964223a226566666563742d31222c22656e666f726365645f6279223a226c6f63616c2d617574686f72697479222c22656e666f7263656d656e745f65766964656e63655f726566223a227368613235363a61323539333539643561373465303437626136363435303731336166343838376464396430646564346432343936323938313736303735376536643261663563222c226964656d706f74656e63795f6b6579223a22726571756573742d6b6579222c227374617465223a22756e6b6e6f776e227d5d2c2265766964656e6365223a5b5d2c2266696e69736865645f6174223a22323032362d30392d32375430303a30303a30305a222c2270726f6475636572223a7b226e616d65223a22706f727461626c652d6578616d706c65222c2276657273696f6e223a2231227d2c22726573756c745f6964223a22726573756c742d31222c22736368656d61223a226b756a6f2e657865637574696f6e2d726573756c742f7631222c22737461727465645f6174223a22323032362d30392d32375430303a30303a30305a222c22737461747573223a22696e64657465726d696e617465222c227375626a656374223a7b22617474656d70745f6964223a2231222c2272756e5f6964223a2272756e2d31222c22737465705f6964223a22616374696f6e227d7d",
+      "sha256": "9feff3e8b1c1ea06cdf685c3d45a9428816604e93f30fb38b41fc8dc50d0ada4"
+    },
+    {
+      "name": "result-whitespace",
+      "recipe": "exact_utf8",
+      "purpose": "result-whitespace",
+      "input": "{\"attempt\":1,\"classification\":\"unknown\",\"effects\":[{\"class\":\"external_idempotent\",\"effect_id\":\"effect-1\",\"enforced_by\":\"local-authority\",\"enforcement_evidence_ref\":\"sha256:a259359d5a74e047ba66450713af4887dd9d0ded4d24962981760757e6d2af5c\",\"idempotency_key\":\"request-key\",\"state\":\"unknown\"}],\"evidence\":[],\"finished_at\":\"2026-09-27T00:00:00Z\",\"producer\":{\"name\":\"portable-example\",\"version\":\"1\"},\"result_id\":\"result-1\",\"schema\":\"kujo.execution-result/v1\",\"started_at\":\"2026-09-27T00:00:00Z\",\"status\":\"indeterminate\",\"subject\":{\"attempt_id\":\"1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}\n",
+      "preimage_utf8": "{\"attempt\":1,\"classification\":\"unknown\",\"effects\":[{\"class\":\"external_idempotent\",\"effect_id\":\"effect-1\",\"enforced_by\":\"local-authority\",\"enforcement_evidence_ref\":\"sha256:a259359d5a74e047ba66450713af4887dd9d0ded4d24962981760757e6d2af5c\",\"idempotency_key\":\"request-key\",\"state\":\"unknown\"}],\"evidence\":[],\"finished_at\":\"2026-09-27T00:00:00Z\",\"producer\":{\"name\":\"portable-example\",\"version\":\"1\"},\"result_id\":\"result-1\",\"schema\":\"kujo.execution-result/v1\",\"started_at\":\"2026-09-27T00:00:00Z\",\"status\":\"indeterminate\",\"subject\":{\"attempt_id\":\"1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}\n",
+      "preimage_hex": "7b22617474656d7074223a312c22636c617373696669636174696f6e223a22756e6b6e6f776e222c2265666665637473223a5b7b22636c617373223a2265787465726e616c5f6964656d706f74656e74222c226566666563745f6964223a226566666563742d31222c22656e666f726365645f6279223a226c6f63616c2d617574686f72697479222c22656e666f7263656d656e745f65766964656e63655f726566223a227368613235363a61323539333539643561373465303437626136363435303731336166343838376464396430646564346432343936323938313736303735376536643261663563222c226964656d706f74656e63795f6b6579223a22726571756573742d6b6579222c227374617465223a22756e6b6e6f776e227d5d2c2265766964656e6365223a5b5d2c2266696e69736865645f6174223a22323032362d30392d32375430303a30303a30305a222c2270726f6475636572223a7b226e616d65223a22706f727461626c652d6578616d706c65222c2276657273696f6e223a2231227d2c22726573756c745f6964223a22726573756c742d31222c22736368656d61223a226b756a6f2e657865637574696f6e2d726573756c742f7631222c22737461727465645f6174223a22323032362d30392d32375430303a30303a30305a222c22737461747573223a22696e64657465726d696e617465222c227375626a656374223a7b22617474656d70745f6964223a2231222c2272756e5f6964223a2272756e2d31222c22737465705f6964223a22616374696f6e227d7d0a",
+      "sha256": "e349f373c320ee2bec1a2683e9c3dd3f32dc9a8d4cc54f329cbf59c55d58aa8a"
+    },
+    {
+      "name": "result-order",
+      "recipe": "exact_utf8",
+      "purpose": "result-order",
+      "input": "{\"schema\":\"kujo.execution-result/v1\",\"result_id\":\"result-1\",\"subject\":{\"run_id\":\"run-1\",\"step_id\":\"action\",\"attempt_id\":\"1\"},\"producer\":{\"name\":\"portable-example\",\"version\":\"1\"},\"status\":\"indeterminate\",\"classification\":\"unknown\",\"started_at\":\"2026-09-27T00:00:00Z\",\"finished_at\":\"2026-09-27T00:00:00Z\",\"attempt\":1,\"effects\":[{\"effect_id\":\"effect-1\",\"class\":\"external_idempotent\",\"state\":\"unknown\",\"idempotency_key\":\"request-key\",\"enforced_by\":\"local-authority\",\"enforcement_evidence_ref\":\"sha256:a259359d5a74e047ba66450713af4887dd9d0ded4d24962981760757e6d2af5c\"}],\"evidence\":[]}",
+      "preimage_utf8": "{\"schema\":\"kujo.execution-result/v1\",\"result_id\":\"result-1\",\"subject\":{\"run_id\":\"run-1\",\"step_id\":\"action\",\"attempt_id\":\"1\"},\"producer\":{\"name\":\"portable-example\",\"version\":\"1\"},\"status\":\"indeterminate\",\"classification\":\"unknown\",\"started_at\":\"2026-09-27T00:00:00Z\",\"finished_at\":\"2026-09-27T00:00:00Z\",\"attempt\":1,\"effects\":[{\"effect_id\":\"effect-1\",\"class\":\"external_idempotent\",\"state\":\"unknown\",\"idempotency_key\":\"request-key\",\"enforced_by\":\"local-authority\",\"enforcement_evidence_ref\":\"sha256:a259359d5a74e047ba66450713af4887dd9d0ded4d24962981760757e6d2af5c\"}],\"evidence\":[]}",
+      "preimage_hex": "7b22736368656d61223a226b756a6f2e657865637574696f6e2d726573756c742f7631222c22726573756c745f6964223a22726573756c742d31222c227375626a656374223a7b2272756e5f6964223a2272756e2d31222c22737465705f6964223a22616374696f6e222c22617474656d70745f6964223a2231227d2c2270726f6475636572223a7b226e616d65223a22706f727461626c652d6578616d706c65222c2276657273696f6e223a2231227d2c22737461747573223a22696e64657465726d696e617465222c22636c617373696669636174696f6e223a22756e6b6e6f776e222c22737461727465645f6174223a22323032362d30392d32375430303a30303a30305a222c2266696e69736865645f6174223a22323032362d30392d32375430303a30303a30305a222c22617474656d7074223a312c2265666665637473223a5b7b226566666563745f6964223a226566666563742d31222c22636c617373223a2265787465726e616c5f6964656d706f74656e74222c227374617465223a22756e6b6e6f776e222c226964656d706f74656e63795f6b6579223a22726571756573742d6b6579222c22656e666f726365645f6279223a226c6f63616c2d617574686f72697479222c22656e666f7263656d656e745f65766964656e63655f726566223a227368613235363a61323539333539643561373465303437626136363435303731336166343838376464396430646564346432343936323938313736303735376536643261663563227d5d2c2265766964656e6365223a5b5d7d",
+      "sha256": "b700404792d1255cd9e5e2030a10cbd5a22854fa97f67847c963254c838ad813"
+    },
+    {
+      "name": "result-attempt",
+      "recipe": "exact_utf8",
+      "purpose": "result-attempt",
+      "input": "{\"attempt\":2,\"classification\":\"unknown\",\"effects\":[{\"class\":\"external_idempotent\",\"effect_id\":\"effect-1\",\"enforced_by\":\"local-authority\",\"enforcement_evidence_ref\":\"sha256:a259359d5a74e047ba66450713af4887dd9d0ded4d24962981760757e6d2af5c\",\"idempotency_key\":\"request-key\",\"state\":\"unknown\"}],\"evidence\":[],\"finished_at\":\"2026-09-27T00:00:00Z\",\"producer\":{\"name\":\"portable-example\",\"version\":\"1\"},\"result_id\":\"result-1\",\"schema\":\"kujo.execution-result/v1\",\"started_at\":\"2026-09-27T00:00:00Z\",\"status\":\"indeterminate\",\"subject\":{\"attempt_id\":\"2\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "preimage_utf8": "{\"attempt\":2,\"classification\":\"unknown\",\"effects\":[{\"class\":\"external_idempotent\",\"effect_id\":\"effect-1\",\"enforced_by\":\"local-authority\",\"enforcement_evidence_ref\":\"sha256:a259359d5a74e047ba66450713af4887dd9d0ded4d24962981760757e6d2af5c\",\"idempotency_key\":\"request-key\",\"state\":\"unknown\"}],\"evidence\":[],\"finished_at\":\"2026-09-27T00:00:00Z\",\"producer\":{\"name\":\"portable-example\",\"version\":\"1\"},\"result_id\":\"result-1\",\"schema\":\"kujo.execution-result/v1\",\"started_at\":\"2026-09-27T00:00:00Z\",\"status\":\"indeterminate\",\"subject\":{\"attempt_id\":\"2\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "preimage_hex": "7b22617474656d7074223a322c22636c617373696669636174696f6e223a22756e6b6e6f776e222c2265666665637473223a5b7b22636c617373223a2265787465726e616c5f6964656d706f74656e74222c226566666563745f6964223a226566666563742d31222c22656e666f726365645f6279223a226c6f63616c2d617574686f72697479222c22656e666f7263656d656e745f65766964656e63655f726566223a227368613235363a61323539333539643561373465303437626136363435303731336166343838376464396430646564346432343936323938313736303735376536643261663563222c226964656d706f74656e63795f6b6579223a22726571756573742d6b6579222c227374617465223a22756e6b6e6f776e227d5d2c2265766964656e6365223a5b5d2c2266696e69736865645f6174223a22323032362d30392d32375430303a30303a30305a222c2270726f6475636572223a7b226e616d65223a22706f727461626c652d6578616d706c65222c2276657273696f6e223a2231227d2c22726573756c745f6964223a22726573756c742d31222c22736368656d61223a226b756a6f2e657865637574696f6e2d726573756c742f7631222c22737461727465645f6174223a22323032362d30392d32375430303a30303a30305a222c22737461747573223a22696e64657465726d696e617465222c227375626a656374223a7b22617474656d70745f6964223a2232222c2272756e5f6964223a2272756e2d31222c22737465705f6964223a22616374696f6e227d7d",
+      "sha256": "7fc76a33086ae8df4392835c3871704d33cb27f70fe7c7e06f39aae69a1245c6"
+    },
+    {
+      "name": "target",
+      "recipe": "exact_utf8",
+      "purpose": "target",
+      "input": "publications",
+      "preimage_utf8": "publications",
+      "preimage_hex": "7075626c69636174696f6e73",
+      "sha256": "1cdd5005f29dab42abccbb4becf0c19d5367c7e29e623b2a91a1b0f01d421e2b"
+    },
+    {
+      "name": "scope",
+      "recipe": "exact_utf8",
+      "purpose": "scope",
+      "input": "tenant-1:production",
+      "preimage_utf8": "tenant-1:production",
+      "preimage_hex": "74656e616e742d313a70726f64756374696f6e",
+      "sha256": "b89be6d0f2bd7ae1f2c577f063c750e075a3b8dcca9c7a5d14a9b01605c99b22"
+    },
+    {
+      "name": "key",
+      "recipe": "exact_utf8",
+      "purpose": "key",
+      "input": "request-key",
+      "preimage_utf8": "request-key",
+      "preimage_hex": "726571756573742d6b6579",
+      "sha256": "42c8b95dc6a35b82eb9e4000244791509119ecee347966e1ab6f08b31eac1afa"
+    },
+    {
+      "name": "request",
+      "recipe": "exact_utf8",
+      "purpose": "request",
+      "input": "Hello é😀\n",
+      "preimage_utf8": "Hello é😀\n",
+      "preimage_hex": "48656c6c6f20c3a9f09f98800a",
+      "sha256": "ad1f08dd515f562389073e9c572d7606a7b838f64f9921bc15c4634c611daad6"
+    },
+    {
+      "name": "precondition",
+      "recipe": "exact_utf8",
+      "purpose": "precondition",
+      "input": "empty",
+      "preimage_utf8": "empty",
+      "preimage_hex": "656d707479",
+      "sha256": "2e1cfa82b035c26cbbbdae632cea070514eb8b773f616aaeaf668e2f0be8f10d"
+    },
+    {
+      "name": "empty",
+      "recipe": "exact_utf8",
+      "purpose": "empty",
+      "input": "",
+      "preimage_utf8": "",
+      "preimage_hex": "",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "maximum_id",
+      "recipe": "exact_utf8",
+      "purpose": "maximum_id",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "preimage_utf8": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "preimage_hex": "6161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161",
+      "sha256": "6836cf13bac400e9105071cd6af47084dfacad4e5e302c94bfed24e013afb73e"
+    },
+    {
+      "name": "unicode",
+      "recipe": "exact_utf8",
+      "purpose": "unicode",
+      "input": "é é 😀  ",
+      "preimage_utf8": "é é 😀  ",
+      "preimage_hex": "c3a92065cc8120f09f988020e280a8",
+      "sha256": "72325dcbb5ea880900d375a96cad50d0f605b8d1d8b798c273c027123f58c3b5"
+    },
+    {
+      "name": "nullable",
+      "recipe": "portable_json",
+      "purpose": "nullable",
+      "input": {
+        "a": null,
+        "b": "",
+        "c": [],
+        "d": {}
+      },
+      "preimage_utf8": "{\"a\":null,\"b\":\"\",\"c\":[],\"d\":{}}",
+      "preimage_hex": "7b2261223a6e756c6c2c2262223a22222c2263223a5b5d2c2264223a7b7d7d",
+      "sha256": "9471b5aab1b36e30da183c8172d2a8f681870a33eb6200c16e8a717fa4e8c212"
+    },
+    {
+      "name": "target-changed",
+      "recipe": "exact_utf8",
+      "purpose": "target-changed",
+      "input": "other-publications",
+      "preimage_utf8": "other-publications",
+      "preimage_hex": "6f746865722d7075626c69636174696f6e73",
+      "sha256": "30bdcfefa580fc14240fd28c27fa4f33125962fc63ccb5dc47093cc78c9ac802"
+    },
+    {
+      "name": "input-changed",
+      "recipe": "exact_utf8",
+      "purpose": "input-changed",
+      "input": "Hello changed",
+      "preimage_utf8": "Hello changed",
+      "preimage_hex": "48656c6c6f206368616e676564",
+      "sha256": "66aa9887adadb024632e35fbbf36ed6d5ed3a6175bbbdbd96a7ba9b70cf50717"
+    },
+    {
+      "name": "configuration-alpha1",
+      "recipe": "alpha_json",
+      "purpose": "configuration-alpha1",
+      "input": {
+        "schema": "dispatch.assurance-configuration/v1alpha1",
+        "mode": "required",
+        "fallback": "deny",
+        "profile": "dispatch.sqlite-unique",
+        "profile_version": "1alpha1",
+        "issuer": "sqlite-local",
+        "mechanism": "sqlite_unique_transaction",
+        "verifier_id": "installed-local",
+        "verifier_version": "1",
+        "verifier_sha256": "eceb3440f6bccdce0387d9eab48ba79ad98753999adbb325f2f2a5d8d2fa20f1",
+        "authority_sha256": "087a3103f4f628cd8a1714c9aeedc0f174dd63bd51a4ab5ebf842d57532e35d4"
+      },
+      "preimage_utf8": "{\"authority_sha256\":\"087a3103f4f628cd8a1714c9aeedc0f174dd63bd51a4ab5ebf842d57532e35d4\",\"fallback\":\"deny\",\"issuer\":\"sqlite-local\",\"mechanism\":\"sqlite_unique_transaction\",\"mode\":\"required\",\"profile\":\"dispatch.sqlite-unique\",\"profile_version\":\"1alpha1\",\"schema\":\"dispatch.assurance-configuration/v1alpha1\",\"verifier_id\":\"installed-local\",\"verifier_sha256\":\"eceb3440f6bccdce0387d9eab48ba79ad98753999adbb325f2f2a5d8d2fa20f1\",\"verifier_version\":\"1\"}",
+      "preimage_hex": "7b22617574686f726974795f736861323536223a2230383761333130336634663632386364386131373134633961656564633066313734646436336264353161346162356562663834326435373533326533356434222c2266616c6c6261636b223a2264656e79222c22697373756572223a2273716c6974652d6c6f63616c222c226d656368616e69736d223a2273716c6974655f756e697175655f7472616e73616374696f6e222c226d6f6465223a227265717569726564222c2270726f66696c65223a2264697370617463682e73716c6974652d756e69717565222c2270726f66696c655f76657273696f6e223a2231616c70686131222c22736368656d61223a2264697370617463682e6173737572616e63652d636f6e66696775726174696f6e2f7631616c70686131222c2276657269666965725f6964223a22696e7374616c6c65642d6c6f63616c222c2276657269666965725f736861323536223a2265636562333434306636626363646365303338376439656162343862613739616439383735333939396164626233323566326632613564386432666132306631222c2276657269666965725f76657273696f6e223a2231227d",
+      "sha256": "db37258da30d04cc1729249dfa54b2ca368616df8d3914555f1fe659885b395e"
+    },
+    {
+      "name": "policy-alpha1",
+      "recipe": "alpha_json",
+      "purpose": "policy-alpha1",
+      "input": {
+        "schema": "dispatch.assurance-negotiation/v1alpha1",
+        "mode": "required",
+        "fallback": "deny",
+        "profile": "dispatch.sqlite-unique",
+        "profile_version": "1alpha1",
+        "config_revision": "db37258da30d04cc1729249dfa54b2ca368616df8d3914555f1fe659885b395e"
+      },
+      "preimage_utf8": "{\"config_revision\":\"db37258da30d04cc1729249dfa54b2ca368616df8d3914555f1fe659885b395e\",\"fallback\":\"deny\",\"mode\":\"required\",\"profile\":\"dispatch.sqlite-unique\",\"profile_version\":\"1alpha1\",\"schema\":\"dispatch.assurance-negotiation/v1alpha1\"}",
+      "preimage_hex": "7b22636f6e6669675f7265766973696f6e223a2264623337323538646133306430346363313732393234396466613534623263613336383631366466386433393134353535663166653635393838356233393565222c2266616c6c6261636b223a2264656e79222c226d6f6465223a227265717569726564222c2270726f66696c65223a2264697370617463682e73716c6974652d756e69717565222c2270726f66696c655f76657273696f6e223a2231616c70686131222c22736368656d61223a2264697370617463682e6173737572616e63652d6e65676f74696174696f6e2f7631616c70686131227d",
+      "sha256": "7643d0abc016e5349a002ff2320dfdfe354c689b9c2e42ea3142345926b8a4ad"
+    },
+    {
+      "name": "configuration-beta1",
+      "recipe": "portable_json",
+      "purpose": "configuration-beta1",
+      "input": {
+        "schema": "dispatch.assurance-configuration/v1beta1",
+        "mode": "required",
+        "fallback": "deny",
+        "profile": "dispatch.sqlite-unique",
+        "profile_version": "1beta1",
+        "issuer": "sqlite-local",
+        "mechanism": "sqlite_unique_transaction",
+        "verifier_id": "installed-local",
+        "verifier_version": "1",
+        "verifier_sha256": "eceb3440f6bccdce0387d9eab48ba79ad98753999adbb325f2f2a5d8d2fa20f1",
+        "authority_sha256": "087a3103f4f628cd8a1714c9aeedc0f174dd63bd51a4ab5ebf842d57532e35d4"
+      },
+      "preimage_utf8": "{\"authority_sha256\":\"087a3103f4f628cd8a1714c9aeedc0f174dd63bd51a4ab5ebf842d57532e35d4\",\"fallback\":\"deny\",\"issuer\":\"sqlite-local\",\"mechanism\":\"sqlite_unique_transaction\",\"mode\":\"required\",\"profile\":\"dispatch.sqlite-unique\",\"profile_version\":\"1beta1\",\"schema\":\"dispatch.assurance-configuration/v1beta1\",\"verifier_id\":\"installed-local\",\"verifier_sha256\":\"eceb3440f6bccdce0387d9eab48ba79ad98753999adbb325f2f2a5d8d2fa20f1\",\"verifier_version\":\"1\"}",
+      "preimage_hex": "7b22617574686f726974795f736861323536223a2230383761333130336634663632386364386131373134633961656564633066313734646436336264353161346162356562663834326435373533326533356434222c2266616c6c6261636b223a2264656e79222c22697373756572223a2273716c6974652d6c6f63616c222c226d656368616e69736d223a2273716c6974655f756e697175655f7472616e73616374696f6e222c226d6f6465223a227265717569726564222c2270726f66696c65223a2264697370617463682e73716c6974652d756e69717565222c2270726f66696c655f76657273696f6e223a22316265746131222c22736368656d61223a2264697370617463682e6173737572616e63652d636f6e66696775726174696f6e2f76316265746131222c2276657269666965725f6964223a22696e7374616c6c65642d6c6f63616c222c2276657269666965725f736861323536223a2265636562333434306636626363646365303338376439656162343862613739616439383735333939396164626233323566326632613564386432666132306631222c2276657269666965725f76657273696f6e223a2231227d",
+      "sha256": "9234329ac159cc8e5e9d17995318266ac2978a7e133c4e94454e82c964a5f594"
+    },
+    {
+      "name": "policy-beta1",
+      "recipe": "portable_json",
+      "purpose": "policy-beta1",
+      "input": {
+        "schema": "dispatch.assurance-negotiation/v1beta1",
+        "mode": "required",
+        "fallback": "deny",
+        "profile": "dispatch.sqlite-unique",
+        "profile_version": "1beta1",
+        "config_revision": "9234329ac159cc8e5e9d17995318266ac2978a7e133c4e94454e82c964a5f594"
+      },
+      "preimage_utf8": "{\"config_revision\":\"9234329ac159cc8e5e9d17995318266ac2978a7e133c4e94454e82c964a5f594\",\"fallback\":\"deny\",\"mode\":\"required\",\"profile\":\"dispatch.sqlite-unique\",\"profile_version\":\"1beta1\",\"schema\":\"dispatch.assurance-negotiation/v1beta1\"}",
+      "preimage_hex": "7b22636f6e6669675f7265766973696f6e223a2239323334333239616331353963633865356539643137393935333138323636616332393738613765313333633465393434353465383263393634613566353934222c2266616c6c6261636b223a2264656e79222c226d6f6465223a227265717569726564222c2270726f66696c65223a2264697370617463682e73716c6974652d756e69717565222c2270726f66696c655f76657273696f6e223a22316265746131222c22736368656d61223a2264697370617463682e6173737572616e63652d6e65676f74696174696f6e2f76316265746131227d",
+      "sha256": "d9d3db18f0a22a56f9d1b35b4ddcee185f45726f0f4c96810fa77686362d63a9"
+    },
+    {
+      "name": "implementation",
+      "recipe": "alpha_json",
+      "purpose": "implementation",
+      "input": [
+        "3aa5238e8278616480382bda2e492b17a6665821f88d6f230c0d25befcfab609"
+      ],
+      "preimage_utf8": "[\"3aa5238e8278616480382bda2e492b17a6665821f88d6f230c0d25befcfab609\"]",
+      "preimage_hex": "5b2233616135323338653832373836313634383033383262646132653439326231376136363635383231663838643666323330633064323562656663666162363039225d",
+      "sha256": "eceb3440f6bccdce0387d9eab48ba79ad98753999adbb325f2f2a5d8d2fa20f1"
+    }
+  ],
+  "distinct": [
+    [
+      "result",
+      "result-whitespace"
+    ],
+    [
+      "result",
+      "result-order"
+    ],
+    [
+      "result",
+      "result-attempt"
+    ],
+    [
+      "target",
+      "target-changed"
+    ],
+    [
+      "request",
+      "input-changed"
+    ]
+  ]
+}
