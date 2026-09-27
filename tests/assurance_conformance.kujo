@@ -55,7 +55,8 @@ export func common_assurance_conformance(raw, document, expected, mapping, at) {
     assert(evaluate_assurance_compatibility(raw + "\n", to_json(future), expected, optional, selected, [entry], at)["action"] == "blocked"); checks = checks + 1
     assert(sha256(raw) == expected["result_sha256"]); checks = checks + 1
     denied_result := parse_json(raw); effects := denied_result["effects"]; effect := effects[0]; effect["class"] := "external_non_idempotent"; effects[0] := effect; denied_result["effects"] := effects
-    for policy in [old, optional, required] {assert(evaluate_assurance_compatibility(to_json(denied_result), null, expected, policy, selected, [entry], at)["ok"] == false); checks = checks + 1}
+    denied_raw := to_json(denied_result); denied_expected := expected; denied_expected["result_sha256"] := sha256(denied_raw)
+    for policy in [old, optional, required] {assert(evaluate_assurance_compatibility(denied_raw, null, denied_expected, policy, selected, [entry], at)["code"] == "compat_v1_denied"); checks = checks + 1}
     oversized := ""
     for index in range(0, 8193) {oversized = oversized + " "}
     assert(evaluate(oversized, optional, selected, [entry], at)["action"] == "blocked"); checks = checks + 1
