@@ -4,6 +4,8 @@ and restart behavior. Alpha retained; no core admission/schema behavior changed.
 
 # Changelog
 
+Unreleased: Experimental local MCP Ability correlation reader and real STDIO restart/review/replay fixtures; replay remains under existing persisted beta authority.
+
 Unreleased: prepare opt-in v1beta1 assurance with portable commitment vectors, owner profile specifications and real alpha/beta migration rehearsal. Keep alpha parsing and immutable alpha runs; new beta runs require explicit required/deny policy and a beta controller feature. No execution-result/v1 or global enablement change.
 
 

@@ -1,0 +1,30 @@
+{
+  "scenario": "stdio-loss",
+  "schema": "dispatch.mcp-ability-rehearsal/v1",
+  "ok": true,
+  "negative_correlations": 21,
+  "business_effects": 1,
+  "receipt_rows": 1,
+  "mcp_processes": 7,
+  "expired_admission_denied": true,
+  "stale_admission_denied": true,
+  "duplicate_admission_denied": true,
+  "locked_replay_denial": true,
+  "controller_restart": true,
+  "beta_required": true,
+  "checkpoint": true,
+  "standalone": true,
+  "receipt_commit_failed": false,
+  "stdio_reply_lost": true,
+  "dispatch_policy": {
+    "config_revision": "fb852f9d3cbdefc4c694e3cba25bece8500833f137cad4efdde8c57e9fd2c9a9",
+    "fallback": "deny",
+    "mode": "required",
+    "policy_sha256": "79f7736085c6ec92326d457393b29fa312bb624a5c0d73717521707ff5fc5615",
+    "profile": "ability.application-gateway",
+    "profile_version": "1beta1",
+    "schema": "dispatch.assurance-negotiation/v1beta1"
+  },
+  "first_result_sha256": "a3aac880edb5380f65be8f87e1f8b64a4bd2393669eedf19caa52053991ef196",
+  "second_result_sha256": "e385d4f3482d9ade0df66ee9d43ea822404d5d2e2714befa58f6b2019af2cb4b"
+}
