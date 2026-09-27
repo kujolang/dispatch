@@ -16,6 +16,11 @@ export func load_http_ability_handoff(root, reference, expected, authoritative_r
         raw := artifact(root, reference, 4096); doc := parse_json(raw)
         fields := ["schema", "client_request_id", "http_request_id", "method", "route_id", "operation_id", "ability_id", "ability_version", "definition_digest", "ability_invocation_id", "dispatch_run_id", "dispatch_step_id", "dispatch_attempt_id", "dispatch_effect_id", "outcome", "receipt_id", "receipt_ref", "execution_result_ref", "assurance_ref", "transaction_sha256"]
         if type(doc) != "dict"||len(keys(doc)) != len(fields)||to_json(doc) != raw||dict_get_or(doc, "schema", "") != "http.ability-handoff/v1alpha1" {return fail()}
+        if doc["method"] != "POST"||doc["route_id"] != "publication_run"||doc["operation_id"] != "publication_create" {return fail()}
+        if doc["receipt_id"] != null {
+            receipt_id := doc["receipt_id"]
+            if type(receipt_id) != "string"||byte_length(receipt_id) > 128||regex_match(receipt_id, "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$") == false||contains(receipt_id, "\n") != 0 {return fail()}
+        }
         valid := true
         for field in fields {if has_key(doc, field) == false {valid = false}}
         for field in ["client_request_id", "http_request_id", "method", "route_id", "operation_id", "ability_id", "ability_version", "ability_invocation_id", "dispatch_run_id", "dispatch_step_id", "dispatch_attempt_id", "dispatch_effect_id"] {
@@ -39,7 +44,7 @@ export func load_http_ability_handoff(root, reference, expected, authoritative_r
             if receipt["schema"] != "kujo.ability.receipt/v1"||receipt["receipt_id"] != doc["receipt_id"]||receipt["invocation_id"] != doc["ability_invocation_id"]||receipt["ability_id"] != doc["ability_id"]||receipt["ability_version"] != doc["ability_version"]||receipt["definition_digest"] != doc["definition_digest"] {return fail()}
             if receipt["status"] == "succeeded"&&dict_get_or(dict_get_or(receipt, "result", {}), "transaction", "") != doc["transaction_sha256"] {return fail()}
             if dict_get_or(dict_get_or(receipt, "idempotency", {}), "key_digest", "") != result["effects"][0]["idempotency_key"] {return fail()}
-            if contains(["response_lost", "timeout"], doc["outcome"]) == false {
+            if contains(["response_lost", "timeout", "application_unavailable"], doc["outcome"]) == false {
                 if receipt["status"] == "succeeded" {if doc["outcome"] != "receipt_succeeded" {return fail()}}
                 else {if doc["outcome"] != "application_error" {return fail()}}
             }
