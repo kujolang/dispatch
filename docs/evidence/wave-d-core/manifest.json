@@ -1,0 +1,54 @@
+{
+  "dispatch-release.txt": {
+    "sha256": "ec781c174e295765eb02657daf49711b72ce2bbbd188d4fc9bce704992a37be9",
+    "bytes": 9344
+  },
+  "git-normalized.json": {
+    "sha256": "982cf158c7aa3f4b9fafd72ef6545b09c6be389b37f54f941f92baac19457cb7",
+    "bytes": 870
+  },
+  "history-interpreter.json": {
+    "sha256": "e4d0b65a5d3fcbbbab2bcd5f3dc04dc966ce041f01ae17c829852db283741279",
+    "bytes": 127
+  },
+  "history-vm.json": {
+    "sha256": "e4d0b65a5d3fcbbbab2bcd5f3dc04dc966ce041f01ae17c829852db283741279",
+    "bytes": 127
+  },
+  "http-normalized.json": {
+    "sha256": "d4b2013891ffc27f9eb72e09f9872c62469b171e53880a32b8c08f12aa24dfa5",
+    "bytes": 1215
+  },
+  "kujo-docs.txt": {
+    "sha256": "dc0bd151508bbdb6da13faf043b2174fbca3233d61f389c85a368f508b251f09",
+    "bytes": 1019
+  },
+  "mcp-normalized.json": {
+    "sha256": "5cc972f54e7e40079501beafb60f5a44eef11619e1cf4964442edd1e2e7c94d0",
+    "bytes": 1296
+  },
+  "oracles.txt": {
+    "sha256": "ccb5b6b0475728fb2435f59803211d47cff242001d02f2730272aa247a39edb6",
+    "bytes": 40
+  },
+  "participants.json": {
+    "sha256": "3df3612f222f1f92132b6b204f33e91749949b01cb74fa4e8aea1de641a8549d",
+    "bytes": 9465
+  },
+  "schema.json": {
+    "sha256": "b1b0281dac014eb90b6394a4a72a2e4ee3df29e27536ea0c329ec779d02df167",
+    "bytes": 66
+  },
+  "sdk-normalized.json": {
+    "sha256": "febf5cbe4a850ccec8f20b07a00dff9123664d6d2d5a7431c516a199bc701be8",
+    "bytes": 1168
+  },
+  "validation.json": {
+    "sha256": "8ee32c77bdae0b60391a82f883d0a3c0e69bba3b94d87e22f32cede3c5efce6b",
+    "bytes": 846
+  },
+  "workcell-git.txt": {
+    "sha256": "9808ca96e3edb3721eeccecd523c6695404a6e15db504cb2fdbe4123039e941d",
+    "bytes": 184
+  }
+}

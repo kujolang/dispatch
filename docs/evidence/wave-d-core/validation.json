@@ -1,0 +1,37 @@
+{
+  "schema": "dispatch.interop-core-validation/v1",
+  "ok": true,
+  "source_commits": [
+    "7299c28",
+    "19ca2b0"
+  ],
+  "historical_families": 4,
+  "historical_artifacts": 15,
+  "historical_expected_substitutions": 46,
+  "live_scenarios": 8,
+  "live_negative_correlations": 172,
+  "dispatch_release_gate": "passed",
+  "dispatch_shards": 24,
+  "bounded_workloads": {
+    "passed": 3,
+    "total": 3
+  },
+  "historical_runtimes": [
+    "vm",
+    "interpreter"
+  ],
+  "schema_instances": 12,
+  "schema_unknown_field_denials": 12,
+  "workcell_contention": {
+    "contenders": 4,
+    "admitted": 1,
+    "denied": 3,
+    "effects": 1
+  },
+  "kujo_docs": [
+    "cargo fmt --check",
+    "cargo test --test readme_contracts"
+  ],
+  "runtime_sha256": "4ef726d0020b6df0be78da4b7e96a79d099d414efa83874676038da501a72a93",
+  "hosted_ci_observed": false
+}

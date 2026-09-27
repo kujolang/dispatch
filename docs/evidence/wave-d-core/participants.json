@@ -1,0 +1,252 @@
+[
+  {
+    "suite": "git_participant_after",
+    "proof": {
+      "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/git-participant-1790544685427",
+      "schema": "dispatch.git-participant-rehearsal/v1",
+      "boundary": "after_commit",
+      "ok": true,
+      "actual_sigkill": true,
+      "initial_observed_state": "committed",
+      "logical_effects": 1,
+      "admitted_processes": 2,
+      "duplicate_denials": 2,
+      "caller_denials": 15,
+      "negative_correlations": 22,
+      "fresh_controller": true,
+      "checkpoint": true,
+      "stale_checkpoint_denied": true,
+      "descendant": true,
+      "privacy": true,
+      "ability_used": false,
+      "policy": {
+        "config_revision": "4655a3647af52125546dbd92993e76fbcb3df363bc762b7e4bf1d17887251c39",
+        "fallback": "deny",
+        "mode": "required",
+        "policy_sha256": "fca556cbf7bb76b69f7b873fbfa1582c4097a21dab5b237d7a6565ffc845e7e0",
+        "profile": "workcell.git-cas",
+        "profile_version": "1beta1",
+        "schema": "dispatch.assurance-negotiation/v1beta1"
+      }
+    }
+  },
+  {
+    "suite": "git_participant_before",
+    "proof": {
+      "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/git-participant-1790544710520",
+      "schema": "dispatch.git-participant-rehearsal/v1",
+      "boundary": "before_commit",
+      "ok": true,
+      "actual_sigkill": true,
+      "initial_observed_state": "not_started",
+      "logical_effects": 1,
+      "admitted_processes": 2,
+      "duplicate_denials": 2,
+      "caller_denials": 15,
+      "negative_correlations": 22,
+      "fresh_controller": true,
+      "checkpoint": true,
+      "stale_checkpoint_denied": true,
+      "descendant": true,
+      "privacy": true,
+      "ability_used": false,
+      "policy": {
+        "config_revision": "8d6b11c53e61ecc10af821b290e8b6db6633f18bac1fc8e61ead47412c2f1cce",
+        "fallback": "deny",
+        "mode": "required",
+        "policy_sha256": "dbc43b66441f7a06013b1b394cb6893a41b0d78e9268627db7359259436a0c96",
+        "profile": "workcell.git-cas",
+        "profile_version": "1beta1",
+        "schema": "dispatch.assurance-negotiation/v1beta1"
+      }
+    }
+  },
+  {
+    "suite": "http_response_loss",
+    "proof": {
+      "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/http-ability-1790544735190",
+      "schema": "dispatch.http-ability-rehearsal/v1",
+      "scenario": "response-loss",
+      "ok": true,
+      "initial_business_effects": 1,
+      "business_effects": 1,
+      "receipt_rows": 1,
+      "negative_correlations": 24,
+      "invalid_http_requests_per_attempt": 21,
+      "concurrent_denied_per_attempt": 1,
+      "controller_restart": true,
+      "server_restart": true,
+      "standalone": true,
+      "expired_stale_reuse_denied": true,
+      "locked_replay_denial": true,
+      "policy": {
+        "config_revision": "4062d77092617d9e04083fbaf6e917d98f052e407d4c7f35e319e07f0ace7733",
+        "fallback": "deny",
+        "mode": "required",
+        "policy_sha256": "7d9fdb089a0627dd42786558e353f63324dedb09551061efdb8b2f87a27d0416",
+        "profile": "ability.application-gateway",
+        "profile_version": "1beta1",
+        "schema": "dispatch.assurance-negotiation/v1beta1"
+      },
+      "initial_outcome": "response_lost"
+    }
+  },
+  {
+    "suite": "http_timeout_before",
+    "proof": {
+      "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/http-ability-1790544762677",
+      "schema": "dispatch.http-ability-rehearsal/v1",
+      "scenario": "timeout-before",
+      "ok": true,
+      "initial_business_effects": 0,
+      "business_effects": 1,
+      "receipt_rows": 1,
+      "negative_correlations": 24,
+      "invalid_http_requests_per_attempt": 21,
+      "concurrent_denied_per_attempt": 1,
+      "controller_restart": true,
+      "server_restart": true,
+      "standalone": true,
+      "expired_stale_reuse_denied": true,
+      "locked_replay_denial": true,
+      "policy": {
+        "config_revision": "cd12261d7134cc983edd3a6d9f8424e72597179a7ef6a3736a8718d48bb4b4a5",
+        "fallback": "deny",
+        "mode": "required",
+        "policy_sha256": "5a8a29ac79e74c64d8a3dc90b8ca58430b04287f6d05f9ba679a2eba7de71c35",
+        "profile": "ability.application-gateway",
+        "profile_version": "1beta1",
+        "schema": "dispatch.assurance-negotiation/v1beta1"
+      },
+      "initial_outcome": "timeout"
+    }
+  },
+  {
+    "suite": "http_application_error",
+    "proof": {
+      "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/http-ability-1790544788577",
+      "schema": "dispatch.http-ability-rehearsal/v1",
+      "scenario": "application-error",
+      "ok": true,
+      "initial_business_effects": 0,
+      "business_effects": 1,
+      "receipt_rows": 1,
+      "negative_correlations": 24,
+      "invalid_http_requests_per_attempt": 21,
+      "concurrent_denied_per_attempt": 1,
+      "controller_restart": true,
+      "server_restart": true,
+      "standalone": true,
+      "expired_stale_reuse_denied": true,
+      "locked_replay_denial": true,
+      "policy": {
+        "config_revision": "5f71b04cdbab5d317f85102e0886d3b74311a3ee16b74367d0822dca743d2a44",
+        "fallback": "deny",
+        "mode": "required",
+        "policy_sha256": "0cba6e9bcc5dc71c2a29c1a3b2c1e00044c302a6dfd527edec48c0e8c5f88620",
+        "profile": "ability.application-gateway",
+        "profile_version": "1beta1",
+        "schema": "dispatch.assurance-negotiation/v1beta1"
+      },
+      "initial_outcome": "application_error"
+    }
+  },
+  {
+    "suite": "mcp_ability",
+    "proof": {
+      "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/mcp-ability-1790544814649",
+      "scenario": "receipt-failure",
+      "schema": "dispatch.mcp-ability-rehearsal/v1",
+      "ok": true,
+      "negative_correlations": 21,
+      "business_effects": 1,
+      "receipt_rows": 1,
+      "mcp_processes": 7,
+      "expired_admission_denied": true,
+      "stale_admission_denied": true,
+      "duplicate_admission_denied": true,
+      "locked_replay_denial": true,
+      "controller_restart": true,
+      "beta_required": true,
+      "checkpoint": true,
+      "standalone": true,
+      "receipt_commit_failed": true,
+      "stdio_reply_lost": false,
+      "dispatch_policy": {
+        "config_revision": "da07ea1dc1c1a777b65d8d89f2cd57864398855d0e47772a71699fe291a9815f",
+        "fallback": "deny",
+        "mode": "required",
+        "policy_sha256": "efbafecabafee0dc65bb5c8a3f4a60ad9b64efef346107bec8313304ed5f4f08",
+        "profile": "ability.application-gateway",
+        "profile_version": "1beta1",
+        "schema": "dispatch.assurance-negotiation/v1beta1"
+      },
+      "first_result_sha256": "b8fffd2a2ac5251e1ee7335a99fe3926cb354c2291101e73f68460e0e24514be",
+      "second_result_sha256": "9a2282033f56c89260af9b7dbb0fe61e4fe56f49edc9070a3ede57ac2c5ba665"
+    }
+  },
+  {
+    "suite": "mcp_stdio_loss",
+    "proof": {
+      "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/mcp-ability-1790544840649",
+      "scenario": "stdio-loss",
+      "schema": "dispatch.mcp-ability-rehearsal/v1",
+      "ok": true,
+      "negative_correlations": 21,
+      "business_effects": 1,
+      "receipt_rows": 1,
+      "mcp_processes": 7,
+      "expired_admission_denied": true,
+      "stale_admission_denied": true,
+      "duplicate_admission_denied": true,
+      "locked_replay_denial": true,
+      "controller_restart": true,
+      "beta_required": true,
+      "checkpoint": true,
+      "standalone": true,
+      "receipt_commit_failed": false,
+      "stdio_reply_lost": true,
+      "dispatch_policy": {
+        "config_revision": "8a40eb3438614fb72fc91ad23d8bd26b0b2392f4ed59fc89ebafbda538e9c45c",
+        "fallback": "deny",
+        "mode": "required",
+        "policy_sha256": "58ca7c10d5f8805096b4df58f83fa454bda4f9e3fb1730033bf5733f707d0b82",
+        "profile": "ability.application-gateway",
+        "profile_version": "1beta1",
+        "schema": "dispatch.assurance-negotiation/v1beta1"
+      },
+      "first_result_sha256": "2829ea765a0f84b13ebea1b1fcb34222dfedab90a29b8c16f54b94fac5e541f0",
+      "second_result_sha256": "4e3fdbb73d3887ce449637e480236d6c35da42642aeb2f32ad35fbf309dffd31"
+    }
+  },
+  {
+    "suite": "sdk_ability",
+    "proof": {
+      "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/sdk-ability-1790544865414",
+      "schema": "dispatch.sdk-ability-rehearsal/v1",
+      "ok": true,
+      "negative_correlations": 14,
+      "business_effects": 1,
+      "receipt_rows": 1,
+      "sdk_processes": 5,
+      "duplicate_admission_denied": true,
+      "locked_replay_denial": true,
+      "controller_restart": true,
+      "beta_required": true,
+      "checkpoint": true,
+      "standalone": true,
+      "receipt_commit_failed": true,
+      "dispatch_policy": {
+        "config_revision": "ee34997c6a7f4cda8077f9d480591966c7c45756dcf61961b2e5d28ca9aebf69",
+        "fallback": "deny",
+        "mode": "required",
+        "policy_sha256": "2524be2b065d0f5bc80b85af5718d45e21aab2024f9b213a91e2a22ad9db20a9",
+        "profile": "ability.application-gateway",
+        "profile_version": "1beta1",
+        "schema": "dispatch.assurance-negotiation/v1beta1"
+      },
+      "first_result_sha256": "ffd9fb3243470c00088663e68d34956cf233a0ed8bdc9bc28af4796e8845a1fd",
+      "second_result_sha256": "325cd7aa0188b7d30dde956ed1de2d3cae5c02686d969c748e1b3f39ac45b118"
+    }
+  }
+]

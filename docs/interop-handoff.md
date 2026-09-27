@@ -121,6 +121,18 @@ callback, not a hosted registry or producer-controlled JSON configuration.
 
 ## Admission and fifth-participant boundary
 
+The local Kujo API is
+`correlate_interop_handoff(root, raw, expected, result_raw, assurance_raw, registration)`.
+`expected` is the host's closed `{subject, participant}` snapshot. `registration`
+contains exact `namespace`, `participant_schema`, nullable `effect_schema`, and
+installed `validate(document, result)` callback. The callback MUST validate the
+closed extension vocabulary and its binding to authorized participant/family facts;
+it MUST NOT merely echo producer assertions. `result_raw` is the authoritative
+result byte string; `assurance_raw` is the selected byte string or empty when none
+was selected. Root, callback and authoritative inputs are host arguments, never
+wire properties. Production callers remain responsible for using the current
+locked boundary; the function does not acquire a workflow lock itself.
+
 `correlate_interop_handoff` returns correlation success or bounded
 `interop_correlation_mismatch`. Success grants **no permission**. The caller MUST
 still reload authoritative state under the existing lock, enforce persisted
