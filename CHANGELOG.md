@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — application effect assurance prototype
+
+- Validate application-owned Ability identity, dual business/receipt commits, live revocation and expiry through the opt-in Wave C resolver. Stable Ability and execution-result/v1 contracts remain unchanged.
+
 Unreleased experimental addition: [effect assurance validation](docs/effect-assurance.md) with SQLite and Git adapters; legacy v1 replay behavior is unchanged.
 
 ## Unreleased

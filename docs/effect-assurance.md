@@ -169,3 +169,30 @@ The opt-in profile currently uses Dispatch's decimal control-attempt identity
 The resolver deliberately does not silently reinterpret them. Likewise, this
 resolver is for external-idempotent effects, not a replacement for none/local
 reversible admission or evaluator-only replay.
+
+## Application-owned Ability profile (experimental)
+
+The third family is `ability_application_gateway`, a profile with separate
+business and replay-receipt commits. `src/adapters/ability_assurance.kujo` invokes
+only an operator-configured local gateway with a separately supplied session
+credential. It compares live application profile identity before returning an
+observation. Unknown receipt completion does not erase a verified business commit.
+Application denial codes are allowlisted; arbitrary callback text is discarded.
+
+The Ability profile's fixed digest fields fit the existing envelope. The one
+additive mechanism enum distinguishes dual commits from the original SQLite
+single-transaction sink. Stable execution-result/v1 and retry_is_effect_safe
+remain unchanged. This is not a stable assurance release or a global default.
+
+`run_workflow_with_admission` is an experimental host-only callback API. It reloads
+state under the existing run lock, reconciles the journal, calls trusted admission,
+and executes without releasing that lock. It accepts a function, never a producer
+JSON decision. The Ability fixture uses prepare_assured_continuation in that
+callback; gateway mutation independently rechecks live authentication, expiry and
+owner fencing. There is no atomic transaction across Dispatch and the application.
+
+Run `KUJO_BIN=/reviewed/source/kujo bash tests/ability_assurance_integration.sh`.
+Set ABILITY_ROOT for a non-sibling checkout. The canonical release gate includes
+this test alongside existing SQLite/Git assurance, failure and durable-review tests.
+See Ability `docs/audits/application-assurance.md` for the dual-commit matrix,
+authentication boundary, bounded profile and compatibility recommendation.

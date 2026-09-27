@@ -1,0 +1,48 @@
+{
+  "gates": [
+    {
+      "name": "Ability canonical release",
+      "command": "KUJO_BIN=<source-runtime> bash scripts/verify-release.sh",
+      "result": "passed",
+      "log": "ability-release.txt",
+      "sha256": "44891869b762d941478235237d3aef9077d52017d644171c5d7d09de1a9f8806"
+    },
+    {
+      "name": "Dispatch canonical full release",
+      "command": "KUJO_BIN=<source-runtime> DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+      "result": "passed",
+      "log": "dispatch-release.txt",
+      "sha256": "6966ce27057afc3534981712c9c5d64c753fe91b2e9986dadb6e24ba0ca30784"
+    },
+    {
+      "name": "Wave A existing real integration",
+      "command": "KUJO_BIN=<source-runtime> node tests/runtime_measurements_adapter_check.js --integration",
+      "result": "passed",
+      "log": "wave-a-regression.txt",
+      "sha256": "ed5d98eb1adb6cb9521956a2acd7d9635b1345fabf826ef3824e3454d7a7ca89"
+    },
+    {
+      "name": "Kujo documentation gates",
+      "command": "cargo fmt --check; cargo test --test readme_contracts",
+      "result": "passed",
+      "log": "kujo-docs.txt",
+      "sha256": "df26663ddfe0051f173a6ca9c2d6693e02770e98a6c9dd67175918b42c34ddc2"
+    },
+    {
+      "name": "Post-review Ability/Dispatch complete application fixture",
+      "command": "KUJO_BIN=<source-runtime> bash scripts/verify-application-assurance.sh --dispatch",
+      "result": "passed",
+      "proof": "proof.json",
+      "sha256": "b1ccd61b7541635341233456e7170533369671460be7535c0a80c45a1b3e07de"
+    }
+  ],
+  "baselineFence": {
+    "result": "reproduced on isolated baseline archive, fixed in c5b4860",
+    "log": "baseline-fence.txt"
+  },
+  "claims": [
+    "No runtime changes; Kujo validation scoped to documentation.",
+    "No live provider, container or power-loss certification claimed.",
+    "All changes remain unreleased; alpha1 is experimental."
+  ]
+}

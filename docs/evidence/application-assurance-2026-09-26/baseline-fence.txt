@@ -1,0 +1,31 @@
+Fence Report
+============
+
+Status: FAILED
+Files scanned: 7
+Imports checked: 18
+Violations: 1
+Errors: 1
+Warnings: 0
+Skipped files: 0
+Ignored violations: 0
+
+Violations
+----------
+[ERROR] public -> unknown is not allowed
+  File: src/index.kujo:6
+  Import: src.profile
+  Resolved: src/profile.kujo
+  Rule: unlisted dependency denied by unknown_dependency_policy = deny
+  Suggestion: Define this relationship explicitly in fence.toml, or move the target into a known zone.
+
+
+Summary by zone
+---------------
+definition: 0
+execution_contracts: 0
+internal: 0
+public: 1 error
+registry: 0
+runtime: 0
+

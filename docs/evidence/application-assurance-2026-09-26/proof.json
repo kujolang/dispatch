@@ -1,0 +1,115 @@
+{
+  "application": {
+    "proof": [
+      {
+        "boundary": "before_business",
+        "businessBefore": 0,
+        "businessAfter": 1,
+        "receiptBefore": false
+      },
+      {
+        "boundary": "before_business_commit",
+        "businessBefore": 0,
+        "businessAfter": 1,
+        "receiptBefore": false
+      },
+      {
+        "boundary": "after_business_commit",
+        "businessBefore": 1,
+        "businessAfter": 1,
+        "receiptBefore": false
+      },
+      {
+        "boundary": "before_receipt_commit",
+        "businessBefore": 1,
+        "businessAfter": 1,
+        "receiptBefore": false
+      },
+      {
+        "boundary": "after_receipt_commit",
+        "businessBefore": 1,
+        "businessAfter": 1,
+        "receiptBefore": true
+      },
+      {
+        "boundary": "before_reply",
+        "businessBefore": 1,
+        "businessAfter": 1,
+        "receiptBefore": true
+      },
+      {
+        "contenders": 6,
+        "admitted": 1,
+        "replayed": 2,
+        "in_progress": 3,
+        "business": 1
+      },
+      {
+        "delayedAdmission": "revoked",
+        "business": 0,
+        "receipt": 0
+      },
+      {
+        "delayedAdmission": "expired",
+        "business": 0,
+        "receipt": 0
+      },
+      {
+        "fencedOldOwner": true,
+        "business": 1
+      }
+    ],
+    "commitFailed": "ability_idempotency_commit_failed",
+    "privacy": true
+  },
+  "dispatch": {
+    "dispatchProof": [
+      {
+        "scenario": "absent",
+        "code": "REPLAY_COMPLETED",
+        "business": 1
+      },
+      {
+        "scenario": "commit-failed",
+        "code": "REPLAY_COMPLETED",
+        "business": 1
+      },
+      {
+        "scenario": "complete",
+        "code": "REPLAY_COMPLETED",
+        "business": 1
+      },
+      {
+        "scenario": "revoked",
+        "code": "ability_assurance_revoked",
+        "business": 0
+      },
+      {
+        "scenario": "expired",
+        "code": "assurance_expired_or_future",
+        "business": 0
+      },
+      {
+        "scenario": "corrupt",
+        "code": "ability_business_receipt_mismatch",
+        "business": 0
+      },
+      {
+        "scenario": "unavailable",
+        "code": "ability_business_effect_unverified",
+        "business": null
+      },
+      {
+        "controllers": 2,
+        "admitted": 1,
+        "rejected": 1
+      },
+      {
+        "scenario": "controller-contention",
+        "code": "REPLAY_COMPLETED",
+        "business": 1
+      }
+    ]
+  },
+  "fixtureRun": "application-assurance-1790481090399"
+}

@@ -1,0 +1,10 @@
+{
+  "runtimeSource": "5d72aab4b99e7f8c01e4c208d6c97061934c7447",
+  "runtimeBinarySha256": "4ef726d0020b6df0be78da4b7e96a79d099d414efa83874676038da501a72a93",
+  "runtimeVersionLabel": "kujo 1.5.0 (source build; not published archive)",
+  "rust": "1.96.0 (ac68faa20 2026-05-25)",
+  "host": "Darwin 25.6.0 x86_64",
+  "abilityTested": "f103ac5904c69ad7a1c6dffb262200f986d734d4",
+  "dispatchCode": "b938d6136f5afaf8bf3864a248b6bc8ce6677046",
+  "note": "Full Dispatch gate includes original Ability profile; post-review full application/Dispatch fixture rerun covers real SQLite failure, stale-owner and unavailable-store additions. Runtime and Workcell unchanged."
+}

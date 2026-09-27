@@ -1,0 +1,104 @@
+{
+  "assurance": {
+    "sha256": "4870c4100845d921d98e0a4286f53fc0271ed1aabaa151f63a57e47dd51b1116",
+    "value": {
+      "assurance": "independently_verified",
+      "attempt_id": "1",
+      "compensation": "not_evaluated",
+      "effect_id": "effect-1",
+      "evidence_ref": "sha256:144d2deb5134d4932e00a67e8c59a0045d5c11a0605c6d07631fef1dbf040a25",
+      "issuer": "ability-application-local",
+      "key_sha256": "d2c7ce88a1bfd730228bd6101e1d9c990f56d482e0353f90f9161d6b8dbbef9f",
+      "mechanism": "ability_application_gateway",
+      "observed_state": "committed",
+      "operation": "create",
+      "precondition_sha256": "e74f71f81267fa03e1ccf3d0f7a3e4b463c9402910e423e0482183467d90c3df",
+      "replay_class": "external_idempotent",
+      "reported_state": "unknown",
+      "request_sha256": "53639e30d0c23db19c9c0609ab94b44e1243656573d50860b245b7f515f10413",
+      "result_sha256": "d26a76f652d476b862dda8fc763e839428a54722fcf52eacdb0515678409bb4b",
+      "run_id": "run-1790481123592-9286",
+      "schema": "dispatch.effect-assurance/v1alpha1",
+      "scope_sha256": "50f742d3a76956d80f12b4bbd6be747e908af03ab6958d0cf41b360d771be2be",
+      "step_id": "action",
+      "target_sha256": "e76cee3b126634393b3a972c4ac277f8354bed0241a7590a3800fa12f43ff47f",
+      "transaction_sha256": "95366131cae07dff0e29cecaf21a20ce12b952a59d050e0c24a3fdb761aad2b8",
+      "valid_from": 1790481120,
+      "valid_until": 1790482922
+    }
+  },
+  "profile": {
+    "sha256": "e74f71f81267fa03e1ccf3d0f7a3e4b463c9402910e423e0482183467d90c3df",
+    "value": {
+      "ability_id": "kujo.fixture.publication.create",
+      "ability_version": "1.0.0",
+      "definition_digest": "7b4d3b40ac011a31f3e2d9c7641c4a7fe99c993a0688a923df1bcabb3dc107ac",
+      "input_sha256": "25c7513f6d7db2954c30c7677566bbffc0ad0420a55c70f6c4a62d34de507732",
+      "intent_sha256": "21bd8a61802a17dd70b885fc0909cfbca2bd63e0245dfd327d6c98a63f935746",
+      "key_digest": "0a377b9f73bcd4d6b794cde3f547e222fa86e52e9dc182dce69f34e598fcf8ef",
+      "operation": "create",
+      "principal_sha256": "50f742d3a76956d80f12b4bbd6be747e908af03ab6958d0cf41b360d771be2be",
+      "request_digest": "53639e30d0c23db19c9c0609ab94b44e1243656573d50860b245b7f515f10413",
+      "schema": "ability.application-assurance/v1alpha1",
+      "surface": "sdk",
+      "target_sha256": "e76cee3b126634393b3a972c4ac277f8354bed0241a7590a3800fa12f43ff47f",
+      "tenant_sha256": "0a96abb33b07ff0e8f48bcc4893e0e7346bff899dd316979517fa06509a49aff",
+      "transaction_sha256": "95366131cae07dff0e29cecaf21a20ce12b952a59d050e0c24a3fdb761aad2b8"
+    }
+  },
+  "executionResult": {
+    "sha256": "d26a76f652d476b862dda8fc763e839428a54722fcf52eacdb0515678409bb4b",
+    "value": {
+      "attempt": 1,
+      "classification": "unknown",
+      "effects": [
+        {
+          "class": "external_idempotent",
+          "effect_id": "effect-1",
+          "enforced_by": "ability-application-local",
+          "enforcement_evidence_ref": "sha256:144d2deb5134d4932e00a67e8c59a0045d5c11a0605c6d07631fef1dbf040a25",
+          "idempotency_key": "0a377b9f73bcd4d6b794cde3f547e222fa86e52e9dc182dce69f34e598fcf8ef",
+          "state": "unknown"
+        }
+      ],
+      "evidence": [],
+      "finished_at": "2026-09-27T03:52:04Z",
+      "preservation_outcome": {
+        "actual_mode": "filesystem",
+        "cleanup": {
+          "handle": "opaque",
+          "owner": "fixture"
+        },
+        "created_at": "2026-09-27T03:52:04Z",
+        "evidence": [],
+        "provider": {
+          "name": "local"
+        },
+        "reconstructability": "same_filesystem",
+        "requested_mode": "filesystem",
+        "result_id": "preserved",
+        "retain_until": "2099-01-01T00:00:00Z",
+        "schema": "kujo.preservation-outcome/v1",
+        "status": "satisfied",
+        "subject": {
+          "attempt_id": "1",
+          "run_id": "run-1790481123592-9286",
+          "step_id": "action"
+        }
+      },
+      "producer": {
+        "name": "effect-assurance-fixture",
+        "version": "1"
+      },
+      "result_id": "run-1790481123592-9286:1",
+      "schema": "kujo.execution-result/v1",
+      "started_at": "2026-09-27T03:52:04Z",
+      "status": "indeterminate",
+      "subject": {
+        "attempt_id": "1",
+        "run_id": "run-1790481123592-9286",
+        "step_id": "action"
+      }
+    }
+  }
+}
