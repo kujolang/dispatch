@@ -1,0 +1,160 @@
+from src.core.assurance_admission import create_negotiated_run, select_run_assurance, resume_negotiated_review
+from src.core.assurance_configuration import configuration_revision, implementation_digest, evaluate_run_assurance
+from src.core.assurance_state import decode_authoritative_state
+from src.core.state import load_run_state, export_run_bundle, import_run_bundle
+from src.core.checkpoint import publish_review_checkpoint
+from src.core.utils import dict_get_or
+from src.adapters.ability_assurance import ability_assurance_verifier
+from tests.assurance_conformance import common_assurance_conformance
+from src.core.control_journal import append_control_event, reconcile_control_journal
+from src.core.effect_assurance import assurance_document, resolve_effect_assurance, load_effect_assurance, prepare_assured_continuation
+from src.core.runner import run_workflow
+from src.core.state import create_run_state, persist_run_state
+from src.core.step import create_step
+from src.tools.tool import create_tool_registry, create_tool, register_tool
+from src.workflows.workflow import create_workflow
+
+func require(value) {if value == false {throw("Effect assurance fixture assertion failed")}}
+func adapter(config, root, mode) {
+    if config["issuer"] == "ability-local" {
+        response := spawn_process([config["runtime"], "run", "examples/application-assurance/gateway.kujo", root, mode, ""], {"cwd": config["cwd"], "max_output_bytes": 8192, "timeout_ms": 20000, "inherit_env": false, "env": {"ABILITY_GATEWAY_SESSION": env("ABILITY_GATEWAY_SESSION")}})
+        require(response.success&&response.stderr == ""); return parse_json(response.stdout)
+    }
+    args := [config["runtime"], "run", config["entry"], root, mode]
+    if mode == "before_commit"||mode == "after_commit" {args = ["node", "tests/effect_assurance_crash.mjs", config["runtime"], config["cwd"], config["entry"], root, mode]}
+    spawn_options := {"cwd": config["cwd"], "max_output_bytes": 8192, "timeout_ms": 20000}
+    if mode == "before_commit"||mode == "after_commit" {spawn_options["cwd"] := os_getcwd()}
+    response := spawn_process(args, spawn_options)
+    require(response.success&&response.stderr == ""&&response.stdout_truncated == false)
+    if mode == "before_commit"||mode == "after_commit" {require(trim(response.stdout) == "VERIFIED_SIGKILL"); return {"ok": true}}
+    return parse_json(response.stdout)
+}
+
+# Named fixture hook avoids nested runtime closure machinery; it changes live
+# operator authority only at the actual step-start lifecycle boundary.
+func delayed_admission_hook(event) {
+    if event["event_type"] == "step_started"&&event["step_id"] == "action" {
+        if phase == "resume-revoke-hook" {
+            store := parse_json(read_file_beneath(root, "operator-store.json", 16384))
+            item := store["revisions"][store["selected"]]
+            item["status"] := "revoked"
+            revisions := store["revisions"]
+            revisions[store["selected"]] := item
+            store["revisions"] := revisions
+            write_file(root + "/operator-store.json", to_json(store), true)
+        } else {
+            while floor(now_utc_seconds()) <= config["intent"]["valid_until"] {sleep(100)}
+        }
+    }
+}
+
+func action(input, context) {
+    root := context["input"]["root"]
+    config := parse_json(read_file_beneath(root, "config.json", 8192))
+    attempt := context["control_attempt"]
+    append_file(root + "/action-invocations", to_string(attempt) + "\n")
+    if config["issuer"] == "ability-local" {if attempt > 1 {require(adapter(config, root, "recover")["ok"]); require(adapter(config, root, "execute")["ok"])}}
+    else if attempt == 1 {require(adapter(config, root, config["boundary"])["ok"])}
+    else {require(adapter(config, root, "apply")["ok"])}
+    observed := adapter(config, root, "observe")
+    require(observed["ok"])
+    stamp := format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
+    result := {"schema": "kujo.execution-result/v1", "result_id": context["run_id"] + ":" + to_string(attempt), "subject": {"run_id": context["run_id"], "step_id": context["step_id"], "attempt_id": to_string(attempt)}, "producer": {"name": "effect-assurance-fixture", "version": "1"}, "status": "indeterminate", "classification": "unknown", "started_at": stamp, "finished_at": stamp, "attempt": attempt, "effects": [{"effect_id": "effect-1", "class": config["effect_class"], "state": "unknown", "idempotency_key": dict_get_or(config, "application_key_digest", "fixture-key"), "enforced_by": config["issuer"], "enforcement_evidence_ref": observed["observation"]["evidence_ref"]}], "evidence": []}
+    if attempt > 1 {result["status"] := "success"}
+    result["preservation_outcome"] := {"schema": "kujo.preservation-outcome/v1", "result_id": "preserved", "subject": result["subject"], "requested_mode": "filesystem", "actual_mode": "filesystem", "status": "satisfied", "provider": {"name": "local"}, "reconstructability": "same_filesystem", "evidence": [], "created_at": stamp, "retain_until": "2099-01-01T00:00:00Z", "cleanup": {"owner": "fixture", "handle": "opaque"}}
+    write_file(root + "/result-" + to_string(attempt) + ".json", to_json(result), true)
+    return {"ok": true, "data": result}
+}
+func descendant(input, context) {return {"ok": true, "data": {"ran": true}}}
+func workflow() {
+    return create_workflow({"id": "assurance", "name": "Assurance", "description": "Experimental assurance", "input_schema": {"type": "dict"}, "agents": {}, "tools": ["action", "descendant"], "steps": [create_step("action", "Effect", "tool", {"tool_name": "action", "input_from": ["input"], "output_key": "action", "effect_class": "external_idempotent", "reexecution_modes": ["same_workspace"]}), create_step("descendant", "After review", "tool", {"tool_name": "descendant", "depends_on": ["action"], "output_key": "descendant", "effect_class": "none"})], "routing": {"enabled": false}, "control": {"policy_id": "assurance", "policy_version": "1", "policies": [{"when": {"result": "execution", "status": "indeterminate"}, "decide": {"disposition": "require_intervention", "reason": "Uncertain effect", "allowed_actions": ["retry_step", "abort"]}}]}, "default_retry_policy": {"max_attempts": 1}, "approval_config": {"auto_approve": false}, "memory_config": {}, "budgets": {}, "max_parallel_steps": 1, "output_schema": {"type": "dict"}})
+}
+func registry() {
+    tools := create_tool_registry()
+    tools = register_tool(tools, create_tool("action", "Local effect", {"type": "dict"}, {"type": "dict"}, action, null))
+    return register_tool(tools, create_tool("descendant", "After review", {"type": "dict"}, {"type": "dict"}, descendant, null))
+}
+func installed_files(config) {
+    files := [{"root": os_getcwd(), "path": "tests/persisted_negotiation_fixture.kujo"}, {"root": os_getcwd(), "path": "src/core/effect_assurance.kujo"}]
+    if config["issuer"] == "sqlite-local" {files = push(files, {"root": os_getcwd(), "path": "src/adapters/sqlite_effect.kujo"})}
+    if config["issuer"] == "git-local" {files = push(files, {"root": config["cwd"], "path": "src/evidence/git_effect.kujo"})}
+    if config["issuer"] == "ability-local" {files = push(files, {"root": config["cwd"], "path": "examples/application-assurance/gateway.kujo"})}
+    return files
+}
+func host(config, root, expected, raw, verifier) {
+    return func(revision, state) {
+        installed := parse_json(read_file_beneath(root, "operator-store.json", 16384))
+        item := dict_get_or(installed["revisions"], revision, null)
+        if item == null {return {"status": "missing"}}
+        return {"status": item["status"], "descriptor": item["descriptor"], "authority_sha256": sha256(root), "implementation": dict_get_or(item, "implementation", installed_files(config)), "verify": verifier, "expected": expected, "result_raw": raw}
+    }
+}
+func make_verifier(config, root) {
+    if config["issuer"] == "ability-local" {context := config["intent"]; context["transaction_sha256"] := config["transaction_sha256"]; context["profile_sha256"] := config["profile_sha256"]; return ability_assurance_verifier(context, config["runtime"], config["cwd"], root, env("ABILITY_GATEWAY_SESSION"))}
+    return func(subject) {return verify_subject(config, root, subject)}
+}
+func verify_subject(config, root, subject) {
+        matched := true
+        for field in ["operation", "target_sha256", "scope_sha256", "key_sha256", "request_sha256", "precondition_sha256"] {if subject[field] != config["intent"][field] {matched = false}}
+        if matched == false {return {"ok": false}}
+        if subject["transaction_sha256"] != sha256(to_json(config["intent"])) {return {"ok": false}}
+        return adapter(config, root, "observe")
+    }
+args := args(); root := args[0]; phase := args[1]
+config := parse_json(read_file_beneath(root, "config.json", 8192))
+options := {"output_root": root + "/runs", "auto_approve": false, "interactive": false}
+if phase == "install" {
+    profiles := {"sqlite-local": ["dispatch.sqlite-unique", "sqlite_unique_transaction"], "git-local": ["workcell.git-cas", "git_ref_cas_transaction"], "ability-local": ["ability.application-gateway", "ability_application_gateway"]}
+    profile := profiles[config["issuer"]]
+    descriptor := {"schema": "dispatch.assurance-configuration/v1alpha1", "mode": dict_get_or(config, "mode", "required"), "fallback": dict_get_or(config, "fallback", "deny"), "profile": dict_get_or(config, "profile", profile[0]), "profile_version": "1alpha1", "issuer": config["issuer"], "mechanism": profile[1], "verifier_id": "installed-local", "verifier_version": "1", "verifier_sha256": implementation_digest(installed_files(config)), "authority_sha256": sha256(root)}
+    first := configuration_revision(descriptor); revisions := {}; revisions[first] := {"status": "active", "descriptor": descriptor}
+    descriptor["verifier_version"] := "2"; second := configuration_revision(descriptor); revisions[second] := {"status": "active", "descriptor": descriptor}
+    write_file(root + "/operator-store.json", to_json({"selected": first, "revisions": revisions}), true)
+    print(to_json({"r1": first, "r2": second}))
+} else if phase == "start" {
+    store := parse_json(read_file_beneath(root, "operator-store.json", 16384))
+    controller := host(config, root, {}, "", func(value) {return {"ok": false}})
+    created := create_negotiated_run(workflow(), {"root": root}, options["output_root"], options, store["revisions"][store["selected"]]["descriptor"], controller)
+    if created["ok"] == false {print(to_json(created)); exit(0)}
+    options["assurance_host"] := controller
+    first := run_workflow(workflow(), created["run_state"], registry(), options)
+    if first["ok"] == false {print(to_json(first)); exit(0)}
+    require(first["paused"])
+    write_file(root + "/state-pointer.json", to_json({"run_dir": first["run_state"]["run_dir"], "run_id": first["run_state"]["run_id"]}), true)
+    print(to_json({"ok": true, "policy": first["run_state"]["assurance_negotiation"]}))
+} else {
+    pointer := parse_json(read_file_beneath(root, "state-pointer.json", 8192))
+    if phase == "import-load" {options["output_root"] := root + "/imported"}
+    loaded := load_run_state(options["output_root"], pointer["run_id"])
+    if loaded["ok"] == false {print(to_json(loaded)); exit(0)}
+    state := loaded["run_state"]
+    if phase == "load" {print(to_json({"ok": true, "policy": state["assurance_negotiation"], "revision": state["revision"]})); exit(0)}
+    if phase == "checkpoint" {print(to_json(publish_review_checkpoint(options["output_root"], state["run_id"]))); exit(0)}
+    if phase == "import-existing" {print(to_json(import_run_bundle(options["output_root"], root + "/bundle.json", {}))); exit(0)}
+    if phase == "import" {print(to_json(import_run_bundle(root + "/imported", root + "/bundle.json", {}))); exit(0)}
+    if phase == "export" {print(to_json(export_run_bundle(options["output_root"], state["run_id"], root + "/bundle.json", {"include_signature": true}))); exit(0)}
+    if phase == "generic" {print(to_json(run_workflow(workflow(), state, registry(), options))); exit(0)}
+    raw := read_file_beneath(root, "result-1.json", 1048576); result := parse_json(raw)
+    expected := {"issuer": config["issuer"], "assurance": "independently_verified", "run_id": state["run_id"], "step_id": "action", "attempt_id": "1", "effect_id": "effect-1", "result_sha256": sha256(raw), "transaction_sha256": dict_get_or(config, "transaction_sha256", sha256(to_json(config["intent"]))), "reported_state": "unknown", "replay_class": result["effects"][0]["class"]}
+    for field in ["operation", "target_sha256", "scope_sha256", "key_sha256", "request_sha256", "precondition_sha256"] {expected[field] := config["intent"][field]}
+    verifier := make_verifier(config, root)
+    if starts_with(phase, "assure") == false {options["assurance_host"] := host(config, root, expected, raw, verifier)}
+    if phase == "execute-existing" {print(to_json(run_workflow(workflow(), state, registry(), options))); exit(0)}
+    if phase == "resume-revoke-hook"||phase == "resume-expire-hook" {options["event_hook"] := delayed_admission_hook}
+    if phase == "eval" {print(to_json(evaluate_run_assurance(state, options))); exit(0)}
+    if starts_with(phase, "assure") {
+        observed := verifier(expected); require(observed["ok"])
+        assurance := assurance_document(expected, observed["observation"])
+        if phase == "assure-future" {assurance["schema"] := "dispatch.effect-assurance/v999"}
+        if phase == "assure-invalid" {assurance["future_field"] := "unsupported"}
+        document := to_json(assurance)
+        if phase == "assure-oversized-subject" {expected["step_id"] := "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+        print(to_json(select_run_assurance(options["output_root"], state["run_id"], expected, document)))
+    } else {
+        request := state["human_intervention"]
+        decision := {"schema": "kujo.intervention-decision/v2", "decision_id": "persisted-review", "request_id": request["request_id"], "boundary_id": request["boundary_id"], "expected_state_revision": state["revision"], "action": "retry_step", "continuation": {"target_step_id": "action", "source": "preserved_workspace", "new_attempt": true}, "actor": {"id": "local-controller", "type": "system", "authenticated_by": "operator-process", "authorization": "review"}, "reason": "Verify persisted policy", "decided_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")}
+        if file_exists(root + "/checkpoint-id") {options["checkpoint_id"] := trim(read_file_beneath(root, "checkpoint-id", 128))}
+        answer := resume_negotiated_review(workflow(), state, registry(), options, decision)
+        if answer["ok"] {require(answer["run_state"]["steps"][1]["status"] == "completed"); print(to_json({"ok": true, "policy": answer["run_state"]["assurance_negotiation"]}))} else {print(to_json(answer))}
+    }
+}

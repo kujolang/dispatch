@@ -25,22 +25,40 @@ jobs:
       RUSTUP_TOOLCHAIN: "1.96.0"
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/kujo
-          ref: 266a8902068a14c3d17f803bef467dc28f1fe162
+          ref: 5d72aab4b99e7f8c01e4c208d6c97061934c7447
           path: .release/kujo
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/ai-sdk
           ref: 849dbbbba7a734938320dd9569d1ed7aa6240298
           path: .release/ai-sdk
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/workcell
+          ref: b34c26c90a8626c988a4234fd2610dcf11df1634
+          path: .release/workcell
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/ability
+          ref: f103ac5904c69ad7a1c6dffb262200f986d734d4
+          path: .release/ability
+      - name: Check offline adapter tools
+        run: |
+          command -v node
+          command -v sqlite3
       - run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal
       - run: cargo build --release --locked --manifest-path .release/kujo/Cargo.toml
       - name: Verify exact tagged source
         env:
           KUJO_BIN: ${{ github.workspace }}/.release/kujo/target/release/kujo
           AI_SDK_PATH: ${{ github.workspace }}/.release/ai-sdk
+          WORKCELL_ROOT: ${{ github.workspace }}/.release/workcell
+          ABILITY_ROOT: ${{ github.workspace }}/.release/ability
         run: bash scripts/run_release_gate.sh
 
   package:

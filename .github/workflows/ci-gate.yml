@@ -29,13 +29,15 @@ jobs:
       DISPATCH_OFFLINE_FIXTURE: "true"
       # Bump deliberately after compatibility verification and record the
       # Dispatch-to-Kujo pairing in the release evidence.
-      KUJO_RUNTIME_REF: "87fae36dd331b185d29256f74d2a92f1aefc5ea5"
+      KUJO_RUNTIME_REF: "5d72aab4b99e7f8c01e4c208d6c97061934c7447"
       KUJO_V1_2_RUNTIME_REF: "123542ba17a0ef0150970a6c626b518946ff0bbb"
       RUSTUP_TOOLCHAIN: "1.96.0"
 
     steps:
       - name: Checkout dispatch repository
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0 # Exercise the actual pinned pre-negotiation controller.
 
       - name: Checkout Kujo runtime repository
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
