@@ -33,27 +33,27 @@
         },
         "run_id": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}(?![\\s\\S])",
           "maxLength": 128
         },
         "step_id": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}(?![\\s\\S])",
           "maxLength": 128
         },
         "attempt_id": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}(?![\\s\\S])",
           "maxLength": 128
         },
         "effect_id": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}(?![\\s\\S])",
           "maxLength": 128
         },
         "result_sha256": {
           "type": "string",
-          "pattern": "^[0-9a-f]{64}$",
+          "pattern": "^[0-9a-f]{64}(?![\\s\\S])",
           "maxLength": 64
         }
       }
@@ -68,19 +68,19 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}(?![\\s\\S])",
           "maxLength": 128
         },
         "version": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}(?![\\s\\S])",
           "maxLength": 128
         }
       }
     },
     "issuer": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}(?![\\s\\S])",
       "maxLength": 128
     },
     "verification_method": {
@@ -108,7 +108,7 @@
     },
     "evidence_ref": {
       "type": "string",
-      "pattern": "^sha256:[0-9a-f]{64}$",
+      "pattern": "^sha256:[0-9a-f]{64}(?![\\s\\S])",
       "maxLength": 71
     },
     "bindings": {
@@ -118,7 +118,7 @@
     },
     "profile_sha256": {
       "type": "string",
-      "pattern": "^[0-9a-f]{64}$",
+      "pattern": "^[0-9a-f]{64}(?![\\s\\S])",
       "maxLength": 64
     }
   },
