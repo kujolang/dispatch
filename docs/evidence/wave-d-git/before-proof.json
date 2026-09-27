@@ -1,0 +1,27 @@
+{
+  "schema": "dispatch.git-participant-rehearsal/v1",
+  "boundary": "before_commit",
+  "ok": true,
+  "actual_sigkill": true,
+  "initial_observed_state": "not_started",
+  "logical_effects": 1,
+  "admitted_processes": 2,
+  "duplicate_denials": 2,
+  "caller_denials": 15,
+  "negative_correlations": 22,
+  "fresh_controller": true,
+  "checkpoint": true,
+  "stale_checkpoint_denied": true,
+  "descendant": true,
+  "privacy": true,
+  "ability_used": false,
+  "policy": {
+    "config_revision": "0fe6e17e36162cca0d59f23f78b3194998d83c116312bcd39f177e05e6185733",
+    "fallback": "deny",
+    "mode": "required",
+    "policy_sha256": "ac03f5a0f11debe945aedee918da6c998e82a6241d2f9fd57c730d837ebf3320",
+    "profile": "workcell.git-cas",
+    "profile_version": "1beta1",
+    "schema": "dispatch.assurance-negotiation/v1beta1"
+  }
+}
