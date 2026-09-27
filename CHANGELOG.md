@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add immutable bounded `dispatch.review-checkpoint/v1` review snapshots and
+  optional locked checkpoint validation on v2 `resume-decision`. Preserve existing
+  effect uncertainty, revision admission and decision-claim recovery behavior.
+- Prove separate-process continuation with real offline Workcell preservation,
+  Eval results and RunLedger correlation; no action replay or live-provider claim.
+
 - Reject all terminal runs, including rejected runs, at direct runner admission;
   share terminal classification with state management.
 

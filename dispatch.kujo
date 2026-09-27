@@ -10,6 +10,7 @@ from src.core.plugins import create_plugin_registry, register_plugin, apply_plug
 from src.core.routing import validate_workflow_routing, resolve_route, routing_policy_version, supported_route_provider
 from src.core.runner import run_workflow, run_workflow_under_lock
 from src.core.state import acquire_run_lock, release_run_lock, create_run_state, persist_run_state, load_run_state, list_runs, list_runs_with_diagnostics, summarize_run, filter_runs, paginate_runs, build_run_catalog, prune_runs, doctor_runs, normalize_output_root, mutation_audit_path, export_run_bundle, import_run_bundle
+from src.core.checkpoint import publish_review_checkpoint, validate_review_checkpoint
 from src.core.state_store import state_store_health
 from src.core.tool_policy import parse_tool_name_list, build_tool_authorization_policy_with_profile
 from src.core.trace import apply_trace_limits, append_trace, finalize_trace
@@ -45,7 +46,8 @@ func print_help() {
     "  kujo run dispatch.kujo show <run-id> [--output-root outputs] [--json]",
     "  kujo run dispatch.kujo inspect <run-id> [--output-root outputs] [--json]",
     "  kujo run dispatch.kujo resume <run-id> [--workflow research-report] [--policy-profile staging] [--yes] [--non-interactive] [--output-root outputs]",
-    "  kujo run dispatch.kujo resume-decision <decision.json> [--output-root outputs] [--non-interactive]",
+    "  kujo run dispatch.kujo resume-decision <decision.json> [--output-root outputs] [--checkpoint cp_SHA256] [--non-interactive]",
+    "  kujo run dispatch.kujo checkpoint <run-id> [--output-root outputs]",
     "  kujo run dispatch.kujo templates [--json]",
     "  kujo run dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]",
     "  kujo run dispatch.kujo doctor [--output-root outputs] [--workflow-file workflow.json] [--live] [--write] [--run-ids run-1,run-2] [--recent-count 20] [--json] [--strict-mutations] [--confirm-mutation]",
@@ -1351,6 +1353,11 @@ func run_v2_resume_decision(decision, parsed, command_args) {
         print(to_json({"status": "already_applied", "run_id": run_id, "decision_id": decision_id}))
         return
     }
+    checkpoint_id := parsed_flag_value(parsed, "--checkpoint", "")
+    if checkpoint_id != "" {
+        checked := validate_review_checkpoint(run_state, checkpoint_id)
+        if checked["ok"] == false {exit_error(to_json(checked["error"]))}
+    }
     validated := validate_intervention_decision(decision, run_state)
     if dict_get_or(validated, "ok", false) == false {exit_error(to_json(validated["error"]))}
     prepared := prepare_intervention_continuation(run_state, decision)
@@ -1443,10 +1450,21 @@ func run_v2_resume_decision(decision, parsed, command_args) {
     if result["ok"] == false&&dict_get_or(result, "cancelled", false) == false {exit_error(to_json(result["error"]))}
 }
 
+func run_checkpoint(command_args) {
+    parsed := parse_cli_args(command_args, {"flags": {"--output-root": {"takes_value": true, "default": "outputs"}}})
+    if parsed["ok"] == false {exit_error(parsed["error"]["message"])}
+    positionals := parsed_positionals_or_empty(parsed)
+    if len(positionals) != 1 {exit_error("checkpoint requires one run ID.")}
+    result := publish_review_checkpoint(parsed_flag_value(parsed, "--output-root", "outputs"), to_string(positionals[0]))
+    if result["ok"] == false {exit_error(to_json(result["error"]))}
+    print(to_json(result))
+}
+
 func run_resume_decision(command_args) {
     parsed := parse_cli_args(command_args, {
         "flags": {
             "--config": {"takes_value": true, "default": ""},
+            "--checkpoint": {"takes_value": true, "default": ""},
             "--output-root": {"takes_value": true, "default": "outputs"},
             "--sources-dir": {"takes_value": true, "default": default_sources_dir()},
             "--non-interactive": {"takes_value": false, "default": false},
@@ -1472,6 +1490,7 @@ func run_resume_decision(command_args) {
         run_v2_resume_decision(decision, parsed, command_args)
         return
     }
+    if parsed_flag_value(parsed, "--checkpoint", "") != "" {exit_error("Review checkpoints require a v2 intervention decision.")}
     run_id := trim(to_string(dict_get_or(decision, "run_id", "")))
     step_id := trim(to_string(dict_get_or(decision, "step_id", "")))
     event_id := trim(to_string(dict_get_or(decision, "event_id", "")))
@@ -2125,6 +2144,10 @@ if command == "resume" {
 }
 if command == "resume-decision" {
     run_resume_decision(command_args)
+    return
+}
+if command == "checkpoint" {
+    run_checkpoint(command_args)
     return
 }
 if command == "runs" {

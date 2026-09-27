@@ -1,0 +1,29 @@
+from examples.failure_gate_producers import require, command
+from src.core.state import load_run_state
+from src.core.control_journal import reconcile_control_journal
+root := args()[0]
+before := parse_json(read_file(root + "/before.json"))
+state := load_run_state("tests/tmp/" + basename(root) + "/runs", before["run_id"])["run_state"]
+require(state["status"] == "completed", "Continuation did not complete")
+require(reconcile_control_journal(state)["ok"], "Final journal must reconcile")
+for step in state["steps"] {require(step["attempts"] == 1, "Action/evaluator replayed or descendant omitted")}
+require(state["steps"][2]["status"] == "completed", "Descendant did not respect accepted decision")
+require(state["human_decisions"]["durable-review-fixture"]["status"] == "applied", "Decision receipt missing")
+require(sha256(read_file(state["data"]["action"]["output_dir"] + "/manifest.json")) == before["workcell_manifest_sha256"], "Workcell evidence changed")
+require(sha256(read_file(root + "/evaluation-1/evaluation-result.json")) == before["evaluation_sha256"], "Evaluation evidence changed")
+require(read_file(root + "/action-ran") == "1", "Original action repeated")
+kujo := env("KUJO_BIN")
+ledger_root := env("FAILURE_GATE_RUNLEDGER")
+handoff := {"schema": "dispatch.durable-review-proof/v1", "fixture": true, "run_id": state["run_id"], "checkpoint": parse_json(read_file(root + "/checkpoint.json"))["checkpoint"], "final_state_sha256": sha256(read_file(state["run_dir"] + "/state.json")), "final_journal_sha256": sha256(read_file(state["run_dir"] + "/control-events.jsonl")), "workcell_manifest_sha256": before["workcell_manifest_sha256"], "evaluation_sha256": before["evaluation_sha256"], "attempts": [1, 1, 1], "status": "completed"}
+write_file(root + "/proof.json", to_json(handoff), true)
+command([kujo, "run", ledger_root + "/runledger.kujo", "start", "--provider", "fixture", "--model", "none", "--task", "Durable controller restart proof", "--repo", root + "/source", "--ledger", root + "/ledger"], ledger_root)
+listed := command([kujo, "run", ledger_root + "/runledger.kujo", "list", "--ledger", root + "/ledger", "--json"], ledger_root)
+id := parse_json(listed.stdout)[0]["id"]
+command([kujo, "run", ledger_root + "/runledger.kujo", "correlate", id, "--dispatch-run", state["run_id"], "--ledger", root + "/ledger"], ledger_root)
+command([kujo, "run", ledger_root + "/runledger.kujo", "finish", id, "--status", "pass", "--verdict", "Separate-process review resumed without replay", "--notes", "Evidence: " + root + "/proof.json SHA256=" + sha256(read_file(root + "/proof.json")), "--ledger", root + "/ledger"], ledger_root)
+verified := command([kujo, "run", ledger_root + "/runledger.kujo", "list", "--ledger", root + "/ledger", "--json"], ledger_root)
+receipt := parse_json(verified.stdout)[0]
+require(receipt["correlation"]["dispatch_run_id"] == state["run_id"], "RunLedger correlation missing")
+require(receipt["status"] == "pass"&&receipt["cost"]["total_cost"] == null, "Receipt status/cost provenance changed")
+write_file(root + "/ledger-records.json", verified.stdout, true)
+print(to_json({"ok": true, "proof": root + "/proof.json", "ledger_id": id}))

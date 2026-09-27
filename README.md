@@ -1,5 +1,9 @@
 # Dispatch
 
+Source-main addition: [durable review checkpoints](docs/review-checkpoints.md)
+bind paused authority and journal evidence before a fresh controller continues.
+This is an unreleased, existing-store review boundary, not portable crash recovery.
+
 [![Version](https://img.shields.io/badge/version-1.3.0--candidate-black)](https://github.com/kujolang/dispatch)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 [![built with Kujo](https://img.shields.io/badge/built%20with-Kujo-white.svg)](https://github.com/kujolang/kujo)

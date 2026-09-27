@@ -1,0 +1,38 @@
+# Controller one: real local Workcell preservation and Eval, then exit at review.
+from examples.failure_gate_producers import require, command, action, evaluate
+from src.core.state import create_run_state
+from src.core.runner import run_workflow
+from src.core.step import create_step
+from src.tools.tool import create_tool, register_tool, register_default_tools
+from src.workflows.workflow import create_workflow
+from src.core.checkpoint import publish_review_checkpoint
+
+root := args()[0]
+kujo := env("KUJO_BIN")
+create_dir(root + "/source")
+command(["git", "init", "-q"], root + "/source")
+write_file(root + "/source/README.md", "Durable review fixture\n")
+command(["git", "add", "README.md"], root + "/source")
+command(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "-qm", "fixture"], root + "/source")
+write_file(root + "/suite.json", to_json({"name": "durable-review", "tests": [{"name": "missing artifact", "check": "file_exists", "params": {"path": "__durable_review_intentionally_missing__"}}]}))
+workflow := create_workflow({"id": "durable-review", "name": "Durable review", "description": "Separate controllers with retained evidence", "input_schema": {"type": "dict"}, "agents": {}, "tools": ["action", "evaluate", "citation_formatter"], "steps": [
+    create_step("action", "Workcell preservation", "tool", {"tool_name": "action", "input_from": ["input"], "output_key": "action", "effect_class": "local_reversible"}),
+    create_step("evaluate", "Eval judgment", "tool", {"tool_name": "evaluate", "input_from": ["action"], "depends_on": ["action"], "output_key": "evaluation", "effect_class": "none", "control_role": "evaluator"}),
+    create_step("downstream", "After authorized review", "tool", {"tool_name": "citation_formatter", "depends_on": ["evaluate"], "output_key": "citations", "effect_class": "none"})
+], "routing": {"enabled": false}, "control": {"policy_id": "durable-review", "policy_version": "1", "policies": [{"when": {"result": "evaluation", "verdict": "fail"}, "decide": {"disposition": "require_intervention", "reason": "Review real failed evaluation", "allowed_actions": ["approve_override", "abort"]}}]}, "default_retry_policy": {"max_attempts": 1}, "approval_config": {"auto_approve": false}, "memory_config": {}, "budgets": {}, "max_parallel_steps": 1, "output_schema": {"type": "dict"}})
+registry := register_default_tools("examples/research-report/sources")
+registry = register_tool(registry, create_tool("action", "Workcell", {"type": "dict"}, {"type": "dict"}, action, null))
+registry = register_tool(registry, create_tool("evaluate", "Eval", {"type": "dict"}, {"type": "dict"}, evaluate, null))
+options := {"output_root": "tests/tmp/" + basename(root) + "/runs", "auto_approve": false, "interactive": false}
+state := create_run_state(workflow, {"topic": "durable review", "root": root, "kujo": kujo, "workcell": env("FAILURE_GATE_WORKCELL"), "eval": env("FAILURE_GATE_EVAL")}, options["output_root"], options)
+first := run_workflow(workflow, state, registry, options)
+require(first["ok"]&&first["paused"], "Expected review boundary: " + to_json(first))
+state = first["run_state"]
+require(state["steps"][2]["attempts"] == 0, "Descendant executed before review")
+checkpoint := publish_review_checkpoint(options["output_root"], state["run_id"])
+require(checkpoint["ok"], "Checkpoint failed: " + to_json(checkpoint))
+write_file(root + "/checkpoint.json", to_json(checkpoint))
+request := state["human_intervention"]
+write_file(root + "/decision.json", to_json({"schema": "kujo.intervention-decision/v2", "run_id": state["run_id"], "decision_id": "durable-review-fixture", "request_id": request["request_id"], "boundary_id": request["boundary_id"], "expected_state_revision": state["revision"], "action": "approve_override", "continuation": {}, "actor": {"id": "offline-reviewer", "type": "human", "authenticated_by": "local-fixture", "authorization": "fixture:review"}, "reason": "Accept retained failed evaluation without repeating action", "decided_at": format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")}))
+write_file(root + "/before.json", to_json({"run_id": state["run_id"], "state_sha256": sha256(read_file(state["run_dir"] + "/state.json")), "workcell_manifest_sha256": sha256(read_file(state["data"]["action"]["output_dir"] + "/manifest.json")), "evaluation_sha256": sha256(read_file(root + "/evaluation-1/evaluation-result.json"))}))
+print(to_json({"status": "paused", "run_id": state["run_id"], "checkpoint_id": checkpoint["checkpoint"]["checkpoint_id"]}))

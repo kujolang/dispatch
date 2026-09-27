@@ -7,43 +7,7 @@ from src.core.step import create_step
 from src.tools.tool import create_tool_registry, create_tool, register_tool
 from src.workflows.workflow import create_workflow
 
-func require(condition, message) {if condition == false {throw(message)}}
-func command(argv, cwd) {
-    result := spawn_process(argv, {"cwd": cwd, "timeout_ms": 120000, "max_output_bytes": 1048576})
-    require(result.exitcode == 0, "Fixture command failed: " + result.stderr + result.stdout)
-    return result
-}
-
-func action(input, context) {
-    config := context["input"]
-    root := config["root"]
-    require(file_exists(root + "/action-ran") == false, "Original action was replayed")
-    write_file(root + "/action-ran", "1")
-    result := command([config["kujo"], "run", config["workcell"] + "/main.kujo", "run", "--file", "tests/fixtures/portable/workcell.json", "--repo", root + "/source", "--output", root + "/workcell", "--manifest", "tests/fixtures/backend-protocol/manifest.json", "--profiles", "tests/fixtures/portable/profiles.json", "--profile", "fixture", "--preserve-until-evaluated", "--retain-until", "2099-01-01T00:00:00Z", "--json"], config["workcell"])
-    value := parse_json(result.stdout)
-    output := value["output_dir"]
-    preservation := parse_json(read_file(output + "/preservation.json"))
-    require(preservation["actual_mode"] == "handoff_bundle", "Evidence was not exported before late evaluation")
-    command([config["kujo"], "run", config["workcell"] + "/main.kujo", "verify", "--run", output, "--json"], config["workcell"])
-    return {"ok": true, "data": {"output_dir": output, "preservation": preservation, "execution_result": parse_json(read_file(output + "/execution-result.json"))}}
-}
-
-func evaluate(input, context) {
-    config := context["input"]
-    evidence := input["action"]
-    output := config["root"] + "/evaluation-" + to_string(context["control_attempt"])
-    subject := {"run_id": context["run_id"], "step_id": context["step_id"], "attempt_id": to_string(context["control_attempt"]), "input_evidence_ids": [sha256(read_file(evidence["output_dir"] + "/manifest.json"))]}
-    if context["reexecution_source"] == "existing_evidence" {require(subject["input_evidence_ids"] == context["retained_input_evidence_ids"], "Evaluator input evidence changed")}
-    subject_path := output + "-subject.json"
-    write_file(subject_path, to_json(subject))
-    result := spawn_process([config["kujo"], "run", config["eval"] + "/main.kujo", "run", config["root"] + "/suite.json", "--subject-context", subject_path, "--output-dir", output, "--artifact-checksums", "--json"], {"cwd": config["eval"], "timeout_ms": 120000, "max_output_bytes": 1048576})
-    require(result.exitcode == 1, "Eval fixture must fail a quality check: " + result.stderr + result.stdout)
-    value := parse_json(read_file(output + "/evaluation-result.json"))
-    require(value["verdict"] == "fail", "Evaluator did not emit a failed judgment")
-    value["preservation_outcome"] := evidence["preservation"]
-    command([config["kujo"], "run", config["eval"] + "/main.kujo", "verify-manifest", "--output-dir", output, "--json"], config["eval"])
-    return {"ok": true, "data": value}
-}
+from examples.failure_gate_producers import require, command, action, evaluate
 
 func downstream(input, context) {throw("Failed gate admitted a descendant")}
 
