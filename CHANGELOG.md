@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Reject all terminal runs, including rejected runs, at direct runner admission;
+  share terminal classification with state management.
+
 - Pin the failure-gate candidate to the Kujo source runtime with confined directory durability; reject older runtimes before running the release gate.
 
 - Added opt-in portable evaluation-result consumption, workflow control policy

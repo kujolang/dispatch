@@ -10,7 +10,7 @@ from src.core.report import build_report_payload, write_report_artifacts
 from src.core.retrieval_preferences import resolve_dispatch_retrieval_preferences
 from src.core.retry import run_with_retry
 from src.core.routing import routing_policy_version, routing_is_enabled, resolve_route, build_effective_agent, evaluate_route_output, route_failure_action, validate_workflow_routing
-from src.core.state import persist_run_state, append_policy_deny_audit_record, acquire_run_lock, release_run_lock
+from src.core.state import persist_run_state, append_policy_deny_audit_record, acquire_run_lock, release_run_lock, status_is_terminal
 from src.core.step import mark_step_started, mark_step_succeeded, mark_step_failed, mark_step_paused, mark_step_skipped
 from src.core.trace import append_trace, finalize_trace
 from src.core.utils import dict_get_or, summarize_value
@@ -1757,7 +1757,7 @@ func run_workflow(workflow, run_state, tool_registry, options) {
     }
     result := null
     try {
-        if array_has(["completed", "failed", "cancelled", "aborted"], dict_get_or(run_state, "status", "")) {
+        if status_is_terminal(dict_get_or(run_state, "status", "")) {
             result = {"ok": false, "paused": false, "run_state": run_state, "error": {"code": "terminal_run", "message": "Terminal runs cannot resume.", "retryable": false}}
         } else {
             reconciled := reconcile_control_journal(run_state)

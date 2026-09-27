@@ -454,7 +454,7 @@ func indexed_catalog_is_complete(output_root, indexed_runs) {
 }
 
 func status_is_terminal(status) {
-    return status == "completed"||status == "failed"||status == "rejected"||status == "cancelled"
+    return status == "completed"||status == "failed"||status == "rejected"||status == "cancelled"||status == "aborted"
 }
 
 func can_resume_status(status) {
@@ -1743,6 +1743,7 @@ func import_run_bundle(output_root, bundle_path, options) {
 }
 
 export create_run_state := create_run_state
+export status_is_terminal := status_is_terminal
 export persist_run_state := persist_run_state
 export acquire_run_lock := acquire_run_lock
 export release_run_lock := release_run_lock

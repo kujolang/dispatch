@@ -7,6 +7,23 @@ test_setup {
     from tests.control_boundary_fixtures import control_workflow, failed_action_registry, control_run_options, passing_gate_registry
 }
 
+test "terminal runs cannot execute pending descendants through the direct runner" {
+    for status in ["completed", "failed", "rejected", "cancelled", "aborted"] {
+        workflow := control_workflow("gate_pass", [])
+        options := control_run_options("tests/tmp/terminal-admission-" + uuid_v4())
+        state := create_run_state(workflow, {"topic": "terminal"}, options["output_root"], options)
+        state["status"] := status
+        state = persist_run_state(state)
+        before := read_file(state["run_dir"] + "/state.json")
+        result := run_workflow(workflow, state, passing_gate_registry(), options)
+        assert_false(result["ok"])
+        assert_equal(result["error"]["code"], "terminal_run")
+        assert_equal(result["run_state"]["status"], status)
+        assert_equal(result["run_state"]["steps"][1]["attempts"], 0)
+        assert_equal(read_file(state["run_dir"] + "/state.json"), before)
+    }
+}
+
 test "execution failure enters review without running descendants or retrying effects" {
     workflow := control_workflow("failed_action", [{"when": {"result": "execution", "status": "failure"}, "decide": {"disposition": "require_intervention", "reason": "Review partial effects", "allowed_actions": ["abort", "approve_override"]}}])
     workflow["default_retry_policy"] := {"max_attempts": 3, "retry_on_codes": ["fixture_action_failed"]}
