@@ -97,6 +97,9 @@ run_suite persisted_negotiation_adapters env KUJO_BIN="$KUJO_BIN" node tests/per
 run_suite beta_contracts "$KUJO_BIN" run tests/beta_contracts.kujo
 run_suite portable_commitments "$KUJO_BIN" run tests/portable_commitments.kujo tests/vectors/commitments.json tests/vectors/sqlite-commitments.json "${WORKCELL_ROOT:-../workcell}/tests/vectors/git-assurance-commitments.json" "${ABILITY_ROOT:-../ability}/tests/vectors/application-assurance-commitments.json"
 run_suite portable_clean_room node tests/portable_clean_room.mjs
+run_suite http_response_loss env KUJO_BIN="$KUJO_BIN" node tests/http_ability_integration.mjs response-loss
+run_suite http_timeout_before env KUJO_BIN="$KUJO_BIN" node tests/http_ability_integration.mjs timeout-before
+run_suite http_application_error env KUJO_BIN="$KUJO_BIN" node tests/http_ability_integration.mjs application-error
 run_suite mcp_ability env KUJO_BIN="$KUJO_BIN" node tests/mcp_ability_integration.mjs
 run_suite mcp_stdio_loss env KUJO_BIN="$KUJO_BIN" node tests/mcp_ability_integration.mjs --lost-response
 run_suite sdk_ability env KUJO_BIN="$KUJO_BIN" node tests/sdk_ability_integration.mjs

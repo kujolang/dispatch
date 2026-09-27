@@ -135,7 +135,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: kujolang/ability
-          ref: ca9acea544e9a8a806f1f09d42b4ca7b5299bd18
+          ref: 6c5efebb110eeb506ef6bd30ab05b5903a184e76
           path: .ci/ability
 
       - name: Configure application assurance fixture
