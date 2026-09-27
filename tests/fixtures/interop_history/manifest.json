@@ -1,0 +1,10 @@
+{
+  "schema": "dispatch.interop-history-test/v1",
+  "baseline": "fbbf8dc2d701e2d35182f65192eccb05a66b5999",
+  "cases": [
+    "sdk",
+    "mcp",
+    "http",
+    "git"
+  ]
+}

@@ -1,3 +1,8 @@
+from tests.interop_core_checks import check_equivalence
+from tests.fixtures.interop_legacy.git_participant_handoff import old_load_git_participant_handoff
+from tests.fixtures.interop_legacy.http_ability_handoff import old_load_http_ability_handoff
+from tests.fixtures.interop_legacy.mcp_ability_handoff import old_load_mcp_ability_handoff
+from tests.fixtures.interop_legacy.agents_ability_handoff import old_load_agents_ability_handoff
 from src.adapters.git_participant_handoff import load_git_participant_handoff
 from src.adapters.http_ability_handoff import load_http_ability_handoff
 from src.adapters.mcp_ability_handoff import load_mcp_ability_handoff
@@ -68,7 +73,10 @@ func sdk_check(config, root, raw, assurance_raw) {
     result := parse_json(raw); prefix := "sdk-bound-handoff-"
     if assurance_raw == "" {prefix = "sdk-handoff-"}
     reference := trim(read_file_beneath(root, prefix + result["subject"]["attempt_id"] + ".ref", 128))
-    return load_agents_ability_handoff(root, reference, sdk_expected(config, root, result), raw, assurance_raw)
+    modern := load_agents_ability_handoff(root, reference, sdk_expected(config, root, result), raw, assurance_raw)
+    historical := old_load_agents_ability_handoff(root, reference, sdk_expected(config, root, result), raw, assurance_raw)
+    check_equivalence(root, modern, historical, raw, assurance_raw)
+    return modern
 }
 func mcp_process(config, root, attempt, mode) {
     response := spawn_process([config["node"], "tests/mcp_ability_client.mjs", root, to_string(attempt), mode], {"cwd": os_getcwd(), "inherit_env": false, "env": {"ABILITY_GATEWAY_SESSION": env("ABILITY_GATEWAY_SESSION")}, "max_output_bytes": 8192, "timeout_ms": 90000})
@@ -81,7 +89,10 @@ func mcp_check(config, root, raw, assurance_raw) {
     reference := trim(read_file_beneath(root, prefix + attempt + ".ref", 128))
     invocation := parse_json(read_file_beneath(root, "invocation.json", 4096))
     expected := {"mcp_server_id": "publication-server", "mcp_session_id": "mcp-" + result["subject"]["run_id"] + "-" + attempt, "rpc_request_id": "rpc-call-" + attempt, "tool_name": "publish", "ability_id": invocation["ability_id"], "ability_version": invocation["ability_version"], "definition_digest": invocation["definition_digest"], "ability_invocation_id": invocation["invocation_id"], "dispatch_run_id": result["subject"]["run_id"], "dispatch_step_id": result["subject"]["step_id"], "dispatch_attempt_id": attempt, "dispatch_effect_id": "effect-1", "transaction_sha256": config["transaction_sha256"]}
-    return load_mcp_ability_handoff(root, reference, expected, raw, assurance_raw)
+    modern := load_mcp_ability_handoff(root, reference, expected, raw, assurance_raw)
+    historical := old_load_mcp_ability_handoff(root, reference, expected, raw, assurance_raw)
+    check_equivalence(root, modern, historical, raw, assurance_raw)
+    return modern
 }
 func http_process(config, root, attempt, mode) {
     response := spawn_process([config["node"], config["cwd"] + "/examples/controlled-http/participant.mjs", root, to_string(attempt), mode], {"cwd": os_getcwd(), "inherit_env": false, "env": {"ABILITY_GATEWAY_SESSION": env("ABILITY_GATEWAY_SESSION")}, "max_output_bytes": 8192, "timeout_ms": 90000})
@@ -94,7 +105,10 @@ func http_check(config, root, raw, assurance_raw) {
     reference := trim(read_file_beneath(root, prefix + attempt + ".ref", 128))
     invocation := parse_json(read_file_beneath(root, "invocation.json", 4096))
     expected := {"client_request_id": "client-call-" + attempt, "method": "POST", "route_id": "publication_run", "operation_id": "publication_create", "ability_id": invocation["ability_id"], "ability_version": invocation["ability_version"], "definition_digest": invocation["definition_digest"], "ability_invocation_id": invocation["invocation_id"], "dispatch_run_id": result["subject"]["run_id"], "dispatch_step_id": result["subject"]["step_id"], "dispatch_attempt_id": attempt, "dispatch_effect_id": "effect-1", "transaction_sha256": config["transaction_sha256"]}
-    return load_http_ability_handoff(root, reference, expected, raw, assurance_raw)
+    modern := load_http_ability_handoff(root, reference, expected, raw, assurance_raw)
+    historical := old_load_http_ability_handoff(root, reference, expected, raw, assurance_raw)
+    check_equivalence(root, modern, historical, raw, assurance_raw)
+    return modern
 }
 func git_process(config, root, attempt) {
     response := spawn_process([config["node"], config["cwd"] + "/examples/controlled-git/supervisor.mjs", root, to_string(attempt)], {"cwd": os_getcwd(), "inherit_env": false, "max_output_bytes": 8192, "timeout_ms": 40000})
@@ -106,7 +120,10 @@ func git_check(config, root, raw, assurance_raw) {
     prefix := "git-bound-handoff-"; if assurance_raw == "" {prefix = "git-handoff-"}
     reference := trim(read_file_beneath(root, prefix + attempt + ".ref", 128))
     expected := {"participant_id": "local-git-process", "participant_call_id": "process-call-" + attempt, "workcell_effect_id": "workcell-logical-git-1", "dispatch_run_id": result["subject"]["run_id"], "dispatch_step_id": result["subject"]["step_id"], "dispatch_attempt_id": attempt, "dispatch_effect_id": "effect-1", "transaction_sha256": sha256(to_json(config["intent"]))}
-    return load_git_participant_handoff(root, reference, expected, raw, assurance_raw)
+    modern := load_git_participant_handoff(root, reference, expected, raw, assurance_raw)
+    historical := old_load_git_participant_handoff(root, reference, expected, raw, assurance_raw)
+    check_equivalence(root, modern, historical, raw, assurance_raw)
+    return modern
 }
 func action(input, context) {
     root := context["input"]["root"]
@@ -199,6 +216,8 @@ func installed_files(config) {
         files = push(files, {"root": os_getcwd(), "path": "src/adapters/git_participant_handoff.kujo"})
         for path in ["examples/controlled-git/participant.kujo", "examples/controlled-git/record.kujo", "examples/controlled-git/supervisor.mjs"] {files = push(files, {"root": config["cwd"], "path": path})}
     }
+    files = push(files, {"root": os_getcwd(), "path": "src/core/interop_handoff.kujo"})
+    files = push(files, {"root": os_getcwd(), "path": "src/adapters/interop_legacy.kujo"})
     return files
 }
 func host(config, root, expected, raw, verifier) {

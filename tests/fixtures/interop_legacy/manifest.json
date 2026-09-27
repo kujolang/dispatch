@@ -1,0 +1,10 @@
+{
+  "baseline": "fbbf8dc2d701e2d35182f65192eccb05a66b5999",
+  "original_sha256": {
+    "agents_ability_handoff": "6ee0633a04264da119f7a66bcb86f02f9a468b061724eaec0b15a9a066ec0851",
+    "mcp_ability_handoff": "ef9a42c9f3b399057996c16598ea3c1ef99f37ab95cdbb83b49778b4d6edf419",
+    "http_ability_handoff": "9b8d617c777c7678a5e796758fd08b76e73af50df0dba0c153f2bf81547e51d9",
+    "git_participant_handoff": "4d08177a5a75b7991569c8dc56e761135e2f5d16b15c823c136b1ec42b5ffdb4"
+  },
+  "transformation": "prepend comment; rename export func load_ to export func old_load_; otherwise exact"
+}

@@ -1,0 +1,41 @@
+# Frozen pre-extraction oracle: only exported symbol renamed.
+# Integrity/correlation only. MUST be followed by persisted beta admission and
+# the installed Workcell live verifier; this reader never authorizes replay.
+from src.core.control import validate_execution_result
+func denied() {return {"ok": false, "code": "git_participant_handoff_mismatch"}}
+func artifact(root, reference, limit) {
+    if type(reference) != "string"||byte_length(reference) != 71||regex_match(reference, "^sha256:[0-9a-f]{64}$") == false {throw("reference")}
+    raw := read_file_beneath(root, "artifacts/" + substring(reference, 7, 71) + ".json", limit)
+    if "sha256:" + sha256(raw) != reference {throw("digest")}
+    return raw
+}
+export func old_load_git_participant_handoff(root, reference, expected, result_raw, assurance_raw) {
+    try {
+        raw := artifact(root, reference, 4096); doc := parse_json(raw)
+        fields := ["schema", "participant_id", "participant_call_id", "participant_invocation_id", "workcell_effect_id", "dispatch_run_id", "dispatch_step_id", "dispatch_attempt_id", "dispatch_effect_id", "outcome", "execution_result_ref", "assurance_ref", "transaction_sha256"]
+        if type(doc) != "dict"||len(keys(doc)) != len(fields)||to_json(doc) != raw||doc["schema"] != "workcell.git-process-handoff/v1alpha1" {return denied()}
+        valid := true
+        for field in fields {if has_key(doc, field) == false {valid = false}}
+        for field in ["participant_id", "participant_call_id", "participant_invocation_id", "workcell_effect_id", "dispatch_run_id", "dispatch_step_id", "dispatch_attempt_id", "dispatch_effect_id"] {
+            value := doc[field]
+            if type(value) != "string"||byte_length(value) > 128||contains(value, "\n") != 0||regex_match(value, "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$") == false {valid = false}
+        }
+        if type(doc["transaction_sha256"]) != "string"||byte_length(doc["transaction_sha256"]) != 64||regex_match(doc["transaction_sha256"], "^[0-9a-f]{64}$") == false {return denied()}
+        for field in keys(expected) {if doc[field] != expected[field] {valid = false}}
+        if valid == false||contains(["completion_lost", "completed"], doc["outcome"]) == false {return denied()}
+        if artifact(root, doc["execution_result_ref"], 1048576) != result_raw {return denied()}
+        result := parse_json(result_raw)
+        if validate_execution_result(result)["ok"] == false||len(result["effects"]) != 1 {return denied()}
+        for field in ["run_id", "step_id", "attempt_id"] {if result["subject"][field] != doc["dispatch_" + field] {valid = false}}
+        if to_string(result["attempt"]) != doc["dispatch_attempt_id"]||result["effects"][0]["effect_id"] != doc["dispatch_effect_id"]||result["effects"][0]["class"] != "external_idempotent" {return denied()}
+        for field in ["participant_id", "participant_call_id", "participant_invocation_id", "workcell_effect_id", "transaction_sha256", "outcome"] {if result["process_correlation"][field] != doc[field] {valid = false}}
+        if valid == false {return denied()}
+        if assurance_raw == "" {if doc["assurance_ref"] != null {return denied()}}
+        else {
+            if artifact(root, doc["assurance_ref"], 8192) != assurance_raw {return denied()}
+            assurance := parse_json(assurance_raw)
+            if assurance["schema"] != "dispatch.effect-assurance/v1beta1"||assurance["subject"]["result_sha256"] != sha256(result_raw)||assurance["bindings"]["transaction_sha256"] != doc["transaction_sha256"] {return denied()}
+        }
+        return {"ok": true, "handoff": doc}
+    } except ignored {return denied()}
+}

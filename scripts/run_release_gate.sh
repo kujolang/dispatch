@@ -97,6 +97,8 @@ run_suite persisted_negotiation_adapters env KUJO_BIN="$KUJO_BIN" node tests/per
 run_suite beta_contracts "$KUJO_BIN" run tests/beta_contracts.kujo
 run_suite portable_commitments "$KUJO_BIN" run tests/portable_commitments.kujo tests/vectors/commitments.json tests/vectors/sqlite-commitments.json "${WORKCELL_ROOT:-../workcell}/tests/vectors/git-assurance-commitments.json" "${ABILITY_ROOT:-../ability}/tests/vectors/application-assurance-commitments.json"
 run_suite portable_clean_room node tests/portable_clean_room.mjs
+run_suite interop_oracles node tests/interop_oracle_integrity.mjs
+run_suite interop_history "$KUJO_BIN" run tests/interop_history.kujo
 run_suite git_participant_after env KUJO_BIN="$KUJO_BIN" node tests/git_participant_integration.mjs after_commit
 run_suite git_participant_before env KUJO_BIN="$KUJO_BIN" node tests/git_participant_integration.mjs before_commit
 run_suite http_response_loss env KUJO_BIN="$KUJO_BIN" node tests/http_ability_integration.mjs response-loss

@@ -1,0 +1,42 @@
+from src.adapters.agents_ability_handoff import load_agents_ability_handoff
+from src.adapters.mcp_ability_handoff import load_mcp_ability_handoff
+from src.adapters.http_ability_handoff import load_http_ability_handoff
+from src.adapters.git_participant_handoff import load_git_participant_handoff
+from tests.fixtures.interop_legacy.agents_ability_handoff import old_load_agents_ability_handoff
+from tests.fixtures.interop_legacy.mcp_ability_handoff import old_load_mcp_ability_handoff
+from tests.fixtures.interop_legacy.http_ability_handoff import old_load_http_ability_handoff
+from tests.fixtures.interop_legacy.git_participant_handoff import old_load_git_participant_handoff
+from tests.interop_core_checks import check_equivalence
+func require(value) {if value != true {throw("historical_migration_failed")}}
+func artifact(root, ref) {return read_file_beneath(root, "artifacts/" + substring(ref,7,71) + ".json",1048576)}
+readers := [load_agents_ability_handoff,load_mcp_ability_handoff,load_http_ability_handoff,load_git_participant_handoff]
+old_readers := [old_load_agents_ability_handoff,old_load_mcp_ability_handoff,old_load_http_ability_handoff,old_load_git_participant_handoff]
+kinds := ["sdk","mcp","http","git"]; index := 0
+large := "x"; for i in range(0,21) {large = large + large}
+for kind in kinds {
+    root := os_getcwd() + "/tests/fixtures/interop_history/" + kind
+    fixture := parse_json(read_file_beneath(root,"case.json",8192)); ref := fixture["reference"]
+    original := artifact(root,ref); doc := parse_json(original)
+    raw := artifact(root,doc["execution_result_ref"]); assurance := artifact(root,doc["assurance_ref"])
+    reader := readers[index]; old_reader := old_readers[index]
+    modern := reader(root,ref,fixture["expected"],raw,assurance)
+    require(modern["ok"])
+    generic := modern["generic"]
+    create_dir("tests/tmp/interop-normalized")
+    write_file("tests/tmp/interop-normalized/" + kind + ".json",to_json(generic),true)
+    check_equivalence(root,modern,old_reader(root,ref,fixture["expected"],raw,assurance),raw,assurance)
+    for field in keys(fixture["expected"]) {
+        changed := parse_json(to_json(fixture["expected"])); changed[field] = "substituted"
+        denied := reader(root,ref,changed,raw,assurance)
+        require(denied["ok"] == false)
+        check_equivalence(root,denied,old_reader(root,ref,changed,raw,assurance),raw,assurance)
+    }
+    require(reader(root,ref,fixture["expected"],raw + " ",assurance)["ok"] == false)
+    require(reader(root,ref,fixture["expected"],raw,assurance + " ")["ok"] == false)
+    require(reader(root,ref,fixture["expected"],large,assurance)["ok"] == false)
+    require(reader(root,ref,fixture["expected"],raw,large)["ok"] == false)
+    require(artifact(root,ref) == original)
+    for path in keys(fixture["files"]) {require(sha256(read_file_beneath(root,path,1048576)) == fixture["files"][path])}
+    index += 1
+}
+print(to_json({"ok":true,"historical_families":index,"bytes_preserved":true,"differential":true,"generic_mutations":true,"fifth_namespace":true}))

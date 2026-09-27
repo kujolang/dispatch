@@ -1,0 +1,78 @@
+# Test-only differential oracle and normalized-wire attacks. Never admission policy.
+from src.core.interop_handoff import correlate_interop_handoff
+func require(value) {if value != true {throw("interop_equivalence_failed")}}
+export func check_equivalence(root, modern, historical, raw, assurance_raw) {
+    require(modern["ok"] == historical["ok"])
+    if modern["ok"] == false {return true}
+    original := modern["generic"]
+    expected := {"subject": original["subject"], "participant": original["participant"]}
+    registration := {"namespace": original["participant"]["namespace"], "participant_schema": original["participant_extension"]["schema"], "effect_schema": original["effect_extension"]["schema"], "validate": func(doc, result) {return doc["completion_knowledge"] == original["completion_knowledge"]&&to_json(doc["participant_extension"]) == to_json(original["participant_extension"])&&to_json(doc["effect_extension"]) == to_json(original["effect_extension"])}}
+    require(correlate_interop_handoff(root, to_json(original), expected, raw, assurance_raw, registration)["ok"])
+    for field in ["run_id", "step_id", "attempt_id", "effect_id"] {
+        changed := parse_json(to_json(original)); nested := changed["subject"]; nested[field] = "substituted"; changed["subject"] = nested
+        require(correlate_interop_handoff(root, to_json(changed), expected, raw, assurance_raw, registration)["ok"] == false)
+    }
+    for field in ["namespace", "invocation_id"] {
+        changed := parse_json(to_json(original)); nested := changed["participant"]; nested[field] = "substituted"; changed["participant"] = nested
+        require(correlate_interop_handoff(root, to_json(changed), expected, raw, assurance_raw, registration)["ok"] == false)
+    }
+    for field in ["execution_result_ref", "assurance_ref", "completion_knowledge", "schema"] {
+        changed := parse_json(to_json(original)); changed[field] = "substituted"
+        require(correlate_interop_handoff(root, to_json(changed), expected, raw, assurance_raw, registration)["ok"] == false)
+    }
+    if original["assurance_ref"] != null {
+        changed := parse_json(to_json(original)); changed["execution_result_ref"] = original["assurance_ref"]
+        require(correlate_interop_handoff(root,to_json(changed),expected,raw,assurance_raw,registration)["ok"] == false)
+        changed = parse_json(to_json(original)); changed["assurance_ref"] = original["execution_result_ref"]
+        require(correlate_interop_handoff(root,to_json(changed),expected,raw,assurance_raw,registration)["ok"] == false)
+    }
+    for field in ["participant_extension", "effect_extension"] {
+        changed := parse_json(to_json(original)); nested := changed[field]; nested["schema"] = "unknown.extension/v1"; changed[field] = nested
+        require(correlate_interop_handoff(root, to_json(changed), expected, raw, assurance_raw, registration)["ok"] == false)
+        for key in keys(original[field]["values"]) {
+            changed = parse_json(to_json(original)); nested := changed[field]; values := nested["values"]; values[key] = "substituted"; nested["values"] = values; changed[field] = nested
+            require(correlate_interop_handoff(root, to_json(changed), expected, raw, assurance_raw, registration)["ok"] == false)
+        }
+        changed = parse_json(to_json(original)); nested := changed[field]; values := nested["values"]; values["payload"] := {"nested": "forbidden"}; nested["values"] = values; changed[field] = nested
+        require(correlate_interop_handoff(root, to_json(changed), expected, raw, assurance_raw, registration)["ok"] == false)
+    }
+    require(correlate_interop_handoff(root, " " + to_json(original), expected, raw, assurance_raw, registration)["ok"] == false)
+    encoded := to_json(original)
+    for wire in [" " + encoded, encoded + "\n", "{\"schema\":\"kujo.interop-handoff/v1alpha1\"," + substring(encoded,1,byte_length(encoded))] {
+        require(correlate_interop_handoff(root, wire, expected, raw, assurance_raw, registration)["ok"] == false)
+    }
+    for value in [null, [], {"schema": "unknown", "values": {}}] {
+        changed := parse_json(encoded); changed["participant_extension"] = value
+        require(correlate_interop_handoff(root, to_json(changed), expected, raw, assurance_raw, registration)["ok"] == false)
+    }
+    oversized := "x"; for i in range(0,13) {oversized = oversized + oversized}
+    changed := parse_json(encoded); changed["extra"] := oversized
+    require(correlate_interop_handoff(root,to_json(changed),expected,raw,assurance_raw,registration)["ok"] == false)
+    changed = parse_json(encoded); nested := changed["participant"]; nested["invocation_id"] = "id\n"; changed["participant"] = nested
+    require(correlate_interop_handoff(root,to_json(changed),expected,raw,assurance_raw,registration)["ok"] == false)
+    # A fifth host-installed namespace needs no Ability/Git schema or effect extension.
+    native := parse_json(to_json(original)); native["participant"] = {"namespace": "example.job", "invocation_id": "job-1"}
+    native["participant_extension"] = {"schema": "example.job-correlation/v1alpha1", "values": {"job_id": "job-1"}}
+    native["effect_extension"] = null
+    native_registration := {"namespace": "example.job", "participant_schema": "example.job-correlation/v1alpha1", "effect_schema": null, "validate": func(doc, result) {return to_json(doc["participant_extension"]["values"]) == to_json({"job_id": "job-1"})}}
+    require(correlate_interop_handoff(root, to_json(native), {"subject": native["subject"], "participant": native["participant"]}, raw, assurance_raw, native_registration)["ok"])
+    # Isolate structural bounds from the semantic validator, so an extension
+    # callback cannot accidentally bypass limits. This permissive callback is test-only.
+    loose := {"namespace": "example.job", "participant_schema": "example.job-correlation/v1alpha1", "effect_schema": null, "validate": func(doc,result) {return true}}
+    native_expected := {"subject": native["subject"], "participant": native["participant"]}
+    values := {}; for i in range(0,17) {values["key" + to_string(i)] := "value"}
+    changed := parse_json(to_json(native)); changed["participant_extension"] = {"schema": "example.job-correlation/v1alpha1", "values": values}
+    require(correlate_interop_handoff(root,to_json(changed),native_expected,raw,assurance_raw,loose)["ok"] == false)
+    values = {"job_id": substring(oversized,0,129)}
+    changed["participant_extension"] = {"schema": "example.job-correlation/v1alpha1", "values": values}
+    require(correlate_interop_handoff(root,to_json(changed),native_expected,raw,assurance_raw,loose)["ok"] == false)
+    values = {}; for i in range(0,16) {values["key" + to_string(i)] := substring(oversized,0,128)}
+    changed["participant_extension"] = {"schema": "example.job-correlation/v1alpha1", "values": values}
+    require(correlate_interop_handoff(root,to_json(changed),native_expected,raw,assurance_raw,loose)["ok"] == false)
+    for field in ["prompt","tool_input","receipt_body","principal","git_path","credential","metadata"] {
+        changed = parse_json(encoded); nested := changed["participant_extension"]; values = nested["values"]; values[field] := "PRIVATE_CONTENT_CANARY"; nested["values"] = values; changed["participant_extension"] = nested
+        denied := correlate_interop_handoff(root,to_json(changed),expected,raw,assurance_raw,registration)
+        require(denied["ok"] == false&&contains(to_json(denied),"PRIVATE_CONTENT_CANARY") == 0)
+    }
+    return true
+}
