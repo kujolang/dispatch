@@ -1,0 +1,8 @@
+interop/typescript-participant/src/record.ts:2:import {produce} from './codec.js';
+interop/typescript-participant/src/codec.ts:1:import {createHash} from 'node:crypto';
+interop/typescript-participant/src/codec.ts:2:import {readFileSync} from 'node:fs';
+interop/typescript-participant/src/codec.ts:3:import {Ajv2020} from 'ajv/dist/2020.js';
+interop/typescript-participant/src/participant.ts:2:import {randomUUID} from 'node:crypto';
+interop/typescript-participant/src/participant.ts:3:import {produce,request} from './codec.js';
+
+Production source/schema/historical fixture diff:

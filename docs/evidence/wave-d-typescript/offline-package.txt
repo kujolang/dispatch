@@ -1,0 +1,66 @@
+
+added 8 packages in 1s
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/interop-typescript-rehearsal@0.0.0-experimental test
+> npm run build && node --test test/*.mjs
+
+
+> @kujolang/interop-typescript-rehearsal@0.0.0-experimental build
+> tsc
+
+✔ native generic shape and deterministic independent codec (9.465708ms)
+✔ deny run_id (0.953876ms)
+✔ deny step_id (0.58814ms)
+✔ deny attempt_id (0.475614ms)
+✔ deny effect_id (0.830012ms)
+✔ deny execution_result_ref (0.864436ms)
+✔ deny assurance_ref (0.669918ms)
+✔ deny swapped refs (0.77169ms)
+✔ deny malformed ref ../../secret (0.5865ms)
+✔ deny malformed ref https://example.invalid (0.574576ms)
+✔ deny malformed ref sha256:ZZ (0.444997ms)
+✔ deny namespace (0.480953ms)
+✔ deny invocation_id (0.620735ms)
+✔ deny bad identifier (0.405333ms)
+✔ deny bad identifier (0.362451ms)
+✔ deny missing extension (0.464107ms)
+✔ deny unknown extension (0.46078ms)
+✔ deny duplicate extensions (0.736054ms)
+✔ deny nested value (0.527177ms)
+✔ deny oversize (0.514539ms)
+✔ deny reported is not commit (0.433035ms)
+✔ deny knowledge mismatch (0.608951ms)
+✔ wire canonical identity rejects whitespace/reordering/duplicates/invalid UTF8 (0.975989ms)
+✔ untrusted profile (0.339261ms)
+✔ untrusted repo (0.152589ms)
+✔ untrusted config_revision (0.144138ms)
+✔ untrusted dispatch_run_id (0.183364ms)
+✔ untrusted dispatch_step_id (0.151964ms)
+✔ untrusted dispatch_attempt_id (0.169669ms)
+✔ untrusted dispatch_effect_id (0.140895ms)
+✔ untrusted assurance_ref (0.127614ms)
+✔ untrusted trusted_root (0.132414ms)
+✔ untrusted verifier (0.175305ms)
+✔ untrusted principal (0.175427ms)
+✔ standalone requires host, no fabricated authority (0.327291ms)
+✔ extension identifier cannot contain newline call_id (0.600286ms)
+✔ extension identifier cannot contain newline process_instance_id (0.495531ms)
+✔ null effect extension is supported without fake effect facts (0.563657ms)
+✔ closed shape rejects joined-key collisions and inherited members (0.326468ms)
+✔ codec errors never echo malformed private input (0.796145ms)
+✔ published portable vectors independently reproduced (4.722913ms)
+✔ packaged assets retain exact published hashes (1.409284ms)
+✔ independent package runs away from all ecosystem checkouts and rejects schema substitution (949.0855ms)
+✔ direct process without host cannot invent admission (347.739638ms)
+ℹ tests 44
+ℹ suites 0
+ℹ pass 44
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1707.034671
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown env config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.

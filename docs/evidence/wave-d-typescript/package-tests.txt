@@ -1,0 +1,63 @@
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/interop-typescript-rehearsal@0.0.0-experimental test
+> npm run build && node --test test/*.mjs
+
+npm warn Unknown env config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/interop-typescript-rehearsal@0.0.0-experimental build
+> tsc
+
+✔ native generic shape and deterministic independent codec (9.87392ms)
+✔ deny run_id (0.866403ms)
+✔ deny step_id (0.572092ms)
+✔ deny attempt_id (0.464927ms)
+✔ deny effect_id (0.682986ms)
+✔ deny execution_result_ref (0.836672ms)
+✔ deny assurance_ref (0.658922ms)
+✔ deny swapped refs (0.730372ms)
+✔ deny malformed ref ../../secret (0.605098ms)
+✔ deny malformed ref https://example.invalid (0.593692ms)
+✔ deny malformed ref sha256:ZZ (0.451104ms)
+✔ deny namespace (0.407676ms)
+✔ deny invocation_id (0.553313ms)
+✔ deny bad identifier (0.405397ms)
+✔ deny bad identifier (0.323216ms)
+✔ deny missing extension (0.393142ms)
+✔ deny unknown extension (0.373489ms)
+✔ deny duplicate extensions (0.563335ms)
+✔ deny nested value (0.396544ms)
+✔ deny oversize (0.528034ms)
+✔ deny reported is not commit (0.390664ms)
+✔ deny knowledge mismatch (0.512827ms)
+✔ wire canonical identity rejects whitespace/reordering/duplicates/invalid UTF8 (0.827875ms)
+✔ untrusted profile (0.292143ms)
+✔ untrusted repo (0.135806ms)
+✔ untrusted config_revision (0.125386ms)
+✔ untrusted dispatch_run_id (0.114859ms)
+✔ untrusted dispatch_step_id (0.113532ms)
+✔ untrusted dispatch_attempt_id (0.15654ms)
+✔ untrusted dispatch_effect_id (0.110727ms)
+✔ untrusted assurance_ref (0.117418ms)
+✔ untrusted trusted_root (0.116259ms)
+✔ untrusted verifier (0.168309ms)
+✔ untrusted principal (0.151534ms)
+✔ standalone requires host, no fabricated authority (0.308772ms)
+✔ extension identifier cannot contain newline call_id (0.556743ms)
+✔ extension identifier cannot contain newline process_instance_id (0.400125ms)
+✔ null effect extension is supported without fake effect facts (0.519056ms)
+✔ closed shape rejects joined-key collisions and inherited members (0.289016ms)
+✔ codec errors never echo malformed private input (0.73801ms)
+✔ published portable vectors independently reproduced (3.281866ms)
+✔ packaged assets retain exact published hashes (1.172727ms)
+✔ independent package runs away from all ecosystem checkouts and rejects schema substitution (924.411147ms)
+✔ direct process without host cannot invent admission (326.843638ms)
+ℹ tests 44
+ℹ suites 0
+ℹ pass 44
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1646.509674

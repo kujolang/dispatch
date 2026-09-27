@@ -158,11 +158,13 @@ identity, generic/extension substitutions and byte preservation. All real partic
 fixtures compare frozen-reader and adapted-reader booleans on positive and negative
 paths before unchanged live verifier/admission. Human diagnostics are not the oracle.
 
-Next: an external TypeScript participant implementing this small core and one closed
-extension from the published contract, with an independent codec and no Dispatch
-implementation imports. This tests external adoption, rather than adding another
-Kujo-specific transport. Remote trust, multi-effect, stable contract promotion and
-universal participant lifecycles remain outside scope.
+The native [external TypeScript participant](../interop/typescript-participant/README.md)
+now implements this core from packaged published contracts with an independent codec
+and closed owner extension. The existing generic API accepts its installed validator;
+no fifth family-specific reader is required. See [adoption evidence](audits/wave-d-typescript.md).
+This adds no normative wire semantics. Next: independent external Python adoption
+to test another runtime before general participant SDK packaging. Remote trust,
+multi-effect, stable promotion and universal lifecycles remain outside scope.
 
 Draft 2020-12 schemas are independently checked with
 `python3 tests/interop_schema_check.py` after the Kujo historical fixture. This

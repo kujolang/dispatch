@@ -4,6 +4,8 @@ and restart behavior. Alpha retained; no core admission/schema behavior changed.
 
 # Changelog
 
+Unreleased: native external TypeScript adoption of the generic interoperability core. Independent bounded codec/closed extension, one-use local host, real Workcell Git pre/post-commit SIGKILL and fresh-controller beta review/replay. Existing core/readers/verifier/policy and historical handoffs remain unchanged; package is experimental and unpublished.
+
 Unreleased: experimental `kujo.interop-handoff/v1alpha1` correlation core with closed participant/family extensions. Four existing readers validate historical handoffs then share subject and exact-reference checks; historical bytes, beta verification and replay policy remain unchanged. Frozen-reader differential and real restart/replay regressions cover migration.
 
 Unreleased: bounded non-Ability Workcell Git process correlation reader, real pre/post-CAS SIGKILL and checkpoint/replay fixtures, and four-participant comparison. Existing Git verifier, beta policy and v1 execution-result remain unchanged.

@@ -1,0 +1,1 @@
+Workflow YAML, immutable supporting pins and dependency ordering passed locally. Node26.7.0 setup and lock installation precede canonical gate. Supporting checkout roots/pins supplied. Hosted execution not claimed.
