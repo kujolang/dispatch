@@ -1,5 +1,7 @@
+from src.core.assurance_state import assurance_policy, assurance_protected, validate_assurance_policy, validate_assurance_anchor, encode_authoritative_state, decode_authoritative_state, read_authoritative_state
+from src.core.control_journal import append_control_event
 from src.core.memory import create_memory
-from src.core.state_store import state_store_write, state_store_load
+from src.core.state_store import state_store_write, state_store_load, state_backend
 from src.core.trace import create_trace, render_trace_markdown, render_otel_trace_json, apply_trace_limits
 from src.core.utils import dict_get_or, ensure_dir, read_json_or, redact_sensitive_data, to_bool, safe_read_file
 from src.workflows.loader import load_workflow_from_spec
@@ -376,7 +378,7 @@ func list_runs_by_scanning_state(output_root) {
             continue
         }
         state_path := output_root + "/" + entry_name + "/state.json"
-        state_obj := read_json_or(state_path, null)
+        state_obj := read_authoritative_state(state_path)
         if type(state_obj) == "dict" {
             state_obj["run_id"] := entry_name
             state_obj["run_dir"] := run_dir
@@ -888,6 +890,17 @@ func create_run_state(workflow, input_payload, output_root, options) {
         "updated_at": format_date(now(), "YYYY-MM-DD HH:mm:ss"),
         "options": options
     }
+    selection := dict_get_or(options, "assurance_negotiation", assurance_policy("legacy", "deny", "", "", ""))
+    if validate_assurance_policy(selection) == false {throw("assurance_policy_invalid")}
+    state["assurance_negotiation"] := selection
+    if assurance_protected(state) {
+        state["required_features"] := ["effect-assurance-negotiation/v1alpha1"]
+        storage := "filesystem"
+        if state_backend() == "sqlite"||file_exists(output_root + "/.dispatch/state.db") {storage = "sqlite"}
+        state["assurance_store"] := storage
+        selected := append_control_event(state, "assurance_policy_selected", "", [], {"policy": selection, "storage": storage, "workflow_sha256": sha256(to_json(redact_sensitive_data(state["workflow_definition"]))), "input_sha256": sha256(to_json(redact_sensitive_data(state["input"])))})
+        state = selected["run_state"]
+    }
     contract_result := ensure_run_state_contract_fields(state)
     state = contract_result["run_state"]
     state = persist_run_state(state)
@@ -898,6 +911,13 @@ func create_run_state(workflow, input_payload, output_root, options) {
 }
 
 func persist_run_state(run_state) {
+    if validate_assurance_anchor(run_state) == false {throw("assurance_policy_tampered")}
+    previous_store := state_store_load(run_state["output_root"], run_state["run_id"])
+    if previous_store["ok"] == false {throw("assurance_state_unavailable")}
+    previous := dict_get_or(previous_store, "run_state", null)
+    if previous == null&&file_exists(run_state["run_dir"] + "/state.json") {previous = read_authoritative_state(run_state["run_dir"] + "/state.json"); if previous == null {throw("assurance_state_unreadable")}}
+    if previous != null&&dict_get_or(previous, "assurance_store", "") == "sqlite"&&dict_get_or(previous_store, "found", false) == false {throw("assurance_authoritative_store_missing")}
+    if previous != null&&to_json(dict_get_or(previous, "assurance_negotiation", null)) != to_json(dict_get_or(run_state, "assurance_negotiation", null)) {throw("assurance_policy_immutable")}
     contract_result := ensure_run_state_contract_fields(run_state)
     run_state = contract_result["run_state"]
     run_state["updated_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
@@ -908,7 +928,7 @@ func persist_run_state(run_state) {
     redacted_trace := redacted_state["trace"]
     trace_contract_result := ensure_trace_contract_fields(redacted_trace)
     redacted_trace = trace_contract_result["trace_state"]
-    state_json := to_json(redacted_state)
+    state_json := encode_authoritative_state(redacted_state)
     store_result := state_store_write(run_state, state_json)
     if dict_get_or(store_result, "ok", false) == false {
         store_error := dict_get_or(store_result, "error", {"code": "state_store_write_failed", "message": "State store write failed."})
@@ -1010,7 +1030,7 @@ func load_run_state(output_root, run_id) {
     }
     loaded := dict_get_or(store_result, "run_state", null)
     if type(loaded) == "null" {
-        loaded = read_json_or(state_path, null)
+        loaded = read_authoritative_state(state_path)
     }
     if type(loaded) == "null" {
         return {
@@ -1022,10 +1042,12 @@ func load_run_state(output_root, run_id) {
             }
         }
     }
+    if dict_get_or(loaded, "assurance_store", "") == "sqlite"&&dict_get_or(store_result, "found", false) == false {return {"ok": false, "error": {"code": "assurance_authoritative_store_missing", "message": "Required authoritative SQLite row is unavailable.", "retryable": false}}}
     contract_result := ensure_run_state_contract_fields(loaded)
     loaded = contract_result["run_state"]
     loaded["run_dir"] := output_root + "/" + run_id
     loaded["output_root"] := output_root
+    if validate_assurance_anchor(loaded) == false {return {"ok": false, "error": {"code": "assurance_policy_tampered", "message": "Persisted policy and retained authority differ.", "retryable": false}}}
     artifact_flags := build_artifact_flags(loaded["run_dir"])
     loaded["health"] := {
         "issues": detect_run_issues(loaded),
@@ -1528,7 +1550,7 @@ func export_run_bundle(output_root, run_id, bundle_path, options) {
     }
     run_dir := output_root + "/" + run_id
     artifacts := {
-        "state_json": read_artifact_or_empty(run_dir + "/state.json"),
+        "state_json": encode_authoritative_state(loaded["run_state"]),
         "trace_json": read_artifact_or_empty(run_dir + "/trace.json"),
         "trace_md": read_artifact_or_empty(run_dir + "/trace.md"),
         "report_json": read_artifact_or_empty(run_dir + "/report.json"),
@@ -1663,7 +1685,7 @@ func import_run_bundle(output_root, bundle_path, options) {
     state_payload := null
     if trim(state_content) != "" {
         try {
-            state_payload = parse_json(state_content)
+            state_payload = decode_authoritative_state(state_content)
         } except err {
             state_payload = null
         }
@@ -1687,11 +1709,12 @@ func import_run_bundle(output_root, bundle_path, options) {
         return {"ok": false, "error": {"code": "invalid_bundle_workflow", "message": "Bundle workflow_definition failed current schema validation.", "retryable": false, "details": dict_get_or(dict_get_or(workflow_validation, "error", {}), "message", "")}}
     }
     state_payload["workflow_definition"] := workflow_validation["workflow"]
-    artifacts["state_json"] := to_json(state_payload)
+    artifacts["state_json"] := encode_authoritative_state(state_payload)
     if source_run_id == "" {
         source_run_id = "run-imported-" + to_string(current_timestamp())
     }
     target_run_id := source_run_id
+    if assurance_protected(state_payload)&&file_exists(output_root + "/" + target_run_id) {return {"ok": false, "error": {"code": "assurance_import_identity_conflict", "message": "Protected run identity cannot be renamed or overwritten.", "retryable": false}}}
     while file_exists(output_root + "/" + target_run_id) {
         target_run_id = source_run_id + "-import-" + to_string(random_int(1000, 9999))
     }
@@ -1715,13 +1738,13 @@ func import_run_bundle(output_root, bundle_path, options) {
     }
 
     state_path := run_dir + "/state.json"
-    state_obj := read_json_or(state_path, null)
+    state_obj := read_authoritative_state(state_path)
     if type(state_obj) == "dict" {
         state_obj["run_id"] := target_run_id
         state_obj["run_dir"] := run_dir
         state_obj["output_root"] := output_root
         state_obj["updated_at"] := format_date(now(), "YYYY-MM-DD HH:mm:ss")
-        write_file_atomic(state_path, to_json(redact_sensitive_data(state_obj)), true)
+        write_file_atomic(state_path, encode_authoritative_state(redact_sensitive_data(state_obj)), true)
         upsert_run_index_entry(state_obj)
     }
 
@@ -1766,3 +1789,5 @@ export append_policy_deny_audit_record := append_policy_deny_audit_record
 export export_run_bundle := export_run_bundle
 export import_run_bundle := import_run_bundle
 export validate_run_id := validate_run_id
+
+export build_persistable_workflow_definition := build_persistable_workflow_definition

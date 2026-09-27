@@ -1,3 +1,4 @@
+from src.core.assurance_state import assurance_protected
 from src.core.utils import dict_get_or
 
 func intervention_error(code, message) {
@@ -126,7 +127,7 @@ func reset_step_for_attempt(step) {
     return step
 }
 
-func prepare_intervention_continuation(run_state, decision) {
+func prepare_intervention_continuation_impl(run_state, decision) {
     action := dict_get_or(decision, "action", "")
     continuation := dict_get_or(decision, "continuation", {})
     boundary := dict_get_or(run_state, "current_control_boundary", {})
@@ -212,6 +213,20 @@ func prepare_intervention_continuation(run_state, decision) {
 }
 
 export validate_intervention_decision := validate_intervention_decision
+func prepare_intervention_continuation(run_state, decision) {
+    if assurance_protected(run_state) {return intervention_error("assurance_controller_incompatible", "This run requires persisted negotiation before continuation.")}
+    return prepare_intervention_continuation_impl(run_state, decision)
+}
 export prepare_intervention_continuation := prepare_intervention_continuation
+
+# Installed controller callback, never deserialized from state or producer JSON.
+export func prepare_verified_intervention(run_state, decision, verify) {
+    if type(verify) != "function" {return intervention_error("assurance_controller_incompatible", "Installed admission verifier required.")}
+    checked := validate_intervention_decision(decision, run_state)
+    if checked["ok"] == false {return checked}
+    verified := verify(run_state)
+    if verified["ok"] == false {return verified}
+    return prepare_intervention_continuation_impl(run_state, decision)
+}
 
 export retry_is_effect_safe := retry_is_effect_safe

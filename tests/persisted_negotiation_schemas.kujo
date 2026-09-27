@@ -1,0 +1,15 @@
+from src.core.assurance_state import assurance_policy
+from src.core.assurance_configuration import negotiation_selection
+policy_schema := parse_json(read_file("schemas/assurance-negotiation-v1alpha1.schema.json"))
+config_schema := parse_json(read_file("schemas/assurance-configuration-v1alpha1.schema.json"))
+config := {"schema": "dispatch.assurance-configuration/v1alpha1", "mode": "required", "fallback": "deny", "profile": "dispatch.sqlite-unique", "profile_version": "1alpha1", "issuer": "local", "mechanism": "sqlite_unique_transaction", "verifier_id": "installed", "verifier_version": "1", "verifier_sha256": sha256("code"), "authority_sha256": sha256("authority")}
+assert(json_schema_validate(config, config_schema)["valid"])
+assert(json_schema_validate(negotiation_selection(config), policy_schema)["valid"])
+assert(json_schema_validate(assurance_policy("legacy", "deny", "", "", ""), policy_schema)["valid"])
+bad := config; bad["executable"] := "producer-selected"
+assert(json_schema_validate(bad, config_schema)["valid"] == false)
+bad = config; bad["fallback"] := "legacy_unavailable"
+assert(json_schema_validate(bad, config_schema)["valid"] == false)
+bad_policy := assurance_policy("required", "legacy_unavailable", "dispatch.sqlite-unique", "1alpha1", sha256("config"))
+assert(json_schema_validate(bad_policy, policy_schema)["valid"] == false)
+print("PASS configuration/negotiation schemas: closed fields and required fallback denied")

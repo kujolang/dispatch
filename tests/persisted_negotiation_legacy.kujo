@@ -1,0 +1,19 @@
+from src.core.state import create_run_state, load_run_state, persist_run_state
+from src.core.assurance_configuration import resolve_run_configuration
+from tests.control_boundary_fixtures import control_workflow, control_run_options
+workflow := control_workflow("gate_fail", [])
+options := control_run_options("tests/tmp/negotiation-historical-" + uuid_v4())
+created := create_run_state(workflow, {"topic": "historical"}, options["output_root"], options)
+assert(created["assurance_negotiation"]["mode"] == "legacy")
+# Simulate the exact missing-field shape of a pre-negotiation filesystem run.
+old := {}
+for field in keys(created) {if field != "assurance_negotiation" {old[field] := created[field]}}
+write_file(created["run_dir"] + "/state.json", to_json(old), true)
+loaded := load_run_state(options["output_root"], created["run_id"])
+assert(loaded["ok"])
+assert(has_key(loaded["run_state"], "assurance_negotiation") == 0)
+assert(resolve_run_configuration(loaded["run_state"], {})["legacy"])
+persisted := persist_run_state(loaded["run_state"])
+assert(has_key(persisted, "assurance_negotiation") == 0)
+assert(has_key(parse_json(read_file(created["run_dir"] + "/state.json")), "assurance_negotiation") == 0)
+print("PASS historical missing policy remains historical legacy; new legacy is explicit")

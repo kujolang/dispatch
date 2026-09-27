@@ -1,0 +1,29 @@
+from src.core.assurance_state import assurance_policy, validate_assurance_policy, encode_authoritative_state, decode_authoritative_state
+from src.core.assurance_configuration import configuration_revision, negotiation_selection
+p := assurance_policy("required", "deny", "dispatch.sqlite-unique", "1alpha1", sha256("revision"))
+assert(validate_assurance_policy(p))
+assert(validate_assurance_policy(assurance_policy("required", "legacy_unavailable", "dispatch.sqlite-unique", "1alpha1", sha256("revision"))) == false)
+assert(validate_assurance_policy(assurance_policy("legacy", "deny", "", "", "")))
+s := {"assurance_negotiation": p, "assurance_store": "filesystem", "required_features": ["effect-assurance-negotiation/v1alpha1"]}
+raw := encode_authoritative_state(s)
+assert(to_json(decode_authoritative_state(raw)) == to_json(s))
+for bad in [to_json(s), "DISPATCH_ASSURANCE_STATE_V999\n" + to_json(s), "DISPATCH_ASSURANCE_STATE_V1ALPHA1\n{}"] {
+    rejected := false
+    try {decode_authoritative_state(bad)} except err {rejected = true}
+    assert(rejected)
+}
+future := s; future["required_features"] := ["effect-assurance-negotiation/v999"]
+rejected := false
+try {decode_authoritative_state(encode_authoritative_state(future))} except err {rejected = true}
+assert(rejected)
+assert(to_json(decode_authoritative_state("{}")) == "{}")
+d := {"schema": "dispatch.assurance-configuration/v1alpha1", "mode": "required", "fallback": "deny", "profile": "dispatch.sqlite-unique", "profile_version": "1alpha1", "issuer": "local", "mechanism": "sqlite_unique_transaction", "verifier_id": "installed", "verifier_version": "1", "verifier_sha256": sha256("code"), "authority_sha256": sha256("authority")}
+revision := configuration_revision(d)
+assert(configuration_revision(parse_json(to_json(d))) == revision)
+for field in ["profile", "profile_version", "issuer", "mechanism", "verifier_id", "verifier_version", "verifier_sha256", "authority_sha256"] {
+    changed := d; changed[field] := "changed"
+    if contains(["verifier_sha256", "authority_sha256"], field) {changed[field] := sha256("changed")}
+    assert(configuration_revision(changed) != revision)
+}
+assert(negotiation_selection(d)["config_revision"] == revision)
+print("PASS persisted negotiation: closed policy, guarded codec, exact configuration commitments")

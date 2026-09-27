@@ -1,4 +1,5 @@
-from src.core.utils import ensure_dir
+from src.core.assurance_state import decode_authoritative_state, assurance_protected
+from src.core.utils import ensure_dir, dict_get_or
 
 func state_backend() {
 	backend := to_lower(trim(to_string(env("DISPATCH_STATE_BACKEND"))))
@@ -26,6 +27,8 @@ func open_state_database(output_root) {
 
 func state_store_write(run_state, state_json) {
 	backend := state_backend()
+	if backend == "filesystem"&&file_exists(sqlite_state_path(run_state["output_root"])) {backend = "sqlite"}
+	if backend != "invalid"&&assurance_protected(run_state) {backend = run_state["assurance_store"]}
 	if backend == "filesystem" {
 		return {"ok": true, "backend": backend, "written": true}
 	}
@@ -44,6 +47,7 @@ func state_store_write(run_state, state_json) {
 
 func state_store_load(output_root, run_id) {
 	backend := state_backend()
+	if backend == "filesystem"&&file_exists(sqlite_state_path(output_root)) {backend = "sqlite"}
 	if backend == "filesystem" {
 		return {"ok": true, "backend": backend, "found": false, "run_state": null}
 	}
@@ -60,7 +64,8 @@ func state_store_load(output_root, run_id) {
 	if len(rows) == 0 {
 		return {"ok": true, "backend": backend, "found": false, "run_state": null}
 	}
-	parsed := parse_json(rows[0]["state_json"])
+	parsed := null
+	try {parsed = decode_authoritative_state(rows[0]["state_json"])} except err {return {"ok": false, "error": {"code": "assurance_state_unreadable", "message": "Authoritative state is invalid or unsupported.", "retryable": false}}}
 	return {"ok": true, "backend": backend, "found": true, "run_state": parsed, "revision": rows[0]["revision"]}
 }
 

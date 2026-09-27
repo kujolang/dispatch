@@ -1,3 +1,5 @@
+from src.core.assurance_state import assurance_protected, validate_assurance_anchor
+from src.core.assurance_configuration import check_negotiated_execution, resolve_run_configuration
 from src.agents.agent import run_agent, run_agent_with_agent
 from src.core.approval import create_approval_request, resolve_approval
 from src.core.control import resolve_control_decision, execution_failure_result
@@ -10,10 +12,10 @@ from src.core.report import build_report_payload, write_report_artifacts
 from src.core.retrieval_preferences import resolve_dispatch_retrieval_preferences
 from src.core.retry import run_with_retry
 from src.core.routing import routing_policy_version, routing_is_enabled, resolve_route, build_effective_agent, evaluate_route_output, route_failure_action, validate_workflow_routing
-from src.core.state import persist_run_state, load_run_state, append_policy_deny_audit_record, acquire_run_lock, release_run_lock, status_is_terminal
+from src.core.state import build_persistable_workflow_definition, persist_run_state, load_run_state, append_policy_deny_audit_record, acquire_run_lock, release_run_lock, status_is_terminal
 from src.core.step import mark_step_started, mark_step_succeeded, mark_step_failed, mark_step_paused, mark_step_skipped
 from src.core.trace import append_trace, finalize_trace
-from src.core.utils import dict_get_or, summarize_value
+from src.core.utils import dict_get_or, summarize_value, redact_sensitive_data
 from src.tools.tool import call_tool, build_tool_payload
 
 func replace_step(steps, target_index, replacement_step) {
@@ -1279,6 +1281,11 @@ func budget_limit_error(workflow, run_state, include_step_limit) {
 }
 
 func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
+    if validate_assurance_anchor(run_state) == false {return {"ok": false, "code": "assurance_policy_tampered"}}
+    if assurance_protected(run_state)&&to_json(redact_sensitive_data(build_persistable_workflow_definition(workflow))) != to_json(run_state["workflow_definition"]) {return {"ok": false, "code": "assurance_workflow_mismatch"}}
+    if assurance_protected(run_state) {journal_check := reconcile_control_journal(run_state); if journal_check["ok"] == false {return journal_check}}
+    checked := check_negotiated_execution(run_state, options)
+    if checked["ok"] == false {return checked}
     routing_validation := validate_workflow_routing(workflow)
     if dict_get_or(routing_validation, "ok", false) == false {
         return {"ok": false, "paused": false, "run_state": run_state, "error": {"code": "invalid_routing_config", "message": "Workflow routing configuration is invalid.", "retryable": false, "details": dict_get_or(routing_validation, "errors", [])}}
@@ -1292,6 +1299,8 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
     precomputed_results := {}
 
     while true {
+        checked := check_negotiated_execution(run_state, options)
+        if checked["ok"] == false {return checked}
         budget_error := budget_limit_error(workflow, run_state, true)
         if type(budget_error) == "dict" {
             run_state["status"] := "failed"
@@ -1383,6 +1392,9 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
             step_started_ms = dict_get_or(precomputed, "started_ms", step_started_ms)
         }
 
+        # Hooks/persistence may have delayed admission or revoked authority.
+        checked = check_negotiated_execution(run_state, options)
+        if checked["ok"] == false {return checked}
         input_validation := validate_step_schema(step["id"], "input", dict_get_or(step, "input_schema", null), step_input)
         idempotency_key := to_string(dict_get_or(step, "idempotency_key", ""))
         idempotency_store := dict_get_or(run_state, "idempotency", {})
@@ -1746,6 +1758,25 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
     }
 }
 
+# Bounded audit-only mutation after a rejected protected admission. It never
+# repairs divergence or grants authority; a new decision/checkpoint uses new revision.
+func journal_assurance_denial(state, result, options) {
+    try {
+        loaded := load_run_state(state["output_root"], state["run_id"])
+        if loaded["ok"] == false {return false}
+        current := loaded["run_state"]
+        if reconcile_control_journal(current)["ok"] == false {return false}
+        code := dict_get_or(result, "code", dict_get_or(dict_get_or(result, "error", {}), "code", "assurance_admission_denied"))
+        if type(code) != "string"||regex_match(code, "^[a-z0-9_]{1,128}$") == false {code = "assurance_admission_denied"}
+        logged := append_control_event(current, "assurance_resolution_denied", "", [], {"code": code, "policy_sha256": current["assurance_negotiation"]["policy_sha256"], "config_revision": current["assurance_negotiation"]["config_revision"]})
+        current = logged["run_state"]
+        request := dict_get_or(current, "human_intervention", null)
+        if type(request) == "dict" {request["state_revision"] := current["revision"] + 1; current["human_intervention"] := request}
+        persist_run_state(current)
+        return true
+    } except err {return false}
+}
+
 func run_workflow_impl(workflow, run_state, tool_registry, options, admission) {
     webhook_validation := validate_webhook_options(options)
     if dict_get_or(webhook_validation, "ok", false) == false {
@@ -1757,18 +1788,18 @@ func run_workflow_impl(workflow, run_state, tool_registry, options, admission) {
     }
     result := null
     try {
-        if type(admission) == "function" {
-            loaded := load_run_state(options["output_root"], run_state["run_id"])
+            loaded := load_run_state(run_state["output_root"], run_state["run_id"])
             if loaded["ok"] == false||loaded["run_state"]["run_dir"] != run_state["run_dir"] {throw("Authoritative state unavailable")}
-            run_state = loaded["run_state"]
-        }
+            if type(admission) == "function"||assurance_protected(run_state)||assurance_protected(loaded["run_state"]) {run_state = loaded["run_state"]}
         if status_is_terminal(dict_get_or(run_state, "status", "")) {
             result = {"ok": false, "paused": false, "run_state": run_state, "error": {"code": "terminal_run", "message": "Terminal runs cannot resume.", "retryable": false}}
         } else {
             reconciled := reconcile_control_journal(run_state)
             if reconciled["ok"] == false {result = {"ok": false, "paused": false, "run_state": run_state, "error": reconciled["error"]}} else {
                 run_state = reconciled["run_state"]
-                if type(admission) == "function" {
+                configured := resolve_run_configuration(run_state, options)
+                if configured["ok"] == false {result = configured}
+                else if type(admission) == "function" {
                     admitted := admission(run_state)
                     if admitted["ok"] == false {result = admitted}
                     else {result = run_workflow_unlocked(workflow, admitted["run_state"], tool_registry, options)}
@@ -1791,6 +1822,9 @@ func run_workflow_impl(workflow, run_state, tool_registry, options, admission) {
             "error": runtime_error,
             "run_state": run_state
         }
+    }
+    if assurance_protected(run_state)&&dict_get_or(result, "ok", false) == false {
+        if journal_assurance_denial(run_state, result, options) == false {result["audit_error"] := {"code": "assurance_denial_audit_unavailable"}}
     }
     release_result := release_run_lock(lock_result)
     if dict_get_or(release_result, "ok", false) == false {

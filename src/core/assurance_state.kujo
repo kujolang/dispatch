@@ -1,0 +1,56 @@
+# Persisted authority and storage codec. No executable, credential or producer input.
+from src.core.utils import dict_get_or, redact_sensitive_data
+
+func digest(value) {return type(value) == "string"&&regex_match(value, "^[0-9a-f]{64}$")}
+func identifier(value) {return type(value) == "string"&&regex_match(value, "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")}
+export func assurance_protected(state) {return dict_get_or(dict_get_or(state, "assurance_negotiation", {}), "mode", "legacy") != "legacy"}
+export func assurance_policy(mode, fallback, profile, version, revision) {
+    policy := {"schema": "dispatch.assurance-negotiation/v1alpha1", "mode": mode, "fallback": fallback, "profile": profile, "profile_version": version, "config_revision": revision}
+    policy["policy_sha256"] := sha256(to_json(policy))
+    return policy
+}
+export func validate_assurance_policy(policy) {
+    if type(policy) != "dict"||len(keys(policy)) != 7 {return false}
+    for field in ["schema", "mode", "fallback", "profile", "profile_version", "config_revision", "policy_sha256"] {if has_key(policy, field) == 0 {return false}}
+    if policy["schema"] != "dispatch.assurance-negotiation/v1alpha1"||contains(["legacy", "optional", "required"], policy["mode"]) == false||contains(["deny", "legacy_unavailable"], policy["fallback"]) == false {return false}
+    if policy["mode"] != "optional"&&policy["fallback"] != "deny" {return false}
+    if policy["mode"] == "legacy" {if policy["profile"] != ""||policy["profile_version"] != ""||policy["config_revision"] != "" {return false}}
+    else {if identifier(policy["profile"]) == false||identifier(policy["profile_version"]) == false||digest(policy["config_revision"]) == false {return false}}
+    return to_json(policy) == to_json(assurance_policy(policy["mode"], policy["fallback"], policy["profile"], policy["profile_version"], policy["config_revision"]))
+}
+export func encode_authoritative_state(state) {
+    body := to_json(state)
+    if assurance_protected(state) {return "DISPATCH_ASSURANCE_STATE_V1ALPHA1\n" + body}
+    return body
+}
+export func decode_authoritative_state(body) {
+    prefix := "DISPATCH_ASSURANCE_STATE_V1ALPHA1\n"
+    guarded := starts_with(body, prefix)
+    if guarded {body = substring(body, len(prefix), len(body))}
+    state := parse_json(body)
+    if type(state) != "dict" {throw("assurance_state_invalid")}
+    if has_key(state, "assurance_negotiation")&&validate_assurance_policy(state["assurance_negotiation"]) == false {throw("assurance_policy_tampered")}
+    if has_key(state, "required_features")&&guarded == false {throw("assurance_controller_incompatible")}
+    if assurance_protected(state) != guarded {throw("assurance_controller_incompatible")}
+    if (guarded||has_key(state, "required_features"))&&to_json(dict_get_or(state, "required_features", [])) != to_json(["effect-assurance-negotiation/v1alpha1"]) {throw("assurance_controller_incompatible")}
+    if guarded&&contains(["filesystem", "sqlite"], dict_get_or(state, "assurance_store", "")) == false {throw("assurance_store_invalid")}
+    return state
+}
+export func read_authoritative_state(path) {
+    try {return decode_authoritative_state(read_file_beneath(dirname(path), basename(path), 8388608))} except err {return null}
+}
+# Existing first control record is the immutable policy anchor, not a parallel file.
+export func validate_assurance_anchor(state) {
+    policy := dict_get_or(state, "assurance_negotiation", null)
+    if policy != null&&validate_assurance_policy(policy) == false {return false}
+    path := state["run_dir"] + "/control-records/1.json"
+    if file_exists(path) {
+        try {
+            event := parse_json(read_file_beneath(state["run_dir"], "control-records/1.json", 1048576))
+            if dict_get_or(event, "kind", "") == "assurance_policy_selected" {
+                return event["run_id"] == state["run_id"]&&to_json(event["details"]["policy"]) == to_json(policy)&&assurance_protected(state)&&dict_get_or(event["details"], "storage", "") == dict_get_or(state, "assurance_store", "")&&dict_get_or(event["details"], "workflow_sha256", "") == sha256(to_json(redact_sensitive_data(state["workflow_definition"])))&&dict_get_or(event["details"], "input_sha256", "") == sha256(to_json(redact_sensitive_data(state["input"])))
+            }
+        } except err {return false}
+    }
+    return assurance_protected(state) == false
+}
