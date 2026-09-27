@@ -39,6 +39,15 @@ jobs:
         with:
           fetch-depth: 0 # Exercise the actual pinned pre-negotiation controller.
 
+      - name: Setup pinned interoperability Node runtime
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "26.7.0"
+          package-manager-cache: false
+
+      - name: Install pinned TypeScript participant dependencies
+        run: npm --prefix interop/typescript-participant ci --ignore-scripts --no-audit --no-fund
+
       - name: Checkout Kujo runtime repository
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:

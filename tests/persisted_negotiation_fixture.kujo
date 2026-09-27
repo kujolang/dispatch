@@ -1,3 +1,5 @@
+from src.core.interop_handoff import correlate_interop_handoff
+from tests.typescript_registration import typescript_registration
 from tests.interop_core_checks import check_equivalence
 from tests.fixtures.interop_legacy.git_participant_handoff import old_load_git_participant_handoff
 from tests.fixtures.interop_legacy.http_ability_handoff import old_load_http_ability_handoff
@@ -125,11 +127,40 @@ func git_check(config, root, raw, assurance_raw) {
     check_equivalence(root, modern, historical, raw, assurance_raw)
     return modern
 }
+func native_process(config, root, attempt, mode) {
+    response := spawn_process([config["node"], os_getcwd() + "/interop/typescript-participant/host/runner.mjs", root, to_string(attempt), mode], {"cwd": os_getcwd(), "inherit_env": false, "max_output_bytes": 8192, "timeout_ms": 30000})
+    require(response.success&&response.stderr == ""); return parse_json(response.stdout)
+}
+func native_check(config, root, raw, assurance_raw) {
+    result := parse_json(raw); attempt := result["subject"]["attempt_id"]
+    prefix := "ts-bound-handoff-"; if assurance_raw == "" {prefix = "ts-handoff-"}
+    ref := trim(read_file_beneath(root, prefix + attempt + ".ref", 128))
+    if byte_length(ref) != 71||regex_match(ref, "^sha256:[0-9a-f]{64}$") == false {return {"ok": false, "code": "interop_correlation_mismatch"}}
+    encoded := read_file_beneath(root, "artifacts/" + substring(ref,7,71) + ".json", 6144)
+    if "sha256:" + sha256(encoded) != ref {return {"ok": false, "code": "interop_correlation_mismatch"}}
+    ids := parse_json(read_file_beneath(root, "ts-identities-" + attempt + ".json", 1024))
+    expected := {"subject": {"run_id": result["subject"]["run_id"], "step_id": "action", "attempt_id": attempt, "effect_id": "effect-1"}, "participant": {"namespace": "kujolang.typescript-process", "invocation_id": ids["invocation_id"]}}
+    return correlate_interop_handoff(root,encoded,expected,raw,assurance_raw,typescript_registration(ids,sha256(to_json(config["intent"]))))
+}
 func action(input, context) {
     root := context["input"]["root"]
     config := parse_json(read_file_beneath(root, "config.json", 8192))
     attempt := context["control_attempt"]
     append_file(root + "/action-invocations", to_string(attempt) + "\n")
+    if has_key(config, "native_participant") {
+        stamp := format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
+        subject := {"run_id": context["run_id"], "step_id": context["step_id"], "attempt_id": to_string(attempt)}
+        preservation := {"schema": "kujo.preservation-outcome/v1", "result_id": "preserved", "subject": subject, "requested_mode": "filesystem", "actual_mode": "filesystem", "status": "satisfied", "provider": {"name": "local"}, "reconstructability": "same_filesystem", "evidence": [], "created_at": stamp, "retain_until": "2099-01-01T00:00:00Z", "cleanup": {"owner": "fixture", "handle": "opaque"}}
+        subject["effect_id"] := "effect-1"
+        ticket := {"subject": subject, "call_id": "native-call-" + to_string(attempt), "preservation": preservation, "valid_until_ms": parse_int(to_string(floor(now_utc_seconds()*1000))) + 120000}
+        write_file_atomic_beneath(root,"ts-ticket-" + to_string(attempt) + ".json",to_json(ticket),false)
+        write_file_atomic_beneath(root,"ts-current.json",to_json({"attempt":to_string(attempt)}),true)
+        write_file_atomic_beneath(root,"ts-request-" + to_string(attempt) + ".json",to_json({"call_id":ticket["call_id"]}),false)
+        require(native_process(config,root,attempt,"run")["ok"])
+        raw := read_file_beneath(root,"result-" + to_string(attempt) + ".json",1048576)
+        require(native_check(config,root,raw,"")["ok"])
+        return {"ok":true,"data":parse_json(raw)}
+    }
     if has_key(config, "git_participant") {
         stamp := format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
         subject := {"run_id": context["run_id"], "step_id": context["step_id"], "attempt_id": to_string(attempt)}
@@ -218,6 +249,9 @@ func installed_files(config) {
     }
     files = push(files, {"root": os_getcwd(), "path": "src/core/interop_handoff.kujo"})
     files = push(files, {"root": os_getcwd(), "path": "src/adapters/interop_legacy.kujo"})
+    if has_key(config,"native_participant") {
+        for path in ["tests/typescript_registration.kujo","interop/typescript-participant/host/runner.mjs","interop/typescript-participant/dist/codec.js","interop/typescript-participant/dist/participant.js","interop/typescript-participant/dist/record.js","interop/typescript-participant/assets/manifest.json","interop/typescript-participant/package-lock.json"] {files = push(files,{"root":os_getcwd(),"path":path})}
+    }
     return files
 }
 func host(config, root, expected, raw, verifier) {
@@ -258,6 +292,15 @@ func host(config, root, expected, raw, verifier) {
                 selected := state["assurance_selection"]
                 sidecar := read_file_beneath(state["run_dir"], selected["sidecar_ref"], 8192)
                 checked := git_check(config, root, raw, sidecar)
+                if checked["ok"] == false {return checked}
+                return verifier(subject)
+            }
+        }
+        if has_key(config,"native_participant")&&raw != "" {
+            active_verifier = func(subject) {
+                selected := state["assurance_selection"]
+                sidecar := read_file_beneath(state["run_dir"],selected["sidecar_ref"],8192)
+                checked := native_check(config,root,raw,sidecar)
                 if checked["ok"] == false {return checked}
                 return verifier(subject)
             }
@@ -375,6 +418,10 @@ if phase == "install" {
         if has_key(config, "sdk_root")&&selection["ok"] {
             write_file_atomic_beneath(root, "sdk-assurance.json", document, false)
             require(sdk_process(config, root, 1, "attach")["ok"])
+        }
+        if has_key(config,"native_participant")&&selection["ok"] {
+            write_file_atomic_beneath(root,"ts-selected.json",document,true)
+            require(native_process(config,root,1,"attach")["ok"])
         }
         print(to_json(selection))
     } else {

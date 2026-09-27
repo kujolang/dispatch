@@ -529,7 +529,11 @@ dispatch webhooks replay --output-root outputs --url https://collector.example/e
 
 ## Testing
 
+The external TypeScript adoption fixture requires Node 22 or newer. Install its
+pinned development dependencies once; the release gate itself remains offline.
+
 ```bash
+npm --prefix interop/typescript-participant ci --ignore-scripts
 DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh
 ```
 

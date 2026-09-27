@@ -85,6 +85,9 @@ run_suite() {
 	echo "$name passed. $(grep '^Tests:' "$log" | tail -1) Evidence: $log"
 	if [[ "${DISPATCH_TEST_VERBOSE:-false}" == true ]]; then cat "$log"; fi
 }
+run_suite typescript_package npm --prefix interop/typescript-participant test
+run_suite typescript_after env KUJO_BIN="$KUJO_BIN" node tests/typescript_integration.mjs after_commit
+run_suite typescript_before env KUJO_BIN="$KUJO_BIN" node tests/typescript_integration.mjs before_commit
 run_suite control_boundary "$KUJO_BIN" test-run tests/control_boundary_tests.kujo -v
 run_suite failure_gate_safety "$KUJO_BIN" test-run tests/failure_gate_safety_tests.kujo -v
 run_suite failure_gate_execution "$KUJO_BIN" test-run tests/failure_gate_execution_tests.kujo -v

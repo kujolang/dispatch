@@ -27,6 +27,15 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           fetch-depth: 0
+      - name: Setup pinned interoperability Node runtime
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "26.7.0"
+          package-manager-cache: false
+
+      - name: Install pinned TypeScript participant dependencies
+        run: npm --prefix interop/typescript-participant ci --ignore-scripts --no-audit --no-fund
+
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/kujo
@@ -40,12 +49,12 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/workcell
-          ref: e66689a8cac6577c22dfaa6c8c5401123f362ce6
+          ref: 1940da0639b70b702c1b1077dda51ca39b065216
           path: .release/workcell
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/ability
-          ref: ca9acea544e9a8a806f1f09d42b4ca7b5299bd18
+          ref: d6c970785f8d8bea04de0dce37920c2d0ca1c067
           path: .release/ability
       - name: Check offline adapter tools
         run: |
@@ -53,12 +62,31 @@ jobs:
           command -v sqlite3
       - run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal
       - run: cargo build --release --locked --manifest-path .release/kujo/Cargo.toml
+      - name: Checkout controlled Agents SDK participant
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: kujolang/agents-sdk
+          ref: af0aa28f5960232cbafa7cf528a32db8cb36c7a9
+          path: .release/agents-sdk-wave-d
+      - name: Checkout controlled MCP participant
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: kujolang/mcp
+          ref: a7ec0dd8e6bcae303ab1431b4586dfe3e91f3a5a
+          path: .release/mcp-wave-d
+      - name: Install controlled participant dependencies
+        run: |
+          git clone --filter=blob:none https://github.com/kujolang/kennel.git .release/kennel-wave-d
+          git -C .release/kennel-wave-d checkout --detach b5e0cf290aa2af7a90b637a7c3bdb4324ea4f66d
+          "$GITHUB_WORKSPACE/.release/kujo/target/release/kujo" run .release/kennel-wave-d/kennel.kujo --interpreter -- install --project-dir "$GITHUB_WORKSPACE/.release/agents-sdk-wave-d"
       - name: Verify exact tagged source
         env:
           KUJO_BIN: ${{ github.workspace }}/.release/kujo/target/release/kujo
           AI_SDK_PATH: ${{ github.workspace }}/.release/ai-sdk
           WORKCELL_ROOT: ${{ github.workspace }}/.release/workcell
           ABILITY_ROOT: ${{ github.workspace }}/.release/ability
+          AGENTS_SDK_ROOT: ${{ github.workspace }}/.release/agents-sdk-wave-d
+          MCP_ROOT: ${{ github.workspace }}/.release/mcp-wave-d
         run: bash scripts/run_release_gate.sh
 
   package:
