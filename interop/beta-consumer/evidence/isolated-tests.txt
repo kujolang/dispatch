@@ -1,0 +1,14 @@
+test_delayed_restart (test_consumer.Decisions) ... ok
+test_negative_matrix (test_consumer.Decisions) ... ok
+test_positives_restart (test_consumer.Decisions) ... ok
+test_privacy (test_consumer.Decisions) ... ok
+test_encoding_boundaries (test_consumer.Portability) ... ok
+test_frozen_vectors (test_consumer.Portability) ... ok
+test_reconstruct_profiles (test_consumer.Portability) ... ok
+test_retained_artifacts (test_consumer.Portability) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 5.301s
+
+OK
+ISOLATED_CONSUMER_PASS

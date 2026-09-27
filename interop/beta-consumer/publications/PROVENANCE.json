@@ -1,0 +1,30 @@
+{
+  "baselines": {
+    "dispatch": "c6680ca36b1c3483cc77d4fd17317d8572de2af8",
+    "workcell": "e66689a8cac6577c22dfaa6c8c5401123f362ce6",
+    "ability": "ca9acea544e9a8a806f1f09d42b4ca7b5299bd18",
+    "kujo": "4ccd023c150835c46acc1a023cf8cffc897939fa"
+  },
+  "sha256": {
+    "ability/application-assurance-commitments.json": "51d11cdd80fe3fa4aa45bb0f974c969bcb414d38d21b3cba6e15139107aa2737",
+    "ability/application-assurance-profile.md": "f984363d01816a8326a0458123fba13f4bec00a33b8714ba7dcb8ba2d350b968",
+    "ability/assurance-profile.json": "0e1037babaced95e7e107ecd49e9bd101ce82da6b2ae1dcd6ed8e0e4b31b707b",
+    "ability/bindings-v1beta1.schema.json": "99728d02ba4d61787d94b5784c30edb60e2447a1ab4a0f72dbd9e868918197c1",
+    "dispatch/assurance-artifacts.json": "d1e8407301ff1926a6427cabe19654a1b055aa5757f8d05d0125e7acda47dfda",
+    "dispatch/assurance-configuration-v1beta1.schema.json": "3cd2936fec460f29fd7f9ec3a6eb97059160851f354227fb3c3e02d6073cb5a9",
+    "dispatch/assurance-negotiation-v1beta1.schema.json": "380b772a07c2503a5d987e6569b157980828acf93a4da431882e98ee6622fa8c",
+    "dispatch/assurance-profile.json": "201685c4c547fd3b12139c09465825d50aaf9e5a868a426edfabb2cd552c9ea0",
+    "dispatch/beta-migration.md": "2a90efbd17c6dfde7a24d38730988c12fa2018d4fd31715a5e58cf65c18fc484",
+    "dispatch/bindings-v1beta1.schema.json": "99728d02ba4d61787d94b5784c30edb60e2447a1ab4a0f72dbd9e868918197c1",
+    "dispatch/commitments.json": "6ba4de9c599eb0c0abcf03ca7576dca1772dbf2d6f765f1f6274dd63275aae7b",
+    "dispatch/effect-assurance-v1beta1.schema.json": "6b001e61e3f36eb334dcde9f5216ce226b3f51940bc239b0067c3bbd73df1dfb",
+    "dispatch/portable-commitments.md": "578448779c162bd976fe7399a9a111fbc1962a335495be7391a1b54c4bee45dd",
+    "dispatch/sqlite-assurance-profile.md": "811a159892d50b465bdb9cfb3b40a7cee3e410c50af02bbfe09d63c332abb5b8",
+    "dispatch/sqlite-commitments.json": "a523d9e8a7ae438168cba4f66e5a34572296106a4ece8a991c2ac2bebad8d26c",
+    "execution-result-v1.schema.json": "2936be16b1f6b2b9237800802b155be993e1f07f4901592d8bdeb98e1a37fdab",
+    "workcell/assurance-profile.json": "fd2344f9d03d54cdab1614f950a94951b36e39042d269930a1165424478839d4",
+    "workcell/bindings-v1beta1.schema.json": "c9a6a7f40476cf7c8b0de02c035c695efc34ad1604f7835b94ca7470347c40c9",
+    "workcell/git-assurance-commitments.json": "8ee98d0bd5f8be87eb94b6b2e6b06441e58a161f54bff7f9d7ae3d0419b7b8d9",
+    "workcell/git-assurance-profile.md": "99c5a8c2c4b0a9d60b6dc29199c31bbd85c78be2211cb9abb101fb186a7da3be"
+  }
+}

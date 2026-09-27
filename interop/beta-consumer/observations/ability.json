@@ -1,0 +1,104 @@
+{
+  "result_raw": "{\"attempt\":1,\"classification\":\"unknown\",\"effects\":[{\"class\":\"external_idempotent\",\"effect_id\":\"effect-1\",\"enforced_by\":\"ability-local\",\"enforcement_evidence_ref\":\"sha256:0221fd739c99964b2b237cc9445926e43d94b0962562159b7d759334bfa5f498\",\"idempotency_key\":\"0a377b9f73bcd4d6b794cde3f547e222fa86e52e9dc182dce69f34e598fcf8ef\",\"state\":\"unknown\"}],\"evidence\":[],\"finished_at\":\"2026-09-27T15:18:37Z\",\"preservation_outcome\":{\"actual_mode\":\"filesystem\",\"cleanup\":{\"handle\":\"opaque\",\"owner\":\"fixture\"},\"created_at\":\"2026-09-27T15:18:37Z\",\"evidence\":[],\"provider\":{\"name\":\"local\"},\"reconstructability\":\"same_filesystem\",\"requested_mode\":\"filesystem\",\"result_id\":\"preserved\",\"retain_until\":\"2099-01-01T00:00:00Z\",\"schema\":\"kujo.preservation-outcome/v1\",\"status\":\"satisfied\",\"subject\":{\"attempt_id\":\"1\",\"run_id\":\"run-1790522316521-2104\",\"step_id\":\"action\"}},\"producer\":{\"name\":\"effect-assurance-fixture\",\"version\":\"1\"},\"result_id\":\"run-1790522316521-2104:1\",\"schema\":\"kujo.execution-result/v1\",\"started_at\":\"2026-09-27T15:18:37Z\",\"status\":\"indeterminate\",\"subject\":{\"attempt_id\":\"1\",\"run_id\":\"run-1790522316521-2104\",\"step_id\":\"action\"}}",
+  "assurance_raw": "{\"bindings\":{\"key_sha256\":\"d2c7ce88a1bfd730228bd6101e1d9c990f56d482e0353f90f9161d6b8dbbef9f\",\"observed_state\":\"committed\",\"operation\":\"create\",\"precondition_sha256\":\"8f4f22f1dfae0fbdda87e0b1c76c22f74a4b9b70a4538ceaa928225e46523928\",\"replay_class\":\"external_idempotent\",\"reported_state\":\"unknown\",\"request_sha256\":\"a355ad0c17a9d8900c1de8fe56c28a93ebaa367816e1a7ca7df532e8b4b2f269\",\"scope_sha256\":\"50f742d3a76956d80f12b4bbd6be747e908af03ab6958d0cf41b360d771be2be\",\"target_sha256\":\"e76cee3b126634393b3a972c4ac277f8354bed0241a7590a3800fa12f43ff47f\",\"transaction_sha256\":\"52573b2c07100decac44cc26d9e216beabf6922a286450174b0b5d801f237292\"},\"evidence_ref\":\"sha256:0221fd739c99964b2b237cc9445926e43d94b0962562159b7d759334bfa5f498\",\"issuer\":\"ability-local\",\"profile\":{\"id\":\"ability.application-gateway\",\"version\":\"1beta1\"},\"profile_sha256\":\"c1677f75ec6da5d43b1dbf2b8ddf82829b8a072d207baa2df04428bf70290169\",\"schema\":\"dispatch.effect-assurance/v1beta1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"kind\":\"action\",\"result_sha256\":\"dc7a2d05569dce7b5fdb3f312082812d7ed6301db8ef0e6c79d297f653bbdb46\",\"run_id\":\"run-1790522316521-2104\",\"step_id\":\"action\"},\"validity\":{\"from\":1790522313,\"until\":1790524115},\"verification_method\":\"live_readback\"}",
+  "policy": {
+    "schema": "dispatch.assurance-negotiation/v1beta1",
+    "mode": "required",
+    "fallback": "deny",
+    "profile": "ability.application-gateway",
+    "profile_version": "1beta1",
+    "config_revision": "4c383d3187a08f571e3a348052a9586fd3f78584a3f0bbe892f607d78db64b8a",
+    "policy_sha256": "7f1df53dec84d806305ca91a1588e293af3fd45dd9f0a9e8be809d258bdf9360"
+  },
+  "now": 1790522319,
+  "host": {
+    "subject": {
+      "attempt_id": "1",
+      "effect_id": "effect-1",
+      "kind": "action",
+      "result_sha256": "dc7a2d05569dce7b5fdb3f312082812d7ed6301db8ef0e6c79d297f653bbdb46",
+      "run_id": "run-1790522316521-2104",
+      "step_id": "action"
+    },
+    "expected_bindings": {
+      "key_sha256": "d2c7ce88a1bfd730228bd6101e1d9c990f56d482e0353f90f9161d6b8dbbef9f",
+      "operation": "create",
+      "precondition_sha256": "8f4f22f1dfae0fbdda87e0b1c76c22f74a4b9b70a4538ceaa928225e46523928",
+      "request_sha256": "a355ad0c17a9d8900c1de8fe56c28a93ebaa367816e1a7ca7df532e8b4b2f269",
+      "scope_sha256": "50f742d3a76956d80f12b4bbd6be747e908af03ab6958d0cf41b360d771be2be",
+      "target_sha256": "e76cee3b126634393b3a972c4ac277f8354bed0241a7590a3800fa12f43ff47f",
+      "transaction_sha256": "52573b2c07100decac44cc26d9e216beabf6922a286450174b0b5d801f237292",
+      "reported_state": "unknown",
+      "replay_class": "external_idempotent",
+      "observed_state": "committed"
+    },
+    "revisions": {
+      "4c383d3187a08f571e3a348052a9586fd3f78584a3f0bbe892f607d78db64b8a": {
+        "descriptor": {
+          "authority_sha256": "410e4a68866fe8a3817e244d42a286e8e715ff7e75f092fc199d9c7aefc2bbaf",
+          "fallback": "deny",
+          "issuer": "ability-local",
+          "mechanism": "ability_application_gateway",
+          "mode": "required",
+          "profile": "ability.application-gateway",
+          "profile_version": "1beta1",
+          "schema": "dispatch.assurance-configuration/v1beta1",
+          "verifier_id": "installed-local",
+          "verifier_sha256": "5f17edc52e02b617aea20236e38b20c22a5cf699c565fb711d6a1b80b77db5b0",
+          "verifier_version": "1"
+        },
+        "status": "active",
+        "current_verifier_sha256": "5f17edc52e02b617aea20236e38b20c22a5cf699c565fb711d6a1b80b77db5b0",
+        "current_authority_sha256": "410e4a68866fe8a3817e244d42a286e8e715ff7e75f092fc199d9c7aefc2bbaf"
+      }
+    }
+  },
+  "live": {
+    "application_profile": {
+      "ability_id": "kujo.fixture.publication.create",
+      "ability_version": "1.0.0",
+      "definition_digest": "7b4d3b40ac011a31f3e2d9c7641c4a7fe99c993a0688a923df1bcabb3dc107ac",
+      "input_sha256": "da2134e5d1be0284188a76fa73b15b6487da8e9645fcc9b6256ff1f06c744785",
+      "intent_sha256": "82a22030a9aaf98af447937f8e538d62bc7e3306f58668a76cff31482b55b0e4",
+      "key_digest": "0a377b9f73bcd4d6b794cde3f547e222fa86e52e9dc182dce69f34e598fcf8ef",
+      "operation": "create",
+      "principal_sha256": "50f742d3a76956d80f12b4bbd6be747e908af03ab6958d0cf41b360d771be2be",
+      "request_digest": "a355ad0c17a9d8900c1de8fe56c28a93ebaa367816e1a7ca7df532e8b4b2f269",
+      "schema": "ability.application-assurance/v1alpha1",
+      "surface": "sdk",
+      "target_sha256": "e76cee3b126634393b3a972c4ac277f8354bed0241a7590a3800fa12f43ff47f",
+      "tenant_sha256": "0a96abb33b07ff0e8f48bcc4893e0e7346bff899dd316979517fa06509a49aff",
+      "transaction_sha256": "52573b2c07100decac44cc26d9e216beabf6922a286450174b0b5d801f237292"
+    },
+    "receipt_sha256": null,
+    "config_revision": "4c383d3187a08f571e3a348052a9586fd3f78584a3f0bbe892f607d78db64b8a",
+    "subject": {
+      "attempt_id": "1",
+      "effect_id": "effect-1",
+      "kind": "action",
+      "result_sha256": "dc7a2d05569dce7b5fdb3f312082812d7ed6301db8ef0e6c79d297f653bbdb46",
+      "run_id": "run-1790522316521-2104",
+      "step_id": "action"
+    },
+    "profile": {
+      "id": "ability.application-gateway",
+      "version": "1beta1"
+    },
+    "checked_at": 1790522319,
+    "bindings": {
+      "key_sha256": "d2c7ce88a1bfd730228bd6101e1d9c990f56d482e0353f90f9161d6b8dbbef9f",
+      "operation": "create",
+      "precondition_sha256": "8f4f22f1dfae0fbdda87e0b1c76c22f74a4b9b70a4538ceaa928225e46523928",
+      "request_sha256": "a355ad0c17a9d8900c1de8fe56c28a93ebaa367816e1a7ca7df532e8b4b2f269",
+      "scope_sha256": "50f742d3a76956d80f12b4bbd6be747e908af03ab6958d0cf41b360d771be2be",
+      "target_sha256": "e76cee3b126634393b3a972c4ac277f8354bed0241a7590a3800fa12f43ff47f",
+      "transaction_sha256": "52573b2c07100decac44cc26d9e216beabf6922a286450174b0b5d801f237292",
+      "reported_state": "unknown",
+      "replay_class": "external_idempotent",
+      "observed_state": "committed"
+    },
+    "predicate": "authenticated application request maps to business transaction and receipt state",
+    "status": "verified",
+    "evidence_ref": "sha256:0221fd739c99964b2b237cc9445926e43d94b0962562159b7d759334bfa5f498"
+  }
+}

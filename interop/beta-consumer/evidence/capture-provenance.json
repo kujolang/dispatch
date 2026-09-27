@@ -1,0 +1,44 @@
+[
+  {
+    "profile": "ability.application-gateway",
+    "capture_time": 1790522319,
+    "fixture_run": "beta-migration-1790522240888",
+    "persisted_policy_matches": true,
+    "authoritative_run_matches": true,
+    "packet_sha256": "201a700ac355422582c3b808f9f95868bb33127d895d7f310d1dea2954d07a1f",
+    "real_pinned_verifier_attestation": {
+      "checks": 33,
+      "ok": true,
+      "result_sha256": "dc7a2d05569dce7b5fdb3f312082812d7ed6301db8ef0e6c79d297f653bbdb46",
+      "schema": "dispatch.effect-assurance/v1beta1"
+    }
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "capture_time": 1790522254,
+    "fixture_run": "beta-migration-1790522240888",
+    "persisted_policy_matches": true,
+    "authoritative_run_matches": true,
+    "packet_sha256": "64230c4582c842539a8d753566e40180308d58c237a80d2523fe538d45319ad0",
+    "real_pinned_verifier_attestation": {
+      "checks": 33,
+      "ok": true,
+      "result_sha256": "cf9c354610dbd2157376371f19b7d0ff7edf8515e828553ed93fe4aad47ae8e7",
+      "schema": "dispatch.effect-assurance/v1beta1"
+    }
+  },
+  {
+    "profile": "workcell.git-cas",
+    "capture_time": 1790522285,
+    "fixture_run": "beta-migration-1790522240888",
+    "persisted_policy_matches": true,
+    "authoritative_run_matches": true,
+    "packet_sha256": "ad9a4f6a13f5dbd3bf6f09f2b013c57a14bbb3561d8dc5e7949f1c15be02e6c3",
+    "real_pinned_verifier_attestation": {
+      "checks": 33,
+      "ok": true,
+      "result_sha256": "e3f1d92be6a5b5d993ebfb28d8839bc9d7c13c590b80b3ed3b24488b6b7a3dd4",
+      "schema": "dispatch.effect-assurance/v1beta1"
+    }
+  }
+]

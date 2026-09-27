@@ -1,0 +1,87 @@
+{
+  "result_raw": "{\"attempt\":1,\"classification\":\"unknown\",\"effects\":[{\"class\":\"external_idempotent\",\"effect_id\":\"effect-1\",\"enforced_by\":\"sqlite-local\",\"enforcement_evidence_ref\":\"sha256:4fbcd0ec8abb50000785bad08b216d5eda8b3cece6a953c7f671ad9b3147723b\",\"idempotency_key\":\"fixture-key\",\"state\":\"unknown\"}],\"evidence\":[],\"finished_at\":\"2026-09-27T15:17:31Z\",\"preservation_outcome\":{\"actual_mode\":\"filesystem\",\"cleanup\":{\"handle\":\"opaque\",\"owner\":\"fixture\"},\"created_at\":\"2026-09-27T15:17:31Z\",\"evidence\":[],\"provider\":{\"name\":\"local\"},\"reconstructability\":\"same_filesystem\",\"requested_mode\":\"filesystem\",\"result_id\":\"preserved\",\"retain_until\":\"2099-01-01T00:00:00Z\",\"schema\":\"kujo.preservation-outcome/v1\",\"status\":\"satisfied\",\"subject\":{\"attempt_id\":\"1\",\"run_id\":\"run-1790522251017-5348\",\"step_id\":\"action\"}},\"producer\":{\"name\":\"effect-assurance-fixture\",\"version\":\"1\"},\"result_id\":\"run-1790522251017-5348:1\",\"schema\":\"kujo.execution-result/v1\",\"started_at\":\"2026-09-27T15:17:31Z\",\"status\":\"indeterminate\",\"subject\":{\"attempt_id\":\"1\",\"run_id\":\"run-1790522251017-5348\",\"step_id\":\"action\"}}",
+  "assurance_raw": "{\"bindings\":{\"key_sha256\":\"66e7c82b49bb291dd09c8e020448311c4a7bb96aeb5c5db769f66812b13a50b5\",\"observed_state\":\"committed\",\"operation\":\"create\",\"precondition_sha256\":\"2e1cfa82b035c26cbbbdae632cea070514eb8b773f616aaeaf668e2f0be8f10d\",\"replay_class\":\"external_idempotent\",\"reported_state\":\"unknown\",\"request_sha256\":\"da2134e5d1be0284188a76fa73b15b6487da8e9645fcc9b6256ff1f06c744785\",\"scope_sha256\":\"c6dd1c4af5ef4f871c0c865c96ed1042c508e256405bc38858fedf7389c1c9c6\",\"target_sha256\":\"34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c\",\"transaction_sha256\":\"5ecd42741ecd7c120211d6a4fdf70c1111764ef97a27c5e36380350305ec1217\"},\"evidence_ref\":\"sha256:4fbcd0ec8abb50000785bad08b216d5eda8b3cece6a953c7f671ad9b3147723b\",\"issuer\":\"sqlite-local\",\"profile\":{\"id\":\"dispatch.sqlite-unique\",\"version\":\"1beta1\"},\"profile_sha256\":\"e412845e244cd68ffd18ba224e7884f860088af2dac9995f9f0428295298e0f8\",\"schema\":\"dispatch.effect-assurance/v1beta1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"kind\":\"action\",\"result_sha256\":\"cf9c354610dbd2157376371f19b7d0ff7edf8515e828553ed93fe4aad47ae8e7\",\"run_id\":\"run-1790522251017-5348\",\"step_id\":\"action\"},\"validity\":{\"from\":1790522245,\"until\":1790524050},\"verification_method\":\"live_readback\"}",
+  "policy": {
+    "schema": "dispatch.assurance-negotiation/v1beta1",
+    "mode": "required",
+    "fallback": "deny",
+    "profile": "dispatch.sqlite-unique",
+    "profile_version": "1beta1",
+    "config_revision": "5981bd2d965b725d6b748c6b16dbe09c2ca5c39f7bccd1e06b83d4b392293759",
+    "policy_sha256": "24f796925453a1392f1347dea2afd259bab3b3266ffd8c14287e00c5d85a5dbe"
+  },
+  "now": 1790522254,
+  "host": {
+    "subject": {
+      "attempt_id": "1",
+      "effect_id": "effect-1",
+      "kind": "action",
+      "result_sha256": "cf9c354610dbd2157376371f19b7d0ff7edf8515e828553ed93fe4aad47ae8e7",
+      "run_id": "run-1790522251017-5348",
+      "step_id": "action"
+    },
+    "expected_bindings": {
+      "key_sha256": "66e7c82b49bb291dd09c8e020448311c4a7bb96aeb5c5db769f66812b13a50b5",
+      "operation": "create",
+      "precondition_sha256": "2e1cfa82b035c26cbbbdae632cea070514eb8b773f616aaeaf668e2f0be8f10d",
+      "request_sha256": "da2134e5d1be0284188a76fa73b15b6487da8e9645fcc9b6256ff1f06c744785",
+      "scope_sha256": "c6dd1c4af5ef4f871c0c865c96ed1042c508e256405bc38858fedf7389c1c9c6",
+      "target_sha256": "34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c",
+      "transaction_sha256": "5ecd42741ecd7c120211d6a4fdf70c1111764ef97a27c5e36380350305ec1217",
+      "reported_state": "unknown",
+      "replay_class": "external_idempotent",
+      "observed_state": "committed"
+    },
+    "revisions": {
+      "5981bd2d965b725d6b748c6b16dbe09c2ca5c39f7bccd1e06b83d4b392293759": {
+        "descriptor": {
+          "authority_sha256": "c6dd1c4af5ef4f871c0c865c96ed1042c508e256405bc38858fedf7389c1c9c6",
+          "fallback": "deny",
+          "issuer": "sqlite-local",
+          "mechanism": "sqlite_unique_transaction",
+          "mode": "required",
+          "profile": "dispatch.sqlite-unique",
+          "profile_version": "1beta1",
+          "schema": "dispatch.assurance-configuration/v1beta1",
+          "verifier_id": "installed-local",
+          "verifier_sha256": "138149ea80df735add662797ee76ab6fb6824e97b636bdd5752ab10401850685",
+          "verifier_version": "1"
+        },
+        "status": "active",
+        "current_verifier_sha256": "138149ea80df735add662797ee76ab6fb6824e97b636bdd5752ab10401850685",
+        "current_authority_sha256": "c6dd1c4af5ef4f871c0c865c96ed1042c508e256405bc38858fedf7389c1c9c6"
+      }
+    }
+  },
+  "live": {
+    "config_revision": "5981bd2d965b725d6b748c6b16dbe09c2ca5c39f7bccd1e06b83d4b392293759",
+    "subject": {
+      "attempt_id": "1",
+      "effect_id": "effect-1",
+      "kind": "action",
+      "result_sha256": "cf9c354610dbd2157376371f19b7d0ff7edf8515e828553ed93fe4aad47ae8e7",
+      "run_id": "run-1790522251017-5348",
+      "step_id": "action"
+    },
+    "profile": {
+      "id": "dispatch.sqlite-unique",
+      "version": "1beta1"
+    },
+    "checked_at": 1790522254,
+    "bindings": {
+      "key_sha256": "66e7c82b49bb291dd09c8e020448311c4a7bb96aeb5c5db769f66812b13a50b5",
+      "operation": "create",
+      "precondition_sha256": "2e1cfa82b035c26cbbbdae632cea070514eb8b773f616aaeaf668e2f0be8f10d",
+      "request_sha256": "da2134e5d1be0284188a76fa73b15b6487da8e9645fcc9b6256ff1f06c744785",
+      "scope_sha256": "c6dd1c4af5ef4f871c0c865c96ed1042c508e256405bc38858fedf7389c1c9c6",
+      "target_sha256": "34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c",
+      "transaction_sha256": "5ecd42741ecd7c120211d6a4fdf70c1111764ef97a27c5e36380350305ec1217",
+      "reported_state": "unknown",
+      "replay_class": "external_idempotent",
+      "observed_state": "committed"
+    },
+    "predicate": "exact scoped key and intent map to one logical effect",
+    "status": "verified",
+    "evidence_ref": "sha256:4fbcd0ec8abb50000785bad08b216d5eda8b3cece6a953c7f671ad9b3147723b"
+  }
+}

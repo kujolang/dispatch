@@ -1,0 +1,758 @@
+[
+  {
+    "profile": "ability.application-gateway",
+    "case": "run_id",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "step_id",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "attempt_id",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "effect_id",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "result_sha256",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "target",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "scope",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "key",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "request",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "precondition",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "transaction",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "profile",
+    "decision": "unsupported",
+    "reason_category": "unsupported_profile"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "profile-version",
+    "decision": "unsupported",
+    "reason_category": "unsupported_profile"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "alpha",
+    "decision": "unsupported",
+    "reason_category": "unsupported_envelope"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "issuer",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "expired",
+    "decision": "blocked",
+    "reason_category": "freshness_failed"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "future",
+    "decision": "blocked",
+    "reason_category": "freshness_failed"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "whitespace",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "reordered",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "duplicate-key",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "extra-field",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "newline-id",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "result-bytes",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "multi-effect",
+    "decision": "blocked",
+    "reason_category": "result_policy_denied"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "non-idempotent",
+    "decision": "blocked",
+    "reason_category": "result_policy_denied"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "opaque-attempt",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "revoked",
+    "decision": "blocked",
+    "reason_category": "authority_revoked"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "missing-revision",
+    "decision": "configuration_error",
+    "reason_category": "configuration_unavailable"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "code-substitution",
+    "decision": "configuration_error",
+    "reason_category": "configuration_unavailable"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "authority-substitution",
+    "decision": "configuration_error",
+    "reason_category": "configuration_unavailable"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "new-revision-only",
+    "decision": "configuration_error",
+    "reason_category": "configuration_unavailable"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "policy-downgrade",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "alpha-policy",
+    "decision": "unsupported",
+    "reason_category": "unsupported_envelope"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "legacy-policy",
+    "decision": "unsupported",
+    "reason_category": "unsupported_envelope"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "live-ok-only",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "live-wrong-transaction",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "live-old-read",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "live-wrong-predicate",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "live-wrong-revision",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "live-failed",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "evidence-url",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "ability.application-gateway",
+    "case": "oversize",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "run_id",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "step_id",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "attempt_id",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "effect_id",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "result_sha256",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "target",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "scope",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "key",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "request",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "precondition",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "transaction",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "profile",
+    "decision": "unsupported",
+    "reason_category": "unsupported_profile"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "profile-version",
+    "decision": "unsupported",
+    "reason_category": "unsupported_profile"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "alpha",
+    "decision": "unsupported",
+    "reason_category": "unsupported_envelope"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "issuer",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "expired",
+    "decision": "blocked",
+    "reason_category": "freshness_failed"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "future",
+    "decision": "blocked",
+    "reason_category": "freshness_failed"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "whitespace",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "reordered",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "duplicate-key",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "extra-field",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "newline-id",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "result-bytes",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "multi-effect",
+    "decision": "blocked",
+    "reason_category": "result_policy_denied"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "non-idempotent",
+    "decision": "blocked",
+    "reason_category": "result_policy_denied"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "opaque-attempt",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "revoked",
+    "decision": "blocked",
+    "reason_category": "authority_revoked"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "missing-revision",
+    "decision": "configuration_error",
+    "reason_category": "configuration_unavailable"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "code-substitution",
+    "decision": "configuration_error",
+    "reason_category": "configuration_unavailable"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "authority-substitution",
+    "decision": "configuration_error",
+    "reason_category": "configuration_unavailable"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "new-revision-only",
+    "decision": "configuration_error",
+    "reason_category": "configuration_unavailable"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "policy-downgrade",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "alpha-policy",
+    "decision": "unsupported",
+    "reason_category": "unsupported_envelope"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "legacy-policy",
+    "decision": "unsupported",
+    "reason_category": "unsupported_envelope"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "live-ok-only",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "live-wrong-transaction",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "live-old-read",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "live-wrong-predicate",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "live-wrong-revision",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "live-failed",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "evidence-url",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "workcell.git-cas",
+    "case": "oversize",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "run_id",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "step_id",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "attempt_id",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "effect_id",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "result_sha256",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "target",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "scope",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "key",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "request",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "precondition",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "transaction",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "profile",
+    "decision": "unsupported",
+    "reason_category": "unsupported_profile"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "profile-version",
+    "decision": "unsupported",
+    "reason_category": "unsupported_profile"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "alpha",
+    "decision": "unsupported",
+    "reason_category": "unsupported_envelope"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "issuer",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "expired",
+    "decision": "blocked",
+    "reason_category": "freshness_failed"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "future",
+    "decision": "blocked",
+    "reason_category": "freshness_failed"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "whitespace",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "reordered",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "duplicate-key",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "extra-field",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "newline-id",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "result-bytes",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "multi-effect",
+    "decision": "blocked",
+    "reason_category": "result_policy_denied"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "non-idempotent",
+    "decision": "blocked",
+    "reason_category": "result_policy_denied"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "opaque-attempt",
+    "decision": "blocked",
+    "reason_category": "binding_mismatch"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "revoked",
+    "decision": "blocked",
+    "reason_category": "authority_revoked"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "missing-revision",
+    "decision": "configuration_error",
+    "reason_category": "configuration_unavailable"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "code-substitution",
+    "decision": "configuration_error",
+    "reason_category": "configuration_unavailable"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "authority-substitution",
+    "decision": "configuration_error",
+    "reason_category": "configuration_unavailable"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "new-revision-only",
+    "decision": "configuration_error",
+    "reason_category": "configuration_unavailable"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "policy-downgrade",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "alpha-policy",
+    "decision": "unsupported",
+    "reason_category": "unsupported_envelope"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "legacy-policy",
+    "decision": "unsupported",
+    "reason_category": "unsupported_envelope"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "live-ok-only",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "live-wrong-transaction",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "live-old-read",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "live-wrong-predicate",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "live-wrong-revision",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "live-failed",
+    "decision": "blocked",
+    "reason_category": "verification_failed"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "evidence-url",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  },
+  {
+    "profile": "dispatch.sqlite-unique",
+    "case": "oversize",
+    "decision": "blocked",
+    "reason_category": "contract_invalid"
+  }
+]

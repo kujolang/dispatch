@@ -1,0 +1,22 @@
+{
+  "schema": "dispatch.assurance-profile-manifest/v1",
+  "advisory": true,
+  "owner": "kujolang",
+  "profile_id": "workcell.git-cas",
+  "versions": [
+    {
+      "profile_version": "1alpha1",
+      "envelope": "dispatch.effect-assurance/v1alpha1"
+    },
+    {
+      "profile_version": "1beta1",
+      "envelope": "dispatch.effect-assurance/v1beta1"
+    }
+  ],
+  "verified_predicate": "exact intent marker and target ref satisfy CAS postcondition",
+  "vectors": "../../tests/vectors/git-assurance-commitments.json",
+  "conformance": "dispatch.effect-assurance-conformance/v1",
+  "multi_effect": false,
+  "live_verification": true,
+  "beta_binding_schema": "bindings-v1beta1.schema.json"
+}
