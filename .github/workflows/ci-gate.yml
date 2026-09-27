@@ -155,6 +155,16 @@ jobs:
           "$KUJO_BIN" run .ci/kennel-wave-d/kennel.kujo --interpreter -- install --project-dir "$GITHUB_WORKSPACE/.ci/agents-sdk-wave-d"
           echo "AGENTS_SDK_ROOT=$GITHUB_WORKSPACE/.ci/agents-sdk-wave-d" >> "$GITHUB_ENV"
 
+      - name: Checkout controlled MCP participant
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: kujolang/mcp
+          ref: f226601be08a48e7b9083f0cd3c6b42c1e43aac2
+          path: .ci/mcp-wave-d
+
+      - name: Configure controlled MCP fixture
+        run: echo "MCP_ROOT=$GITHUB_WORKSPACE/.ci/mcp-wave-d" >> "$GITHUB_ENV"
+
       - name: Run Dispatch release gate
         timeout-minutes: 45
         run: bash scripts/run_release_gate.sh
