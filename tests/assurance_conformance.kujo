@@ -24,6 +24,13 @@ export func common_assurance_conformance(raw, document, expected, mapping, at) {
     unknown := {"profile": "future.profile", "version": "1alpha1"}
     assert(evaluate(document, required, unknown, [entry], at)["code"] == "compat_profile_unsupported"); checks = checks + 1
     assert(evaluate(document, optional, unknown, [entry], at)["action"] == "legacy"); checks = checks + 1
+    # Unsupported profile cannot erase understood failures or invalid framing.
+    for malformed in ["{", "[]", "{}"] {assert(evaluate(malformed, optional, unknown, [entry], at)["action"] == "blocked"); checks = checks + 1}
+    assert(evaluate(document, optional, unknown, [entry], doc["valid_until"])["action"] == "blocked"); checks = checks + 1
+    wrong_subject := doc; wrong_subject["result_sha256"] := sha256("different historical bytes")
+    assert(evaluate(to_json(wrong_subject), optional, unknown, [entry], at)["action"] == "blocked"); checks = checks + 1
+    extra := doc; extra["future_field"] := "ignored is unsafe"
+    assert(evaluate(to_json(extra), optional, unknown, [entry], at)["action"] == "blocked"); checks = checks + 1
     revoked := entry; revoked["status"] := "revoked"
     disabled := entry; disabled["status"] := "disabled"
     for policy in [required, optional] {
@@ -60,6 +67,7 @@ export func common_assurance_conformance(raw, document, expected, mapping, at) {
     oversized := ""
     for index in range(0, 8193) {oversized = oversized + " "}
     assert(evaluate(oversized, optional, selected, [entry], at)["action"] == "blocked"); checks = checks + 1
+    assert(evaluate(oversized, optional, unknown, [entry], at)["action"] == "blocked"); checks = checks + 1
     assert(evaluate(document, required, selected, [entry], at)["action"] == "verified"); checks = checks + 1
     assert(evaluate(document, required, selected, [revoked], at)["action"] == "blocked"); checks = checks + 1
     return {"profile": selected["profile"], "checks": checks, "historical_result_sha256": sha256(raw), "live_verification": true}

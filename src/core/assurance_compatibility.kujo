@@ -3,7 +3,7 @@
 from src.core.utils import dict_get_or
 from src.core.control import validate_execution_result
 from src.core.intervention import retry_is_effect_safe
-from src.core.effect_assurance import resolve_effect_assurance
+from src.core.effect_assurance import resolve_effect_assurance, validate_effect_assurance_shape
 
 func outcome(action, code, verified) {return {"ok": (action == "verified"||action == "legacy"), "action": action, "code": code, "assurance_verified": verified}}
 func legacy(result, code) {
@@ -53,15 +53,28 @@ export func evaluate_assurance_compatibility(result_raw, assurance_raw, expected
         if matched != null&&matched["status"] == "revoked" {return outcome("blocked", "compat_profile_revoked", false)}
         if matched != null&&matched["status"] == "disabled" {return outcome("configuration_error", "compat_profile_disabled", false)}
         known := mechanism(selected["profile"], selected["version"])
+        if known != ""&&matched == null {return outcome("configuration_error", "compat_verifier_unconfigured", false)}
+        if matched != null&&matched["assurance"] != expected["assurance"] {return outcome("configuration_error", "compat_authority_mismatch", false)}
+        # Framing and understood envelope failures outrank unsupported-profile
+        # fallback. Unknown envelopes remain uninterpreted, not partially trusted.
+        doc := null
+        if assurance_raw != null {
+            if type(assurance_raw) != "string"||byte_length(assurance_raw) > 8192 {return outcome("blocked", "compat_assurance_invalid", false)}
+            doc = parse_json(assurance_raw)
+            if type(doc) != "dict"||type(dict_get_or(doc, "schema", null)) != "string"||len(doc["schema"]) == 0||len(doc["schema"]) > 128 {return outcome("blocked", "compat_assurance_invalid", false)}
+            if doc["schema"] == "dispatch.effect-assurance/v1alpha1" {
+                if known != ""&&dict_get_or(doc, "mechanism", "") != known {return outcome("blocked", "compat_profile_mismatch", false)}
+                if validate_effect_assurance_shape(doc) == false {return outcome("blocked", "assurance_contract_invalid", false)}
+                if type(at_seconds) != "int"||at_seconds < 0||at_seconds > 253402300799 {return outcome("blocked", "assurance_clock_invalid", false)}
+                if at_seconds < doc["valid_from"]||at_seconds >= doc["valid_until"] {return outcome("blocked", "assurance_expired_or_future", false)}
+                for field in ["issuer", "assurance", "run_id", "step_id", "attempt_id", "effect_id", "result_sha256", "operation", "target_sha256", "scope_sha256", "key_sha256", "request_sha256", "precondition_sha256", "transaction_sha256", "reported_state", "replay_class"] {
+                    if doc[field] != dict_get_or(expected, field, null) {return outcome("blocked", "assurance_binding_mismatch", false)}
+                }
+            }
+        }
         if known == "" {return unavailable(result, policy, "compat_profile_unsupported")}
-        if matched == null {return outcome("configuration_error", "compat_verifier_unconfigured", false)}
-        if matched["assurance"] != expected["assurance"] {return outcome("configuration_error", "compat_authority_mismatch", false)}
-        if assurance_raw == null {return unavailable(result, policy, "compat_assurance_absent")}
-        if type(assurance_raw) != "string"||byte_length(assurance_raw) > 8192 {return outcome("blocked", "compat_assurance_invalid", false)}
-        doc := parse_json(assurance_raw)
-        if type(doc) != "dict"||type(dict_get_or(doc, "schema", null)) != "string" {return outcome("blocked", "compat_assurance_invalid", false)}
+        if doc == null {return unavailable(result, policy, "compat_assurance_absent")}
         if doc["schema"] != "dispatch.effect-assurance/v1alpha1" {return unavailable(result, policy, "compat_envelope_unsupported")}
-        if dict_get_or(doc, "mechanism", "") != known {return outcome("blocked", "compat_profile_mismatch", false)}
         registry := {}; registry[expected["issuer"]] := {"assurance": matched["assurance"], "verify": matched["verify"]}
         resolved := resolve_effect_assurance(result_raw, assurance_raw, expected, registry, at_seconds)
         if resolved["ok"] == false {return outcome("blocked", resolved["code"], false)}

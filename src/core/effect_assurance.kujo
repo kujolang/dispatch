@@ -48,6 +48,9 @@ func valid_document(doc) {
     return doc["valid_until"] > doc["valid_from"]&&doc["valid_until"] - doc["valid_from"] <= 3600
 }
 
+# Shared closed-envelope validation; this is shape, never authenticated proof.
+export validate_effect_assurance_shape := valid_document
+
 export func load_effect_assurance(root, relative_path, expected_digest) {
     try {
         if digest(expected_digest) == false {return denied("assurance_digest_invalid")}
