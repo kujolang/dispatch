@@ -17,6 +17,8 @@ export TMPDIR="$root"
 "$KUJO_BIN" run tests/durable_review_fixture.kujo "$root" > "$root/first.log" 2>&1
 id="$(jq -r .run_id "$root/decision.json")"
 checkpoint="$(jq -r .checkpoint.checkpoint_id "$root/checkpoint.json")"
+"$KUJO_BIN" run dispatch.kujo checkpoint "$id" --output-root "$output_root" > "$root/republished.json"
+jq -e --slurpfile first "$root/checkpoint.json" '. == $first[0]' "$root/republished.json" > /dev/null
 state="$root/runs/$id/state.json"
 jq -e '.status == "paused" and .steps[2].attempts == 0' "$state" > /dev/null
 cp "$state" "$root/paused-state.json"

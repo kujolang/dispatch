@@ -18,6 +18,9 @@ func checkpoint_ready(state) {
     boundary := dict_get_or(state, "current_control_boundary", {})
     request := dict_get_or(state, "human_intervention", {})
     if type(boundary) != "dict"||type(request) != "dict" {return false}
+    if dict_get_or(boundary, "schema", "") != "kujo.control-boundary/v1"||type(dict_get_or(boundary, "boundary_id", null)) != "string"||trim(dict_get_or(boundary, "boundary_id", "")) == "" {return false}
+    journal := dict_get_or(state, "control_journal", {})
+    if type(journal) != "dict"||type(dict_get_or(journal, "sequence", null)) != "int"||dict_get_or(journal, "sequence", 0) < 1 {return false}
     if dict_get_or(state, "status", "") != "paused"||dict_get_or(boundary, "status", "") != "open" {return false}
     if dict_get_or(request, "schema", "") != "kujo.intervention-request/v2"||dict_get_or(request, "state_revision", -1) != state["revision"] {return false}
     if dict_get_or(request, "boundary_id", "") != dict_get_or(boundary, "boundary_id", "") {return false}

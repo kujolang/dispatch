@@ -21,6 +21,10 @@ and confined relative reference, input/workflow/control-policy SHA, and existing
 control-journal cursor. Snapshot content includes existing run/step/attempt IDs,
 capability declarations, result/effect/evidence references, preservation,
 evaluation and intervention. Only read-time `health` diagnostics are excluded.
+References are bound as persisted data; this does not recursively copy or verify
+every external referenced artifact. Producers/materializers retain their existing
+verification duties, and an authorized override can accept an outcome without
+replaying it. Keep referenced evidence available for review and later validation.
 There is no new lifecycle or claim that declarations prove enforcement. Runtime
 environment and materialization identities remain the existing producer-owned
 descriptor contract, not independently attested by this manifest.

@@ -53,6 +53,9 @@ test "checkpoint refuses changed revision or in-flight work" {
     state := paused_checkpoint_run()
     checkpoint := publish_review_checkpoint(state["output_root"], state["run_id"])
     loaded := load_run_state(state["output_root"], state["run_id"])["run_state"]
+    invalid := loaded
+    boundary := invalid["current_control_boundary"]; boundary["schema"] := "unknown"; invalid["current_control_boundary"] := boundary
+    assert_equal(validate_review_checkpoint(invalid, checkpoint["checkpoint"]["checkpoint_id"])["error"]["code"], "checkpoint_boundary_not_ready")
     input := loaded["input"]; input["changed"] := true; loaded["input"] := input
     assert_equal(validate_review_checkpoint(loaded, checkpoint["checkpoint"]["checkpoint_id"])["error"]["code"], "stale_checkpoint")
     steps := loaded["steps"]; step := steps[1]; step["status"] := "running"; steps[1] := step; loaded["steps"] := steps
