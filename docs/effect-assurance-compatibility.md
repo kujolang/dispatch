@@ -328,7 +328,7 @@ No group representation or multi-effect admission is implemented here.
 |---|---|
 | 0: legacy v1 | Existing trusted integrations and effect references; no fabricated assurance. |
 | 1: controlled sidecars | Current three-family prototype: opt-in host mappings, exact retained bytes, real failure tests. |
-| 2: explicit negotiation | This specification/reference evaluator and advisory catalog; next implement persistent operator selection, config revisions and downgrade-resistant restart/rollback behavior. |
+| 2: explicit negotiation | This specification/reference evaluator and advisory catalog; opt-in persisted operator selection, exact configuration revisions and restart/rollback guards are implemented. See [persisted negotiation](persisted-assurance-negotiation.md) for the bounded local API and storage compatibility boundary. |
 | 3: required deployments | Only after mixed-version/controller migration tests, operators explicitly require assurance for selected external replay boundaries. Never globally enable implicitly. |
 | 4: broader conformance | Independently maintained adapters/consumers pass conformance and security review; remote trust remains separate work. |
 
@@ -404,8 +404,14 @@ Remote trust and multi-effect support are not implicit prerequisites for a clear
 scoped local single-effect v1, but MUST remain explicitly unsupported until proven.
 No stable/promoted claim is made by this assignment.
 
-**Recommended next task:** implement compatibility negotiation in persisted
-Dispatch admission paths: operator-owned mode/profile/configuration revision,
-reload under lock, downgrade-resistant restart and mixed-version/rollback tests.
-Use this reference evaluator; do not add adapters, global enablement, result/v2,
-remote PKI or multi-effect execution in that slice.
+**Implementation status (unreleased):** [Persisted negotiation](persisted-assurance-negotiation.md)
+now binds operator policy/configuration revisions to authoritative run state and the
+control journal, with locked live resolution, restart tests, three real profile paths
+and actual previous-controller refusal. Protected state uses a guarded codec because
+older readers ignore additive authority fields. Legacy runs retain v1 semantics.
+
+**Recommended next task:** beta contract design/review for the bounded local,
+single-effect profile. Review the guarded storage boundary, operator installation
+contract, reason-code stability and migration/retention rules against the retained
+test evidence. Do not promote automatically, enable globally, or add remote/multi-effect
+semantics. Alpha remains opt-in and unreleased.

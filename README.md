@@ -2,7 +2,7 @@
 
 Unreleased experimental addition: [effect assurance validation](docs/effect-assurance.md) with SQLite, Git and Ability adapters; legacy v1 replay behavior is unchanged.
 
-Compatibility authority: [effect assurance compatibility and migration](docs/effect-assurance-compatibility.md). This defines experimental profile negotiation, explicit fallback and required-policy boundaries. Existing audit documents remain historical evidence; global admission is unchanged.
+Compatibility authority: [effect assurance compatibility and migration](docs/effect-assurance-compatibility.md). This defines experimental profile negotiation, explicit fallback and required-policy boundaries. [Persisted negotiation](docs/persisted-assurance-negotiation.md) now binds opt-in run authority to immutable operator policy/configuration revisions across controller replacement. Existing audit documents remain historical evidence; global admission is unchanged.
 
 Source-main addition: [durable review checkpoints](docs/review-checkpoints.md)
 bind paused authority and journal evidence before a fresh controller continues.
@@ -469,7 +469,7 @@ persistence, retention, and export.
 
 All run artifacts (`state.json`, `trace.json`, `trace.md`, `report.*`, the run index, and signed bundles) are written atomically: content is staged to a temporary file and renamed into place, so a crash or a concurrent reader never observes a partially written file. The run index (`.dispatch-run-index.json`) is a cache that can be rebuilt from per-run `state.json` files; `runs` and `doctor` fall back to scanning state when the index is missing or malformed. For strict isolation under heavy concurrency, use a dedicated `--output-root` per service.
 
-Contract metadata is embedded in persisted machine-readable artifacts: `state.json`, `trace.json`, and `report.json` include `artifact_contract_version`, `schema_name`, and `schema_version` fields to support schema-aware integrations and forward-compatible readers.
+Protected assurance-aware state uses the guarded codec documented in [persisted negotiation](docs/persisted-assurance-negotiation.md); use the state loader instead of parsing its raw storage as JSON. Legacy state remains JSON. Contract metadata is embedded in persisted machine-readable artifacts: `state.json`, `trace.json`, and `report.json` include `artifact_contract_version`, `schema_name`, and `schema_version` fields to support schema-aware integrations and forward-compatible readers.
 
 Dispatch redacts sensitive fields (for example keys containing `api_key`, `token`, `authorization`, `secret`, `password`) before writing persisted artifacts.
 

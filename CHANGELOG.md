@@ -1,5 +1,7 @@
 # Changelog
 
+Unreleased: opt-in persisted effect-assurance negotiation binds mode/fallback, exact profile/version and trusted configuration revision to run state and journal. Locked admission rechecks installed authority, verifier bytes, freshness and revocation. Protected storage refuses old controllers; checkpoints and signed bundles retain policy, and imported runs without surviving journal authority cannot resume. Legacy v1 replay rules and effect/result schemas are unchanged. See docs/persisted-assurance-negotiation.md and its audit evidence.
+
 ## Unreleased — effect assurance prototype and compatibility
 
 - Add the canonical compatibility/migration specification, opt-in reference policy evaluator, bounded advisory capability catalog and shared live-adapter conformance. No global enablement or v1 result change.

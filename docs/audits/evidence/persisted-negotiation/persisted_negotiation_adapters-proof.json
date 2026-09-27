@@ -1,0 +1,34 @@
+{
+  "root": "tests/tmp/persisted-adapters-1790511601283",
+  "proofs": [
+    {
+      "family": "sqlite",
+      "required": true,
+      "fresh_controller": true,
+      "checkpoint": true,
+      "descendant": true,
+      "logical_effects": 1,
+      "config_revision": "d12cb7613529f94487acb504b37d1f9ad7ed71c0dacef1c50805703ddf24af24"
+    },
+    {
+      "family": "git",
+      "required": true,
+      "fresh_controller": true,
+      "checkpoint": true,
+      "descendant": true,
+      "logical_effects": 1,
+      "config_revision": "81cf73484e78b054d37d0946e687dbc8ae3dc3fba0d709d14e6894360d4d512f"
+    },
+    {
+      "family": "ability",
+      "required": true,
+      "fresh_controller": true,
+      "checkpoint": true,
+      "descendant": true,
+      "logical_effects": 1,
+      "config_revision": "f48b39d287acc38cb2e00a93f1b03e2f2801ba3e86e88fc23c2888b928be67a0"
+    }
+  ],
+  "privacy": true,
+  "source_stdout_sha256": "8543e82fd21dc8fb8f433f4f8ba6aabf1f03d13ca58784ca108b029bd5d6b075"
+}

@@ -1,0 +1,107 @@
+{
+  "root": "tests/tmp/persisted-negotiation-1790511461361",
+  "proofs": [
+    {
+      "scenario": "required-fresh-controller-weaker-default",
+      "ok": true,
+      "revision": "b04e640c9fe4b3f75d7c5d6f5466d8803f3b34248bc1f8f7f81d1ee4cfd70a29"
+    },
+    {
+      "scenario": "revision-missing",
+      "code": "assurance_policy_revision_missing"
+    },
+    {
+      "scenario": "revision-revoked",
+      "code": "assurance_policy_revision_revoked"
+    },
+    {
+      "scenario": "revision-substituted",
+      "code": "assurance_configuration_mismatch"
+    },
+    {
+      "scenario": "revision-changed-verifier",
+      "code": "assurance_configuration_mismatch"
+    },
+    {
+      "scenario": "revision-implementation-replaced",
+      "code": "assurance_verifier_revision_mismatch"
+    },
+    {
+      "scenario": "optional-absent",
+      "ok": true
+    },
+    {
+      "scenario": "optional-unknown-profile",
+      "ok": true
+    },
+    {
+      "scenario": "optional-unknown-envelope",
+      "ok": true
+    },
+    {
+      "scenario": "optional-invalid-selected",
+      "code": "assurance_contract_invalid"
+    },
+    {
+      "scenario": "optional-deleted-selected",
+      "code": "assurance_selected_evidence_unavailable"
+    },
+    {
+      "scenario": "optional-expired",
+      "code": "assurance_expired_or_future"
+    },
+    {
+      "scenario": "optional-revoked-selected",
+      "code": "assurance_policy_revision_revoked"
+    },
+    {
+      "scenario": "delayed-revoke-before-action-and-running-restart",
+      "blocked": true
+    },
+    {
+      "scenario": "delayed-expire-before-action-and-running-restart",
+      "blocked": true
+    },
+    {
+      "scenario": "optional-deny",
+      "code": "compat_assurance_absent"
+    },
+    {
+      "scenario": "oversized-association-no-authority-mutation",
+      "blocked": true
+    },
+    {
+      "scenario": "manual-policy-tamper",
+      "blocked": true
+    },
+    {
+      "scenario": "stale-checkpoint",
+      "code": "stale_checkpoint"
+    },
+    {
+      "scenario": "selection-removed",
+      "code": "assurance_journal_state_mismatch"
+    },
+    {
+      "scenario": "retained-r1-and-new-r2",
+      "ok": true
+    },
+    {
+      "scenario": "state-rollback",
+      "code": "control_recovery_required"
+    },
+    {
+      "scenario": "sqlite-authority-over-stale-json-and-weaker-backend",
+      "ok": true
+    },
+    {
+      "scenario": "bundle-preserves-policy-without-claiming-portable-recovery",
+      "ok": true
+    },
+    {
+      "scenario": "actual-63d8097-controller-refuses-protected-filesystem-sqlite-and-import",
+      "ok": true
+    }
+  ],
+  "source_stdout_sha256": "6de2501d85c3e87257e407267bd7f3204bc3aef94099b952632983ff29678545"
+}

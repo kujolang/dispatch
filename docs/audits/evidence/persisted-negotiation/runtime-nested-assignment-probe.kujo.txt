@@ -1,0 +1,5 @@
+store := {"selected": "r1", "revisions": {"r1": {"status": "active"}}}
+item := store["revisions"][store["selected"]]
+item["status"] := "revoked"
+store["revisions"][store["selected"]] := item
+print(to_json(store))

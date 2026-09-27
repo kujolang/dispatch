@@ -1,0 +1,25 @@
+{
+  "implementation_commit": "006ff1a2a7e7fc2e1326afa8847fffeb1305e85e",
+  "fixture_commit": "fb7d7c6e358b7e3e1ee91af0b166c8a25d48284b",
+  "files": {
+    ".github/workflows/ci-gate.yml": "fae5aaa67b30a34d34ef108763320d2a79617d3006cfdefc7ce0fa00354fe9a0",
+    ".github/workflows/release-artifacts.yml": "d322b8b950b8b68c05f96b2628e5865e622c22f138a81d944a3882b336bd45dc",
+    "schemas/assurance-configuration-v1alpha1.schema.json": "229d3e1e74ded19f3b2fe087b8ef4989aef34d13dbd83bd581c852d3246128c7",
+    "schemas/assurance-negotiation-v1alpha1.schema.json": "bb421c420ef28e8b304f9dca8fc719d52fb7283885fe24d2f7829f328f80d19c",
+    "scripts/run_release_gate.sh": "0303f74d60ad1b99349e103a7e95e871dcad7e177dac5d8cf95fb776a08bc465",
+    "src/core/assurance_admission.kujo": "e8e5a9e0945e2f891d6f9d05491bf36091c25a0337aef0665b36da264d21e317",
+    "src/core/assurance_configuration.kujo": "4d6791152667e6b095402570e5c37181b0f3b4b09ab7694a21ef3ef47ec1506f",
+    "src/core/assurance_state.kujo": "bdfb03d2d6d2f0f34a55c4bbabaa5881462c748fe7db64e8265753c6e02fa398",
+    "src/core/control_journal.kujo": "6827f68404703f09872cefca5d171c146e13721f80e6623932216f39c35a7497",
+    "src/core/intervention.kujo": "655c1646b3f3facb56af7a9af67b5b95b6e60207e15e833e9d014b3511e4b40d",
+    "src/core/runner.kujo": "620c63e006f6d5f53f20b8ba622403526a3fa0cad68a8cbb52c03b93f4720e10",
+    "src/core/state.kujo": "cc59fb2f7d456d7c60900f564f4720135a4863db795df8e041854a87fa579c5d",
+    "src/core/state_store.kujo": "707179c81ed5eb682c245b4aacb976b90069cda031325c03cb31d5efc5be4001",
+    "tests/persisted_negotiation_adapters.mjs": "0155b314287d966bea9e85083b795c3951f6051eea59173c0ffd1981eee35bb1",
+    "tests/persisted_negotiation_contracts.kujo": "53f0742edb002ea9f05e12205063b9227f7a6303ad99e204470c7e63f4b46921",
+    "tests/persisted_negotiation_fixture.kujo": "0b4697a371cd7eca68dfd227dd68232e20e33f6a74237f751f29268c832ad20d",
+    "tests/persisted_negotiation_integration.mjs": "1e881cb6569425d3ea65057aea0f359bdaedc9dfc64a8a489b511875da616d24",
+    "tests/persisted_negotiation_legacy.kujo": "5615493a0681e3f610cbb822eac6504c199a162dc147742278429ec14377cbe5",
+    "tests/persisted_negotiation_schemas.kujo": "da20c7b18753de4f22a1da005ece3d28a324d4f4f77676d099afb8ea63399cb4"
+  }
+}
