@@ -1,4 +1,4 @@
-from src.core.assurance_state import assurance_policy, assurance_protected, validate_assurance_policy, validate_assurance_anchor, encode_authoritative_state, decode_authoritative_state, read_authoritative_state
+from src.core.assurance_state import assurance_feature, assurance_policy, assurance_protected, validate_assurance_policy, validate_assurance_anchor, encode_authoritative_state, decode_authoritative_state, read_authoritative_state
 from src.core.control_journal import append_control_event
 from src.core.memory import create_memory
 from src.core.state_store import state_store_write, state_store_load, state_backend
@@ -894,7 +894,7 @@ func create_run_state(workflow, input_payload, output_root, options) {
     if validate_assurance_policy(selection) == false {throw("assurance_policy_invalid")}
     state["assurance_negotiation"] := selection
     if assurance_protected(state) {
-        state["required_features"] := ["effect-assurance-negotiation/v1alpha1"]
+        state["required_features"] := [assurance_feature(selection)]
         storage := "filesystem"
         if state_backend() == "sqlite"||file_exists(output_root + "/.dispatch/state.db") {storage = "sqlite"}
         state["assurance_store"] := storage

@@ -1,5 +1,7 @@
+from src.core.portable_commitments import portable_digest
+from src.core.effect_assurance_beta import resolve_beta_assurance, beta_mechanism
 from src.core.utils import dict_get_or
-from src.core.assurance_state import assurance_policy, assurance_protected
+from src.core.assurance_state import beta_assurance_policy, assurance_policy, assurance_protected
 from src.core.assurance_compatibility import evaluate_assurance_compatibility
 
 func denial(code) {return {"ok": false, "code": code, "error": {"code": code, "message": "Persisted assurance authority could not admit this operation.", "retryable": false}}}
@@ -7,10 +9,15 @@ export func configuration_revision(descriptor) {
     fields := ["schema", "mode", "fallback", "profile", "profile_version", "issuer", "mechanism", "verifier_id", "verifier_version", "verifier_sha256", "authority_sha256"]
     if type(descriptor) != "dict"||len(keys(descriptor)) != len(fields) {throw("assurance_configuration_invalid")}
     for field in fields {if type(dict_get_or(descriptor, field, null)) != "string"||len(descriptor[field]) > 128 {throw("assurance_configuration_invalid")}}
-    if descriptor["schema"] != "dispatch.assurance-configuration/v1alpha1" {throw("assurance_configuration_unsupported")}
+    if contains(["dispatch.assurance-configuration/v1alpha1", "dispatch.assurance-configuration/v1beta1"], descriptor["schema"]) == false {throw("assurance_configuration_unsupported")}
     for field in ["verifier_sha256", "authority_sha256"] {if regex_match(descriptor[field], "^[0-9a-f]{64}$") == false {throw("assurance_configuration_invalid")}}
     for field in ["profile", "profile_version", "issuer", "mechanism", "verifier_id", "verifier_version"] {if regex_match(descriptor[field], "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$") == false {throw("assurance_configuration_invalid")}}
     if contains(["optional", "required"], descriptor["mode"]) == false||contains(["deny", "legacy_unavailable"], descriptor["fallback"]) == false||(descriptor["mode"] == "required"&&descriptor["fallback"] != "deny") {throw("assurance_policy_invalid")}
+    if descriptor["schema"] == "dispatch.assurance-configuration/v1beta1" {
+        if descriptor["mode"] != "required"||descriptor["fallback"] != "deny"||beta_mechanism(descriptor["profile"], descriptor["profile_version"]) != descriptor["mechanism"]||descriptor["mechanism"] == "" {throw("assurance_configuration_invalid")}
+        return portable_digest(descriptor)
+    }
+    if descriptor["profile_version"] == "1beta1" {throw("assurance_configuration_unsupported")}
     return sha256(to_json(descriptor))
 }
 # Host-owned bounded source manifest; paths never come from a producer or sidecar.
@@ -22,6 +29,7 @@ export func implementation_digest(files) {
 }
 export func negotiation_selection(descriptor) {
     revision := configuration_revision(descriptor)
+    if descriptor["schema"] == "dispatch.assurance-configuration/v1beta1" {return beta_assurance_policy(descriptor["mode"], descriptor["fallback"], descriptor["profile"], descriptor["profile_version"], revision)}
     return assurance_policy(descriptor["mode"], descriptor["fallback"], descriptor["profile"], descriptor["profile_version"], revision)
 }
 # Called under the run lock, again at execution. The host resolves the persisted
@@ -60,6 +68,11 @@ export func evaluate_run_assurance(state, options) {
             # Selected read failure is a denial, never null/absence fallback.
             document = read_file_beneath(state["run_dir"], selection["sidecar_ref"], 8192)
             if sha256(document) != selection["sidecar_sha256"] {return denial("assurance_digest_mismatch")}
+        }
+        if policy["schema"] == "dispatch.assurance-negotiation/v1beta1" {
+            beta := resolve_beta_assurance(raw, document, expected, descriptor, installed["verify"], parse_int(to_string(floor(now_utc_seconds()))))
+            if beta["ok"] == false {answer := denial(beta["code"]); answer["reason_category"] := beta["reason_category"]; return answer}
+            return {"ok": true, "resolution": beta, "expected": expected, "result_raw": raw}
         }
         entry := {"profile": descriptor["profile"], "version": descriptor["profile_version"], "issuer": descriptor["issuer"], "envelope": "dispatch.effect-assurance/v1alpha1", "status": "active", "assurance": expected["assurance"], "verify": installed["verify"]}
         # Unknown host profiles may use explicit optional fallback; known mechanism

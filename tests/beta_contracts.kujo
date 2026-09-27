@@ -1,0 +1,30 @@
+from src.core.portable_commitments import portable_json
+from src.core.assurance_state import beta_assurance_policy, encode_authoritative_state, decode_authoritative_state, validate_assurance_policy
+from src.core.assurance_configuration import configuration_revision, negotiation_selection
+args := args()
+config := parse_json(read_file("tests/vectors/commitments.json"))["vectors"]
+for vector in config {
+    if vector["name"] == "configuration-beta1" {
+        descriptor := vector["input"]
+        assert(configuration_revision(descriptor) == vector["sha256"])
+        policy := negotiation_selection(descriptor)
+        assert(validate_assurance_policy(policy))
+        state := {"assurance_negotiation": policy, "required_features": ["effect-assurance-negotiation/v1beta1"], "assurance_store": "filesystem"}
+        raw := encode_authoritative_state(state)
+        assert(starts_with(raw, "DISPATCH_ASSURANCE_STATE_V1BETA1\n"))
+        assert(decode_authoritative_state(raw) == state)
+        for feature in ["effect-assurance-negotiation/v1alpha1", "future"] {
+            changed := state; changed["required_features"] := [feature]; rejected := false
+            try {decode_authoritative_state(encode_authoritative_state(changed))} except err {rejected = true}
+            assert(rejected)
+        }
+        bad := descriptor; bad["schema"] := "dispatch.assurance-configuration/v1alpha1"
+        rejected := false; try {configuration_revision(bad)} except err {rejected = true}; assert(rejected)
+        bad = descriptor; bad["mode"] := "optional"
+        rejected = false; try {configuration_revision(bad)} except err {rejected = true}; assert(rejected)
+    }
+}
+for value in [1.25, 9007199254740992, {"not an ASCII key": true}] {
+    rejected := false; try {portable_json(value)} except err {rejected = true}; assert(rejected)
+}
+print("PASS beta policy/feature/configuration isolation and portable value bounds")
