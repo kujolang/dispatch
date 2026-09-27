@@ -40,7 +40,9 @@ Unknown manifest fields are rejected in v1; extensions require a new version.
 Use a private output directory and restrictive process umask (for example 077).
 Snapshots inherit persisted-state redaction and filesystem access policy; they
 can still contain private application data and are **not telemetry**. No snapshot
-is uploaded. Hashes are integrity checks, not authentication against someone
+is uploaded. Hashes bind the persisted redacted representation, not the original
+secret values; adapters must re-resolve authorized secret references when needed.
+Hashes are integrity checks, not authentication against someone
 able to rewrite both authority and evidence. Retention is run-owner policy;
 publication is explicit and each unchanged boundary creates only one checkpoint.
 
