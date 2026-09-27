@@ -1,0 +1,8 @@
+{
+  "status": "unavailable",
+  "command": "docker info --format '{{.ServerVersion}}'",
+  "exit_code": 1,
+  "reason": "Default Docker daemon Unix socket does not exist; no engine/image operations attempted.",
+  "closest_passing_proof": "Workcell offline suite and real local Git/SQLite process-crash fixtures",
+  "resume": "Start the operator-selected Docker daemon, verify local image availability, then run the Workcell documented integration gates. No Docker acceptance claimed."
+}

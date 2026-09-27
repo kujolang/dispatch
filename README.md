@@ -1,5 +1,7 @@
 # Dispatch
 
+Unreleased experimental addition: [effect assurance validation](docs/effect-assurance.md) with SQLite and Git adapters; legacy v1 replay behavior is unchanged.
+
 Source-main addition: [durable review checkpoints](docs/review-checkpoints.md)
 bind paused authority and journal evidence before a fresh controller continues.
 This is an unreleased, existing-store review boundary, not portable crash recovery.

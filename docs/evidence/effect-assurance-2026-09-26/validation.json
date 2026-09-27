@@ -1,0 +1,63 @@
+{
+  "runtime_source": "5d72aab4b99e7f8c01e4c208d6c97061934c7447",
+  "runtime_binary_sha256": "4ef726d0020b6df0be78da4b7e96a79d099d414efa83874676038da501a72a93",
+  "kujo": {
+    "commands": [
+      "cargo fmt --check",
+      "cargo check",
+      "CARGO_BUILD_JOBS=2 RUST_TEST_THREADS=2 bash scripts/release_gate.sh --full",
+      "cargo test --test readme_contracts --test architecture_docs_contract --test markdown_unchecked_contract --test repo_hygiene_contract"
+    ],
+    "exit_code": 0,
+    "dual": {
+      "passed": 149,
+      "skipped": 11
+    },
+    "interpreter": {
+      "passed": 149,
+      "skipped": 11
+    },
+    "optional_not_run": [
+      "cargo-deny unavailable",
+      "opt-in serve socket integration",
+      "opt-in benchmark smoke"
+    ],
+    "existing_audit_exception": "RUSTSEC-2025-0141"
+  },
+  "dispatch": {
+    "command": "KUJO_BIN=/tmp/kujo-wave-a-release-candidate-bin DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+    "exit_code": 0,
+    "shards": 24,
+    "sharded_tests": 101,
+    "control_boundary": 14,
+    "failure_gate_safety": 20,
+    "failure_gate_execution": 6,
+    "review_checkpoint": 4,
+    "real_effect_scenarios": 8,
+    "assurance_cases": 180,
+    "release_workloads": 3
+  },
+  "workcell": {
+    "command": "KUJO=/tmp/kujo-wave-a-release-candidate-bin WORKCELL_TEST_KUJO_VERSION=1.5.0 ./tests/run.sh",
+    "exit_code": 0,
+    "additional": [
+      "tests/quality.sh",
+      "tests/release_report.sh",
+      "tests/markdown_links.sh",
+      "tests/version_consistency.sh",
+      "tests/effect_assurance.sh",
+      "npm test --prefix adapters/official",
+      "npm run integrity:check --prefix adapters/official"
+    ],
+    "report_passed": 249,
+    "official_adapter_tests": 23,
+    "docker_live": "unavailable; isolated missing daemon socket",
+    "stable_runtime_pin_changed": false
+  },
+  "regressions": {
+    "watchdog_runledger_integration": "passed, 76 importer cases and real HTTP/restart/receipt path",
+    "runledger_full": "passed",
+    "assurance_interpreter": "schema and 4 historical readback/binding/issuer/expiry cases passed; no historical replay performed"
+  },
+  "wave_c": "design validated with two local adapters; opt-in prototype; broad migration unscheduled"
+}

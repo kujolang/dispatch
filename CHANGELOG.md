@@ -1,5 +1,7 @@
 # Changelog
 
+Unreleased experimental addition: [effect assurance validation](docs/effect-assurance.md) with SQLite and Git adapters; legacy v1 replay behavior is unchanged.
+
 ## Unreleased
 
 - Add immutable bounded `dispatch.review-checkpoint/v1` review snapshots and

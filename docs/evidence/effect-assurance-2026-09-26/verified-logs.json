@@ -1,0 +1,62 @@
+{
+  "kujo_full": {
+    "local_path": "/tmp/wave-c-kujo-gate.log",
+    "sha256": "e5d19aebcbfbbc8c37b5b84002b78e7125d44fcb4460e4f3e5bc48c4d9bb7162",
+    "bytes": 296339
+  },
+  "kujo_docs": {
+    "local_path": "/tmp/wave-c-kujo-docs.log",
+    "sha256": "1308f8b30b2cc685f7f1fcfe7223df69cfc74d8c060eb13fc6e935dbedfd2c42",
+    "bytes": 2166
+  },
+  "workcell_report": {
+    "local_path": "/tmp/wave-c-workcell-report.log",
+    "sha256": "903a17f8cd341981800f846d3acf1a8f6595275d02fd72b0e2ec3e813683622e",
+    "bytes": 929
+  },
+  "workcell_official_adapters": {
+    "local_path": "/tmp/wave-c-workcell-adapters.log",
+    "sha256": "e222b4a50a3ca4cd76f3a15635cf451cf19aff29bf0a2f289877e70aa35c0000",
+    "bytes": 2115
+  },
+  "workcell_integrity": {
+    "local_path": "/tmp/wave-c-workcell-integrity.log",
+    "sha256": "6d749172e63ea9d9e8f8ccec5a19acd74d86f489ff9528583fec71bbbeaad64a",
+    "bytes": 254
+  },
+  "wave_a_integration": {
+    "local_path": "/tmp/wave-c-wave-a-regression.log",
+    "sha256": "ed5d98eb1adb6cb9521956a2acd7d9635b1345fabf826ef3824e3454d7a7ca89",
+    "bytes": 89
+  },
+  "runledger_regression": {
+    "local_path": "/tmp/wave-c-runledger-regression.log",
+    "sha256": "d43da85b028ffde4ac5a23da8ad979aa8de1bfe290dd49a3c73bf14686f07055",
+    "bytes": 1754
+  },
+  "compensation_policy": {
+    "local_path": "/tmp/wave-c-failure-gate-final.log",
+    "sha256": "24434c02d3db6d21d7e66928fcbe6a7a5b1f1eb5cbdb6088ce6e84c6bdfcc384",
+    "bytes": 1681
+  },
+  "dispatch_full": {
+    "local_path": "/tmp/wave-c-dispatch-gate-final.log",
+    "sha256": "0250f138bb6558294b5b870c1954e18c9a9b44f475213e9bbbf5682b04c6060a",
+    "bytes": 7130
+  },
+  "workcell_full": {
+    "local_path": "/tmp/wave-c-workcell-gate-final.log",
+    "sha256": "ce0418ca120d6129af730496f140c5756dda664cfaec47b74e73338afad31655",
+    "bytes": 31760
+  },
+  "interpreter_cases": {
+    "local_path": "/tmp/wave-c-assurance-interpreter-cases.json",
+    "sha256": "d24990ec342961e001bdde35d0d85e55df17ab2a2b3b435edb3c261696a3dde6",
+    "bytes": 1023
+  },
+  "interpreter_schema": {
+    "local_path": "/tmp/wave-c-assurance-interpreter-schema.log",
+    "sha256": "d95aba4532c54939c2a30a721827e022b0a2f332b589242c310d95e8b89b5934",
+    "bytes": 82
+  }
+}

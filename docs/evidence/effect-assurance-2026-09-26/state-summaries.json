@@ -1,0 +1,170 @@
+[
+  {
+    "family": "sqlite",
+    "scenario": "before_commit",
+    "run_id": "run-1790478293522-7399",
+    "status": "completed",
+    "steps": [
+      {
+        "id": "action",
+        "status": "completed",
+        "control_attempt": 2
+      },
+      {
+        "id": "descendant",
+        "status": "completed",
+        "control_attempt": 1
+      }
+    ],
+    "state_sha256": "1a093e8d570826d6d555f16df6b58f5936d9b21156cf944ded9cdb3735c836b7",
+    "journal_sha256": "89a76ba9a11c6d5e8ea02fb27afb45b32ef024f9de17c2b6822ac841583b0255",
+    "journal_records": 6
+  },
+  {
+    "family": "sqlite",
+    "scenario": "after_commit",
+    "run_id": "run-1790478301851-9765",
+    "status": "completed",
+    "steps": [
+      {
+        "id": "action",
+        "status": "completed",
+        "control_attempt": 2
+      },
+      {
+        "id": "descendant",
+        "status": "completed",
+        "control_attempt": 1
+      }
+    ],
+    "state_sha256": "48070690a0e0697bfe04a1a6233e2c1be01e6d3efc2c393051f9ff4c04e469a3",
+    "journal_sha256": "b4cbecb73cb6702516173cf1778e40384901ca6180bfc67c87aa6e58e7b1ad48",
+    "journal_records": 6
+  },
+  {
+    "family": "sqlite",
+    "scenario": "expired",
+    "run_id": "run-1790478309693-7553",
+    "status": "paused",
+    "steps": [
+      {
+        "id": "action",
+        "status": "completed",
+        "control_attempt": 1
+      },
+      {
+        "id": "descendant",
+        "status": "pending",
+        "control_attempt": 1
+      }
+    ],
+    "state_sha256": "06c9bddc6f93e3c953b35ed7e9703e4e2ce673bee7584658b9a1386e5f1db4ac",
+    "journal_sha256": "480b0795b577fd1126de15a26ac745e89558476425c1498cff197f8bc4f35002",
+    "journal_records": 4
+  },
+  {
+    "family": "sqlite",
+    "scenario": "non-idempotent",
+    "run_id": "run-1790478321775-8573",
+    "status": "paused",
+    "steps": [
+      {
+        "id": "action",
+        "status": "completed",
+        "control_attempt": 1
+      },
+      {
+        "id": "descendant",
+        "status": "pending",
+        "control_attempt": 1
+      }
+    ],
+    "state_sha256": "81d221d2ec8110bf08b6ef74aa2bf024cd62c59c251dcadd1a289dfd323f235c",
+    "journal_sha256": "a597d7ca8aa770557360a5ace45416b9e59ff2ea3714be899f38ea29bf1d6264",
+    "journal_records": 4
+  },
+  {
+    "family": "git",
+    "scenario": "before_commit",
+    "run_id": "run-1790478324443-5972",
+    "status": "completed",
+    "steps": [
+      {
+        "id": "action",
+        "status": "completed",
+        "control_attempt": 2
+      },
+      {
+        "id": "descendant",
+        "status": "completed",
+        "control_attempt": 1
+      }
+    ],
+    "state_sha256": "c927dc7a3307a9c614f77062ce7951dbd2b8c0cf6af94172eee20b62cd50fd2f",
+    "journal_sha256": "9b42523895e573748986f0cb74a6f81947e14a99bcef96a3a67faf081eae4c81",
+    "journal_records": 6
+  },
+  {
+    "family": "git",
+    "scenario": "after_commit",
+    "run_id": "run-1790478335041-5981",
+    "status": "completed",
+    "steps": [
+      {
+        "id": "action",
+        "status": "completed",
+        "control_attempt": 2
+      },
+      {
+        "id": "descendant",
+        "status": "completed",
+        "control_attempt": 1
+      }
+    ],
+    "state_sha256": "580071624c3bd8eb5c793f982617bb3084b28cad81fd11235bf291e268acf3e7",
+    "journal_sha256": "958b5fabfefa9a7494703067c63214dbeced7285e57f9e31e28987c2952973c5",
+    "journal_records": 6
+  },
+  {
+    "family": "git",
+    "scenario": "expired",
+    "run_id": "run-1790478345559-9964",
+    "status": "paused",
+    "steps": [
+      {
+        "id": "action",
+        "status": "completed",
+        "control_attempt": 1
+      },
+      {
+        "id": "descendant",
+        "status": "pending",
+        "control_attempt": 1
+      }
+    ],
+    "state_sha256": "13de464325cc0882ab18a105935cfd277f9b467543aeafaef08b9875ece4e4e7",
+    "journal_sha256": "c8077ee5d5f7765439facdeb17e039a0ef56bd02968a9f04651cdd6555f22bfd",
+    "journal_records": 4
+  },
+  {
+    "family": "git",
+    "scenario": "non-idempotent",
+    "run_id": "run-1790478357798-8858",
+    "status": "paused",
+    "steps": [
+      {
+        "id": "action",
+        "status": "completed",
+        "control_attempt": 1
+      },
+      {
+        "id": "descendant",
+        "status": "pending",
+        "control_attempt": 1
+      }
+    ],
+    "state_sha256": "06a64818b5da060b090a37ff6b56ba780f2a2b0b44e0ad3d3561555bd32f2de2",
+    "journal_sha256": "a1eca7115fdaccf60330e0835f56e57eb4822ea98625110a2faf58a29057ecc0",
+    "journal_records": 4
+  }
+]
