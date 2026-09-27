@@ -105,5 +105,5 @@ Implementation commits: 5a605a6 (canonical specification/catalog/audit), 35e137d
 (reference evaluator/shared conformance), bbc3044 (review assertion refinement).
 Kujo f63d662 updates the roadmap and direction only. Final documentation/evidence
 is committed separately. No outstanding implementation defect was found in review.
-The next task is section 16 of the canonical specification: implement persisted
+The next task is the final recommendation in the canonical specification: implement persisted
 compatibility negotiation and downgrade-resistant admission, not another adapter.
