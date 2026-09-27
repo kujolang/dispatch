@@ -1,0 +1,15 @@
+from src.core.portable_commitments import portable_json
+args := args()
+checks := 0
+for path in args {
+    suite := parse_json(read_file(path))
+    for vector in suite["vectors"] {
+        raw := vector["input"]
+        if vector["recipe"] != "exact_utf8" {raw = portable_json(vector["input"])}
+        assert(raw == vector["preimage_utf8"], vector["name"])
+        assert(sha256(raw) == vector["sha256"], vector["name"])
+        if vector["recipe"] == "alpha_json" {assert(to_json(vector["input"]) == raw, "alpha bytes differ")}
+        checks = checks + 1
+    }
+}
+print(to_json({"checker": "kujo", "vectors": checks, "ok": true}))
