@@ -712,3 +712,5 @@ The optional `rag` plugin retrieves source-cited documentation from a configured
 An experimental [Agents SDK → Ability interoperability slice](docs/agents-sdk-ability.md)
 transports bounded evidence into the existing beta review/replay path. Dispatch
 retains replay authority; standalone SDK tools remain independent.
+
+Experimental Wave D: [controlled Workcell Git process interoperability](docs/git-process-participant.md) exercises a non-Ability effect with existing beta review/replay authority.

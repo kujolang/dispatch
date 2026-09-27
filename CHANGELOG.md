@@ -4,6 +4,8 @@ and restart behavior. Alpha retained; no core admission/schema behavior changed.
 
 # Changelog
 
+Unreleased: bounded non-Ability Workcell Git process correlation reader, real pre/post-CAS SIGKILL and checkpoint/replay fixtures, and four-participant comparison. Existing Git verifier, beta policy and v1 execution-result remain unchanged.
+
 Unreleased: local HTTP Ability correlation reader, real socket timeout/loss/duplicate fixtures and locked beta review/replay. No core replay policy changes.
 
 Unreleased: Experimental local MCP Ability correlation reader and real STDIO restart/review/replay fixtures; replay remains under existing persisted beta authority.

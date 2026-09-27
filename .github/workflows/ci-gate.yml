@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/workcell
-          ref: e66689a8cac6577c22dfaa6c8c5401123f362ce6
+          ref: 1940da0639b70b702c1b1077dda51ca39b065216
           path: .ci/workcell
           fetch-depth: 1
 
