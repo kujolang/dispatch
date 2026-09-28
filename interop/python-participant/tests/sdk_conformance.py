@@ -2,7 +2,7 @@
 import copy
 import json
 from kujo_participant import codec
-from kujo_participant.sdk import create_codec, content_ref, SDKError
+from kujo_participant.sdk import create_codec, content_ref, SDKError, CorrelationError
 
 def run():
     corpus=json.loads((codec.ASSETS/'sdk-conformance.json').read_text())
@@ -30,7 +30,9 @@ def run():
             elif mutation=='oversize': wire=b' '*6145
             elif mutation=='surrogate': wire=wire.replace(b'run-1',b'\\ud800')
             op=c['op']
-            if op=='match': result={'code':sdk.match_expected(wire,corpus['handoff'])}
+            if op=='match':
+                assert sdk.match_expected(wire,corpus['handoff']) is True
+                result={'code':'match'}
             elif op=='reference_string': content_ref(wire.decode()); raise AssertionError('accepted string')
             elif op=='reference': result={'code':'ok','ref':content_ref(bytes([0,255,10]))}
             else:
@@ -40,6 +42,7 @@ def run():
                      sdk.encode_handoff(sdk.parse_handoff(wire)))
                 result={'code':'ok','hex':raw.hex(),'ref':content_ref(raw),'value':sdk.parse_handoff(raw)}
         except SDKError as error:
+            if c['op']=='match': assert isinstance(error,CorrelationError)
             result={'code':error.code}
         assert result['code']==c['expected'],(c['name'],result,c['expected'])
         results.append(dict(name=c['name'],**result))

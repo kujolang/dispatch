@@ -6,6 +6,6 @@
   "core.schema.json": "e7ca18d1bd949d0a649905c122fb8d1d167b1e5a92437f3cf124156459846608",
   "commitment-vectors.json": "6ba4de9c599eb0c0abcf03ca7576dca1772dbf2d6f765f1f6274dd63275aae7b",
   "sdk-conformance.json": "2e5d04a84909321e1baa06c6f1ab819caf53b7dc4a41ca8b1e01fb019ae70e71",
-  "sdk-design.md": "b350a9684b56b51bbea8a9120ce7a09d6236b06b5b57e2a5d31066ba6fbed126",
+  "sdk-design.md": "6f805e5d5e1125b6689a5df6fd3e1ed73650124a81c150b8529f2e67ff3aea3e",
   "sdk-manifest.json": "fd7658d5b16a0d167c58ccf6392ec86e03a469dc2a0d80158607d490a1893cc2"
 }

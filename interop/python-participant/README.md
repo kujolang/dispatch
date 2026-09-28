@@ -114,7 +114,7 @@ The immutable callable tuple exposes `encode_handoff`, `parse_handoff`,
 `match_expected`, `provisional`, `terminal_report`, `finalize_after_readback`.
 Inputs/outputs use exact `bytes`; strings are not content-reference inputs.
 Malformed wire is rejected, never normalized into acceptance. `match_expected`
-returns `match` or a bounded correlation category; it is not admission.
+returns only `True` on match; otherwise it raises `CorrelationError.code`, never admission.
 
 The operator installs one copied closed registration (see `installed_sdk.py`).
 Never construct registration or host context from participant JSON. `provisional`
@@ -127,3 +127,17 @@ recording-only process after loss.
 Run `python -I run.py sdk-conformance` for the shared 45-case SDK corpus. The
 ordinary test command and isolated offline package test include it. The existing
 independent codec and pinned dependency lock remain. No publication or API freeze.
+
+Host-side use after admission (snapshots come from trusted host code, never input):
+
+```python
+wire = sdk.provisional(host_snapshot)  # knowledge is explicitly unknown
+# Host records durably, invokes its fixed effect and performs readback.
+final_wire = sdk.finalize_after_readback(final_host_snapshot)
+if sdk.match_expected(final_wire, final_host_snapshot) is not True:
+    raise ValueError('correlation_mismatch')
+# Matching is not replay permission; the host submits exact refs to Dispatch.
+```
+
+Use `sdk.terminal_report(reported_host_snapshot)` for a usable terminal report.
+A fresh recording-only worker needs no execution callback to finalize after loss.

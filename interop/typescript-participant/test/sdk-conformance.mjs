@@ -1,4 +1,4 @@
-import {createCodec,contentRef} from '../dist/sdk.js';
+import {createCodec,contentRef,CorrelationError} from '../dist/sdk.js';
 import {encode} from '../dist/codec.js';
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
@@ -22,14 +22,14 @@ for(const c of corpus.cases){
   if(c.wire==='invalid_utf8')wire=Buffer.from([255]);
   if(c.wire==='oversize')wire=Buffer.alloc(6145,32);
   if(c.wire==='surrogate')wire=Buffer.from(text.replace('run-1','\\ud800'));
-  if(c.op==='match')result={code:sdk.matchExpected(wire,corpus.handoff)};
+  if(c.op==='match'){assert.equal(sdk.matchExpected(wire,corpus.handoff),true);result={code:'match'};}
   else if(c.op==='reference_string'){contentRef(text);throw Error('accepted string');}
   else if(c.op==='reference')result={code:'ok',ref:contentRef(Buffer.from([0,255,10]))};
   else{
    const bytes=c.op==='provisional'?sdk.provisional(d):c.op==='terminal_report'?sdk.terminalReport(d):c.op==='finalize_after_readback'?sdk.finalizeAfterReadback(d):sdk.encodeHandoff(sdk.parseHandoff(wire));
    result={code:'ok',hex:Buffer.from(bytes).toString('hex'),ref:contentRef(bytes),value:sdk.parseHandoff(bytes)};
   }
- }catch(e){result={code:e.code??'unexpected'};}
+ }catch(e){if(c.op==='match')assert(e instanceof CorrelationError);result={code:e.code??'unexpected'};}
  assert.equal(result.code,c.expected,c.name);
  results.push({name:c.name,...result});
 }

@@ -9,6 +9,9 @@ class SDKError(ValueError):
         self.code = code
         super().__init__(code)
 
+class CorrelationError(SDKError):
+    pass
+
 def fail(code):
     raise SDKError(code)
 
@@ -92,8 +95,8 @@ def create_codec(registration):
                             ('participant_extension', 'extension_mismatch'), ('effect_extension', 'extension_mismatch'),
                             ('completion_knowledge', 'knowledge_mismatch')):
             if doc[field] != exp[field]:
-                return code
-        return 'match'
+                raise CorrelationError(code)
+        return True
 
     def record(doc, knowledge=None):
         raw = encode_handoff(doc)

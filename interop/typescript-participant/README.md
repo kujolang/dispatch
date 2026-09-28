@@ -170,7 +170,7 @@ load or implement that verifier. Only the host integration needs a Workcell chec
 The factory returns `encodeHandoff`, `parseHandoff`, `matchExpected`, `provisional`,
 `terminalReport`, `finalizeAfterReadback`. Wire inputs/outputs are exact
 `Uint8Array` bytes; legacy string APIs in `codec.ts` remain available for the proof.
-`matchExpected` returns `match` or a bounded correlation category, never permission.
+`matchExpected` returns only `true` on match; otherwise it throws `CorrelationError.code`, never permission.
 
 The host installs one closed registration once (example: `src/installed-sdk.ts`).
 Do not construct registrations or host snapshots from caller JSON. The factory
@@ -183,3 +183,19 @@ storage, readback or retry. A terminal error is a report, not proof of no effect
 Current participant/record workers use this surface. Shared SDK conformance runs
 in `npm test`; isolated copied-package tests include this API. No npm publication,
 API stability promise or remote trust is implied. Dependency lock is unchanged.
+
+Host-side use after host admission (context is host-created, not tool JSON):
+
+```ts
+const wire = sdk.provisional(hostSnapshot); // knowledge must already be unknown
+// The host durably records wire, invokes its fixed effect and performs readback.
+const finalWire = sdk.finalizeAfterReadback(finalHostSnapshot);
+if (sdk.matchExpected(finalWire, finalHostSnapshot) !== true) {
+  throw new Error('correlation_mismatch');
+}
+// Still no replay permission: the host submits exact refs to Dispatch.
+```
+
+For a usable terminal report use `sdk.terminalReport(reportedHostSnapshot)` instead.
+The host owns storage callbacks and their acknowledgements; the SDK never invokes
+an effect callback. A fresh worker can perform the finalization lines alone.

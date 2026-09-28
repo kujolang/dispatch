@@ -6,6 +6,7 @@ export type Field = 'identifier'|'sha256'|'reference'|'nullable_identifier';
 export type Extension = {schema:string,fields:Record<string,Field>};
 export type Registration = {namespace:string,participant:Extension,effect:Extension|null};
 export class SDKError extends Error {constructor(public readonly code:string){super(code);}}
+export class CorrelationError extends SDKError {}
 const fail=(code:string):never=>{throw new SDKError(code);};
 const exact=(x:any,keys:string[])=>x!==null&&typeof x==='object'&&!Array.isArray(x)&&Object.keys(x).length===keys.length&&keys.every(k=>Object.hasOwn(x,k));
 const schemaID=(s:any)=>typeof s==='string'&&s.length<=128&&/^[A-Za-z0-9][A-Za-z0-9_.:-]*\/v[1-9][0-9]*(?:alpha|beta)?[0-9]*$/.test(s)&&!/[\r\n]/.test(s);
@@ -45,10 +46,10 @@ export function createCodec(registration:Registration){
  const encodeHandoff=(doc:Doc):Uint8Array=>{
   try{const b=Buffer.from(encode(doc));parseHandoff(b);return b;}catch(e){if(e instanceof SDKError)throw e;return fail('invalid_handoff');}
  };
- const matchExpected=(bytes:Uint8Array,expected:Doc):string=>{
+ const matchExpected=(bytes:Uint8Array,expected:Doc):true=>{
   const d=parseHandoff(bytes),e=parseHandoff(encodeHandoff(expected));
-  for(const [field,code] of [['subject','subject_mismatch'],['participant','participant_mismatch'],['execution_result_ref','result_ref_mismatch'],['assurance_ref','assurance_ref_mismatch'],['participant_extension','extension_mismatch'],['effect_extension','extension_mismatch'],['completion_knowledge','knowledge_mismatch']])if(encode(d[field])!==encode(e[field]))return code;
-  return 'match';
+  for(const [field,code] of [['subject','subject_mismatch'],['participant','participant_mismatch'],['execution_result_ref','result_ref_mismatch'],['assurance_ref','assurance_ref_mismatch'],['participant_extension','extension_mismatch'],['effect_extension','extension_mismatch'],['completion_knowledge','knowledge_mismatch']])if(encode(d[field])!==encode(e[field]))throw new CorrelationError(code);
+  return true;
  };
  const record=(doc:Doc,knowledge?:string):Uint8Array=>{
   const bytes=encodeHandoff(doc);if(knowledge!==undefined&&parseHandoff(bytes).completion_knowledge!==knowledge)return fail('invalid_knowledge');return bytes;

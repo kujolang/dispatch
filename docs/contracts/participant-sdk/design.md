@@ -49,7 +49,7 @@ is outside the local model. JSON input cannot install code or context.
 | Encode handoff | Complete structured handoff | Canonical UTF-8 bytes | Validates all fields; no normalization of wire input |
 | Parse handoff | Exact bytes | Validated detached value | Canonical equality; no evidence lookup |
 | Content reference | Exact bytes | `sha256:` + lowercase hex | Hash only, no URL/path handling or authorization |
-| Match expected | Exact wire + complete host snapshot | `match` or bounded mismatch code | Both validated; includes knowledge/extensions; not admission |
+| Match expected | Exact wire + complete host snapshot | `true` or bounded `CorrelationError` | Both validated; includes knowledge/extensions; not admission |
 | Provisional | Host snapshot whose knowledge is `unknown` | Validated bytes | Rejects reported; never overwrites history |
 | Terminal report | Host snapshot whose knowledge is `reported` | Validated bytes | Usable report including error; not effect success |
 | Finalize after readback | New complete host snapshot with explicit knowledge | Validated bytes | Recording-only; does not perform/verify readback |
@@ -82,10 +82,12 @@ Codec operations throw a bounded error code, never input data:
 `invalid_handoff`, `bounds_exceeded`, `unsupported_extension`,
 `invalid_registration`, `invalid_knowledge`. Invalid identifiers, references,
 Unicode, JSON and closed fields are `invalid_handoff` (no unstable parser details).
-Correlation returns `match`, `subject_mismatch`, `participant_mismatch`,
+Correlation returns only boolean `true` on equality; mismatches raise a distinct
+`CorrelationError` with `subject_mismatch`, `participant_mismatch`,
 `result_ref_mismatch`, `assurance_ref_mismatch`, `extension_mismatch`, or
 `knowledge_mismatch`. Malformed operands throw codec errors; they do not become a
-correlation match. These are SDK alpha categories, not Dispatch reason codes.
+correlation match. A mismatch is never returned as a truthy string/object.
+These are SDK alpha categories, not Dispatch reason codes.
 
 ## Host sequence and capability separation
 
@@ -105,7 +107,9 @@ Remote identity/authentication and hostile operator protection are not implement
 ## Conformance and packaging
 
 The shared machine corpus is `conformance.json`; both language runners execute the
-same operations and expected categories. Existing 20 frozen wire vectors and the
+same operations and expected categories. Corpus `expected: "match"` denotes a
+strict boolean-true return; mismatch categories denote `CorrelationError.code`,
+not return strings. Codec categories denote `SDKError.code`. Existing 20 frozen wire vectors and the
 28-case/22-parser cross-runtime corpus remain mandatory, as do real pre/post-CAS
 process loss, fresh controller and one-use contention tests. Package isolation must
 copy source/build assets, pinned specs/schemas, manifest and dependency lock without
