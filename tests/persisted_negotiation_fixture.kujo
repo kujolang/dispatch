@@ -261,7 +261,7 @@ func installed_files(config) {
         for path in ["tests/typescript_registration.kujo","interop/typescript-participant/host/runner.mjs","interop/typescript-participant/dist/codec.js","interop/typescript-participant/dist/participant.js","interop/typescript-participant/dist/record.js","interop/typescript-participant/assets/manifest.json","interop/typescript-participant/package-lock.json"] {files = push(files,{"root":os_getcwd(),"path":path})}
     }
     if has_key(config,"native_participant")&&native_prefix(config) == "py" {
-        for path in ["tests/python_registration.kujo","interop/python-participant/host/runner.py","interop/python-participant/run.py","interop/python-participant/src/kujo_participant/codec.py","interop/python-participant/src/kujo_participant/process.py","interop/python-participant/assets/manifest.json","interop/python-participant/requirements.lock"] {files = push(files,{"root":os_getcwd(),"path":path})}
+        for path in ["tests/python_registration.kujo","interop/python-participant/host/runner.py","interop/python-participant/run.py","interop/python-participant/src/kujo_participant/__init__.py","interop/python-participant/src/kujo_participant/codec.py","interop/python-participant/src/kujo_participant/process.py","interop/python-participant/assets/manifest.json","interop/python-participant/requirements.lock"] {files = push(files,{"root":os_getcwd(),"path":path})}
     }
     return files
 }

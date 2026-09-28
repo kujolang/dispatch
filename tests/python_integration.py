@@ -77,6 +77,12 @@ for crash in ('before_commit','after_commit'):
     selected=root/'py-bound-handoff-1.ref';saved_ref=selected.read_bytes()
     original_handoff=(root/'artifacts'/(saved_ref.decode()[7:]+'.json')).read_bytes()
     if crash=='after_commit':
+        initializer=PACKAGE/'src/kujo_participant/__init__.py';original_initializer=initializer.read_bytes()
+        try:
+            initializer.write_bytes(original_initializer+b'\n')
+            assert not controller(root,'eval')['ok']
+        finally:initializer.write_bytes(original_initializer)
+        assert controller(root,'eval')['ok']
         mutations=[(['subject',k],'wrong') for k in ['run_id','step_id','attempt_id','effect_id']]
         mutations += [(['participant','invocation_id'],'wrong'),(['participant','namespace'],'other.owner'),
                       (['execution_result_ref'],'sha256:'+'d'*64),(['assurance_ref'],'sha256:'+'e'*64),
