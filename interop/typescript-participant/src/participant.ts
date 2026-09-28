@@ -1,6 +1,7 @@
 // No filesystem, Git, Dispatch or retry implementation. Host is an inherited IPC peer.
 import {randomUUID} from 'node:crypto';
-import {produce,request} from './codec.js';
+import {request} from './codec.js';
+import {sdk} from './installed-sdk.js';
 let next=0;
 function rpc(op: string, data: unknown): Promise<any> {
  return new Promise((resolve,reject)=>{
@@ -15,9 +16,9 @@ try {
  const input=request(JSON.parse(raw));
  const context=await rpc('admit',{...input,process_instance_id:randomUUID()});
  // Persist participant-authored UNKNOWN handoff before the effect can start.
- await rpc('record',produce(context));
+ await rpc('record',Buffer.from(sdk.provisional(context)).toString('utf8'));
  const completion=await rpc('execute',null);
- await rpc('record',produce(completion));
+ await rpc('record',Buffer.from(sdk.terminalReport(completion)).toString('utf8'));
  process.stdout.write('{"ok":true,"completion_knowledge":"reported"}\n');
  process.disconnect?.();
 } catch {process.stdout.write('{"ok":false,"code":"participant_unavailable"}\n');process.disconnect?.();process.exitCode=1;}

@@ -20,11 +20,13 @@ test('packaged assets retain exact published hashes',()=>{
 test('independent package runs away from all ecosystem checkouts and rejects schema substitution',()=>{
  const dest=fs.mkdtempSync(path.join(os.tmpdir(),'ts-interop-isolation-'));
  try{
-  for(const name of ['dist','assets','package.json'])fs.cpSync(root+'/'+name,dest+'/'+name,{recursive:true});
+  for(const name of ['dist','assets','package.json','package-lock.json','test'])fs.cpSync(root+'/'+name,dest+'/'+name,{recursive:true});
   // Only pinned generic npm libraries are shared; no ecosystem implementation source.
-  fs.symlinkSync(root+'/node_modules',dest+'/node_modules','dir');
+  fs.cpSync(root+'/node_modules',dest+'/node_modules',{recursive:true});
   const check=()=>spawnSync(process.execPath,['--input-type=module','-e',"import {encode} from './dist/codec.js';console.log(encode({b:null,a:'independent'}));"],{cwd:dest,env:{},encoding:'utf8',timeout:5000});
   assert.equal(check().stdout,'{"a":"independent","b":null}\n');assert.equal(check().status,0);
+  const sdk=spawnSync(process.execPath,['test/sdk-conformance.mjs'],{cwd:dest,env:{},encoding:'utf8',timeout:5000});
+  assert.equal(sdk.status,0,sdk.stderr);assert.equal(JSON.parse(sdk.stdout).cases.length,45);
   fs.appendFileSync(dest+'/assets/core.schema.json',' ');assert.notEqual(check().status,0);
  }finally{fs.rmSync(dest,{recursive:true,force:true});}
 });

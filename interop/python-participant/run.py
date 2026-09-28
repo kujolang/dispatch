@@ -2,11 +2,21 @@
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / 'src'))
-from kujo_participant.codec import assets_check, encode, parse, match, digest, decode, Invalid
+try:
+    from kujo_participant.codec import assets_check, encode, parse, match, digest, decode, Invalid
+except Exception:
+    print("interop_invalid", file=sys.stderr)
+    sys.exit(1)
 
 def main():
     assets_check()
     mode = sys.argv[1]
+    if mode == 'sdk-conformance':
+        sys.path.insert(0, str(Path(__file__).resolve().parent / 'tests'))
+        from sdk_conformance import run
+        import json
+        print(json.dumps(run(), sort_keys=True, separators=(',', ':')))
+        return 0
     if mode == 'test':
         import unittest
         suite = unittest.defaultTestLoader.discover(str(Path(__file__).resolve().parent / 'tests'))

@@ -36,13 +36,18 @@ const manifest: Record<string,string> = JSON.parse(readFileSync(new URL('manifes
 const ajv = new Ajv2020({strict:true,allErrors:false});
 function schema(name: string) {const bytes=readFileSync(new URL(name,assets));if(hash(bytes)!==manifest[name])reject();return ajv.compile<Doc>(JSON.parse(bytes.toString('utf8')));}
 const core = schema('core.schema.json'), participant=schema('participant.schema.json'), effect=schema('git.schema.json');
-function parseUnchecked(raw: Buffer|string): Doc {
+export type OwnerValidator = (doc: Doc) => void;
+const legacyOwner: OwnerValidator = d => {
+ if(!participant(d.participant_extension)||d.participant.namespace!==NS)reject();
+ if(!id(d.participant_extension.values.call_id)||!id(d.participant_extension.values.process_instance_id))reject();
+ if(d.effect_extension!==null&&(!effect(d.effect_extension)||!id(d.effect_extension.values.workcell_effect_id)))reject();
+};
+function parseUnchecked(raw: Buffer|string, owner: OwnerValidator): Doc {
  const bytes=Buffer.isBuffer(raw)?raw:Buffer.from(raw);if(bytes.length>6144)reject();
  const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);const d=JSON.parse(text);
  // This equality also rejects duplicate members, reordered keys and alternate escapes.
- if(encode(d)!==text||!core(d)||!participant(d.participant_extension)||d.participant.namespace!==NS)reject();
- if(!id(d.participant_extension.values.call_id)||!id(d.participant_extension.values.process_instance_id))reject();
- if(d.effect_extension!==null&&(!effect(d.effect_extension)||!id(d.effect_extension.values.workcell_effect_id)))reject();
+ if(encode(d)!==text||!core(d))reject();
+ owner(d);
  for(const x of [...Object.values(d.subject),...Object.values(d.participant)])if(!id(x))reject();
  if(!reference(d.execution_result_ref)||(d.assurance_ref!==null&&!reference(d.assurance_ref)))reject();
  if(!/^[1-9][0-9]*$/.test(d.subject.attempt_id))reject();
@@ -55,8 +60,11 @@ function parseUnchecked(raw: Buffer|string): Doc {
  return d;
 }
 export function parse(raw: Buffer|string): Doc {
- try {return parseUnchecked(raw);} catch {return reject();}
+ try {return parseUnchecked(raw,legacyOwner);} catch {return reject();}
 }
 export function match(raw: string, expected: Doc): Doc {const d=parse(raw);if(encode(d)!==encode(expected))reject();return d;}
 export function request(raw: unknown): {call_id:string} {closed(raw,['call_id']);if(!id((raw as Doc).call_id))reject();return raw as {call_id:string};}
 export function produce(context: Doc): string {const raw=encode(context);parse(raw);return raw;}
+
+// Installed caller supplies validation code, never wire data. No registry lookup.
+export function parseRegistered(raw: Buffer, owner: OwnerValidator): Doc {return parseUnchecked(raw,owner);}

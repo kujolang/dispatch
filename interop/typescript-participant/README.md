@@ -162,3 +162,24 @@ bytes, not rewritten documents.
 Workcell's normative live predicate remains owner-published in
 `workcell/docs/contracts/git-assurance-profile.md`; the TypeScript codec does not
 load or implement that verifier. Only the host integration needs a Workcell checkout.
+
+## Experimental SDK prototype (unpublished)
+
+`src/sdk.ts` exports `createCodec(registration)`, `contentRef(Uint8Array)` and
+`SDKError.code`. See the packaged [language-neutral design](assets/sdk-design.md).
+The factory returns `encodeHandoff`, `parseHandoff`, `matchExpected`, `provisional`,
+`terminalReport`, `finalizeAfterReadback`. Wire inputs/outputs are exact
+`Uint8Array` bytes; legacy string APIs in `codec.ts` remain available for the proof.
+`matchExpected` returns `match` or a bounded correlation category, never permission.
+
+The host installs one closed registration once (example: `src/installed-sdk.ts`).
+Do not construct registrations or host snapshots from caller JSON. The factory
+copies registration data and freezes its surface. Owner business semantics still
+require the host/Dispatch validator. `provisional` requires `unknown`;
+`terminalReport` requires `reported`; `finalizeAfterReadback` preserves explicitly
+supplied knowledge. All return new bytes and perform no admission, execution,
+storage, readback or retry. A terminal error is a report, not proof of no effect.
+
+Current participant/record workers use this surface. Shared SDK conformance runs
+in `npm test`; isolated copied-package tests include this API. No npm publication,
+API stability promise or remote trust is implied. Dependency lock is unchanged.

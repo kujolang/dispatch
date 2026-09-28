@@ -105,3 +105,25 @@ The Python package never imports the TypeScript implementation.
 Dispatch uses the existing generic reader plus a fixture-installed closed owner
 validator. No production family-specific reader, assurance verifier or retry policy
 was added. Standalone codec tests do not load that registration.
+
+## Experimental SDK prototype (unpublished)
+
+`kujo_participant.sdk` exports `create_codec(registration)`, `content_ref(bytes)`
+and `SDKError.code`. See packaged [language-neutral design](assets/sdk-design.md).
+The immutable callable tuple exposes `encode_handoff`, `parse_handoff`,
+`match_expected`, `provisional`, `terminal_report`, `finalize_after_readback`.
+Inputs/outputs use exact `bytes`; strings are not content-reference inputs.
+Malformed wire is rejected, never normalized into acceptance. `match_expected`
+returns `match` or a bounded correlation category; it is not admission.
+
+The operator installs one copied closed registration (see `installed_sdk.py`).
+Never construct registration or host context from participant JSON. `provisional`
+requires `unknown`, `terminal_report` requires `reported`, and finalization preserves
+host-supplied knowledge. Functions return new bytes, do not mutate snapshots, and
+have no admission/effect/storage/readback/retry capability. Owner effect semantics
+remain outside the SDK. Current workers use these functions, including a fresh
+recording-only process after loss.
+
+Run `python -I run.py sdk-conformance` for the shared 45-case SDK corpus. The
+ordinary test command and isolated offline package test include it. The existing
+independent codec and pinned dependency lock remain. No publication or API freeze.

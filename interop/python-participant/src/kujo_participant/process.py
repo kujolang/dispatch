@@ -2,7 +2,8 @@
 import socket
 import struct
 import uuid
-from .codec import decode, encode, parse, request, require
+from .codec import decode, encode, request, require
+from .installed_sdk import sdk
 
 
 def receive(channel):
@@ -24,16 +25,16 @@ def participate(fd):
     initial=receive(channel)
     if initial.get('mode')=='record':
         # Fresh recording-only process has no execute operation.
-        raw=encode(initial['handoff']);parse(raw)
+        raw=sdk.finalize_after_readback(initial['handoff'])
         send(channel,{'wire':raw.decode()});return
     call=request(encode(initial['request']))
     send(channel,{'op':'admit','call_id':call['call_id'],'process_instance_id':str(uuid.uuid4())})
     context=receive(channel);require(context.get('ok') is True)
-    raw=encode(context['handoff']);parse(raw)
+    raw=sdk.provisional(context['handoff'])
     send(channel,{'op':'record','wire':raw.decode()})
     require(receive(channel)=={'ok':True})
     send(channel,{'op':'execute'})
     final=receive(channel);require(final.get('ok') is True)
-    raw=encode(final['handoff']);parse(raw)
+    raw=sdk.terminal_report(final['handoff'])
     send(channel,{'op':'record','wire':raw.decode()})
     require(receive(channel)=={'ok':True})

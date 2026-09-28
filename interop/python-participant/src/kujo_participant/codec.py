@@ -86,11 +86,21 @@ def identifier(value):
 def closed(value, keys):
     require(type(value) is dict and set(value) == set(keys))
 
-def schema_check(name, value):
-    schema = json.loads((ASSETS / name).read_text())
-    require(Draft202012Validator(schema).is_valid(value))
+def _load_schemas():
+    manifest = json.loads((ASSETS / 'manifest.json').read_text())['files']
+    validators = {}
+    for name in ('core.schema.json', 'participant.schema.json', 'git.schema.json'):
+        raw = (ASSETS / name).read_bytes()
+        require(digest(raw) == manifest[name])
+        validators[name] = Draft202012Validator(json.loads(raw))
+    return validators
 
-def validate(doc):
+_SCHEMAS = _load_schemas()
+
+def schema_check(name, value):
+    require(_SCHEMAS[name].is_valid(value))
+
+def validate(doc, owner=None):
     closed(doc, ('schema', 'subject', 'participant', 'completion_knowledge',
                  'execution_result_ref', 'assurance_ref', 'participant_extension', 'effect_extension'))
     require(doc['schema'] == 'kujo.interop-handoff/v1alpha1')
@@ -99,7 +109,9 @@ def validate(doc):
     # Published current-consumer domain: canonical positive decimal action attempt.
     require(re.fullmatch(r'[1-9][0-9]*', doc['subject']['attempt_id'], re.ASCII) is not None)
     closed(doc['participant'], ('namespace', 'invocation_id'))
-    require(doc['participant']['namespace'] == NS and identifier(doc['participant']['invocation_id']))
+    require(identifier(doc['participant']['namespace']) and identifier(doc['participant']['invocation_id']))
+    if owner is None:
+        require(doc['participant']['namespace'] == NS)
     require(doc['completion_knowledge'] in ('reported', 'unknown'))
     require(type(doc['execution_result_ref']) is str and REF.fullmatch(doc['execution_result_ref']) is not None)
     require(doc['assurance_ref'] is None or
@@ -115,6 +127,8 @@ def validate(doc):
         for key, value in ext['values'].items():
             require(identifier(key))
             require(value is None or (type(value) is str and len(value.encode('utf-8')) <= 128))
+        if owner is not None:
+            continue
         if name == 'participant_extension':
             require(ext['schema'] == EXT)
             closed(ext['values'], ('call_id', 'process_instance_id'))
@@ -126,16 +140,18 @@ def validate(doc):
             require(identifier(ext['values']['workcell_effect_id']))
             require(type(ext['values']['transaction_sha256']) is str and HEX.fullmatch(ext['values']['transaction_sha256']) is not None)
             schema_check('git.schema.json', ext)
+    if owner is not None:
+        owner(doc)
     core = {k: v for k, v in doc.items() if k not in ('participant_extension', 'effect_extension')}
     require(len(encode(core)) <= 2048)
     schema_check('core.schema.json', doc)
     return doc
 
-def parse(raw):
+def parse(raw, owner=None):
     try:
         doc = decode(raw, 6144)
         require(encode(doc) == raw)
-        return validate(doc)
+        return validate(doc, owner)
     except (ValueError, TypeError, KeyError, UnicodeError):
         raise Invalid() from None
 
