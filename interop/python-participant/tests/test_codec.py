@@ -83,6 +83,12 @@ class CodecTests(unittest.TestCase):
         for _ in range(9):value=[value]
         with self.assertRaises(Invalid):encode(value)
         with self.assertRaises(Invalid):parse(b' '*6145)
+    def test_action_attempts(self):
+        for attempt in ['0','01','-1','1.0','opaque','1\n']:
+            doc=specimen();doc['subject']['attempt_id']=attempt
+            with self.subTest(attempt=attempt),self.assertRaises(Invalid):parse(encode(doc))
+        doc=specimen();doc['subject']['run_id']='r'*128
+        self.assertEqual(parse(encode(doc)),doc)
     def test_request(self):
         self.assertEqual(request(b'{"call_id":"x"}'),{'call_id':'x'})
         for key in ['profile','repository','target','verifier','config_revision','evidence_root',
@@ -108,6 +114,10 @@ class ParityCorpusTests(unittest.TestCase):
         for item in corpus['cases']:
             raw=item['wire'].replace('@RUNTIME@','python').encode()
             with self.subTest(name=item['name']):
+                if item['mode']!='encode':
+                    try:parse(raw);parsed=True
+                    except Invalid:parsed=False
+                    self.assertEqual(parsed,item['parse_accept'])
                 try:
                     result=encode(decode(raw)) if item['mode']=='encode' else encode(match(raw,expected))
                     accepted=True

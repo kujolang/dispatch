@@ -96,6 +96,8 @@ def validate(doc):
     require(doc['schema'] == 'kujo.interop-handoff/v1alpha1')
     closed(doc['subject'], ('run_id', 'step_id', 'attempt_id', 'effect_id'))
     require(all(identifier(x) for x in doc['subject'].values()))
+    # Published current-consumer domain: canonical positive decimal action attempt.
+    require(re.fullmatch(r'[1-9][0-9]*', doc['subject']['attempt_id'], re.ASCII) is not None)
     closed(doc['participant'], ('namespace', 'invocation_id'))
     require(doc['participant']['namespace'] == NS and identifier(doc['participant']['invocation_id']))
     require(doc['completion_knowledge'] in ('reported', 'unknown'))
