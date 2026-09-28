@@ -1,0 +1,203 @@
+{
+  "schema": "interop-runtime-parity/v1alpha1",
+  "expected": {
+    "schema": "kujo.interop-handoff/v1alpha1",
+    "subject": {
+      "run_id": "run-1",
+      "step_id": "action",
+      "attempt_id": "1",
+      "effect_id": "effect-1"
+    },
+    "participant": {
+      "namespace": "kujolang.@RUNTIME@-process",
+      "invocation_id": "invocation-1"
+    },
+    "completion_knowledge": "unknown",
+    "execution_result_ref": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "assurance_ref": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "participant_extension": {
+      "schema": "kujolang.@RUNTIME@-process-correlation/v1alpha1",
+      "values": {
+        "call_id": "call-1",
+        "process_instance_id": "process-1"
+      }
+    },
+    "effect_extension": {
+      "schema": "workcell.git-correlation/v1alpha1",
+      "values": {
+        "workcell_effect_id": "workcell-1",
+        "transaction_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    }
+  },
+  "cases": [
+    {
+      "name": "valid",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": true
+    },
+    {
+      "name": "duplicate",
+      "mode": "match",
+      "wire": "{\"schema\":\"duplicate\",\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "reordered",
+      "mode": "match",
+      "wire": "{\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"run_id\":\"run-1\",\"step_id\":\"action\",\"attempt_id\":\"1\",\"effect_id\":\"effect-1\"},\"participant\":{\"namespace\":\"kujolang.@RUNTIME@-process\",\"invocation_id\":\"invocation-1\"},\"completion_knowledge\":\"unknown\",\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"workcell_effect_id\":\"workcell-1\",\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"}}}",
+      "accept": false
+    },
+    {
+      "name": "space",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}} ",
+      "accept": false
+    },
+    {
+      "name": "alternate-escape",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknow\\u006e\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "unicode",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"\u00e9\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "surrogate",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"\\ud800\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "newline",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\\n\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "oversized-id",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "nested",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":{\"x\":\"y\"},\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "oversized-extension",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "missing",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "unknown",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"unknown\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "extra-extension",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"extra_extension\":{},\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "malformed-ref",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"https://bad\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "swapped",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "completion",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"reported\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "run_id",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"wrong\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "step_id",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"wrong\"}}",
+      "accept": false
+    },
+    {
+      "name": "attempt_id",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"wrong\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "effect_id",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"wrong\",\"run_id\":\"run-1\",\"step_id\":\"action\"}}",
+      "accept": false
+    },
+    {
+      "name": "duplicate-extension",
+      "mode": "match",
+      "wire": "{\"assurance_ref\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"completion_knowledge\":\"unknown\",\"effect_extension\":{\"schema\":\"workcell.git-correlation/v1alpha1\",\"values\":{\"transaction_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"workcell_effect_id\":\"workcell-1\"}},\"execution_result_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"participant\":{\"invocation_id\":\"invocation-1\",\"namespace\":\"kujolang.@RUNTIME@-process\"},\"participant_extension\":{\"schema\":\"kujolang.@RUNTIME@-process-correlation/v1alpha1\",\"values\":{\"call_id\":\"call-1\",\"process_instance_id\":\"process-1\"}},\"schema\":\"kujo.interop-handoff/v1alpha1\",\"subject\":{\"attempt_id\":\"1\",\"effect_id\":\"effect-1\",\"run_id\":\"run-1\",\"step_id\":\"action\"},\"participant_extension\":null}",
+      "accept": false
+    },
+    {
+      "name": "scalar-unicode",
+      "mode": "encode",
+      "wire": "\"\\u00e9/\\u2028\\u2029\\u0000\\b\\f\\n\\r\\t\"",
+      "accept": true
+    },
+    {
+      "name": "normalization",
+      "mode": "encode",
+      "wire": "\"e\\u0301\"",
+      "accept": true
+    },
+    {
+      "name": "integer",
+      "mode": "encode",
+      "wire": "9007199254740991",
+      "accept": true
+    },
+    {
+      "name": "over-integer",
+      "mode": "encode",
+      "wire": "9007199254740992",
+      "accept": false
+    },
+    {
+      "name": "nested-json",
+      "mode": "encode",
+      "wire": "{\"z\": null, \"a\": [true, false]}",
+      "accept": true
+    },
+    {
+      "name": "float",
+      "mode": "encode",
+      "wire": "1.5",
+      "accept": false
+    }
+  ]
+}

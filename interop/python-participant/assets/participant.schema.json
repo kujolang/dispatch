@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kujolang.python-process-correlation/v1alpha1",
+  "type": "object",
+  "required": [
+    "schema",
+    "values"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "kujolang.python-process-correlation/v1alpha1"
+    },
+    "values": {
+      "type": "object",
+      "required": [
+        "call_id",
+        "process_instance_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "call_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "process_instance_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        }
+      }
+    }
+  }
+}

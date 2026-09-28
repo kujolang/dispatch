@@ -1,0 +1,12 @@
+{
+  "source_revision": "c944b079b2744fdd96792e50158cc82b72eeea4d",
+  "files": {
+    "commitment-vectors.json": "6ba4de9c599eb0c0abcf03ca7576dca1772dbf2d6f765f1f6274dd63275aae7b",
+    "core.schema.json": "e7ca18d1bd949d0a649905c122fb8d1d167b1e5a92437f3cf124156459846608",
+    "git.schema.json": "a3c3672eba53b95d11af5a124f61b7b58299ebc594b6a016c031b2161482ad60",
+    "interop-handoff.md": "43697643c8cd3c4987e57652ac6070e7c78d5056e192bd2f743872870e753249",
+    "participant.schema.json": "6c85fd9d06d497019b081e9199c59f218192a53b430e0a891ed28b66485f66e5",
+    "portable-commitments.md": "578448779c162bd976fe7399a9a111fbc1962a335495be7391a1b54c4bee45dd",
+    "parity.json": "60186fb8946b126c8a8cce06449e0b7a0195a763f1140db447c4f6892df5231a"
+  }
+}
