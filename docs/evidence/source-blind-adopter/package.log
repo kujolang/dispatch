@@ -1,0 +1,10 @@
+Requirement already satisfied: build==1.3.0 in /private/tmp/kujo-sdk-build/lib/python3.10/site-packages (from -r packages/participant-sdk-python/build-requirements.lock (line 2)) (1.3.0)
+Requirement already satisfied: packaging==26.3 in /private/tmp/kujo-sdk-build/lib/python3.10/site-packages (from -r packages/participant-sdk-python/build-requirements.lock (line 3)) (26.3)
+Requirement already satisfied: pyproject-hooks==1.3.3 in /private/tmp/kujo-sdk-build/lib/python3.10/site-packages (from -r packages/participant-sdk-python/build-requirements.lock (line 4)) (1.3.3)
+Requirement already satisfied: tomli==2.4.1 in /private/tmp/kujo-sdk-build/lib/python3.10/site-packages (from -r packages/participant-sdk-python/build-requirements.lock (line 5)) (2.4.1)
+Requirement already satisfied: setuptools==80.9.0 in /private/tmp/kujo-sdk-build/lib/python3.10/site-packages (from -r packages/participant-sdk-python/build-requirements.lock (line 6)) (80.9.0)
+Requirement already satisfied: wheel==0.45.1 in /private/tmp/kujo-sdk-build/lib/python3.10/site-packages (from -r packages/participant-sdk-python/build-requirements.lock (line 7)) (0.45.1)
+WARNING: You are using pip version 22.0.4; however, version 26.2.1 is available.
+You should consider upgrading via the '/private/tmp/kujo-sdk-build/bin/python -m pip install --upgrade pip' command.
+{"ok": true, "report": "/private/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo-sdk-packages-91whst7n/report.json", "ts_config": "/private/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo-sdk-packages-91whst7n/ts/config.json", "python_config": "/private/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo-sdk-packages-91whst7n/py/config.json", "conformance": {"ts": 45, "python": 45, "exact_parity": true}, "reproducible": {"npm": true, "wheel": true, "sdist": false}}
+Installed package conformance and real crash/replay/contention passed.

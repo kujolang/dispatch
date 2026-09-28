@@ -1,0 +1,13 @@
+{
+  "files": {
+    "interop/adopter-pilot/consumer/participant.mjs": "1c729c64f4625dc9f043e26e9e40e800bf3bb640da0ba2f39372c27ce092fb75",
+    "interop/adopter-pilot/consumer/registration.json": "a8f89a3c268249b6eb85ad0e1e9c21cc9a9f5c30a5557c2d3ccdda82211f7983",
+    "interop/adopter-pilot/host/runner.py": "da5085f2ac6767344a496f8303ea6245764ebbbb0ac97b206f97697c906c11d2",
+    "tests/pilot_registration.kujo": "6e6666bdfe3affcb823650cfcc0aab6ec8acb0199fa28f8693fd0396e9dd1c8b",
+    "tests/adopter_pilot_integration.py": "39586cb483fc7e5465ab05c4ad2d9c21660454c91b3297098d6d4ce58116d49a"
+  },
+  "protocol": "frozen HOST_INTERFACE.md at1110ff7",
+  "adopter_files_preserved": true,
+  "live_consumer": "/tmp/kujo-source-blind-adopter.ed0Hgo/consumer",
+  "offline_reinstallation_passed": true
+}

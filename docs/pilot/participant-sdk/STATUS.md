@@ -1,6 +1,14 @@
 # Limited adopter pilot status
 
-**Prepared; blocked awaiting adopter selection. No readiness decision.**
+**Source-blind agent rehearsal passed; human validation remains unperformed.**
+
+The user subsequently selected a fresh no-history agent rehearsal. See
+[`source-blind-adopter.md`](../../audits/source-blind-adopter.md) for current evidence
+and the separate Kujo 1.6 technical recommendation. The original 39-file frozen
+bundle and its manifest remain unchanged. The preparation record below describes
+what was and was not known at `1110ff7`; it is historical, not a current blocker.
+
+## Original preparation record
 
 Baseline: Dispatch `113a72853c2c9532e13825bf825d4fb3c3e77785`, Kujo
 `c1cc06ff67e6b8dc1419e5b91adc259891090aad`; fetched main, clean before preparation.

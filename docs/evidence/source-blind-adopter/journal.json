@@ -1,0 +1,126 @@
+{
+  "schema": "pilot.adopter-journal/v1",
+  "adopter": "agent-simulated external adopter; no human usability claim",
+  "runtime": {
+    "node": "v26.7.0",
+    "npm": "11.19.0"
+  },
+  "imports": [
+    "@kujolang/participant-sdk public root: createCodec,contentRef,SDKError,CorrelationError",
+    "node:fs",
+    "node:crypto",
+    "node:assert/strict",
+    "node:child_process"
+  ],
+  "isolation": "Procedural read boundary, not OS security sandbox",
+  "events": [
+    {
+      "step": 1,
+      "task": "Read frozen task and host interface; verify manifest hash and every named file",
+      "command": "shasum -a 256 onboarding/frozen-inputs.json; node crypto SHA256 verification",
+      "result": "39/39 verified",
+      "evidence": "input-verification.json"
+    },
+    {
+      "step": 2,
+      "task": "Read public Node documentation and conformance; choose installed compatible Node",
+      "command": "node --version; cat public docs",
+      "result": "Node v26.7.0; no incompatible runtime fallback"
+    },
+    {
+      "step": 3,
+      "task": "Save own comprehension before implementation",
+      "evidence": "comprehension.md",
+      "saved": "2026-09-28T14:04:59.828Z"
+    },
+    {
+      "step": 4,
+      "task": "Fetch six selected exact-pinned archives from local feed and check SHA256",
+      "command": "fetch http://127.0.0.1:18763/<archive>; crypto SHA256",
+      "evidence": "acquisition.json"
+    },
+    {
+      "step": 5,
+      "task": "Install isolated consumer",
+      "command": "npm ci --prefix consumer --offline --ignore-scripts --no-audit --cache consumer/empty-cache --registry http://127.0.0.1:9",
+      "result": "pass",
+      "evidence": "install.log"
+    },
+    {
+      "step": 6,
+      "task": "Author new closed registration, transport and lifecycle proof",
+      "command": "node consumer/proof.mjs > proof-result.json",
+      "first_valid_handoff": "2026-09-28T14:05:44.899Z",
+      "result": "pass",
+      "evidence": "proof-result.json"
+    },
+    {
+      "step": 7,
+      "task": "Run all published cases, preserving expectations",
+      "command": "node consumer/conformance.mjs > conformance-results.json",
+      "result": "45/45 pass"
+    },
+    {
+      "step": 8,
+      "task": "Exercise local host transport and loss path with standalone synthetic inputs",
+      "command": "node consumer/transport-probes.mjs > transport-results.json",
+      "result": "11/11 pass"
+    }
+  ],
+  "timing": {
+    "first_valid_handoff_utc": "2026-09-28T14:05:44.899Z",
+    "note": "Initial wall-clock start not recorded; no invented duration. File timestamps preserve ordering; eight task steps through transport verification."
+  },
+  "code_size": [
+    {
+      "file": "consumer/participant.mjs",
+      "bytes": 2372,
+      "lines": 23
+    },
+    {
+      "file": "consumer/proof.mjs",
+      "bytes": 1657,
+      "lines": 9
+    },
+    {
+      "file": "consumer/conformance.mjs",
+      "bytes": 2799,
+      "lines": 37
+    },
+    {
+      "file": "consumer/transport-probes.mjs",
+      "bytes": 1838,
+      "lines": 5
+    }
+  ],
+  "boilerplate": "Main manual transport boilerplate is LF byte framing, maximum length, UTF8 validation and duplicate-member detection; SDK handles handoff canonicalization and validation.",
+  "errors_and_resolutions": [],
+  "assumptions": [
+    {
+      "topic": "Corpus wire mutation labels",
+      "interpretation": "Construct representative invalid byte strings matching public wire rules; preserve all supplied expected categories.",
+      "source": "sdk-conformance.json + interop.md + sdk-design.md",
+      "classification": "runner choice, no blocking gap"
+    },
+    {
+      "topic": "Null effect extension",
+      "interpretation": "Choose effect:null registration because no family-specific correlation is needed by this participant.",
+      "source": "HOST_INTERFACE.md + interop.md",
+      "classification": "allowed registration choice"
+    }
+  ],
+  "probes": {
+    "malformed_reference": "bad-ref => invalid_handoff",
+    "extension_mismatch": "participant_extension.values.call_id => extension_mismatch",
+    "correlation_mismatch": "subject.run_id => subject_mismatch",
+    "unknown_namespace": "unknown-owner => unsupported_extension",
+    "noncanonical_wire": "whitespace/reordered/duplicate/alternate_escape => invalid_handoff",
+    "diagnosable_from_docs": true
+  },
+  "questions": [],
+  "unresolved_gaps": [],
+  "limitations": [
+    "No real effect/controller proof claimed by this isolated participant; coordinator owns integration.",
+    "No human usability evidence."
+  ]
+}

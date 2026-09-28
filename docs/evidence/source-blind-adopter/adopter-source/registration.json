@@ -1,0 +1,1 @@
+{"namespace":"pilot.lantern","participant":{"schema":"pilot.lantern-correlation/v1alpha1","fields":{"session_tag":"identifier","exchange_tag":"identifier"}},"effect":null}

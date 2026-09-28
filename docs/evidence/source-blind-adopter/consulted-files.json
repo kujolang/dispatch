@@ -1,0 +1,17 @@
+{
+  "instructional": [
+    "onboarding/frozen-inputs.json",
+    "onboarding/ADOPTER_TASK.md",
+    "onboarding/HOST_INTERFACE.md",
+    "onboarding/reviewed-pins.json",
+    "onboarding/typescript/README.md",
+    "onboarding/typescript/API.md",
+    "onboarding/typescript/interop.md",
+    "onboarding/typescript/portable-json.md",
+    "onboarding/typescript/sdk-design.md",
+    "onboarding/artifacts/package.json",
+    "onboarding/artifacts/package-lock.json",
+    "onboarding/typescript/sdk-conformance.json"
+  ],
+  "verification_only": "All 39 files listed in frozen-inputs.json read as opaque bytes for SHA256 verification. Package private code not read. Python docs not consulted."
+}

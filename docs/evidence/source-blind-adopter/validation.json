@@ -1,0 +1,50 @@
+{
+  "schema": "kujo.source-blind-rehearsal-evidence/v1alpha1",
+  "date": "2026-09-28",
+  "pilot_decision": "AGENT_REHEARSAL_PASS",
+  "release_decision": "READY_AFTER_BOUNDED_FIXES",
+  "human_validation": "unperformed; POST_RELEASE_VALIDATION",
+  "isolation": "no-history agent, procedural workspace-only read boundary; not OS sandbox",
+  "frozen_commit": "1110ff77accaa5034b6cf0349c6771410d6079d5",
+  "frozen_manifest_sha256": "37ed7e530b573bf0939243cc2c7337d527c1f82238b1ee73ab987b977cfca405",
+  "gates": [
+    {
+      "command": "node consumer/conformance.mjs",
+      "exit": 0,
+      "passed": 45
+    },
+    {
+      "command": "node consumer/transport-probes.mjs",
+      "exit": 0,
+      "passed": 11
+    },
+    {
+      "command": "PILOT_CONSUMER=/tmp/kujo-source-blind-adopter.ed0Hgo/consumer KUJO_BIN=/tmp/kujo-wave-a-release-candidate-bin python3 tests/adopter_pilot_integration.py",
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=/tmp/kujo-wave-a-release-candidate-bin SDK_BUILD_ENV=/tmp/kujo-sdk-build bash scripts/run_participant_package_gate.sh",
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=/tmp/kujo-wave-a-release-candidate-bin DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+      "exit": 0,
+      "shards": 24,
+      "source_tests": 101,
+      "workloads_passed": 3
+    },
+    {
+      "command": "KUJO_BIN=/tmp/kujo-wave-a-release-candidate-bin bash scripts/run_participant_distribution_gate.sh",
+      "exit": 0
+    },
+    {
+      "repository": "workcell",
+      "command": "KUJO_BIN=/tmp/kujo-wave-a-release-candidate-bin bash tests/effect_assurance.sh",
+      "exit": 0
+    }
+  ],
+  "kujo_gates": "kujo/docs/evidence/kujo-1.6-review/results.json",
+  "known_failure": "Current Kujo VM return probe exits 4, interpreter 0; independent bounded runtime blocker, not a passed gate.",
+  "hosted_ci_observed": false,
+  "publication": false
+}

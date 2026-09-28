@@ -1,0 +1,321 @@
+{
+  "total": 45,
+  "passed": 45,
+  "results": [
+    {
+      "name": "roundtrip",
+      "operation": "parse",
+      "expected": "ok",
+      "actual": "ok",
+      "pass": true
+    },
+    {
+      "name": "provisional",
+      "operation": "provisional",
+      "expected": "ok",
+      "actual": "ok",
+      "pass": true
+    },
+    {
+      "name": "terminal",
+      "operation": "terminal_report",
+      "expected": "ok",
+      "actual": "ok",
+      "pass": true
+    },
+    {
+      "name": "readback-unknown",
+      "operation": "finalize_after_readback",
+      "expected": "ok",
+      "actual": "ok",
+      "pass": true
+    },
+    {
+      "name": "readback-selected",
+      "operation": "finalize_after_readback",
+      "expected": "ok",
+      "actual": "ok",
+      "pass": true
+    },
+    {
+      "name": "no-effect-extension",
+      "operation": "parse",
+      "expected": "ok",
+      "actual": "ok",
+      "pass": true
+    },
+    {
+      "name": "wrong-provisional",
+      "operation": "provisional",
+      "expected": "invalid_knowledge",
+      "actual": "invalid_knowledge",
+      "pass": true
+    },
+    {
+      "name": "wrong-terminal",
+      "operation": "terminal_report",
+      "expected": "invalid_knowledge",
+      "actual": "invalid_knowledge",
+      "pass": true
+    },
+    {
+      "name": "matching",
+      "operation": "match",
+      "expected": "match",
+      "actual": "match",
+      "pass": true
+    },
+    {
+      "name": "subject.run_id",
+      "operation": "match",
+      "expected": "subject_mismatch",
+      "actual": "subject_mismatch",
+      "pass": true
+    },
+    {
+      "name": "subject.step_id",
+      "operation": "match",
+      "expected": "subject_mismatch",
+      "actual": "subject_mismatch",
+      "pass": true
+    },
+    {
+      "name": "subject.attempt_id",
+      "operation": "match",
+      "expected": "subject_mismatch",
+      "actual": "subject_mismatch",
+      "pass": true
+    },
+    {
+      "name": "subject.effect_id",
+      "operation": "match",
+      "expected": "subject_mismatch",
+      "actual": "subject_mismatch",
+      "pass": true
+    },
+    {
+      "name": "participant.invocation_id",
+      "operation": "match",
+      "expected": "participant_mismatch",
+      "actual": "participant_mismatch",
+      "pass": true
+    },
+    {
+      "name": "execution_result_ref",
+      "operation": "match",
+      "expected": "result_ref_mismatch",
+      "actual": "result_ref_mismatch",
+      "pass": true
+    },
+    {
+      "name": "assurance_ref",
+      "operation": "match",
+      "expected": "assurance_ref_mismatch",
+      "actual": "assurance_ref_mismatch",
+      "pass": true
+    },
+    {
+      "name": "participant_extension.values.call_id",
+      "operation": "match",
+      "expected": "extension_mismatch",
+      "actual": "extension_mismatch",
+      "pass": true
+    },
+    {
+      "name": "effect_extension.values.commitment",
+      "operation": "match",
+      "expected": "extension_mismatch",
+      "actual": "extension_mismatch",
+      "pass": true
+    },
+    {
+      "name": "completion_knowledge",
+      "operation": "match",
+      "expected": "knowledge_mismatch",
+      "actual": "knowledge_mismatch",
+      "pass": true
+    },
+    {
+      "name": "unknown-owner",
+      "operation": "parse",
+      "expected": "unsupported_extension",
+      "actual": "unsupported_extension",
+      "pass": true
+    },
+    {
+      "name": "unknown-extension",
+      "operation": "parse",
+      "expected": "unsupported_extension",
+      "actual": "unsupported_extension",
+      "pass": true
+    },
+    {
+      "name": "unknown-effect",
+      "operation": "parse",
+      "expected": "unsupported_extension",
+      "actual": "unsupported_extension",
+      "pass": true
+    },
+    {
+      "name": "nested",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "long-id",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "newline-id",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "opaque-attempt",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "bad-ref",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "uppercase-ref",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "truth-not-knowledge",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "missing-participant",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "unknown-field",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "oversize-extension",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "whitespace",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "reordered",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "duplicate",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "alternate_escape",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "invalid_utf8",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "oversize",
+      "operation": "parse",
+      "expected": "bounds_exceeded",
+      "actual": "bounds_exceeded",
+      "pass": true
+    },
+    {
+      "name": "surrogate",
+      "operation": "parse",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    },
+    {
+      "name": "registration-copy",
+      "operation": "registration_copy",
+      "expected": "ok",
+      "actual": "ok",
+      "pass": true
+    },
+    {
+      "name": "registration-unknown-type",
+      "operation": "bad_registration",
+      "expected": "invalid_registration",
+      "actual": "invalid_registration",
+      "pass": true
+    },
+    {
+      "name": "registration-no-participant",
+      "operation": "null_registration",
+      "expected": "invalid_registration",
+      "actual": "invalid_registration",
+      "pass": true
+    },
+    {
+      "name": "cannot-install-effect-from-wire",
+      "operation": "no_effect_registration",
+      "expected": "unsupported_extension",
+      "actual": "unsupported_extension",
+      "pass": true
+    },
+    {
+      "name": "content-bytes",
+      "operation": "reference",
+      "expected": "ok",
+      "actual": "ok",
+      "pass": true
+    },
+    {
+      "name": "bytes-only",
+      "operation": "reference_string",
+      "expected": "invalid_handoff",
+      "actual": "invalid_handoff",
+      "pass": true
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "total": 11,
+  "passed": 11,
+  "results": [
+    {
+      "name": "record",
+      "exit": 0,
+      "outputs": 1,
+      "diagnostic": "",
+      "pass": true
+    },
+    {
+      "name": "participate-terminal",
+      "exit": 0,
+      "outputs": 2,
+      "diagnostic": "",
+      "pass": true
+    },
+    {
+      "name": "lost-report-eof",
+      "exit": 0,
+      "outputs": 1,
+      "diagnostic": "",
+      "pass": true
+    },
+    {
+      "name": "unknown-mode",
+      "exit": 1,
+      "outputs": 0,
+      "diagnostic": "invalid_host_message\n",
+      "pass": true
+    },
+    {
+      "name": "extra-field",
+      "exit": 1,
+      "outputs": 0,
+      "diagnostic": "invalid_host_message\n",
+      "pass": true
+    },
+    {
+      "name": "duplicate-key",
+      "exit": 1,
+      "outputs": 0,
+      "diagnostic": "invalid_host_message\n",
+      "pass": true
+    },
+    {
+      "name": "duplicate-nested",
+      "exit": 1,
+      "outputs": 0,
+      "diagnostic": "invalid_host_message\n",
+      "pass": true
+    },
+    {
+      "name": "invalid-utf8",
+      "exit": 1,
+      "outputs": 0,
+      "diagnostic": "invalid_host_message\n",
+      "pass": true
+    },
+    {
+      "name": "oversize",
+      "exit": 1,
+      "outputs": 0,
+      "diagnostic": "invalid_host_message\n",
+      "pass": true
+    },
+    {
+      "name": "truncated",
+      "exit": 1,
+      "outputs": 0,
+      "diagnostic": "invalid_host_message\n",
+      "pass": true
+    },
+    {
+      "name": "wrong-knowledge",
+      "exit": 1,
+      "outputs": 0,
+      "diagnostic": "invalid_host_message\n",
+      "pass": true
+    }
+  ]
+}
