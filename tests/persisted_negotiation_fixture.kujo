@@ -1,5 +1,6 @@
 from src.core.interop_handoff import correlate_interop_handoff
 from tests.typescript_registration import typescript_registration
+from tests.python_registration import python_registration
 from tests.interop_core_checks import check_equivalence
 from tests.fixtures.interop_legacy.git_participant_handoff import old_load_git_participant_handoff
 from tests.fixtures.interop_legacy.http_ability_handoff import old_load_http_ability_handoff
@@ -127,20 +128,27 @@ func git_check(config, root, raw, assurance_raw) {
     check_equivalence(root, modern, historical, raw, assurance_raw)
     return modern
 }
+func native_prefix(config) {if dict_get_or(config,"native_participant","") == "python" {return "py"}; return "ts"}
 func native_process(config, root, attempt, mode) {
+    if native_prefix(config) == "py" {
+        response := spawn_process([config["python"],"-I",os_getcwd()+"/interop/python-participant/host/runner.py",root,to_string(attempt),mode], {"cwd":os_getcwd(),"inherit_env":false,"max_output_bytes":8192,"timeout_ms":30000})
+        require(response.success&&response.stderr == ""); return parse_json(response.stdout)
+    }
     response := spawn_process([config["node"], os_getcwd() + "/interop/typescript-participant/host/runner.mjs", root, to_string(attempt), mode], {"cwd": os_getcwd(), "inherit_env": false, "max_output_bytes": 8192, "timeout_ms": 30000})
     require(response.success&&response.stderr == ""); return parse_json(response.stdout)
 }
 func native_check(config, root, raw, assurance_raw) {
     result := parse_json(raw); attempt := result["subject"]["attempt_id"]
-    prefix := "ts-bound-handoff-"; if assurance_raw == "" {prefix = "ts-handoff-"}
+    prefix := native_prefix(config)+"-bound-handoff-"; if assurance_raw == "" {prefix = native_prefix(config)+"-handoff-"}
     ref := trim(read_file_beneath(root, prefix + attempt + ".ref", 128))
     if byte_length(ref) != 71||regex_match(ref, "^sha256:[0-9a-f]{64}$") == false {return {"ok": false, "code": "interop_correlation_mismatch"}}
     encoded := read_file_beneath(root, "artifacts/" + substring(ref,7,71) + ".json", 6144)
     if "sha256:" + sha256(encoded) != ref {return {"ok": false, "code": "interop_correlation_mismatch"}}
-    ids := parse_json(read_file_beneath(root, "ts-identities-" + attempt + ".json", 1024))
+    ids := parse_json(read_file_beneath(root, native_prefix(config)+"-identities-" + attempt + ".json", 1024))
     expected := {"subject": {"run_id": result["subject"]["run_id"], "step_id": "action", "attempt_id": attempt, "effect_id": "effect-1"}, "participant": {"namespace": "kujolang.typescript-process", "invocation_id": ids["invocation_id"]}}
-    return correlate_interop_handoff(root,encoded,expected,raw,assurance_raw,typescript_registration(ids,sha256(to_json(config["intent"]))))
+    registration := typescript_registration(ids,sha256(to_json(config["intent"])))
+    if native_prefix(config) == "py" {expected["participant"] := {"namespace":"kujolang.python-process","invocation_id":ids["invocation_id"]}; registration = python_registration(ids,sha256(to_json(config["intent"])))}
+    return correlate_interop_handoff(root,encoded,expected,raw,assurance_raw,registration)
 }
 func action(input, context) {
     root := context["input"]["root"]
@@ -153,9 +161,9 @@ func action(input, context) {
         preservation := {"schema": "kujo.preservation-outcome/v1", "result_id": "preserved", "subject": subject, "requested_mode": "filesystem", "actual_mode": "filesystem", "status": "satisfied", "provider": {"name": "local"}, "reconstructability": "same_filesystem", "evidence": [], "created_at": stamp, "retain_until": "2099-01-01T00:00:00Z", "cleanup": {"owner": "fixture", "handle": "opaque"}}
         subject["effect_id"] := "effect-1"
         ticket := {"subject": subject, "call_id": "native-call-" + to_string(attempt), "preservation": preservation, "valid_until_ms": parse_int(to_string(floor(now_utc_seconds()*1000))) + 120000}
-        write_file_atomic_beneath(root,"ts-ticket-" + to_string(attempt) + ".json",to_json(ticket),false)
-        write_file_atomic_beneath(root,"ts-current.json",to_json({"attempt":to_string(attempt)}),true)
-        write_file_atomic_beneath(root,"ts-request-" + to_string(attempt) + ".json",to_json({"call_id":ticket["call_id"]}),false)
+        write_file_atomic_beneath(root,native_prefix(config)+"-ticket-" + to_string(attempt) + ".json",to_json(ticket),false)
+        write_file_atomic_beneath(root,native_prefix(config)+"-current.json",to_json({"attempt":to_string(attempt)}),true)
+        write_file_atomic_beneath(root,native_prefix(config)+"-request-" + to_string(attempt) + ".json",to_json({"call_id":ticket["call_id"]}),false)
         require(native_process(config,root,attempt,"run")["ok"])
         raw := read_file_beneath(root,"result-" + to_string(attempt) + ".json",1048576)
         require(native_check(config,root,raw,"")["ok"])
@@ -249,8 +257,11 @@ func installed_files(config) {
     }
     files = push(files, {"root": os_getcwd(), "path": "src/core/interop_handoff.kujo"})
     files = push(files, {"root": os_getcwd(), "path": "src/adapters/interop_legacy.kujo"})
-    if has_key(config,"native_participant") {
+    if has_key(config,"native_participant")&&native_prefix(config) == "ts" {
         for path in ["tests/typescript_registration.kujo","interop/typescript-participant/host/runner.mjs","interop/typescript-participant/dist/codec.js","interop/typescript-participant/dist/participant.js","interop/typescript-participant/dist/record.js","interop/typescript-participant/assets/manifest.json","interop/typescript-participant/package-lock.json"] {files = push(files,{"root":os_getcwd(),"path":path})}
+    }
+    if has_key(config,"native_participant")&&native_prefix(config) == "py" {
+        for path in ["tests/python_registration.kujo","interop/python-participant/host/runner.py","interop/python-participant/run.py","interop/python-participant/src/kujo_participant/codec.py","interop/python-participant/src/kujo_participant/process.py","interop/python-participant/assets/manifest.json","interop/python-participant/requirements.lock"] {files = push(files,{"root":os_getcwd(),"path":path})}
     }
     return files
 }
@@ -420,7 +431,7 @@ if phase == "install" {
             require(sdk_process(config, root, 1, "attach")["ok"])
         }
         if has_key(config,"native_participant")&&selection["ok"] {
-            write_file_atomic_beneath(root,"ts-selected.json",document,true)
+            write_file_atomic_beneath(root,native_prefix(config)+"-selected.json",document,true)
             require(native_process(config,root,1,"attach")["ok"])
         }
         print(to_json(selection))

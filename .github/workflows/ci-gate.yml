@@ -45,6 +45,9 @@ jobs:
           node-version: "26.7.0"
           package-manager-cache: false
 
+      - name: Install pinned Python participant dependencies
+        run: bash interop/python-participant/bootstrap.sh
+
       - name: Install pinned TypeScript participant dependencies
         run: npm --prefix interop/typescript-participant ci --ignore-scripts --no-audit --no-fund
 
