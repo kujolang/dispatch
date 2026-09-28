@@ -13,7 +13,7 @@ if(fs.lstatSync(location('artifacts')).isSymbolicLink())fail();
 const cfg=JSON.parse(read('config.json')), ticket=JSON.parse(read('ts-ticket-'+attempt+'.json'));
 const effect={schema:GIT,values:{workcell_effect_id:'workcell-logical-native-1',transaction_sha256:hash(encode(cfg.intent))}};
 function invoke(mode='apply'){const r=spawnSync(cfg.runtime,['run','examples/effect-assurance/adapter.kujo',root,mode],{cwd:cfg.cwd,env:{PATH:'/usr/bin:/bin'},encoding:'utf8',timeout:15000,maxBuffer:8192});if(r.status!==0||r.stderr||!JSON.parse(r.stdout).ok)fail();return JSON.parse(r.stdout);}
-function nativeRecord(context){const r=spawnSync(process.execPath,[new URL('../dist/record.js',import.meta.url).pathname],{env:{},input:encode(context),encoding:'utf8',timeout:5000,maxBuffer:6144});if(r.status!==0||r.stderr)fail();match(r.stdout,context);return r.stdout;}
+function nativeRecord(context){const r=spawnSync(process.execPath,[cfg.package_record||new URL('../dist/record.js',import.meta.url).pathname],{env:{},input:encode(context),encoding:'utf8',timeout:5000,maxBuffer:6144});if(r.status!==0||r.stderr)fail();match(r.stdout,context);return r.stdout;}
 // Attaching selected evidence publishes another native generic artifact; no historical rewrite.
 if(mode==='attach'){
  const oldRef=read('ts-handoff-'+attempt+'.ref',128),raw=read('artifacts/'+oldRef.slice(7)+'.json',6144);if(ref(raw)!==oldRef)fail();
@@ -21,7 +21,7 @@ if(mode==='attach'){
  write('ts-bound-handoff-'+attempt+'.ref',artifact(nativeRecord(doc)),true);
  console.log('{"ok":true}');process.exit(0);
 }
-const child=fork(new URL('../dist/participant.js',import.meta.url),[],{env:{},execArgv:[],stdio:['pipe','pipe','pipe','ipc'],cwd:path.dirname(new URL(import.meta.url).pathname)});
+const child=fork(cfg.package_worker||new URL('../dist/participant.js',import.meta.url),[],{env:{},execArgv:[],stdio:['pipe','pipe','pipe','ipc'],cwd:path.dirname(new URL(import.meta.url).pathname)});
 let state='initial',context,result,recorded=false,output='',finished=false;
 const timer=setTimeout(()=>child.kill('SIGKILL'),20000);
 for(const stream of [child.stdout,child.stderr])stream.on('data',b=>{output+=b;if(Buffer.byteLength(output)>1024)child.kill('SIGKILL');});

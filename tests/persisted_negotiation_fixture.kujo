@@ -263,6 +263,18 @@ func installed_files(config) {
     if has_key(config,"native_participant")&&native_prefix(config) == "py" {
         for path in ["tests/python_registration.kujo","interop/python-participant/host/runner.py","interop/python-participant/run.py","interop/python-participant/src/kujo_participant/__init__.py","interop/python-participant/src/kujo_participant/codec.py","interop/python-participant/src/kujo_participant/sdk.py","interop/python-participant/src/kujo_participant/installed_sdk.py","interop/python-participant/src/kujo_participant/process.py","interop/python-participant/assets/manifest.json","interop/python-participant/requirements.lock"] {files = push(files,{"root":os_getcwd(),"path":path})}
     }
+    if has_key(config,"package_manifest_root") {
+        manifest_raw := read_file_beneath(config["package_manifest_root"], "installation.json", 32768)
+        manifest := parse_json(manifest_raw)
+        for key in keys(manifest["bindings"]) {
+            if dict_get_or(config,key,null) != manifest["bindings"][key] {throw("package_installation_invalid")}
+        }
+        if len(manifest["files"]) > 64 {throw("package_installation_invalid")}
+        for entry in manifest["files"] {
+            if sha256(read_file_beneath(entry["root"], entry["path"], 1048576)) != entry["sha256"] {throw("package_installation_invalid")}
+        }
+        files = push(files,{"root":config["package_manifest_root"],"path":"installation.json"})
+    }
     return files
 }
 func host(config, root, expected, raw, verifier) {

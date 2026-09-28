@@ -1,6 +1,7 @@
 // Controller integration harness only; external participant implementation is not copied.
 import fs from 'node:fs';import path from 'node:path';import {spawnSync,spawn} from 'node:child_process';import assert from 'node:assert/strict';
 import {encode,hash,ref,parse} from '../interop/typescript-participant/dist/codec.js';
+const installedPackage=process.env.PARTICIPANT_PACKAGE_CONFIG?JSON.parse(fs.readFileSync(process.env.PARTICIPANT_PACKAGE_CONFIG)):{};
 const boundary=process.argv[2]||'after_commit',cwd=process.cwd(),runtime=process.env.KUJO_BIN||'/tmp/kujo-wave-a-release-candidate-bin',workcell=path.resolve(process.env.WORKCELL_ROOT||'../workcell');
 assert(['before_commit','after_commit'].includes(boundary));const root=path.resolve('tests/tmp/typescript-'+Date.now());fs.mkdirSync(root+'/artifacts',{recursive:true,mode:0o700});
 const write=(n,d)=>fs.writeFileSync(root+'/'+n,encode(d)),read=n=>JSON.parse(fs.readFileSync(root+'/'+n,'utf8')),logs=[];
@@ -11,7 +12,7 @@ const repo=root+'/PRIVATE_HOST_PATH.git';cmd('git',['init','--bare','--quiet',re
 const git=(args,input)=>cmd('git',['--git-dir='+repo,...args],cwd,input),old=git(['hash-object','-w','--stdin'],'old'),next=git(['hash-object','-w','--stdin'],'PRIVATE_GIT_CONTENT');
 const now=Math.floor(Date.now()/1000),intent={operation:'update',target_sha256:hash('private-target'),scope_sha256:hash('operator-scope'),key_sha256:hash('fixture-key'),request_sha256:hash(next),precondition_sha256:hash(old),valid_from:now-5,valid_until:now+1800};
 const target='refs/kujo-targets/'+intent.target_sha256,marker='refs/kujo-effects/'+intent.scope_sha256+'/'+intent.key_sha256;git(['update-ref',target,old]);
-write('config.json',{runtime,node:process.execPath,cwd:workcell,entry:'examples/effect-assurance/adapter.kujo',issuer:'git-local',repo,old_oid:old,new_oid:next,intent,beta:true,native_participant:true,boundary,effect_class:'external_idempotent'});
+write('config.json',{...installedPackage,runtime,node:process.execPath,cwd:workcell,entry:'examples/effect-assurance/adapter.kujo',issuer:'git-local',repo,old_oid:old,new_oid:next,intent,beta:true,native_participant:true,boundary,effect_class:'external_idempotent'});
 const observe=()=>JSON.parse(cmd(runtime,['run','examples/effect-assurance/adapter.kujo',root,'observe'],workcell));
 const host=n=>JSON.parse(cmd(process.execPath,['interop/typescript-participant/host/runner.mjs',root,String(n)]));
 const installed=phase('install');const started=phase('start');assert.equal(started.ok,true,JSON.stringify(started));
@@ -30,7 +31,8 @@ attacks.push(d=>d.completion_knowledge='reported',d=>d.participant_extension.val
 for(const mutate of attacks){const d=structuredClone(doc);mutate(d);select(d);assert.equal(phase('eval').ok,false);assert.deepEqual(fs.readFileSync(pointer.run_dir+'/state.json'),before);negatives++;}
 fs.writeFileSync(root+'/ts-bound-handoff-1.ref',originalRef);
 // Pinned executable/lock substitution cannot borrow the installed revision.
-for(const name of ['interop/typescript-participant/dist/codec.js','interop/typescript-participant/dist/sdk.js','interop/typescript-participant/package-lock.json']){const saved=fs.readFileSync(name);try{fs.appendFileSync(name,'\n');assert.equal(phase('eval').ok,false);assert.deepEqual(fs.readFileSync(pointer.run_dir+'/state.json'),before);}finally{fs.writeFileSync(name,saved);}}
+for(const name of ['interop/typescript-participant/dist/codec.js','interop/typescript-participant/dist/sdk.js','interop/typescript-participant/package-lock.json',...(installedPackage.package_probe_files||[])]){const saved=fs.readFileSync(name);try{fs.appendFileSync(name,'\n');assert.equal(phase('eval').ok,false);assert.deepEqual(fs.readFileSync(pointer.run_dir+'/state.json'),before);}finally{fs.writeFileSync(name,saved);}}
+if(installedPackage.package_worker){const originalConfig=read('config.json');write('config.json',{...originalConfig,package_worker:originalConfig.package_record});assert.equal(phase('eval').ok,false);write('config.json',originalConfig);assert.equal(phase('eval').ok,true);}
 // Exact artifact reads reject byte tampering and symlinks, not just JSON substitutions.
 const artifactPath=root+'/artifacts/'+originalRef.slice(7)+'.json';
 fs.appendFileSync(artifactPath,' ');assert.equal(phase('eval').ok,false);fs.writeFileSync(artifactPath,original);
@@ -52,4 +54,4 @@ assert.equal(git(['for-each-ref','--format=%(refname)','refs/kujo-effects']).spl
 const journal=fs.readFileSync(pointer.run_dir+'/control-events.jsonl','utf8');assert(journal.includes('assurance_replay_admitted'));
 for(const raw of [journal,original,...logs])for(const canary of ['PRIVATE_INPUT_CANARY','PRIVATE_GIT_CONTENT','PRIVATE_HOST_PATH'])assert(!raw.includes(canary));
 assert.deepEqual(fs.readFileSync(root+'/artifacts/'+preparedRef.slice(7)+'.json'),preparedBytes);assert.equal(ref(fs.readFileSync(root+'/artifacts/'+originalRef.slice(7)+'.json')),originalRef);
-const proof={package_substitution_denials:3,artifact_tamper_denials:2,historical_bytes_unchanged:true,ok:true,boundary,native_generic:true,actual_sigkill:true,controller_restart:true,participant_restart:true,checkpoint:true,logical_effects:1,concurrency:{contenders:4,admitted:1,denied:3},negative_correlations:negatives,trust_denials:trust+2,no_new_reader:true,privacy:true};write('proof.json',proof);console.log(JSON.stringify({root,...proof}));
+const proof={package_substitution_denials:3+(installedPackage.package_probe_files||[]).length,installed_package:!!installedPackage.package_worker,artifact_tamper_denials:2,historical_bytes_unchanged:true,ok:true,boundary,native_generic:true,actual_sigkill:true,controller_restart:true,participant_restart:true,checkpoint:true,logical_effects:1,concurrency:{contenders:4,admitted:1,denied:3},negative_correlations:negatives,trust_denials:trust+2,no_new_reader:true,privacy:true};write('proof.json',proof);console.log(JSON.stringify({root,...proof}));

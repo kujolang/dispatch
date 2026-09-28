@@ -16,6 +16,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
 from kujo_participant.codec import *
 from kujo_participant.process import send,receive
 PACKAGE=Path(__file__).resolve().parents[1]
+INSTALLED={}
 
 
 def read(root,name,limit=8192):
@@ -52,7 +53,7 @@ def artifact(root,raw):
 
 def child():
     parent,worker=socket.socketpair();parent.settimeout(20)
-    process=subprocess.Popen([sys.executable,'-I',str(PACKAGE/'run.py'),'participant',str(worker.fileno())],
+    process=subprocess.Popen([INSTALLED.get('package_python',sys.executable),'-I',INSTALLED.get('package_worker',str(PACKAGE/'run.py')),'participant',str(worker.fileno())],
                              pass_fds=(worker.fileno(),),stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,env={},cwd=PACKAGE)
     worker.close();return process,parent
@@ -98,6 +99,7 @@ def effect(config,root,mode):
 
 def run(root,attempt,mode):
     assets_check();config=decode(read(root,'config.json'));suffix=str(attempt)
+    INSTALLED.update(config)
     ticket=decode(read(root,'py-ticket-'+suffix+'.json'))
     request_data=request(read(root,'py-request-'+suffix+'.json',512))
     def live():

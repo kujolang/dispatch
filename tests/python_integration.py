@@ -37,7 +37,7 @@ def git(config,*args,data=None):return cmd(['git','--git-dir='+config['repo'],*a
 def setup(parent,name,crash=None):
     root=parent/name;root.mkdir(mode=0o700)
     now=int(time.time())
-    config={'runtime':RUNTIME,'python':PYTHON,'cwd':str(WORKCELL),'entry':'examples/effect-assurance/adapter.kujo',
+    config={**(load(Path(os.environ['PARTICIPANT_PACKAGE_CONFIG'])) if 'PARTICIPANT_PACKAGE_CONFIG' in os.environ else {}),'runtime':RUNTIME,'python':PYTHON,'cwd':str(WORKCELL),'entry':'examples/effect-assurance/adapter.kujo',
             'issuer':'git-local','beta':True,'native_participant':'python','crash':crash,
             'repo':str(root/(PATHCANARY+'.git')),'effect_class':'external_idempotent'}
     cmd(['git','init','--bare','--quiet',config['repo']])
@@ -77,12 +77,17 @@ for crash in ('before_commit','after_commit'):
     selected=root/'py-bound-handoff-1.ref';saved_ref=selected.read_bytes()
     original_handoff=(root/'artifacts'/(saved_ref.decode()[7:]+'.json')).read_bytes()
     if crash=='after_commit':
-        for name in ('__init__.py', 'sdk.py'):
-            source=PACKAGE/'src/kujo_participant'/name; original_source=source.read_bytes()
+        for source in [PACKAGE/'src/kujo_participant'/n for n in ('__init__.py','sdk.py')]+[Path(n) for n in config.get('package_probe_files',[])]:
+            original_source=source.read_bytes()
             try:
                 source.write_bytes(original_source+b'\n')
                 assert not controller(root,'eval')['ok']
             finally:source.write_bytes(original_source)
+            assert controller(root,'eval')['ok']
+        if config.get('package_worker'):
+            write(root/'config.json',dict(config,package_worker=config['package_python']))
+            assert not controller(root,'eval')['ok']
+            write(root/'config.json',config)
             assert controller(root,'eval')['ok']
         mutations=[(['subject',k],'wrong') for k in ['run_id','step_id','attempt_id','effect_id']]
         mutations += [(['participant','invocation_id'],'wrong'),(['participant','namespace'],'other.owner'),
@@ -137,5 +142,5 @@ for mode in ('expired','stale','symlink'):
     assert not host(root)['ok'];assert not (root/'py-claim-1').exists()
     assert effect(root,'observe')['observation']['observed_state']=='not_started'
 for line in logs:assert CANARY.encode() not in line and PATHCANARY.encode() not in line
-write(parent/'proof.json',{'proofs':proofs,'input_denials':12})
-print(json.dumps({'ok':True,'root':str(parent),'proofs':proofs,'input_denials':12}))
+write(parent/'proof.json',{'proofs':proofs,'input_denials':12,'installed_package':bool(os.environ.get('PARTICIPANT_PACKAGE_CONFIG'))})
+print(json.dumps({'ok':True,'root':str(parent),'proofs':proofs,'input_denials':12,'installed_package':bool(os.environ.get('PARTICIPANT_PACKAGE_CONFIG'))}))
