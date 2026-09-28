@@ -6,6 +6,8 @@ and restart behavior. Alpha retained; no core admission/schema behavior changed.
 
 # Changelog
 
+Unreleased: experimental participant npm tarball and Python wheel/sdist packaging, closed public APIs, pinned local assets, clean installed conformance and real installed-package Git crash/replay proofs. No publication, wire, verifier or replay-policy change.
+
 Unreleased: independent external Python native generic participant, closed owner extension, strict UTF-8/JSON codec and published-vector agreement. Cross-runtime TypeScript parity, offline package isolation, real Git SIGKILL/review/replay and four-process one-use contention preserve existing Dispatch authority. No generic schema or replay-policy change.
 
 Unreleased: native external TypeScript adoption of the generic interoperability core. Independent bounded codec/closed extension, one-use local host, real Workcell Git pre/post-commit SIGKILL and fresh-controller beta review/replay. Existing core/readers/verifier/policy and historical handoffs remain unchanged; package is experimental and unpublished.

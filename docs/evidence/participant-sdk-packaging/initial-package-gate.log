@@ -1,0 +1,10 @@
+Requirement already satisfied: build==1.3.0 in <build-venv>/lib/python3.10/site-packages (from -r packages/participant-sdk-python/build-requirements.lock (line 2)) (1.3.0)
+Requirement already satisfied: packaging==26.3 in <build-venv>/lib/python3.10/site-packages (from -r packages/participant-sdk-python/build-requirements.lock (line 3)) (26.3)
+Requirement already satisfied: pyproject-hooks==1.3.3 in <build-venv>/lib/python3.10/site-packages (from -r packages/participant-sdk-python/build-requirements.lock (line 4)) (1.3.3)
+Requirement already satisfied: tomli==2.4.1 in <build-venv>/lib/python3.10/site-packages (from -r packages/participant-sdk-python/build-requirements.lock (line 5)) (2.4.1)
+Requirement already satisfied: setuptools==80.9.0 in <build-venv>/lib/python3.10/site-packages (from -r packages/participant-sdk-python/build-requirements.lock (line 6)) (80.9.0)
+Requirement already satisfied: wheel==0.45.1 in <build-venv>/lib/python3.10/site-packages (from -r packages/participant-sdk-python/build-requirements.lock (line 7)) (0.45.1)
+WARNING: You are using pip version 22.0.4; however, version 26.2.1 is available.
+You should consider upgrading via the '<build-venv>/bin/python -m pip install --upgrade pip' command.
+{"ok": true, "report": "<installation>/report.json", "ts_config": "<installation>/ts/config.json", "python_config": "<installation>/py/config.json", "conformance": {"ts": 45, "python": 45, "exact_parity": true}, "reproducible": {"npm": true, "wheel": true, "sdist": false}}
+Installed package conformance and real crash/replay/contention passed.

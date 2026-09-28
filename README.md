@@ -726,3 +726,7 @@ Experimental Wave D: [controlled Workcell Git process interoperability](docs/git
 Experimental Wave D [interoperability correlation core](docs/interop-handoff.md)
 retains SDK/MCP/HTTP/Workcell handoffs through explicit adapters. Correlation never
 authorizes replay; existing persisted beta admission remains authoritative.
+
+[Experimental participant packages](packages/README.md) provide unpublished npm
+and Python artifacts for pure correlation/recording APIs. They contain no effect
+executor, admission, assurance or replay authority.

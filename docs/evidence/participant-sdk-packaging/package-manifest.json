@@ -1,0 +1,215 @@
+{
+  "additional_checks": {
+    "artifact_pin_rejection": true,
+    "external_typescript_declarations": true,
+    "post_import_asset_rejection": 2,
+    "python_worker_selection_denied": true,
+    "source_package_four_runner_parity": 45,
+    "ts_worker_selection_denied": true
+  },
+  "api_snapshot_sha256": "6a3eb91165e520af69d587d5c308e7a1449d7bfda54e17864124dc29a7ec1cfe",
+  "artifact_substitution_rejected": true,
+  "artifacts": {
+    "kujo_participant_sdk-0.1.0a1-py3-none-any.whl": "dbd3a2ab270b34c9d86f171f8906c51a705cecc7cff2907ae80fcee3c68732cc",
+    "kujo_participant_sdk-0.1.0a1.tar.gz": "0949a215284034c72178cc40ac2531a0853945b475689a9f19f077adbd26281a",
+    "kujolang-participant-sdk-0.1.0-alpha.1.tgz": "adacd78bdc2d5b29bea8a1ff2aa26ef7b75f84c6353952ae557b8427a0d0c2fa"
+  },
+  "asset_substitution_denials": 4,
+  "conformance": {
+    "exact_parity": true,
+    "python": 45,
+    "ts": 45
+  },
+  "dependencies_match_lock": true,
+  "final_artifact_validation": {
+    "conformance": "final artifacts: 45 each with exact parity",
+    "python": "rebuilt wheel with bundled API; full installed pre/post crash, replay, contention rerun",
+    "sdist": "built and inspected; non-reproducible timestamps accepted limitation",
+    "typescript": "unchanged exact tarball from full installed package gate"
+  },
+  "log_redaction": {
+    "initial-package-gate.log": {
+      "changes": "local install/build-venv path placeholders only",
+      "original_sha256": "2f79b671c32f294f44b004dc86fd2e05c282ccac47b1500df9dc40cf798c8552"
+    }
+  },
+  "package_commits": [
+    "ce26fa180d72181313830430c0fc6b00e00f92c7",
+    "1e3763426a5ae883432166a9f97272bbe806f73a",
+    "b63680a91bd111c5b01d719b1e9a3c7ded812588",
+    "5ff1ed45ba2942d500b1067e73a4f0a6efca4f0e"
+  ],
+  "reproducible": {
+    "npm": true,
+    "sdist": false,
+    "wheel": true
+  },
+  "runtime": {
+    "sha256": "4ef726d0020b6df0be78da4b7e96a79d099d414efa83874676038da501a72a93",
+    "source": "5d72aab4b99e7f8c01e4c208d6c97061934c7447"
+  },
+  "schema": "kujo.participant-package-rehearsal/v1alpha1",
+  "sdist_contents": [
+    "kujo_participant_sdk-0.1.0a1",
+    "kujo_participant_sdk-0.1.0a1/API.md",
+    "kujo_participant_sdk-0.1.0a1/LICENSE",
+    "kujo_participant_sdk-0.1.0a1/MANIFEST.in",
+    "kujo_participant_sdk-0.1.0a1/PKG-INFO",
+    "kujo_participant_sdk-0.1.0a1/README.md",
+    "kujo_participant_sdk-0.1.0a1/pyproject.toml",
+    "kujo_participant_sdk-0.1.0a1/requirements.lock",
+    "kujo_participant_sdk-0.1.0a1/setup.cfg",
+    "kujo_participant_sdk-0.1.0a1/src",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/__init__.py",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/__init__.pyi",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/_codec.py",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/_sdk.py",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/assets",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/assets/api.md",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/assets/capabilities.json",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/assets/core.schema.json",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/assets/dependencies.lock",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/assets/interop.md",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/assets/manifest.json",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/assets/portable-json.md",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/assets/sdk-conformance-manifest.json",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/assets/sdk-conformance.json",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/assets/sdk-design.md",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk/py.typed",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk.egg-info",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk.egg-info/PKG-INFO",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk.egg-info/SOURCES.txt",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk.egg-info/dependency_links.txt",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk.egg-info/requires.txt",
+    "kujo_participant_sdk-0.1.0a1/src/kujo_participant_sdk.egg-info/top_level.txt"
+  ],
+  "sdist_reproducibility_evidence": {
+    "member_timestamp_differences": 7,
+    "repeat_sha256": "82504eb9b2d90494d6e777e9c33d0b5332f6450e6b8408a5350dc6d5b9eb6757",
+    "same_member_contents": true
+  },
+  "source_sha256": {
+    "packages/participant-sdk-python/.gitignore": "7185ba15c24006a24eebafea6bd7462dd3ff91784fe0dbd7005951a0c84a8f74",
+    "packages/participant-sdk-python/API.md": "acd0bbb5cbd50497596a2f7656b808cc1bfc0c08506e09424ee92c876643c9d1",
+    "packages/participant-sdk-python/LICENSE": "4b6449939f8dce26dc5fb87756740a5977da9085517af127d9e634e6a6492506",
+    "packages/participant-sdk-python/MANIFEST.in": "8f64481dd88402bb3f4c999010125cf0f0f4af7d044d7314862da6069b943414",
+    "packages/participant-sdk-python/README.md": "d6f4be68a38c769adc3b34d41bee5fd6e6f7b69f1cda2aeae5535b70504bb6b7",
+    "packages/participant-sdk-python/build-requirements.lock": "142726fe9727b8f69b63f358c6c3b85463b93f5d432a0f391f9f0f5814b1672b",
+    "packages/participant-sdk-python/pyproject.toml": "2c4964802bbe2097ca5d7bf9867064bd1a10754bf5a98f8af1561a649a740285",
+    "packages/participant-sdk-python/requirements.lock": "0826520f9fd33a5619053051fd8d32af49f654927a2dd867f53ee9912ae5e556",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/__init__.py": "8820896e9e131fa7519442cdea8bf97fbfc3750accf2efa553648e1678db59f4",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/__init__.pyi": "823571111a4339ede3fc8137fcff2eda6b76b2d66ec7708623589105dbeda44f",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/_codec.py": "0f3d0fcde3394bd8aa1b1e0e4ad8be32537a3143589ff5bc797fe08080d1ebe1",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/_sdk.py": "96646e57e95bb03c97ed69e181fefdec18b05d0ba7b488acc34f17180c498f0a",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/assets/api.md": "acd0bbb5cbd50497596a2f7656b808cc1bfc0c08506e09424ee92c876643c9d1",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/assets/capabilities.json": "3b29512661eab4a79784baeed338d7870cac96fa7d694a080c349c9e02e0c18d",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/assets/core.schema.json": "e7ca18d1bd949d0a649905c122fb8d1d167b1e5a92437f3cf124156459846608",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/assets/dependencies.lock": "0826520f9fd33a5619053051fd8d32af49f654927a2dd867f53ee9912ae5e556",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/assets/interop.md": "21f499cc4fe299d5936670cc4392ef03bf9b33ceca19ba87ea2f4e64674decd6",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/assets/manifest.json": "d226203f39aec5ef034c085aa25539cd4658761791189914c0c32bcfe6b80ac4",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/assets/portable-json.md": "578448779c162bd976fe7399a9a111fbc1962a335495be7391a1b54c4bee45dd",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/assets/sdk-conformance-manifest.json": "fd7658d5b16a0d167c58ccf6392ec86e03a469dc2a0d80158607d490a1893cc2",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/assets/sdk-conformance.json": "2e5d04a84909321e1baa06c6f1ab819caf53b7dc4a41ca8b1e01fb019ae70e71",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/assets/sdk-design.md": "6f805e5d5e1125b6689a5df6fd3e1ed73650124a81c150b8529f2e67ff3aea3e",
+    "packages/participant-sdk-python/src/kujo_participant_sdk/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "packages/participant-sdk-ts/.gitignore": "7185ba15c24006a24eebafea6bd7462dd3ff91784fe0dbd7005951a0c84a8f74",
+    "packages/participant-sdk-ts/API.md": "0321dd5ff2bb609abc9be19dd46fed0d98c348871f2127a8a22e0bc2b1cfafc8",
+    "packages/participant-sdk-ts/LICENSE": "4b6449939f8dce26dc5fb87756740a5977da9085517af127d9e634e6a6492506",
+    "packages/participant-sdk-ts/README.md": "e095026604143d3b34f93d27b0f0e181d3d28a83e198fce1a76eb73f95f98b54",
+    "packages/participant-sdk-ts/assets/capabilities.json": "f8bb3408d172dd24c608c6613ac8e8b1c376358051df3c8265bb6adbede0f319",
+    "packages/participant-sdk-ts/assets/core.schema.json": "e7ca18d1bd949d0a649905c122fb8d1d167b1e5a92437f3cf124156459846608",
+    "packages/participant-sdk-ts/assets/interop.md": "21f499cc4fe299d5936670cc4392ef03bf9b33ceca19ba87ea2f4e64674decd6",
+    "packages/participant-sdk-ts/assets/manifest.json": "48348c6dcb79c7372dd9141461266d4ea9bf8a46eba239aabfbf65185fc5fab4",
+    "packages/participant-sdk-ts/assets/portable-json.md": "578448779c162bd976fe7399a9a111fbc1962a335495be7391a1b54c4bee45dd",
+    "packages/participant-sdk-ts/assets/sdk-conformance-manifest.json": "fd7658d5b16a0d167c58ccf6392ec86e03a469dc2a0d80158607d490a1893cc2",
+    "packages/participant-sdk-ts/assets/sdk-conformance.json": "2e5d04a84909321e1baa06c6f1ab819caf53b7dc4a41ca8b1e01fb019ae70e71",
+    "packages/participant-sdk-ts/assets/sdk-design.md": "6f805e5d5e1125b6689a5df6fd3e1ed73650124a81c150b8529f2e67ff3aea3e",
+    "packages/participant-sdk-ts/dependency-lock.json": "2bee29457b3a21e808868dba9b6e023c30c3cdb1033f916bbd13253a3917bdfb",
+    "packages/participant-sdk-ts/package-lock.json": "2bee29457b3a21e808868dba9b6e023c30c3cdb1033f916bbd13253a3917bdfb",
+    "packages/participant-sdk-ts/package.json": "b33f3402f4aaed5d283ef860c06074a7467f7ccf5cffe361f501c63f4edb85e6",
+    "packages/participant-sdk-ts/src/_codec.ts": "85c9fd4d0db37b17af01912b077b2915edbd8ac895f774d92177527d524dd865",
+    "packages/participant-sdk-ts/src/index.ts": "d48977de98a5e71eee2fffc7f04db64d70bf183631561d5e302dabba7b512dcc",
+    "packages/participant-sdk-ts/tsconfig.json": "49bed608460baa2ed844cb8a346fe540b7628d8efa8d5b0f48041f7686ff79fb"
+  },
+  "status": "experimental-alpha-unpublished",
+  "tools": {
+    "build": "build 1.3.0",
+    "jsonschema": "4.23.0",
+    "node": "v26.7.0",
+    "npm": "11.19.0",
+    "python": "Python 3.10.5",
+    "setuptools": "80.9.0",
+    "typescript": "5.9.3",
+    "wheel": "0.45.1"
+  },
+  "ts_contents": [
+    "package/LICENSE",
+    "package/dist/_codec.js",
+    "package/dist/index.js",
+    "package/assets/capabilities.json",
+    "package/assets/core.schema.json",
+    "package/dependency-lock.json",
+    "package/assets/manifest.json",
+    "package/package.json",
+    "package/assets/sdk-conformance-manifest.json",
+    "package/assets/sdk-conformance.json",
+    "package/API.md",
+    "package/assets/interop.md",
+    "package/assets/portable-json.md",
+    "package/README.md",
+    "package/assets/sdk-design.md",
+    "package/dist/_codec.d.ts",
+    "package/dist/index.d.ts"
+  ],
+  "validation": {
+    "dispatch_release_gate": {
+      "exit_code": 0,
+      "shards": 24,
+      "source_tests": 101,
+      "workloads": 3
+    },
+    "hosted_ci_observed": false,
+    "installed_runtime_crash_replay_contention": {
+      "python": true,
+      "typescript": true
+    },
+    "installed_sdk_conformance": {
+      "parity": true,
+      "python": 45,
+      "typescript": 45
+    },
+    "kujo_fmt": {
+      "exit_code": 0
+    },
+    "kujo_readme_contracts": {
+      "exit_code": 0,
+      "tests": 1
+    },
+    "workcell_effect_assurance": {
+      "exit_code": 0
+    }
+  },
+  "wheel_contents": [
+    "kujo_participant_sdk/__init__.py",
+    "kujo_participant_sdk/__init__.pyi",
+    "kujo_participant_sdk/_codec.py",
+    "kujo_participant_sdk/_sdk.py",
+    "kujo_participant_sdk/py.typed",
+    "kujo_participant_sdk/assets/api.md",
+    "kujo_participant_sdk/assets/capabilities.json",
+    "kujo_participant_sdk/assets/core.schema.json",
+    "kujo_participant_sdk/assets/dependencies.lock",
+    "kujo_participant_sdk/assets/interop.md",
+    "kujo_participant_sdk/assets/manifest.json",
+    "kujo_participant_sdk/assets/portable-json.md",
+    "kujo_participant_sdk/assets/sdk-conformance-manifest.json",
+    "kujo_participant_sdk/assets/sdk-conformance.json",
+    "kujo_participant_sdk/assets/sdk-design.md",
+    "kujo_participant_sdk-0.1.0a1.dist-info/licenses/LICENSE",
+    "kujo_participant_sdk-0.1.0a1.dist-info/METADATA",
+    "kujo_participant_sdk-0.1.0a1.dist-info/WHEEL",
+    "kujo_participant_sdk-0.1.0a1.dist-info/top_level.txt",
+    "kujo_participant_sdk-0.1.0a1.dist-info/RECORD"
+  ]
+}

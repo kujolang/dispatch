@@ -1,0 +1,86 @@
+{
+  "artifact_sha256": "adacd78bdc2d5b29bea8a1ff2aa26ef7b75f84c6353952ae557b8427a0d0c2fa",
+  "files": [
+    {
+      "name": "API.md",
+      "sha256": "0321dd5ff2bb609abc9be19dd46fed0d98c348871f2127a8a22e0bc2b1cfafc8"
+    },
+    {
+      "name": "LICENSE",
+      "sha256": "4b6449939f8dce26dc5fb87756740a5977da9085517af127d9e634e6a6492506"
+    },
+    {
+      "name": "README.md",
+      "sha256": "e095026604143d3b34f93d27b0f0e181d3d28a83e198fce1a76eb73f95f98b54"
+    },
+    {
+      "name": "capabilities.json",
+      "sha256": "f8bb3408d172dd24c608c6613ac8e8b1c376358051df3c8265bb6adbede0f319"
+    },
+    {
+      "name": "core.schema.json",
+      "sha256": "e7ca18d1bd949d0a649905c122fb8d1d167b1e5a92437f3cf124156459846608"
+    },
+    {
+      "name": "interop.md",
+      "sha256": "21f499cc4fe299d5936670cc4392ef03bf9b33ceca19ba87ea2f4e64674decd6"
+    },
+    {
+      "name": "manifest.json",
+      "sha256": "48348c6dcb79c7372dd9141461266d4ea9bf8a46eba239aabfbf65185fc5fab4"
+    },
+    {
+      "name": "portable-json.md",
+      "sha256": "578448779c162bd976fe7399a9a111fbc1962a335495be7391a1b54c4bee45dd"
+    },
+    {
+      "name": "sdk-conformance-manifest.json",
+      "sha256": "fd7658d5b16a0d167c58ccf6392ec86e03a469dc2a0d80158607d490a1893cc2"
+    },
+    {
+      "name": "sdk-conformance.json",
+      "sha256": "2e5d04a84909321e1baa06c6f1ab819caf53b7dc4a41ca8b1e01fb019ae70e71"
+    },
+    {
+      "name": "sdk-design.md",
+      "sha256": "6f805e5d5e1125b6689a5df6fd3e1ed73650124a81c150b8529f2e67ff3aea3e"
+    },
+    {
+      "name": "dependency-lock.json",
+      "sha256": "2bee29457b3a21e808868dba9b6e023c30c3cdb1033f916bbd13253a3917bdfb"
+    },
+    {
+      "name": "_codec.d.ts",
+      "sha256": "d9a754cb462fab2b4a0d7c0d0514de08b270037771b917d6ce1d1717ce94680c"
+    },
+    {
+      "name": "_codec.js",
+      "sha256": "7bd6246b0b6bf0e9ec724ddcfedfaa41db555592f9fb3c79f4100182af718e62"
+    },
+    {
+      "name": "index.d.ts",
+      "sha256": "567e5e964a3bb9afda6b977ad038af9c245611b57cde131a2de4a71a601446ac"
+    },
+    {
+      "name": "index.js",
+      "sha256": "507f121227c0fdf850f9c21f3bdb8aaa8a13d376b3a5a454f2f4effe5e7a886d"
+    },
+    {
+      "name": "package.json",
+      "sha256": "b33f3402f4aaed5d283ef860c06074a7467f7ccf5cffe361f501c63f4edb85e6"
+    },
+    {
+      "name": "record.mjs",
+      "sha256": "eb1056ae7f2ec206554737981a7a7d1a1e8da985a077b839d91ef477c81dfd3c"
+    },
+    {
+      "name": "registration.mjs",
+      "sha256": "03c1705070bdf1c02edc37e117fc8a5031334c2f14b03a85159625dfc8bd9f7c"
+    },
+    {
+      "name": "worker.mjs",
+      "sha256": "aa6a4d064c87ca9c588d512fa7cc4279c78f6a7584e7ca95fdc74c050f37151e"
+    }
+  ],
+  "installation_sha256": "7560e0a5debcf4e783b3f543fac5838f40042cef74434ed05620a8d74299d25c"
+}

@@ -1,0 +1,70 @@
+{
+  "artifact_sha256": "dbd3a2ab270b34c9d86f171f8906c51a705cecc7cff2907ae80fcee3c68732cc",
+  "files": [
+    {
+      "name": "__init__.py",
+      "sha256": "8820896e9e131fa7519442cdea8bf97fbfc3750accf2efa553648e1678db59f4"
+    },
+    {
+      "name": "__init__.pyi",
+      "sha256": "823571111a4339ede3fc8137fcff2eda6b76b2d66ec7708623589105dbeda44f"
+    },
+    {
+      "name": "_codec.py",
+      "sha256": "0f3d0fcde3394bd8aa1b1e0e4ad8be32537a3143589ff5bc797fe08080d1ebe1"
+    },
+    {
+      "name": "_sdk.py",
+      "sha256": "96646e57e95bb03c97ed69e181fefdec18b05d0ba7b488acc34f17180c498f0a"
+    },
+    {
+      "name": "api.md",
+      "sha256": "acd0bbb5cbd50497596a2f7656b808cc1bfc0c08506e09424ee92c876643c9d1"
+    },
+    {
+      "name": "capabilities.json",
+      "sha256": "3b29512661eab4a79784baeed338d7870cac96fa7d694a080c349c9e02e0c18d"
+    },
+    {
+      "name": "core.schema.json",
+      "sha256": "e7ca18d1bd949d0a649905c122fb8d1d167b1e5a92437f3cf124156459846608"
+    },
+    {
+      "name": "dependencies.lock",
+      "sha256": "0826520f9fd33a5619053051fd8d32af49f654927a2dd867f53ee9912ae5e556"
+    },
+    {
+      "name": "interop.md",
+      "sha256": "21f499cc4fe299d5936670cc4392ef03bf9b33ceca19ba87ea2f4e64674decd6"
+    },
+    {
+      "name": "manifest.json",
+      "sha256": "d226203f39aec5ef034c085aa25539cd4658761791189914c0c32bcfe6b80ac4"
+    },
+    {
+      "name": "portable-json.md",
+      "sha256": "578448779c162bd976fe7399a9a111fbc1962a335495be7391a1b54c4bee45dd"
+    },
+    {
+      "name": "sdk-conformance-manifest.json",
+      "sha256": "fd7658d5b16a0d167c58ccf6392ec86e03a469dc2a0d80158607d490a1893cc2"
+    },
+    {
+      "name": "sdk-conformance.json",
+      "sha256": "2e5d04a84909321e1baa06c6f1ab819caf53b7dc4a41ca8b1e01fb019ae70e71"
+    },
+    {
+      "name": "sdk-design.md",
+      "sha256": "6f805e5d5e1125b6689a5df6fd3e1ed73650124a81c150b8529f2e67ff3aea3e"
+    },
+    {
+      "name": "py.typed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "worker.py",
+      "sha256": "0bda8d4b416d7042e940aabbe271a9dc7f2ce2fe9fa4acce0c887d86cc3c04a4"
+    }
+  ],
+  "installation_sha256": "2ea1f6c583ba8b7a53e3f4cb629538e0f9cbabce8043b0ae2219ca67dda25524"
+}

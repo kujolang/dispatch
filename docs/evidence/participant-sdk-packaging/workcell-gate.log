@@ -1,0 +1,2 @@
+PASS Git effect: real atomic ref transaction, duplicate, input conflict, expiry, moved target, privacy
+{"ok":true,"concurrent_processes":4,"admitted":1,"denied":3,"logical_effects":1}
