@@ -31,6 +31,10 @@
     "initial-package-gate.log": {
       "changes": "local install/build-venv path placeholders only",
       "original_sha256": "2f79b671c32f294f44b004dc86fd2e05c282ccac47b1500df9dc40cf798c8552"
+    },
+    "kujo-readme.log": {
+      "changes": "terminal blank line removed; test output unchanged",
+      "original_sha256": "d941125ebf2058d031bf7710806a97a071c25fef9b785b77905e8b7c2ef128c1"
     }
   },
   "package_commits": [
