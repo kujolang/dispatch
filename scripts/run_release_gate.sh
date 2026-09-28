@@ -88,6 +88,7 @@ run_suite() {
 run_suite typescript_package npm --prefix interop/typescript-participant test
 run_suite python_package interop/python-participant/.venv/bin/python -I interop/python-participant/run.py test
 run_suite python_parity node tests/python_parity.mjs
+run_suite participant_sdk_parity node tests/participant_sdk_parity.mjs
 run_suite python_isolation python3 tests/python_package_isolation.py
 run_suite python_integration env KUJO_BIN="$KUJO_BIN" python3 tests/python_integration.py
 run_suite typescript_after env KUJO_BIN="$KUJO_BIN" node tests/typescript_integration.mjs after_commit

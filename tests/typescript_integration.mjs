@@ -30,7 +30,7 @@ attacks.push(d=>d.completion_knowledge='reported',d=>d.participant_extension.val
 for(const mutate of attacks){const d=structuredClone(doc);mutate(d);select(d);assert.equal(phase('eval').ok,false);assert.deepEqual(fs.readFileSync(pointer.run_dir+'/state.json'),before);negatives++;}
 fs.writeFileSync(root+'/ts-bound-handoff-1.ref',originalRef);
 // Pinned executable/lock substitution cannot borrow the installed revision.
-for(const name of ['interop/typescript-participant/dist/codec.js','interop/typescript-participant/package-lock.json']){const saved=fs.readFileSync(name);try{fs.appendFileSync(name,'\n');assert.equal(phase('eval').ok,false);assert.deepEqual(fs.readFileSync(pointer.run_dir+'/state.json'),before);}finally{fs.writeFileSync(name,saved);}}
+for(const name of ['interop/typescript-participant/dist/codec.js','interop/typescript-participant/dist/sdk.js','interop/typescript-participant/package-lock.json']){const saved=fs.readFileSync(name);try{fs.appendFileSync(name,'\n');assert.equal(phase('eval').ok,false);assert.deepEqual(fs.readFileSync(pointer.run_dir+'/state.json'),before);}finally{fs.writeFileSync(name,saved);}}
 // Exact artifact reads reject byte tampering and symlinks, not just JSON substitutions.
 const artifactPath=root+'/artifacts/'+originalRef.slice(7)+'.json';
 fs.appendFileSync(artifactPath,' ');assert.equal(phase('eval').ok,false);fs.writeFileSync(artifactPath,original);
@@ -52,4 +52,4 @@ assert.equal(git(['for-each-ref','--format=%(refname)','refs/kujo-effects']).spl
 const journal=fs.readFileSync(pointer.run_dir+'/control-events.jsonl','utf8');assert(journal.includes('assurance_replay_admitted'));
 for(const raw of [journal,original,...logs])for(const canary of ['PRIVATE_INPUT_CANARY','PRIVATE_GIT_CONTENT','PRIVATE_HOST_PATH'])assert(!raw.includes(canary));
 assert.deepEqual(fs.readFileSync(root+'/artifacts/'+preparedRef.slice(7)+'.json'),preparedBytes);assert.equal(ref(fs.readFileSync(root+'/artifacts/'+originalRef.slice(7)+'.json')),originalRef);
-const proof={package_substitution_denials:2,artifact_tamper_denials:2,historical_bytes_unchanged:true,ok:true,boundary,native_generic:true,actual_sigkill:true,controller_restart:true,participant_restart:true,checkpoint:true,logical_effects:1,concurrency:{contenders:4,admitted:1,denied:3},negative_correlations:negatives,trust_denials:trust+2,no_new_reader:true,privacy:true};write('proof.json',proof);console.log(JSON.stringify({root,...proof}));
+const proof={package_substitution_denials:3,artifact_tamper_denials:2,historical_bytes_unchanged:true,ok:true,boundary,native_generic:true,actual_sigkill:true,controller_restart:true,participant_restart:true,checkpoint:true,logical_effects:1,concurrency:{contenders:4,admitted:1,denied:3},negative_correlations:negatives,trust_denials:trust+2,no_new_reader:true,privacy:true};write('proof.json',proof);console.log(JSON.stringify({root,...proof}));
