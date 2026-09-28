@@ -69,6 +69,9 @@ verify_artifact(wheel,wheelsha)
 run([python,'-m','pip','install','--no-deps',wheel])
 run([python,'-m','pip','check'])
 tr=json.loads(run(['node','conformance.mjs'],ts));pr=json.loads(run([python,'-I',py/'conformance.py'],py));assert tr==pr and len(tr['cases'])==45
+source_ts=json.loads(run(['node',ROOT/'interop/typescript-participant/test/sdk-conformance.mjs'],ROOT))
+source_py=json.loads(run([ROOT/'interop/python-participant/.venv/bin/python','-I',ROOT/'interop/python-participant/run.py','sdk-conformance'],ROOT))
+assert tr==source_ts==source_py
 assert run(['node','example.mjs'],ts).strip()==run([python,'-I',py/'example.py'],py).strip()
 tsroot=ts/'node_modules/@kujolang/participant-sdk'
 pyroot=Path(run([python,'-I','-c','import kujo_participant_sdk,pathlib; print(pathlib.Path(kujo_participant_sdk.__file__).parent)']).strip())
