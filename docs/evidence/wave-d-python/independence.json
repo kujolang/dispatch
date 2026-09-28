@@ -1,0 +1,73 @@
+{
+  "audit": "AST imports; no existing participant/Dispatch implementation imported or translated. TypeScript public API invoked only by external parity harness.",
+  "files": [
+    {
+      "file": "interop/python-participant/host/runner.py",
+      "imports": [
+        "datetime",
+        "json",
+        "os",
+        "pathlib",
+        "re",
+        "signal",
+        "selectors",
+        "socket",
+        "stat",
+        "subprocess",
+        "sys",
+        "time",
+        "uuid",
+        "kujo_participant.codec",
+        "kujo_participant.process"
+      ]
+    },
+    {
+      "file": "interop/python-participant/run.py",
+      "imports": [
+        "sys",
+        "pathlib",
+        "kujo_participant.codec",
+        "unittest",
+        "kujo_participant.process"
+      ]
+    },
+    {
+      "file": "interop/python-participant/src/kujo_participant/__init__.py",
+      "imports": []
+    },
+    {
+      "file": "interop/python-participant/src/kujo_participant/codec.py",
+      "imports": [
+        "hashlib",
+        "json",
+        "re",
+        "pathlib",
+        "jsonschema"
+      ]
+    },
+    {
+      "file": "interop/python-participant/src/kujo_participant/process.py",
+      "imports": [
+        "socket",
+        "struct",
+        "uuid",
+        ".codec"
+      ]
+    },
+    {
+      "file": "interop/python-participant/tests/test_codec.py",
+      "imports": [
+        "copy",
+        "json",
+        "os",
+        "pathlib",
+        "subprocess",
+        "sys",
+        "tempfile",
+        "unittest",
+        "kujo_participant.codec"
+      ]
+    }
+  ],
+  "production_diff": ""
+}

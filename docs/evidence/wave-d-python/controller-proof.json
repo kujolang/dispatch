@@ -1,0 +1,20 @@
+[
+  {
+    "case": "before_commit",
+    "controller_action_attempts": [
+      "1",
+      "2"
+    ],
+    "journal_sha256": "3846b9f839c595ea490d345e0a27285997995c17ed7270adba23121779016f4d",
+    "replay_admission_recorded": true
+  },
+  {
+    "case": "after_commit",
+    "controller_action_attempts": [
+      "1",
+      "2"
+    ],
+    "journal_sha256": "2ba39fec600324d305778d62601b55d00db640cc7c083807efd7a5e9e179497b",
+    "replay_admission_recorded": true
+  }
+]

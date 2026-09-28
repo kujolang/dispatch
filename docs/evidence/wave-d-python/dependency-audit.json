@@ -1,0 +1,56 @@
+{
+  "queries": [
+    {
+      "package": {
+        "name": "attrs",
+        "ecosystem": "PyPI"
+      },
+      "version": "26.1.0"
+    },
+    {
+      "package": {
+        "name": "jsonschema",
+        "ecosystem": "PyPI"
+      },
+      "version": "4.23.0"
+    },
+    {
+      "package": {
+        "name": "jsonschema-specifications",
+        "ecosystem": "PyPI"
+      },
+      "version": "2025.9.1"
+    },
+    {
+      "package": {
+        "name": "referencing",
+        "ecosystem": "PyPI"
+      },
+      "version": "0.37.0"
+    },
+    {
+      "package": {
+        "name": "rpds-py",
+        "ecosystem": "PyPI"
+      },
+      "version": "0.30.0"
+    },
+    {
+      "package": {
+        "name": "typing-extensions",
+        "ecosystem": "PyPI"
+      },
+      "version": "4.16.0"
+    }
+  ],
+  "response": {
+    "results": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ]
+  }
+}

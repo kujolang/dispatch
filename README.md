@@ -2,6 +2,8 @@ Independent beta consumer adoption: [rehearsal and evidence](docs/audits/indepen
 
 # Dispatch
 
+Experimental native generic participants: independent [Python adoption](docs/audits/wave-d-python.md) and [TypeScript adoption](docs/audits/wave-d-typescript.md) reuse the existing correlation API; Dispatch remains replay authority.
+
 Proposed beta adoption work: [portable commitments and alpha/beta coexistence](docs/contracts/beta-migration.md). Alpha rules below remain supported; beta is a separate opt-in required-policy path, not an automatic upgrade.
 
 

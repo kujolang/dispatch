@@ -1,0 +1,46 @@
+{
+  "recorded_at": "2026-09-28T00:24:10.304619+00:00",
+  "python": "3.10.5",
+  "platform": "macOS-26.6.2-x86_64-i386-64bit",
+  "machine": "x86_64",
+  "node": "v26.7.0",
+  "dependencies": [
+    {
+      "name": "attrs",
+      "version": "26.1.0"
+    },
+    {
+      "name": "jsonschema",
+      "version": "4.23.0"
+    },
+    {
+      "name": "jsonschema-specifications",
+      "version": "2025.9.1"
+    },
+    {
+      "name": "pip",
+      "version": "22.0.4"
+    },
+    {
+      "name": "referencing",
+      "version": "0.37.0"
+    },
+    {
+      "name": "rpds-py",
+      "version": "0.30.0"
+    },
+    {
+      "name": "setuptools",
+      "version": "58.1.0"
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0"
+    }
+  ],
+  "requirements_sha256": "0826520f9fd33a5619053051fd8d32af49f654927a2dd867f53ee9912ae5e556",
+  "runtime_source": "5d72aab4b99e7f8c01e4c208d6c97061934c7447",
+  "runtime_sha256": "4ef726d0020b6df0be78da4b7e96a79d099d414efa83874676038da501a72a93",
+  "generic_core": "kujo.interop-handoff/v1alpha1",
+  "workcell_profile": "workcell.git-cas/1beta1"
+}

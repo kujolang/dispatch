@@ -18,7 +18,8 @@ Copy `src/`, `tests/`, `assets/`, `docs/`, `run.py`, `requirements.lock` and
 `bootstrap.sh` anywhere. No ecosystem checkout is needed for codec/schema/vector
 unit tests. The separate operator host fixture additionally needs Git, Workcell,
 Dispatch and its compatible Kujo runtime. Do not install the fixture as a general
-Git execution service.
+Git execution service. The real host fixture is POSIX-only (inherited file
+descriptors, O_NOFOLLOW and SIGKILL); this rehearsal ran on Darwin/x64.
 
 ## Independent contract implementation
 
@@ -33,7 +34,10 @@ specifications/schemas/vectors are pinned exact copies in `assets/manifest.json`
 `reference` hashes exact bytes; it does not read files. Duplicate keys are rejected
 before dict construction. Python unlimited integers, floats, -0, NaN/Infinity,
 ASCII escaping and permissive duplicate handling are deliberately not defaults.
-Unicode is not normalized. Unknown closed extensions fail.
+Unicode is not normalized. Unknown closed extensions fail. This bounded adopter
+accepts only canonical positive decimal action attempts from the published current
+Dispatch domain; the broader structural identifier pattern is not an opaque-attempt
+capability. Parser acceptance is tested separately from host snapshot comparison.
 
 The eight core fields, 6144-byte document, 2048-byte core/extension and 128-byte
 identifier/value bounds remain unchanged. The owner namespace is
@@ -78,7 +82,7 @@ shadowing. The explicit package source anchor and operator-installed virtualenv
 remain trusted. System/venv site installation, including .pth files, is not a
 sandbox: only reviewed hash-pinned wheels may be installed there. Tests inject
 hostile environment/startup modules and verify no execution or public leakage.
-Configuration revisions pin host, codec, worker, owner registration, manifest and
+Configuration revisions pin host, codec, worker, package initializer, owner registration, manifest and
 lockfile. Protected operator installation is still required; a lockfile alone does
 not authenticate mutable runtime site-packages.
 

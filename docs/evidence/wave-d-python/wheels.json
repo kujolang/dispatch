@@ -1,0 +1,32 @@
+[
+  {
+    "wheel": "attrs-26.1.0-py3-none-any.whl",
+    "sha256": "c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309",
+    "startup_or_install_scripts": []
+  },
+  {
+    "wheel": "jsonschema-4.23.0-py3-none-any.whl",
+    "sha256": "fbadb6f8b144a8f8cf9f0b89ba94501d143e50411a1278633f56a7acf7fd5566",
+    "startup_or_install_scripts": []
+  },
+  {
+    "wheel": "jsonschema_specifications-2025.9.1-py3-none-any.whl",
+    "sha256": "98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe",
+    "startup_or_install_scripts": []
+  },
+  {
+    "wheel": "referencing-0.37.0-py3-none-any.whl",
+    "sha256": "381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231",
+    "startup_or_install_scripts": []
+  },
+  {
+    "wheel": "rpds_py-0.30.0-cp310-cp310-macosx_10_12_x86_64.whl",
+    "sha256": "679ae98e00c0e8d68a7fda324e16b90fd5260945b45d3b824c892cec9eea3288",
+    "startup_or_install_scripts": []
+  },
+  {
+    "wheel": "typing_extensions-4.16.0-py3-none-any.whl",
+    "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+    "startup_or_install_scripts": []
+  }
+]

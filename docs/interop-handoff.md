@@ -162,8 +162,11 @@ The native [external TypeScript participant](../interop/typescript-participant/R
 now implements this core from packaged published contracts with an independent codec
 and closed owner extension. The existing generic API accepts its installed validator;
 no fifth family-specific reader is required. See [adoption evidence](audits/wave-d-typescript.md).
-This adds no normative wire semantics. Next: independent external Python adoption
-to test another runtime before general participant SDK packaging. Remote trust,
+The independent [Python participant](../interop/python-participant/README.md) now
+emits this core natively too; its closed owner validator uses the same generic API.
+See [Python adoption and cross-runtime parity](audits/wave-d-python.md). Neither
+adopter adds normative wire semantics. Next: design a minimal participant SDK API
+from both runtimes, without freezing or publishing it. Remote trust,
 multi-effect, stable promotion and universal lifecycles remain outside scope.
 
 Draft 2020-12 schemas are independently checked with
