@@ -1,0 +1,1 @@
+{"ok":true,"schema":"kujo.participant-sdk-conformance/v1alpha1","cases":45,"comparison":"exact bytes, content references, normalized values, error/correlation categories"}

@@ -1,0 +1,29 @@
+Looking in links: /Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/interop/python-participant/wheelhouse
+Processing ./interop/python-participant/wheelhouse/attrs-26.1.0-py3-none-any.whl
+Processing ./interop/python-participant/wheelhouse/jsonschema-4.23.0-py3-none-any.whl
+Processing ./interop/python-participant/wheelhouse/jsonschema_specifications-2025.9.1-py3-none-any.whl
+Processing ./interop/python-participant/wheelhouse/referencing-0.37.0-py3-none-any.whl
+Processing ./interop/python-participant/wheelhouse/rpds_py-0.30.0-cp310-cp310-macosx_10_12_x86_64.whl
+Processing ./interop/python-participant/wheelhouse/typing_extensions-4.16.0-py3-none-any.whl
+Installing collected packages: typing-extensions, rpds-py, attrs, referencing, jsonschema-specifications, jsonschema
+Successfully installed attrs-26.1.0 jsonschema-4.23.0 jsonschema-specifications-2025.9.1 referencing-0.37.0 rpds-py-0.30.0 typing-extensions-4.16.0
+test_action_attempts (test_codec.CodecTests) ... ok
+test_assets (test_codec.CodecTests) ... ok
+test_closed_extensions (test_codec.CodecTests) ... ok
+test_correlations (test_codec.CodecTests) ... ok
+test_isolated_environment (test_codec.CodecTests) ... ok
+test_limits (test_codec.CodecTests) ... ok
+test_python_numbers (test_codec.CodecTests) ... ok
+test_request (test_codec.CodecTests) ... ok
+test_roundtrip (test_codec.CodecTests) ... ok
+test_unicode (test_codec.CodecTests) ... ok
+test_vectors (test_codec.CodecTests) ... ok
+test_wire_mutations (test_codec.CodecTests) ... ok
+test_neutral_corpus (test_codec.ParityCorpusTests) ... ok
+test_shared_contract (test_sdk.SDKTests) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.337s
+
+OK
+{"ok": true, "external_copy": true, "network": false, "ecosystem_imports": false}

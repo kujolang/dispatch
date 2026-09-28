@@ -1,0 +1,273 @@
+{
+  "schema": "participant-sdk-api-evidence/v1",
+  "validated_commit": "2f7bf303f738eb5c37f662dcc74043f84b770369",
+  "baseline": "0ca34ec9769b07254c1f4db385cecae6efbfd6d5",
+  "validation": {
+    "dispatch_release_gate_exit": 0,
+    "sdk_cases": 45,
+    "typescript_tests": 45,
+    "python_test_methods": 14,
+    "portable_vectors_per_runtime": 20,
+    "legacy_parity_cases": 28,
+    "parser_checks": 22,
+    "contract_shards": 24,
+    "workloads": 3,
+    "workcell": "PASS",
+    "kujo_docs_fmt": "PASS",
+    "hosted_ci": false
+  },
+  "source_hashes": {
+    "docs/contracts/participant-sdk/conformance.json": "2e5d04a84909321e1baa06c6f1ab819caf53b7dc4a41ca8b1e01fb019ae70e71",
+    "docs/contracts/participant-sdk/design.md": "6f805e5d5e1125b6689a5df6fd3e1ed73650124a81c150b8529f2e67ff3aea3e",
+    "docs/contracts/participant-sdk/manifest.json": "fd7658d5b16a0d167c58ccf6392ec86e03a469dc2a0d80158607d490a1893cc2",
+    "interop/python-participant/.gitignore": "2e244a1a175942a804ffa05b19bae447b0c6e454a3a5f796bcbe2ff65138a31f",
+    "interop/python-participant/README.md": "dd5b561bfd8159e4978368b918b786227add8c08a93a876d477a4fcd1f3a4447",
+    "interop/python-participant/assets/commitment-vectors.json": "6ba4de9c599eb0c0abcf03ca7576dca1772dbf2d6f765f1f6274dd63275aae7b",
+    "interop/python-participant/assets/core.schema.json": "e7ca18d1bd949d0a649905c122fb8d1d167b1e5a92437f3cf124156459846608",
+    "interop/python-participant/assets/git.schema.json": "a3c3672eba53b95d11af5a124f61b7b58299ebc594b6a016c031b2161482ad60",
+    "interop/python-participant/assets/interop-handoff.md": "43697643c8cd3c4987e57652ac6070e7c78d5056e192bd2f743872870e753249",
+    "interop/python-participant/assets/manifest.json": "30597406eeb44822af0dc35f908550151d59e36e0764ec3c7742393c7ccbee72",
+    "interop/python-participant/assets/parity.json": "43836832dc1209a6f225cb456a7cfa0032961e878e3009a15693d4838e392e5c",
+    "interop/python-participant/assets/participant.schema.json": "6c85fd9d06d497019b081e9199c59f218192a53b430e0a891ed28b66485f66e5",
+    "interop/python-participant/assets/portable-commitments.md": "578448779c162bd976fe7399a9a111fbc1962a335495be7391a1b54c4bee45dd",
+    "interop/python-participant/assets/sdk-conformance.json": "2e5d04a84909321e1baa06c6f1ab819caf53b7dc4a41ca8b1e01fb019ae70e71",
+    "interop/python-participant/assets/sdk-design.md": "6f805e5d5e1125b6689a5df6fd3e1ed73650124a81c150b8529f2e67ff3aea3e",
+    "interop/python-participant/assets/sdk-manifest.json": "fd7658d5b16a0d167c58ccf6392ec86e03a469dc2a0d80158607d490a1893cc2",
+    "interop/python-participant/bootstrap.sh": "29f7e69c9e38f83c5601c3849effbef49364828711d638bf58aead4b57269263",
+    "interop/python-participant/docs/interpretation.md": "6d1b85e949488895c3cddb59cef18f258a585f41c73a7b0393118d239a33b7b6",
+    "interop/python-participant/host/runner.py": "ddf87ae356f04b54dfc81671143fc5f7c2660bc545779578ec60fc46ad475ac6",
+    "interop/python-participant/requirements.lock": "0826520f9fd33a5619053051fd8d32af49f654927a2dd867f53ee9912ae5e556",
+    "interop/python-participant/run.py": "3bcaf1dba60be680574ad51c95b9363b7d1dcd5655e0121dd2c81f070b6938cc",
+    "interop/python-participant/src/kujo_participant/__init__.py": "fd348afd850ee09f813bc0fb32e7a9c2edae7c031e6131871c5f2c4ca6a41cf4",
+    "interop/python-participant/src/kujo_participant/codec.py": "f5d4da03b71437eaaa4ec1a908808e321d5c1443b17498ebc35f4fd671b51592",
+    "interop/python-participant/src/kujo_participant/installed_sdk.py": "c958979a19fca6151c1cfcd9797c74f6bd206b25202dd3775e8c363458e99b93",
+    "interop/python-participant/src/kujo_participant/process.py": "f1aa8dd48d11ca51b652089c27bb4c1cc415ab315f45f11fc3fb05709abe1cbd",
+    "interop/python-participant/src/kujo_participant/sdk.py": "ea4d29b987e2feac273e05b9b8a9ca0ffcce766f33fefd4dab64a92b2a36b241",
+    "interop/python-participant/tests/sdk_conformance.py": "62bb064a61313ca2c80b9ac1b07527c866d92e19913e2aaf159cd400f6d7f3b6",
+    "interop/python-participant/tests/test_codec.py": "4851a9cc80b75f0375c4e911b778c5ee0cec09d1b7ac633ea293a72be18d30d5",
+    "interop/python-participant/tests/test_sdk.py": "ea44762dfc8ce961ed60c79008ecb12ec771b2641b8b86eb5b843e08657f991e",
+    "interop/typescript-participant/.gitignore": "790e3169bc19b046fe55ba1da6d13b976c28363c8c00462a2195fe5faf260910",
+    "interop/typescript-participant/README.md": "ff0ced72fe4b17cca9d16e79acb986cbcc3825490cbd6f42e16c932b5819c319",
+    "interop/typescript-participant/assets/commitment-vectors.json": "6ba4de9c599eb0c0abcf03ca7576dca1772dbf2d6f765f1f6274dd63275aae7b",
+    "interop/typescript-participant/assets/core.schema.json": "e7ca18d1bd949d0a649905c122fb8d1d167b1e5a92437f3cf124156459846608",
+    "interop/typescript-participant/assets/git.schema.json": "a3c3672eba53b95d11af5a124f61b7b58299ebc594b6a016c031b2161482ad60",
+    "interop/typescript-participant/assets/interop-handoff.md": "5dde1e35d3b23fb7ae5229fb4816890094f142ab1402a6354fc8a9d1a469af69",
+    "interop/typescript-participant/assets/manifest.json": "2a9f3b59b96d4fa041b3b2f309c98fb03a0a43b1d9de3b22eb73777a6a707f16",
+    "interop/typescript-participant/assets/participant.schema.json": "73fcc1a632aa1c751b33ca76052dcba59755983b95f0f799482f57de1d813fff",
+    "interop/typescript-participant/assets/portable-commitments.md": "578448779c162bd976fe7399a9a111fbc1962a335495be7391a1b54c4bee45dd",
+    "interop/typescript-participant/assets/sdk-conformance.json": "2e5d04a84909321e1baa06c6f1ab819caf53b7dc4a41ca8b1e01fb019ae70e71",
+    "interop/typescript-participant/assets/sdk-design.md": "6f805e5d5e1125b6689a5df6fd3e1ed73650124a81c150b8529f2e67ff3aea3e",
+    "interop/typescript-participant/assets/sdk-manifest.json": "fd7658d5b16a0d167c58ccf6392ec86e03a469dc2a0d80158607d490a1893cc2",
+    "interop/typescript-participant/docs/interpretation.md": "89db4e5d7e9c5279f1629884d845b1cbbe4a6939e68bd8331823bfc388a11597",
+    "interop/typescript-participant/host/runner.mjs": "c3a6f56841a4c6e6c0e559f8269da3e1f835977664f3f3d3c2fb10bb0d948132",
+    "interop/typescript-participant/package-lock.json": "9c1929290f3aca19ffbf8987990cb04d18ff8670f1aebcfe3b29f0d38ca0e0c1",
+    "interop/typescript-participant/package.json": "31679d837b224eddf9ee3ba2c90cab980f987ff59a02835dd9776ad9fc30a38f",
+    "interop/typescript-participant/src/codec.ts": "899736465506506c17396a3daf9e691212ef1273a308d956a5c228924aad5f7b",
+    "interop/typescript-participant/src/installed-sdk.ts": "cdec1f4a5dd6ed7e7e9488f8c31b7fd30b21b8c4062a44cb1fb4c7abdc3743cf",
+    "interop/typescript-participant/src/participant.ts": "c43c65d60f8e9c9e7fef968f9d34b899eb4ec703d3df5fca2fadfb2e47baa6c3",
+    "interop/typescript-participant/src/record.ts": "57c9bf34bad2b5ad2b9ade50cdad766e41e838772b9a9848a904a76e0615150f",
+    "interop/typescript-participant/src/sdk.ts": "2999dc4162cd86364219a39029ca4705a88648345dbf0a6e1683bea57f114cf3",
+    "interop/typescript-participant/test/codec.mjs": "69532f19c71f6e2d0896339e31cf6f80478ef64baa17211e2e1c95df3f54af44",
+    "interop/typescript-participant/test/package.mjs": "f83bf585759f25d8a0982e8efdb48548ea5c8755eaa987ce4df3d6903de24bf3",
+    "interop/typescript-participant/test/sdk-conformance.mjs": "2b009ebf0e9dea0aa795a8e477789d216f33b71a2969ccca695465ed825cd3a4",
+    "interop/typescript-participant/tsconfig.json": "49bed608460baa2ed844cb8a346fe540b7628d8efa8d5b0f48041f7686ff79fb",
+    "scripts/run_release_gate.sh": "9678dd06bee55b08ee9674b2b24e40e929d4df6bc0ac80f1f4de988e05b91b45",
+    "tests/participant_sdk_parity.mjs": "ea6bfdd9126f37747111506092e182b5b6dac2fbdad136faee9a38548726e9ab",
+    "tests/persisted_negotiation_fixture.kujo": "f9d86137c402ae7efe8dcdbe2ccafa88dacc36f691fbc6e0cfa21c2ebe031f5a",
+    "tests/python_integration.py": "c00a064ed762419350db391edf44ff65210db3d7cd4d48fe0518fc424d26ccf4",
+    "tests/typescript_integration.mjs": "a4623e9704f8a0bbf9a2a7f3ce2e68fa07de4a07ee3aef43e5f0f983d7a8800d"
+  },
+  "log_original_sha256": {
+    "typescript_package": "eaefde52aa29643fa9bca2131a93d9ff478a0182b5ced4942ff13f6e84cc4bc0",
+    "python_package": "0ae948cb27369571d26d7957e13f1f015b4f239745fa021ebf77f053629cf48e",
+    "python_parity": "4b4988f27db2bb0ab909456f968785d3b2971d3c679a5a6b62a3a2244cd0b581",
+    "participant_sdk_parity": "2d94d6b4bf5a14c819c19f3f500fb9391295ff2bd08d00e68448181df4e9fb0e",
+    "python_isolation": "11e3fd70aafb6063512c99e0e22fcd58a83dca2fa6f4ed44f2f002967d6456f5",
+    "python_integration": "6000220ff9541f545f7e485154f0a0655c40896418ab70b0f7dbdda7bb11649d",
+    "typescript_before": "2e84fd491d3dcb59031e7faeb964ed411ce6cd292a4a076a8d29470bee7fec1b",
+    "typescript_after": "64f79cec5eb0b49164e7f40b493f8654bb20a88ed1e9368b270137151ed617ba",
+    "interop_history": "e4d0b65a5d3fcbbbab2bcd5f3dc04dc966ce041f01ae17c829852db283741279",
+    "sdk_ability": "a771718602e951be3cab5819939f5c365339f925e1725629110510aeb4967d96",
+    "mcp_ability": "728d7d466a1822bd63e41209952caaeba05accc22e20a59c3de2e95ca1acc260",
+    "mcp_stdio_loss": "91aa4f3dfe825929ff47731e98806f4036c0e8db97a44cc1df52fbc4b21b5689",
+    "http_response_loss": "41c81e090f26370cd3e52ad22196bc0dafa3ab6088dac048578aa8cecc34384b",
+    "git_participant_before": "edff64f15ea13486dab35fd095e33f0f538fb0ac3bcce0f85600d1489bb09593",
+    "git_participant_after": "04edd3312f2d9c1fed6a09e90dab5a55509bdd558acc6b953e4e17d79d972732",
+    "release-gate": "6ff8526c3eee1260b39fd9d54576c98d7f7871997eb3a78d66a4f289935c5980",
+    "workcell": "9808ca96e3edb3721eeccecd523c6695404a6e15db504cb2fdbe4123039e941d",
+    "kujo-fmt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "kujo-docs": "382bdd332fbdb6d7c88e4e6ff6cf9ef220811fea1f5a2c77b8d37b5da12264f4"
+  },
+  "log_normalization": "terminal blank lines removed; nonempty text has one newline; JSON artifacts retained exactly",
+  "files": {
+    "git_participant_after.txt": {
+      "bytes": 809,
+      "sha256": "04edd3312f2d9c1fed6a09e90dab5a55509bdd558acc6b953e4e17d79d972732"
+    },
+    "git_participant_before.txt": {
+      "bytes": 812,
+      "sha256": "edff64f15ea13486dab35fd095e33f0f538fb0ac3bcce0f85600d1489bb09593"
+    },
+    "http_response_loss.txt": {
+      "bytes": 846,
+      "sha256": "41c81e090f26370cd3e52ad22196bc0dafa3ab6088dac048578aa8cecc34384b"
+    },
+    "interop_history.txt": {
+      "bytes": 127,
+      "sha256": "e4d0b65a5d3fcbbbab2bcd5f3dc04dc966ce041f01ae17c829852db283741279"
+    },
+    "kujo-docs.txt": {
+      "bytes": 1019,
+      "sha256": "38ad9d9f5eac4de96676eabc7416ab8f3cee0996af042f832c084e344f74b1e5"
+    },
+    "kujo-fmt.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "mcp_ability.txt": {
+      "bytes": 1049,
+      "sha256": "728d7d466a1822bd63e41209952caaeba05accc22e20a59c3de2e95ca1acc260"
+    },
+    "mcp_stdio_loss.txt": {
+      "bytes": 1044,
+      "sha256": "91aa4f3dfe825929ff47731e98806f4036c0e8db97a44cc1df52fbc4b21b5689"
+    },
+    "participant_sdk_parity.txt": {
+      "bytes": 172,
+      "sha256": "2d94d6b4bf5a14c819c19f3f500fb9391295ff2bd08d00e68448181df4e9fb0e"
+    },
+    "process-proofs.json": {
+      "bytes": 2330,
+      "sha256": "a08c2b6fc1c5611d240b6095176acfd745fd9f07118ec997de621ef582fc1810"
+    },
+    "python-after-assurance.json": {
+      "bytes": 1220,
+      "sha256": "6db67a7b6112c7c8d296b1edfdc58ae8b6a2c3a5fb5f76b65b9e83ac3f7a4920"
+    },
+    "python-after-provisional.json": {
+      "bytes": 798,
+      "sha256": "577e0a8bf1d9d1a608456bea6995645531dd6427a14b2f4820729e0da0f28627"
+    },
+    "python-after-result.json": {
+      "bytes": 1273,
+      "sha256": "7ec2a168c7602db8efca2733e2f7662100956ebe28f8551cddddfd9c898ec548"
+    },
+    "python-after-selected.json": {
+      "bytes": 867,
+      "sha256": "bcc8084038bd03bce49ed369ef5baa3e4c322e6fe35632e6432a57bdb118d0f4"
+    },
+    "python-after-termination.json": {
+      "bytes": 121,
+      "sha256": "54d74a4af525e61557fe24babd28d0d47becb40677b7405853cd7499a86ae547"
+    },
+    "python-before-assurance.json": {
+      "bytes": 1222,
+      "sha256": "8bc38b80d8a418f0749736941e8cff87d87c2af1a7cebbbfd0f1089d932ed2c7"
+    },
+    "python-before-provisional.json": {
+      "bytes": 798,
+      "sha256": "224082956ebc545d5db199c1cafb37296036cd77abaf67ecf675f6c3419e5b66"
+    },
+    "python-before-result.json": {
+      "bytes": 1273,
+      "sha256": "16b5141d711d2164e50e913a19e9270a972689c2a3d982610fe290f60fa4f06a"
+    },
+    "python-before-selected.json": {
+      "bytes": 867,
+      "sha256": "29e77e5da4fa5f890d74d1123ec32b32c0ad6d97bb54f87803f92b0139577113"
+    },
+    "python-before-termination.json": {
+      "bytes": 124,
+      "sha256": "940ca4a8db6f06b3fa2aa63814eb91ca614bd8cc22d9fe655c93c9973c3a3328"
+    },
+    "python_integration.txt": {
+      "bytes": 743,
+      "sha256": "6000220ff9541f545f7e485154f0a0655c40896418ab70b0f7dbdda7bb11649d"
+    },
+    "python_isolation.txt": {
+      "bytes": 1792,
+      "sha256": "11e3fd70aafb6063512c99e0e22fcd58a83dca2fa6f4ed44f2f002967d6456f5"
+    },
+    "python_package.txt": {
+      "bytes": 783,
+      "sha256": "0ae948cb27369571d26d7957e13f1f015b4f239745fa021ebf77f053629cf48e"
+    },
+    "python_parity.txt": {
+      "bytes": 122,
+      "sha256": "4b4988f27db2bb0ab909456f968785d3b2971d3c679a5a6b62a3a2244cd0b581"
+    },
+    "release-gate.txt": {
+      "bytes": 10100,
+      "sha256": "6ff8526c3eee1260b39fd9d54576c98d7f7871997eb3a78d66a4f289935c5980"
+    },
+    "sdk_ability.txt": {
+      "bytes": 933,
+      "sha256": "a771718602e951be3cab5819939f5c365339f925e1725629110510aeb4967d96"
+    },
+    "typescript-after-assurance.json": {
+      "bytes": 1220,
+      "sha256": "d16a1c5fae004ea9d44659f5cd6b6175244385287e8716f0226ab901190a821b"
+    },
+    "typescript-after-provisional.json": {
+      "bytes": 809,
+      "sha256": "70ee8fd52aa782fcc6de4232eab3a5de742570673b6ace6e1720a3c951435889"
+    },
+    "typescript-after-result.json": {
+      "bytes": 1277,
+      "sha256": "a836a92f315971ba8338136487dbcee3381d10c4975ec3ba43d8d4b51cfcda12"
+    },
+    "typescript-after-selected.json": {
+      "bytes": 878,
+      "sha256": "a4576dc2b81b195d2937118dc7fcf4d74214b4a4138dc2e9cd6e1f16887bfb5a"
+    },
+    "typescript-after-termination.json": {
+      "bytes": 57,
+      "sha256": "84bc30c6d1db377a9dcbe20afd7814272ae3cce3a5f3dad60e7782318b9ae522"
+    },
+    "typescript-before-assurance.json": {
+      "bytes": 1222,
+      "sha256": "aba12fc14670f04935b447c219389ba70aa1bdbdc5ce8808c052c86444f80d36"
+    },
+    "typescript-before-provisional.json": {
+      "bytes": 809,
+      "sha256": "9e1baf8c2cba2596ac679160525ad0479ca7743eec0b05e52180eb390b871605"
+    },
+    "typescript-before-result.json": {
+      "bytes": 1277,
+      "sha256": "fdd1d592a737045b40251e47a572bb18bb3563f7ea11709930e60f6ec14cbdab"
+    },
+    "typescript-before-selected.json": {
+      "bytes": 878,
+      "sha256": "856d8231ce898d527861728560358f8fb0d79c80456ded6e71c460eb1088bca7"
+    },
+    "typescript-before-termination.json": {
+      "bytes": 57,
+      "sha256": "84bc30c6d1db377a9dcbe20afd7814272ae3cce3a5f3dad60e7782318b9ae522"
+    },
+    "typescript_after.txt": {
+      "bytes": 503,
+      "sha256": "64f79cec5eb0b49164e7f40b493f8654bb20a88ed1e9368b270137151ed617ba"
+    },
+    "typescript_before.txt": {
+      "bytes": 504,
+      "sha256": "2e84fd491d3dcb59031e7faeb964ed411ce6cd292a4a076a8d29470bee7fec1b"
+    },
+    "typescript_package.txt": {
+      "bytes": 20158,
+      "sha256": "eaefde52aa29643fa9bca2131a93d9ff478a0182b5ced4942ff13f6e84cc4bc0"
+    },
+    "workcell.txt": {
+      "bytes": 184,
+      "sha256": "9808ca96e3edb3721eeccecd523c6695404a6e15db504cb2fdbe4123039e941d"
+    }
+  },
+  "toolchain": {
+    "node": "26.7.0",
+    "python": "3.10.5",
+    "typescript": "5.9.3",
+    "jsonschema": "4.23.0",
+    "source_runtime": "5d72aab4b99e7f8c01e4c208d6c97061934c7447",
+    "runtime_sha256": "4ef726d0020b6df0be78da4b7e96a79d099d414efa83874676038da501a72a93"
+  },
+  "unchanged_production_core_and_historical_contracts": true
+}

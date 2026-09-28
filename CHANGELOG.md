@@ -1,4 +1,6 @@
 Unreleased interoperability evidence: a standalone Python beta consumer independently
+
+- Unreleased experimental participant SDK API: independent TypeScript/Python codecs, closed installed registrations, exact-byte correlation and recording-only helpers; shared conformance and real crash/replay regressions. No publication or replay-policy change.
 validates published commitments, three real-profile observations, pinned authority
 and restart behavior. Alpha retained; no core admission/schema behavior changed.
 
