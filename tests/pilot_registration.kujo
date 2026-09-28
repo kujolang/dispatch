@@ -1,0 +1,15 @@
+# Trusted pilot host registration; correlation only, no admission or effect truth.
+# Accumulate instead of return-inside-loop: avoid the separately tracked VM defect.
+export func pilot_registration(ids, owner) {
+    return {"namespace":owner["namespace"],"participant_schema":owner["schema"],"effect_schema":null,"validate":func(doc,result) {
+        p := doc["participant_extension"]["values"]
+        c := result["participant_correlation"]
+        matches := len(keys(p)) == 2&&doc["effect_extension"] == null
+        for key in ["session_tag","exchange_tag"] {
+            if has_key(p,key) == false {matches = false} else {
+                if p[key] != ids[key]||c[key] != ids[key] {matches = false}
+            }
+        }
+        return matches&&c["invocation_id"] == ids["invocation_id"]&&c["completion_knowledge"] == doc["completion_knowledge"]
+    }}
+}

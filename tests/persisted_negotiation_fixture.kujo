@@ -1,6 +1,7 @@
 from src.core.interop_handoff import correlate_interop_handoff
 from tests.typescript_registration import typescript_registration
 from tests.python_registration import python_registration
+from tests.pilot_registration import pilot_registration
 from tests.interop_core_checks import check_equivalence
 from tests.fixtures.interop_legacy.git_participant_handoff import old_load_git_participant_handoff
 from tests.fixtures.interop_legacy.http_ability_handoff import old_load_http_ability_handoff
@@ -130,6 +131,10 @@ func git_check(config, root, raw, assurance_raw) {
 }
 func native_prefix(config) {if dict_get_or(config,"native_participant","") == "python" {return "py"}; return "ts"}
 func native_process(config, root, attempt, mode) {
+    if dict_get_or(config,"pilot_host",false) {
+        response := spawn_process([config["python"],"-I",os_getcwd()+"/interop/adopter-pilot/host/runner.py",root,to_string(attempt),mode], {"cwd":os_getcwd(),"inherit_env":false,"max_output_bytes":8192,"timeout_ms":30000})
+        require(response.success&&response.stderr == ""); return parse_json(response.stdout)
+    }
     if native_prefix(config) == "py" {
         response := spawn_process([config["python"],"-I",os_getcwd()+"/interop/python-participant/host/runner.py",root,to_string(attempt),mode], {"cwd":os_getcwd(),"inherit_env":false,"max_output_bytes":8192,"timeout_ms":30000})
         require(response.success&&response.stderr == ""); return parse_json(response.stdout)
@@ -149,6 +154,7 @@ func native_check(config, root, raw, assurance_raw) {
     owner := {"namespace":dict_get_or(config,"consumer_namespace","kujolang.typescript-process"),"schema":dict_get_or(config,"consumer_schema","kujolang.typescript-process-correlation/v1alpha1")}
     registration := typescript_registration(ids,sha256(to_json(config["intent"])),owner)
     if native_prefix(config) == "py" {expected["participant"] := {"namespace":"kujolang.python-process","invocation_id":ids["invocation_id"]}; owner = {"namespace":dict_get_or(config,"consumer_namespace","kujolang.python-process"),"schema":dict_get_or(config,"consumer_schema","kujolang.python-process-correlation/v1alpha1")}; registration = python_registration(ids,sha256(to_json(config["intent"])),owner)}
+    if dict_get_or(config,"pilot_host",false) {registration = pilot_registration(ids,owner)}
     expected["participant"] := {"namespace":owner["namespace"],"invocation_id":ids["invocation_id"]}
     return correlate_interop_handoff(root,encoded,expected,raw,assurance_raw,registration)
 }
@@ -246,7 +252,7 @@ func registry() {
     return register_tool(tools, create_tool("descendant", "After review", {"type": "dict"}, {"type": "dict"}, descendant, null))
 }
 func installed_files(config) {
-    if has_key(config,"consumer_namespace")||has_key(config,"consumer_schema") {
+    if has_key(config,"consumer_namespace")||has_key(config,"consumer_schema")||has_key(config,"pilot_host") {
         if has_key(config,"package_manifest_root") == false {throw("package_installation_invalid")}
     }
     files := [{"root": os_getcwd(), "path": "tests/persisted_negotiation_fixture.kujo"}, {"root": os_getcwd(), "path": "src/core/effect_assurance.kujo"}]
