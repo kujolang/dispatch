@@ -1,6 +1,6 @@
 // Operator-installed local host, NOT participant/library code. No legacy participant imports.
 import fs from 'node:fs';import path from 'node:path';import {fork,spawnSync} from 'node:child_process';import {randomUUID} from 'node:crypto';
-import {encode,parse,match,ref,hash,id,closed,NS,EXT,GIT} from '../dist/codec.js';
+import {encode,parse as legacyParse,parseRegistered,ref,hash,id,closed,NS as DEFAULT_NS,EXT as DEFAULT_EXT,GIT} from '../dist/codec.js';
 const root=process.argv[2], attempt=process.argv[3], mode=process.argv[4]||'run';
 const fail=()=>{throw Error('host_denied');};
 process.on('uncaughtException',()=>{process.stdout.write('{"ok":false,"code":"host_unavailable"}\n');process.exit(1);});
@@ -11,6 +11,14 @@ function write(name,bytes,replace=false){const dest=location(name),file=replace?
 function artifact(bytes){const r=ref(bytes);write('artifacts/'+r.slice(7)+'.json',bytes);return r;}
 if(fs.lstatSync(location('artifacts')).isSymbolicLink())fail();
 const cfg=JSON.parse(read('config.json')), ticket=JSON.parse(read('ts-ticket-'+attempt+'.json'));
+// Namespace selection is operator configuration committed with the installation inventory.
+const NS=cfg.consumer_namespace||DEFAULT_NS, EXT=cfg.consumer_schema||DEFAULT_EXT;
+function parse(raw){if(!cfg.consumer_namespace)return legacyParse(raw);return parseRegistered(Buffer.from(raw),d=>{
+ if(d.participant.namespace!==NS||d.participant_extension.schema!==EXT)fail();
+ closed(d.participant_extension.values,['call_id','process_instance_id']);
+ if(!Object.values(d.participant_extension.values).every(id)||encode(d.effect_extension)!==encode(effect))fail();
+});}
+function match(raw,expected){const d=parse(raw);if(encode(d)!==encode(expected))fail();return d;}
 const effect={schema:GIT,values:{workcell_effect_id:'workcell-logical-native-1',transaction_sha256:hash(encode(cfg.intent))}};
 function invoke(mode='apply'){const r=spawnSync(cfg.runtime,['run','examples/effect-assurance/adapter.kujo',root,mode],{cwd:cfg.cwd,env:{PATH:'/usr/bin:/bin'},encoding:'utf8',timeout:15000,maxBuffer:8192});if(r.status!==0||r.stderr||!JSON.parse(r.stdout).ok)fail();return JSON.parse(r.stdout);}
 function nativeRecord(context){const r=spawnSync(process.execPath,[cfg.package_record||new URL('../dist/record.js',import.meta.url).pathname],{env:{},input:encode(context),encoding:'utf8',timeout:5000,maxBuffer:6144});if(r.status!==0||r.stderr)fail();match(r.stdout,context);return r.stdout;}

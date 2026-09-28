@@ -15,8 +15,23 @@ import uuid
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
 from kujo_participant.codec import *
 from kujo_participant.process import send,receive
+from kujo_participant.codec import parse as legacy_parse
 PACKAGE=Path(__file__).resolve().parents[1]
 INSTALLED={}
+
+def parse(raw):
+    if 'consumer_namespace' not in INSTALLED:return legacy_parse(raw)
+    def owner(d):
+        require(d['participant']['namespace']==INSTALLED['consumer_namespace'])
+        require(d['participant_extension']['schema']==INSTALLED['consumer_schema'])
+        closed(d['participant_extension']['values'],('call_id','process_instance_id'))
+        require(all(identifier(v) for v in d['participant_extension']['values'].values()))
+        require(d['effect_extension']=={'schema':GIT,'values':{'workcell_effect_id':'workcell-logical-git-1','transaction_sha256':digest(encode(INSTALLED['intent']))}})
+    return legacy_parse(raw,owner)
+
+def match(raw,expected):
+    doc=parse(raw);require(raw==encode(expected));return doc
+
 
 
 def read(root,name,limit=8192):
@@ -133,9 +148,9 @@ def run(root,attempt,mode):
         tx=digest(encode(config['intent']))
         def document(result_raw,knowledge):
             return {'schema':'kujo.interop-handoff/v1alpha1','subject':ticket['subject'],
-                    'participant':{'namespace':NS,'invocation_id':ids['invocation_id']},
+                    'participant':{'namespace':config.get('consumer_namespace',NS),'invocation_id':ids['invocation_id']},
                     'completion_knowledge':knowledge,'execution_result_ref':artifact(root,result_raw),'assurance_ref':None,
-                    'participant_extension':{'schema':EXT,'values':{'call_id':ids['call_id'],'process_instance_id':ids['process_instance_id']}},
+                    'participant_extension':{'schema':config.get('consumer_schema',EXT),'values':{'call_id':ids['call_id'],'process_instance_id':ids['process_instance_id']}},
                     'effect_extension':{'schema':GIT,'values':{'workcell_effect_id':'workcell-logical-git-1','transaction_sha256':tx}}}
         def result(knowledge,observation):
             subject={k:v for k,v in ticket['subject'].items() if k!='effect_id'}

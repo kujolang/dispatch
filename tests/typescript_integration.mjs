@@ -1,7 +1,8 @@
 // Controller integration harness only; external participant implementation is not copied.
 import fs from 'node:fs';import path from 'node:path';import {spawnSync,spawn} from 'node:child_process';import assert from 'node:assert/strict';
-import {encode,hash,ref,parse} from '../interop/typescript-participant/dist/codec.js';
+import {encode,hash,ref,parse as legacyParse,parseRegistered} from '../interop/typescript-participant/dist/codec.js';
 const installedPackage=process.env.PARTICIPANT_PACKAGE_CONFIG?JSON.parse(fs.readFileSync(process.env.PARTICIPANT_PACKAGE_CONFIG)):{};
+const parse=raw=>installedPackage.consumer_namespace?parseRegistered(Buffer.from(raw),d=>{assert.equal(d.participant.namespace,installedPackage.consumer_namespace);assert.equal(d.participant_extension.schema,installedPackage.consumer_schema);}):legacyParse(raw);
 const boundary=process.argv[2]||'after_commit',cwd=process.cwd(),runtime=process.env.KUJO_BIN||'/tmp/kujo-wave-a-release-candidate-bin',workcell=path.resolve(process.env.WORKCELL_ROOT||'../workcell');
 assert(['before_commit','after_commit'].includes(boundary));const root=path.resolve('tests/tmp/typescript-'+Date.now());fs.mkdirSync(root+'/artifacts',{recursive:true,mode:0o700});
 const write=(n,d)=>fs.writeFileSync(root+'/'+n,encode(d)),read=n=>JSON.parse(fs.readFileSync(root+'/'+n,'utf8')),logs=[];
@@ -33,6 +34,7 @@ fs.writeFileSync(root+'/ts-bound-handoff-1.ref',originalRef);
 // Pinned executable/lock substitution cannot borrow the installed revision.
 for(const name of ['interop/typescript-participant/dist/codec.js','interop/typescript-participant/dist/sdk.js','interop/typescript-participant/package-lock.json',...(installedPackage.package_probe_files||[])]){const saved=fs.readFileSync(name);try{fs.appendFileSync(name,'\n');assert.equal(phase('eval').ok,false);assert.deepEqual(fs.readFileSync(pointer.run_dir+'/state.json'),before);}finally{fs.writeFileSync(name,saved);}}
 if(installedPackage.package_worker){const originalConfig=read('config.json');write('config.json',{...originalConfig,package_worker:originalConfig.package_record});assert.equal(phase('eval').ok,false);write('config.json',originalConfig);assert.equal(phase('eval').ok,true);}
+if(installedPackage.consumer_namespace){for(const key of ['consumer_namespace','consumer_schema']){const originalConfig=read('config.json');write('config.json',{...originalConfig,[key]:'example.substitute'});assert.equal(phase('eval').ok,false);assert.deepEqual(fs.readFileSync(pointer.run_dir+'/state.json'),before);write('config.json',originalConfig);}}
 // Exact artifact reads reject byte tampering and symlinks, not just JSON substitutions.
 const artifactPath=root+'/artifacts/'+originalRef.slice(7)+'.json';
 fs.appendFileSync(artifactPath,' ');assert.equal(phase('eval').ok,false);fs.writeFileSync(artifactPath,original);

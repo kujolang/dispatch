@@ -84,6 +84,11 @@ for crash in ('before_commit','after_commit'):
                 assert not controller(root,'eval')['ok']
             finally:source.write_bytes(original_source)
             assert controller(root,'eval')['ok']
+        if config.get('consumer_namespace'):
+            for key in ('consumer_namespace','consumer_schema'):
+                write(root/'config.json',dict(config,**{key:'example.substitute'}))
+                assert controller(root,'eval')['ok'] is False
+                write(root/'config.json',config)
         if config.get('package_worker'):
             write(root/'config.json',dict(config,package_worker=config['package_python']))
             assert not controller(root,'eval')['ok']

@@ -1,8 +1,8 @@
 # Trusted owner-extension registration for the external fixture, not a correlation reader.
 # No assurance/replay decision. Invoked only by the existing generic core.
-export func typescript_registration(ids, transaction) {
-    return {"namespace": "kujolang.typescript-process", "participant_schema": "kujolang.typescript-process-correlation/v1alpha1", "effect_schema": "workcell.git-correlation/v1alpha1", "validate": func(doc, result) {
-        expected := {"schema": "kujolang.typescript-process-correlation/v1alpha1", "values": {"call_id": ids["call_id"], "process_instance_id": ids["process_instance_id"]}}
+export func typescript_registration(ids, transaction, owner) {
+    return {"namespace": owner["namespace"], "participant_schema": owner["schema"], "effect_schema": "workcell.git-correlation/v1alpha1", "validate": func(doc, result) {
+        expected := {"schema": owner["schema"], "values": {"call_id": ids["call_id"], "process_instance_id": ids["process_instance_id"]}}
         effect := {"schema": "workcell.git-correlation/v1alpha1", "values": {"workcell_effect_id": "workcell-logical-native-1", "transaction_sha256": transaction}}
         correlation := {"call_id": ids["call_id"], "process_instance_id": ids["process_instance_id"], "invocation_id": ids["invocation_id"], "completion_knowledge": doc["completion_knowledge"]}
         return to_json(doc["participant_extension"]) == to_json(expected)&&to_json(doc["effect_extension"]) == to_json(effect)&&to_json(result["participant_correlation"]) == to_json(correlation)

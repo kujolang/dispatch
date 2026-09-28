@@ -146,8 +146,10 @@ func native_check(config, root, raw, assurance_raw) {
     if "sha256:" + sha256(encoded) != ref {return {"ok": false, "code": "interop_correlation_mismatch"}}
     ids := parse_json(read_file_beneath(root, native_prefix(config)+"-identities-" + attempt + ".json", 1024))
     expected := {"subject": {"run_id": result["subject"]["run_id"], "step_id": "action", "attempt_id": attempt, "effect_id": "effect-1"}, "participant": {"namespace": "kujolang.typescript-process", "invocation_id": ids["invocation_id"]}}
-    registration := typescript_registration(ids,sha256(to_json(config["intent"])))
-    if native_prefix(config) == "py" {expected["participant"] := {"namespace":"kujolang.python-process","invocation_id":ids["invocation_id"]}; registration = python_registration(ids,sha256(to_json(config["intent"])))}
+    owner := {"namespace":dict_get_or(config,"consumer_namespace","kujolang.typescript-process"),"schema":dict_get_or(config,"consumer_schema","kujolang.typescript-process-correlation/v1alpha1")}
+    registration := typescript_registration(ids,sha256(to_json(config["intent"])),owner)
+    if native_prefix(config) == "py" {expected["participant"] := {"namespace":"kujolang.python-process","invocation_id":ids["invocation_id"]}; owner = {"namespace":dict_get_or(config,"consumer_namespace","kujolang.python-process"),"schema":dict_get_or(config,"consumer_schema","kujolang.python-process-correlation/v1alpha1")}; registration = python_registration(ids,sha256(to_json(config["intent"])),owner)}
+    expected["participant"] := {"namespace":owner["namespace"],"invocation_id":ids["invocation_id"]}
     return correlate_interop_handoff(root,encoded,expected,raw,assurance_raw,registration)
 }
 func action(input, context) {
@@ -244,6 +246,9 @@ func registry() {
     return register_tool(tools, create_tool("descendant", "After review", {"type": "dict"}, {"type": "dict"}, descendant, null))
 }
 func installed_files(config) {
+    if has_key(config,"consumer_namespace")||has_key(config,"consumer_schema") {
+        if has_key(config,"package_manifest_root") == false {throw("package_installation_invalid")}
+    }
     files := [{"root": os_getcwd(), "path": "tests/persisted_negotiation_fixture.kujo"}, {"root": os_getcwd(), "path": "src/core/effect_assurance.kujo"}]
     if config["issuer"] == "sqlite-local" {files = push(files, {"root": os_getcwd(), "path": "src/adapters/sqlite_effect.kujo"})}
     if config["issuer"] == "git-local" {files = push(files, {"root": config["cwd"], "path": "src/evidence/git_effect.kujo"})}

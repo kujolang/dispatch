@@ -1,6 +1,6 @@
 # Operator-installed owner extension validation. No parser, verifier or replay policy.
-export func python_registration(ids, transaction) {
-    return {"namespace":"kujolang.python-process","participant_schema":"kujolang.python-process-correlation/v1alpha1","effect_schema":"workcell.git-correlation/v1alpha1","validate":func(doc,result) {
+export func python_registration(ids, transaction, owner) {
+    return {"namespace":owner["namespace"],"participant_schema":owner["schema"],"effect_schema":"workcell.git-correlation/v1alpha1","validate":func(doc,result) {
         p := doc["participant_extension"]["values"]
         e := doc["effect_extension"]["values"]
         c := result["participant_correlation"]
