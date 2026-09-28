@@ -78,11 +78,11 @@ for crash in ('before_commit','after_commit'):
     original_handoff=(root/'artifacts'/(saved_ref.decode()[7:]+'.json')).read_bytes()
     if crash=='after_commit':
         for name in ('__init__.py', 'sdk.py'):
-            source=PACKAGE/'src/kujo_participant'/name; original=source.read_bytes()
+            source=PACKAGE/'src/kujo_participant'/name; original_source=source.read_bytes()
             try:
-                source.write_bytes(original+b'\n')
+                source.write_bytes(original_source+b'\n')
                 assert not controller(root,'eval')['ok']
-            finally:source.write_bytes(original)
+            finally:source.write_bytes(original_source)
             assert controller(root,'eval')['ok']
         mutations=[(['subject',k],'wrong') for k in ['run_id','step_id','attempt_id','effect_id']]
         mutations += [(['participant','invocation_id'],'wrong'),(['participant','namespace'],'other.owner'),
