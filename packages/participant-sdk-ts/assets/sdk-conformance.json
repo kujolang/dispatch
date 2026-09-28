@@ -1,0 +1,366 @@
+{
+  "schema": "kujo.participant-sdk-conformance/v1alpha1",
+  "wire_schema": "kujo.interop-handoff/v1alpha1",
+  "registration": {
+    "namespace": "example.recorder",
+    "participant": {
+      "schema": "example.recorder-correlation/v1alpha1",
+      "fields": {
+        "call_id": "identifier",
+        "process_instance_id": "identifier"
+      }
+    },
+    "effect": {
+      "schema": "example.effect-correlation/v1alpha1",
+      "fields": {
+        "effect_alias": "identifier",
+        "commitment": "sha256"
+      }
+    }
+  },
+  "handoff": {
+    "schema": "kujo.interop-handoff/v1alpha1",
+    "subject": {
+      "run_id": "run-1",
+      "step_id": "step-1",
+      "attempt_id": "1",
+      "effect_id": "effect-1"
+    },
+    "participant": {
+      "namespace": "example.recorder",
+      "invocation_id": "invocation-1"
+    },
+    "completion_knowledge": "unknown",
+    "execution_result_ref": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "assurance_ref": null,
+    "participant_extension": {
+      "schema": "example.recorder-correlation/v1alpha1",
+      "values": {
+        "call_id": "call-1",
+        "process_instance_id": "process-1"
+      }
+    },
+    "effect_extension": {
+      "schema": "example.effect-correlation/v1alpha1",
+      "values": {
+        "effect_alias": "alias-1",
+        "commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    }
+  },
+  "cases": [
+    {
+      "name": "roundtrip",
+      "op": "parse",
+      "expected": "ok"
+    },
+    {
+      "name": "provisional",
+      "op": "provisional",
+      "expected": "ok"
+    },
+    {
+      "name": "terminal",
+      "op": "terminal_report",
+      "expected": "ok",
+      "change": {
+        "completion_knowledge": "reported"
+      }
+    },
+    {
+      "name": "readback-unknown",
+      "op": "finalize_after_readback",
+      "expected": "ok"
+    },
+    {
+      "name": "readback-selected",
+      "op": "finalize_after_readback",
+      "expected": "ok",
+      "change": {
+        "assurance_ref": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      }
+    },
+    {
+      "name": "no-effect-extension",
+      "op": "parse",
+      "expected": "ok",
+      "change": {
+        "effect_extension": null
+      }
+    },
+    {
+      "name": "wrong-provisional",
+      "op": "provisional",
+      "expected": "invalid_knowledge",
+      "change": {
+        "completion_knowledge": "reported"
+      }
+    },
+    {
+      "name": "wrong-terminal",
+      "op": "terminal_report",
+      "expected": "invalid_knowledge"
+    },
+    {
+      "name": "matching",
+      "op": "match",
+      "expected": "match"
+    },
+    {
+      "name": "subject.run_id",
+      "op": "match",
+      "expected": "subject_mismatch",
+      "change": {
+        "subject.run_id": "changed"
+      }
+    },
+    {
+      "name": "subject.step_id",
+      "op": "match",
+      "expected": "subject_mismatch",
+      "change": {
+        "subject.step_id": "changed"
+      }
+    },
+    {
+      "name": "subject.attempt_id",
+      "op": "match",
+      "expected": "subject_mismatch",
+      "change": {
+        "subject.attempt_id": "2"
+      }
+    },
+    {
+      "name": "subject.effect_id",
+      "op": "match",
+      "expected": "subject_mismatch",
+      "change": {
+        "subject.effect_id": "changed"
+      }
+    },
+    {
+      "name": "participant.invocation_id",
+      "op": "match",
+      "expected": "participant_mismatch",
+      "change": {
+        "participant.invocation_id": "changed"
+      }
+    },
+    {
+      "name": "execution_result_ref",
+      "op": "match",
+      "expected": "result_ref_mismatch",
+      "change": {
+        "execution_result_ref": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      }
+    },
+    {
+      "name": "assurance_ref",
+      "op": "match",
+      "expected": "assurance_ref_mismatch",
+      "change": {
+        "assurance_ref": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      }
+    },
+    {
+      "name": "participant_extension.values.call_id",
+      "op": "match",
+      "expected": "extension_mismatch",
+      "change": {
+        "participant_extension.values.call_id": "changed"
+      }
+    },
+    {
+      "name": "effect_extension.values.commitment",
+      "op": "match",
+      "expected": "extension_mismatch",
+      "change": {
+        "effect_extension.values.commitment": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    },
+    {
+      "name": "completion_knowledge",
+      "op": "match",
+      "expected": "knowledge_mismatch",
+      "change": {
+        "completion_knowledge": "reported"
+      }
+    },
+    {
+      "name": "unknown-owner",
+      "op": "parse",
+      "expected": "unsupported_extension",
+      "change": {
+        "participant.namespace": "unknown.owner"
+      }
+    },
+    {
+      "name": "unknown-extension",
+      "op": "parse",
+      "expected": "unsupported_extension",
+      "change": {
+        "participant_extension.schema": "unknown.owner/v1alpha1"
+      }
+    },
+    {
+      "name": "unknown-effect",
+      "op": "parse",
+      "expected": "unsupported_extension",
+      "change": {
+        "effect_extension.schema": "unknown.effect/v1alpha1"
+      }
+    },
+    {
+      "name": "nested",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "change": {
+        "participant_extension.values.call_id": {}
+      }
+    },
+    {
+      "name": "long-id",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "change": {
+        "subject.run_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "name": "newline-id",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "change": {
+        "subject.run_id": "run\n"
+      }
+    },
+    {
+      "name": "opaque-attempt",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "change": {
+        "subject.attempt_id": "opaque"
+      }
+    },
+    {
+      "name": "bad-ref",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "change": {
+        "execution_result_ref": "https://private.invalid"
+      }
+    },
+    {
+      "name": "uppercase-ref",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "change": {
+        "execution_result_ref": "sha256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    {
+      "name": "truth-not-knowledge",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "change": {
+        "completion_knowledge": "committed"
+      }
+    },
+    {
+      "name": "missing-participant",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "change": {
+        "participant_extension": null
+      }
+    },
+    {
+      "name": "unknown-field",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "change": {
+        "metadata": "PRIVATE_CANARY"
+      }
+    },
+    {
+      "name": "oversize-extension",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "change": {
+        "participant_extension.values.call_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "name": "whitespace",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "wire": "whitespace"
+    },
+    {
+      "name": "reordered",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "wire": "reordered"
+    },
+    {
+      "name": "duplicate",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "wire": "duplicate"
+    },
+    {
+      "name": "alternate_escape",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "wire": "alternate_escape"
+    },
+    {
+      "name": "invalid_utf8",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "wire": "invalid_utf8"
+    },
+    {
+      "name": "oversize",
+      "op": "parse",
+      "expected": "bounds_exceeded",
+      "wire": "oversize"
+    },
+    {
+      "name": "surrogate",
+      "op": "parse",
+      "expected": "invalid_handoff",
+      "wire": "surrogate"
+    },
+    {
+      "name": "registration-copy",
+      "op": "registration_copy",
+      "expected": "ok"
+    },
+    {
+      "name": "registration-unknown-type",
+      "op": "bad_registration",
+      "expected": "invalid_registration"
+    },
+    {
+      "name": "registration-no-participant",
+      "op": "null_registration",
+      "expected": "invalid_registration"
+    },
+    {
+      "name": "cannot-install-effect-from-wire",
+      "op": "no_effect_registration",
+      "expected": "unsupported_extension"
+    },
+    {
+      "name": "content-bytes",
+      "op": "reference",
+      "expected": "ok"
+    },
+    {
+      "name": "bytes-only",
+      "op": "reference_string",
+      "expected": "invalid_handoff"
+    }
+  ]
+}

@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kujo.interop-handoff/v1alpha1",
+  "type": "object",
+  "required": [
+    "schema",
+    "subject",
+    "participant",
+    "completion_knowledge",
+    "execution_result_ref",
+    "assurance_ref",
+    "participant_extension",
+    "effect_extension"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "kujo.interop-handoff/v1alpha1"
+    },
+    "subject": {
+      "type": "object",
+      "required": [
+        "run_id",
+        "step_id",
+        "attempt_id",
+        "effect_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "step_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "attempt_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "effect_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        }
+      }
+    },
+    "participant": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "invocation_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "invocation_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        }
+      }
+    },
+    "completion_knowledge": {
+      "enum": [
+        "reported",
+        "unknown"
+      ]
+    },
+    "execution_result_ref": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "minLength": 71,
+      "maxLength": 71
+    },
+    "assurance_ref": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "minLength": 71,
+          "maxLength": 71
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "participant_extension": {
+      "type": "object",
+      "required": [
+        "schema",
+        "values"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "values": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "effect_extension": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "schema",
+            "values"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "values": {
+              "type": "object",
+              "maxProperties": 16,
+              "propertyNames": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+              },
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "description": "Structural validation only. Registered closed owner schemas, byte bounds, canonical wire and semantic correlation are additionally mandatory; see ../../interop-handoff.md."
+}

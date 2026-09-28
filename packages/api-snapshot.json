@@ -1,0 +1,34 @@
+{
+  "schema": "kujo.participant-sdk-api-snapshot/v1alpha1",
+  "status": "experimental",
+  "typescript_exports": [
+    "CONFORMANCE",
+    "CorrelationError",
+    "SDKError",
+    "contentRef",
+    "createCodec"
+  ],
+  "python_exports": [
+    "CONFORMANCE",
+    "CorrelationError",
+    "SDKError",
+    "content_ref",
+    "create_codec"
+  ],
+  "codec_errors": [
+    "invalid_handoff",
+    "bounds_exceeded",
+    "unsupported_extension",
+    "invalid_registration",
+    "invalid_knowledge",
+    "sdk_assets_invalid"
+  ],
+  "correlation_errors": [
+    "subject_mismatch",
+    "participant_mismatch",
+    "result_ref_mismatch",
+    "assurance_ref_mismatch",
+    "extension_mismatch",
+    "knowledge_mismatch"
+  ]
+}

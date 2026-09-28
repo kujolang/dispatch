@@ -189,3 +189,7 @@ tests/tmp/*
 # /fence.toml
 # /.lens.toml
 # /packwrite.toml
+
+# Unpublished participant package build/install rehearsal outputs
+/.ci/participant-packages/
+/.ci/participant-sdk-build/

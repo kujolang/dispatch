@@ -1,0 +1,10 @@
+{
+  "capabilities.json": "3b29512661eab4a79784baeed338d7870cac96fa7d694a080c349c9e02e0c18d",
+  "core.schema.json": "e7ca18d1bd949d0a649905c122fb8d1d167b1e5a92437f3cf124156459846608",
+  "dependencies.lock": "0826520f9fd33a5619053051fd8d32af49f654927a2dd867f53ee9912ae5e556",
+  "interop.md": "21f499cc4fe299d5936670cc4392ef03bf9b33ceca19ba87ea2f4e64674decd6",
+  "portable-json.md": "578448779c162bd976fe7399a9a111fbc1962a335495be7391a1b54c4bee45dd",
+  "sdk-conformance-manifest.json": "fd7658d5b16a0d167c58ccf6392ec86e03a469dc2a0d80158607d490a1893cc2",
+  "sdk-conformance.json": "2e5d04a84909321e1baa06c6f1ab819caf53b7dc4a41ca8b1e01fb019ae70e71",
+  "sdk-design.md": "6f805e5d5e1125b6689a5df6fd3e1ed73650124a81c150b8529f2e67ff3aea3e"
+}

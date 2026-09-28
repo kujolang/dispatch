@@ -1,0 +1,36 @@
+{
+  "name": "@kujolang/participant-sdk",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "ajv": "8.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.0",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "description": "Experimental alpha participant correlation SDK; unpublished",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "assets",
+    "README.md",
+    "API.md",
+    "LICENSE",
+    "dependency-lock.json"
+  ],
+  "license": "MIT"
+}

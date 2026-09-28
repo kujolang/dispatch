@@ -1,0 +1,14 @@
+{
+  "schema": "kujo.participant-sdk-capabilities/v1alpha1",
+  "package_version": "0.1.0-alpha.1",
+  "status": "experimental-alpha-unpublished",
+  "interop": [
+    "kujo.interop-handoff/v1alpha1"
+  ],
+  "conformance": [
+    "kujo.participant-sdk-conformance/v1alpha1"
+  ],
+  "canonical_codec": true,
+  "recording_helpers": true,
+  "authority": false
+}

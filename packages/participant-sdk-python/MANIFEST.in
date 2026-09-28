@@ -1,0 +1,2 @@
+include README.md API.md LICENSE requirements.lock
+recursive-include src *.py *.pyi py.typed *.json *.md

@@ -1,0 +1,10 @@
+{
+  "schema": "kujo.participant-sdk-manifest/v1alpha1",
+  "conformance": "kujo.participant-sdk-conformance/v1alpha1",
+  "wire_versions": ["kujo.interop-handoff/v1alpha1"],
+  "status": "experimental-unreleased",
+  "registration": "one-closed-participant-and-optional-effect",
+  "authority": "none",
+  "remote_trust": false,
+  "multi_effect": false
+}
