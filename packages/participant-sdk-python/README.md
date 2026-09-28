@@ -19,7 +19,7 @@ it cannot protect against an attacker replacing the package and its checks.
 Install only operator-pinned artifact bytes and dependencies. Package names are
 proposed identities, not a claim of registry ownership. Do not install by name.
 
-See API.md. Package version is independent of wire and conformance versions.
+See API.md (bundled as `kujo_participant_sdk/assets/api.md` in the wheel). Package version is independent of wire and conformance versions.
 Private modules are implementation details, never supported imports.
 
 Python >=3.10. Install the local wheel with the hash-pinned requirements.lock.

@@ -86,7 +86,7 @@ def closed(value, keys):
 def assets_check():
     try:
         raw = (ASSETS / 'manifest.json').read_bytes()
-        require(digest(raw) == '2742f2c5dbd1e43588f7d3282541ef16ab88252d834c13aafc118eefb75b6ff4')
+        require(digest(raw) == 'd226203f39aec5ef034c085aa25539cd4658761791189914c0c32bcfe6b80ac4')
         for name, expected in json.loads(raw).items():
             require(re.fullmatch(r'[a-z0-9.-]+', name) is not None)
             require(digest((ASSETS / name).read_bytes()) == expected)

@@ -43,6 +43,7 @@ with tarfile.open(tgz) as t:
 with zipfile.ZipFile(wheel) as z:
  wn=z.namelist();assert all(n.startswith(('kujo_participant_sdk/','kujo_participant_sdk-0.1.0a1.dist-info/')) for n in wn)
  assert not any('/tests/' in n or '/host/' in n or '__pycache__' in n for n in wn)
+ assert z.read('kujo_participant_sdk/assets/api.md')==(PY/'API.md').read_bytes()
 with tarfile.open(sdist) as t: sn=t.getnames();assert not any('/tests/' in n or '/host/' in n for n in sn)
 cons=ROOT/'tests/package-consumers'
 def setup(name):
