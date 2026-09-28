@@ -4,6 +4,13 @@ This is the active release authority. The [1.2 checklist](release-checklist-1.2.
 is retained as historical evidence. Checking a box requires evidence from the
 final revision; local fixture success alone does not qualify as a public release.
 
+Current Kujo 1.6 RC cohort: `release/kujo-1.6.0-rc.refs`, runtime
+`0d7189bd05ca56a6d6006e6a8552558be7b0c914`. CI checks its checkout against KUJO_RUNTIME_REF,
+not the older immutable 1.3 closure. The earlier completed boxes/hosted CI links
+below remain historical evidence, not validation of this new cohort. Kujo's RC
+provenance receipt records the new local gates; no hosted CI or publication claim
+is made by updating these pins.
+
 ## Contract and dependencies
 
 - [x] `kennel.toml`, `kujo.toml`, the badge, `dispatch version`, and OTLP scope version agree on 1.3.0.

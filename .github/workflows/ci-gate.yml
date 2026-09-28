@@ -29,7 +29,7 @@ jobs:
       DISPATCH_OFFLINE_FIXTURE: "true"
       # Bump deliberately after compatibility verification and record the
       # Dispatch-to-Kujo pairing in the release evidence.
-      KUJO_RUNTIME_REF: "5d72aab4b99e7f8c01e4c208d6c97061934c7447"
+      KUJO_RUNTIME_REF: "44af277848173664f72ca85f2a1b3b98d634ecdd"
       KUJO_V1_2_RUNTIME_REF: "123542ba17a0ef0150970a6c626b518946ff0bbb"
       RUSTUP_TOOLCHAIN: "1.96.0"
 
@@ -85,7 +85,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/ai-sdk
-          ref: 849dbbbba7a734938320dd9569d1ed7aa6240298
+          ref: 71bad1468fbc97eab830a27c185c032f07fd76cf
           path: .ci/ai-sdk
           fetch-depth: 1
 
@@ -93,7 +93,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/agents-sdk
-          ref: d3904d348754b492bda298b6c30f49c1eb24b7ea
+          ref: af0aa28f5960232cbafa7cf528a32db8cb36c7a9
           path: .ci/agents-sdk
           fetch-depth: 1
 
@@ -113,10 +113,11 @@ jobs:
           grep -qx "ai-sdk=849dbbbba7a734938320dd9569d1ed7aa6240298" release/dispatch-v1.3.0.refs
           grep -qx "agents-sdk=d3904d348754b492bda298b6c30f49c1eb24b7ea" release/dispatch-v1.3.0.refs
           grep -qx "dispatch=v1.3.0" release/dispatch-v1.3.0.refs
+          grep -qx "kujo=$KUJO_RUNTIME_REF" release/kujo-1.6.0-rc.refs
           test "$(git -C .ci/kujo rev-parse HEAD)" = "$KUJO_RUNTIME_REF"
           test "$(git -C .ci/kujo-old rev-parse HEAD)" = "123542ba17a0ef0150970a6c626b518946ff0bbb"
-          test "$(git -C .ci/ai-sdk rev-parse HEAD)" = "849dbbbba7a734938320dd9569d1ed7aa6240298"
-          test "$(git -C .ci/agents-sdk rev-parse HEAD)" = "d3904d348754b492bda298b6c30f49c1eb24b7ea"
+          test "$(git -C .ci/ai-sdk rev-parse HEAD)" = "71bad1468fbc97eab830a27c185c032f07fd76cf"
+          test "$(git -C .ci/agents-sdk rev-parse HEAD)" = "af0aa28f5960232cbafa7cf528a32db8cb36c7a9"
           test -f .ci/ai-sdk/scripts/generate_model_catalog.kujo
           bash .ci/kujo/tests/install_release_manifest.sh
 
