@@ -193,3 +193,5 @@ tests/tmp/*
 # Unpublished participant package build/install rehearsal outputs
 /.ci/participant-packages/
 /.ci/participant-sdk-build/
+
+/.ci/participant-distribution/
