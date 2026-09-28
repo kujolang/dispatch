@@ -1,0 +1,101 @@
+Runtime directory durability contract passed.
+Source layout passed.
+Smoke gate tests passed (success, silent failure, diagnostics).
+Run locking, at-least-once crash replay, and external idempotency passed.
+Isolated bridge package smoke passed.
+First workflow and scoped plugin walkthrough passed.
+typescript_package passed. 
+python_package passed. 
+python_parity passed. 
+participant_sdk_parity passed. 
+python_isolation passed. 
+python_integration passed. 
+typescript_after passed. 
+typescript_before passed. 
+control_boundary passed. Tests: 14 total, 14 passed, 0 failed
+failure_gate_safety passed. Tests: 20 total, 20 passed, 0 failed
+failure_gate_execution passed. Tests: 6 total, 6 passed, 0 failed
+review_checkpoint passed. Tests: 4 total, 4 passed, 0 failed
+persisted_negotiation_legacy passed. 
+persisted_negotiation_schemas passed. 
+persisted_negotiation_contracts passed. 
+persisted_negotiation passed. 
+persisted_negotiation_adapters passed. 
+beta_contracts passed. 
+portable_commitments passed. 
+portable_clean_room passed. 
+interop_oracles passed. 
+interop_history passed. 
+git_participant_after passed. 
+git_participant_before passed. 
+http_response_loss passed. 
+http_timeout_before passed. 
+http_application_error passed. 
+mcp_ability passed. 
+mcp_stdio_loss passed. 
+sdk_ability passed. 
+beta_migration passed. 
+assurance_compatibility passed. 
+assurance_capabilities passed. 
+effect_assurance_schema passed. 
+effect_assurance passed. 
+ability_assurance passed. 
+reexecution_lifecycle passed. 
+decision_claim passed. 
+sdk_adapter passed. Tests: 10 total, 10 passed, 0 failed
+policy_precedence passed. Tests: 3 total, 3 passed, 0 failed
+retrieval_preferences passed. Tests: 3 total, 3 passed, 0 failed
+routing passed. Tests: 31 total, 31 passed, 0 failed
+state_store_sqlite passed. Tests: 1 total, 1 passed, 0 failed
+operational_controls passed. Tests: 9 total, 9 passed, 0 failed
+hardening passed. Tests: 8 total, 8 passed, 0 failed
+Shard 1/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_1.kujo
+dispatch-1 passed. Tests: 5 total, 5 passed, 0 failed
+Shard 2/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_2.kujo
+dispatch-2 passed. Tests: 5 total, 5 passed, 0 failed
+Shard 3/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_3.kujo
+dispatch-3 passed. Tests: 5 total, 5 passed, 0 failed
+Shard 4/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_4.kujo
+dispatch-4 passed. Tests: 5 total, 5 passed, 0 failed
+Shard 5/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_5.kujo
+dispatch-5 passed. Tests: 5 total, 5 passed, 0 failed
+Shard 6/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_6.kujo
+dispatch-6 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 7/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_7.kujo
+dispatch-7 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 8/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_8.kujo
+dispatch-8 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 9/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_9.kujo
+dispatch-9 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 10/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_10.kujo
+dispatch-10 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 11/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_11.kujo
+dispatch-11 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 12/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_12.kujo
+dispatch-12 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 13/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_13.kujo
+dispatch-13 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 14/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_14.kujo
+dispatch-14 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 15/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_15.kujo
+dispatch-15 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 16/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_16.kujo
+dispatch-16 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 17/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_17.kujo
+dispatch-17 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 18/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_18.kujo
+dispatch-18 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 19/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_19.kujo
+dispatch-19 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 20/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_20.kujo
+dispatch-20 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 21/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_21.kujo
+dispatch-21 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 22/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_22.kujo
+dispatch-22 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 23/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_23.kujo
+dispatch-23 passed. Tests: 4 total, 4 passed, 0 failed
+Shard 24/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_24.kujo
+dispatch-24 passed. Tests: 4 total, 4 passed, 0 failed
+Dispatch v1.1 evidence passed: 3/3 runs in 12s
+Dispatch release gate passed.

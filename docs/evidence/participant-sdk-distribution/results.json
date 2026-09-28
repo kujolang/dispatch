@@ -1,0 +1,198 @@
+{
+  "asset_sha256": {
+    "capabilities.json": "f8bb3408d172dd24c608c6613ac8e8b1c376358051df3c8265bb6adbede0f319",
+    "core.schema.json": "e7ca18d1bd949d0a649905c122fb8d1d167b1e5a92437f3cf124156459846608",
+    "interop.md": "21f499cc4fe299d5936670cc4392ef03bf9b33ceca19ba87ea2f4e64674decd6",
+    "portable-json.md": "578448779c162bd976fe7399a9a111fbc1962a335495be7391a1b54c4bee45dd",
+    "sdk-conformance-manifest.json": "fd7658d5b16a0d167c58ccf6392ec86e03a469dc2a0d80158607d490a1893cc2",
+    "sdk-conformance.json": "2e5d04a84909321e1baa06c6f1ab819caf53b7dc4a41ca8b1e01fb019ae70e71",
+    "sdk-design.md": "6f805e5d5e1125b6689a5df6fd3e1ed73650124a81c150b8529f2e67ff3aea3e"
+  },
+  "baselines": {
+    "ability": "d6c970785f8d8bea04de0dce37920c2d0ca1c067",
+    "agents_sdk": "af0aa28f5960232cbafa7cf528a32db8cb36c7a9",
+    "dispatch": "c6edf00bf3509177ef05eb3a9d0c5fd9fe84e1ec",
+    "kujo": "b56c1539b1e4fc256da2bb9b2ca664abf44d8d51",
+    "mcp": "a7ec0dd8e6bcae303ab1431b4586dfe3e91f3a5a",
+    "workcell": "1940da0639b70b702c1b1077dda51ca39b065216"
+  },
+  "capabilities": {
+    "authority": false,
+    "canonical_codec": true,
+    "conformance": [
+      "kujo.participant-sdk-conformance/v1alpha1"
+    ],
+    "interop": [
+      "kujo.interop-handoff/v1alpha1"
+    ],
+    "package_version": "0.1.0-alpha.1",
+    "recording_helpers": true,
+    "schema": "kujo.participant-sdk-capabilities/v1alpha1",
+    "status": "experimental-alpha-unpublished"
+  },
+  "conformance": {
+    "exact_parity": true,
+    "python": 45,
+    "ts": 45
+  },
+  "decision": "YES_WITH_DISTRIBUTION_CONTROLS",
+  "implementation_commits": [
+    "0bfc0dd",
+    "5eb21d4"
+  ],
+  "install_manifest_sha256": {
+    "py": "47ca75ee010f61135239ff85faf3e684fa57f9a9dccd25674314140226ed4222",
+    "ts": "b0fdb41a6c1d2eaff591f742d8e5b49542d9fcac26ccad03a0e0a1d10ae3f01f"
+  },
+  "local_log_sha256": {
+    "gate.log": "ee3d0c2ded40974b440ed643cf676bc66852c2f48d9fefc9f7029524c61b5253",
+    "kujo-docs.log": "8b7b3e107d96a8b6d494ed24c5edcd714bff9694678f53ef0e57d01bb282690d",
+    "packaging-regression.log": "8b89ae86db516072aead9b058c2f4813393a3220a08740262c373d02f4c58c76",
+    "python.json": "b5743367aa192311bcb9f851b17225e2b66e65adc184fb3a83339094c4f002c9",
+    "release-gate.log": "ae97a2219548bc7e5f11438d73915c37079ed9eb4ae9a4cad7eaa9339217c476",
+    "result.json": "9fc4915b60fafae006075e42595a9f6764151bdc790bbbac77b14a1c6010d2e2",
+    "typescript-after.json": "b540ac1614bdea92fe2d91e72bef31dc4d427c95449ba6425408e488b62310df",
+    "typescript-before.json": "6a3f46e7ea08278e9b988e147329d63f103e70212000629322ccd8e220f829fc",
+    "workcell.log": "9808ca96e3edb3721eeccecd523c6695404a6e15db504cb2fdbe4123039e941d"
+  },
+  "negative_cases": [
+    "same-version-replacement",
+    "altered-wheel",
+    "wrong-name-collision",
+    "older",
+    "newer",
+    "dependency-version",
+    "missing-integrity",
+    "registry-fallback",
+    "missing-python-hash",
+    "missing-npm-lock",
+    "dependency-archive-substitution",
+    "schema-substitution",
+    "manifest-substitution",
+    "capability-substitution",
+    "missing-artifact"
+  ],
+  "offline_feed_removed": true,
+  "packaging_regression": {
+    "api_snapshot_sha256": "6a3eb91165e520af69d587d5c308e7a1449d7bfda54e17864124dc29a7ec1cfe",
+    "artifacts": {
+      "kujo_participant_sdk-0.1.0a1-py3-none-any.whl": "dbd3a2ab270b34c9d86f171f8906c51a705cecc7cff2907ae80fcee3c68732cc",
+      "kujo_participant_sdk-0.1.0a1.tar.gz": "105ecf78afa4d6a2d594bf2c6e8e8f279917702a9d1a94ac298577be9df12270",
+      "kujolang-participant-sdk-0.1.0-alpha.1.tgz": "adacd78bdc2d5b29bea8a1ff2aa26ef7b75f84c6353952ae557b8427a0d0c2fa"
+    },
+    "conformance": {
+      "exact_parity": true,
+      "python": 45,
+      "ts": 45
+    },
+    "reproducible": {
+      "npm": true,
+      "sdist": false,
+      "wheel": true
+    }
+  },
+  "real_flows": {
+    "python": {
+      "input_denials": 12,
+      "installed_package": true,
+      "ok": true,
+      "proofs": [
+        {
+          "case": "before_commit",
+          "fresh_controller": true,
+          "logical_effects": 1,
+          "required_revision_preserved": true,
+          "termination": {
+            "completion_knowledge": "unknown",
+            "observed_state": "not_started",
+            "phase": "before_commit",
+            "returncode": -9,
+            "signal": "SIGKILL"
+          }
+        },
+        {
+          "case": "after_commit",
+          "fresh_controller": true,
+          "logical_effects": 1,
+          "required_revision_preserved": true,
+          "termination": {
+            "completion_knowledge": "unknown",
+            "observed_state": "committed",
+            "phase": "after_commit",
+            "returncode": -9,
+            "signal": "SIGKILL"
+          }
+        },
+        {
+          "admitted": 1,
+          "case": "concurrency",
+          "denied": 3,
+          "logical_effects": 1
+        }
+      ]
+    },
+    "typescript-after": {
+      "actual_sigkill": true,
+      "artifact_tamper_denials": 2,
+      "boundary": "after_commit",
+      "checkpoint": true,
+      "concurrency": {
+        "admitted": 1,
+        "contenders": 4,
+        "denied": 3
+      },
+      "controller_restart": true,
+      "historical_bytes_unchanged": true,
+      "installed_package": true,
+      "logical_effects": 1,
+      "native_generic": true,
+      "negative_correlations": 15,
+      "no_new_reader": true,
+      "ok": true,
+      "package_substitution_denials": 5,
+      "participant_restart": true,
+      "privacy": true,
+      "trust_denials": 13
+    },
+    "typescript-before": {
+      "actual_sigkill": true,
+      "artifact_tamper_denials": 2,
+      "boundary": "before_commit",
+      "checkpoint": true,
+      "concurrency": {
+        "admitted": 1,
+        "contenders": 4,
+        "denied": 3
+      },
+      "controller_restart": true,
+      "historical_bytes_unchanged": true,
+      "installed_package": true,
+      "logical_effects": 1,
+      "native_generic": true,
+      "negative_correlations": 15,
+      "no_new_reader": true,
+      "ok": true,
+      "package_substitution_denials": 5,
+      "participant_restart": true,
+      "privacy": true,
+      "trust_denials": 13
+    }
+  },
+  "registration_substitution_denials_per_crash_flow": 2,
+  "retained_closure_files": 16,
+  "retention_note": "Raw local logs retain install/checkout paths; this evidence omits those paths, preserving their exact SHA-256. Reviewed SDK archives remain in local artifact retention; feed was deleted. No hosted CI or publication.",
+  "schema": "kujo.private-sdk-distribution-evidence/v1alpha1",
+  "tools": {
+    "node": "v26.7.0",
+    "npm": "11.19.0",
+    "python": "3.10.5 (v3.10.5:f377153967, Jun  6 2022, 12:36:10) [Clang 13.0.0 (clang-1300.0.29.30)]"
+  },
+  "validation": {
+    "dispatch_full_release_gate": "PASS",
+    "distribution_gate": "PASS",
+    "kujo_fmt": "PASS",
+    "kujo_readme_contracts": "PASS",
+    "original_packaging_gate": "PASS",
+    "workcell_effect_assurance": "PASS"
+  }
+}

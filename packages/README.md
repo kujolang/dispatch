@@ -63,3 +63,5 @@ records are retained in `docs/evidence/participant-sdk-packaging`.
 The recording lifecycle remains unknown → optional reported observation → fresh
 read-only finalization. Finalization never performs the readback itself. Matching
 an expected snapshot is correlation, never permission to replay.
+
+Private/local distribution rehearsal: [consumer acquisition and evidence](../docs/audits/participant-sdk-distribution.md). Packages remain alpha and unpublished; artifact names are not trust anchors.
