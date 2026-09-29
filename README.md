@@ -731,3 +731,8 @@ authorizes replay; existing persisted beta admission remains authoritative.
 [Experimental participant packages](packages/README.md) provide unpublished npm
 and Python artifacts for pure correlation/recording APIs. They contain no effect
 executor, admission, assurance or replay authority.
+
+Experimental Wave C/D: [one selected local effect](docs/contracts/effect-set/one-effect-admission.md)
+adds locked selection and one-use admission for a verified not-started SQLite
+effect. The assessor remains read-only; parent replay and automatic remainder
+execution remain prohibited.

@@ -51,7 +51,10 @@ export func decode_authoritative_state(body) {
     if has_key(state, "assurance_negotiation")&&validate_assurance_policy(state["assurance_negotiation"]) == false {throw("assurance_policy_tampered")}
     if has_key(state, "required_features")&&guarded == false {throw("assurance_controller_incompatible")}
     if assurance_protected(state) != guarded {throw("assurance_controller_incompatible")}
-    if (guarded||has_key(state, "required_features"))&&to_json(dict_get_or(state, "required_features", [])) != to_json([assurance_feature(state["assurance_negotiation"])]) {throw("assurance_controller_incompatible")}
+    features := []
+    if guarded {features = [assurance_feature(state["assurance_negotiation"])]}
+    if has_key(state,"effect_continuation") {features = push(features,"effect-continuation/v1alpha1")}
+    if (guarded||has_key(state, "required_features"))&&to_json(dict_get_or(state, "required_features", [])) != to_json(features) {throw("assurance_controller_incompatible")}
     if guarded&&beta != (state["assurance_negotiation"]["schema"] == "dispatch.assurance-negotiation/v1beta1") {throw("assurance_controller_incompatible")}
     if guarded&&contains(["filesystem", "sqlite"], dict_get_or(state, "assurance_store", "")) == false {throw("assurance_store_invalid")}
     return state
