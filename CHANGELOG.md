@@ -6,6 +6,7 @@ Dispatch's version.
 
 ## [1.3.0] - 2026-09-29
 
+- Launch the AI SDK bridge with Kujo 1.6 native working-directory support, avoiding platform-specific `env -C` behavior.
 - Preserve configured tool authorization during v1/v2 `resume-decision`; scope legacy approvals to their reviewed step and serialize decision claim/execution/publication under the run lock.
 
 ### Added

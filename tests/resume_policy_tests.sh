@@ -7,6 +7,8 @@ mkdir -p "$root"
 trap 'probe_code=$?; if [[ "$probe_code" -ne 0 ]]; then echo "Resume policy failure: ${case_root:-setup}" >&2; if [[ -f "${case_root:-}/result.log" ]]; then tail -20 "$case_root/result.log" >&2; fi; fi' EXIT
 export DISPATCH_POLICY_PROFILE=development
 export DISPATCH_OFFLINE_FIXTURE=false
+# Fixture-only diagnostics contain no credentials or user inputs.
+export DISPATCH_SDK_DEBUG_OUTPUT=true
 export DISPATCH_SDK_BRIDGE_SCRIPT="$PWD/tests/fixtures/policy_model_bridge.kujo"
 export AI_SDK_PATH="${AI_SDK_PATH:-$PWD}"
 for version in v2 v1; do
