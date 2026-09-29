@@ -56,9 +56,16 @@ func fold(state) {
     if len(refs) > 0 {
         last_event := read_artifact(state, refs[len(refs) - 1])
         last_control := parse_json(read_file_beneath(state["run_dir"], "control-records/" + to_string(state["control_journal"]["sequence"]) + ".json", 1048576))
-        require(last_event["prior_revision"] + 1 == state["revision"])
-        require(last_event["prior_revision"] == last_control["state_revision"]&&last_event["prior_journal"] == last_control["previous_sha256"])
-        require(last_control["kind"] == "effect_lifecycle_recorded")
+        if last_control["kind"] == "retained_host_reconciled" {
+            require(last_control["state_revision"] + 1 == state["revision"])
+            require(last_control["details"]["schema"] == "dispatch.reconciliation-receipt/v1alpha1")
+            require(last_control["details"]["resulting_revision"] == state["revision"])
+            require(last_event["prior_revision"] < state["revision"])
+        } else {
+            require(last_event["prior_revision"] + 1 == state["revision"])
+            require(last_event["prior_revision"] == last_control["state_revision"]&&last_event["prior_journal"] == last_control["previous_sha256"])
+            require(last_control["kind"] == "effect_lifecycle_recorded")
+        }
     }
     return view
 }
@@ -207,3 +214,6 @@ export func sequential_effect_operation(root, id, request, options) {
     try {answer = operate(root, id, request, options, read_state(root, id))} except err {answer = {"ok":false, "code":"sequential_effect_denied", "parent_replay":"prohibited"}}
     released := release_run_lock(lock);if released["ok"] == false {return released};return answer
 }
+
+# Recovery reads retained knowledge only; it never resolves admission context.
+export func recovery_lifecycle_view(state) {return fold(state)}

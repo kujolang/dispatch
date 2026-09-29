@@ -1,3 +1,4 @@
+from src.core.retained_recovery import inspect_retained_run, plan_retained_reconciliation, apply_retained_reconciliation
 from src.bridge.sdk_adapter import custom_provider_api_key_env_allowed, custom_provider_endpoint_allowed, call_agent_model
 from src.cli.bundled_workflow import bundled_workflow_path, normalize_config_path
 from src.cli.cli_args import parse_cli_args, parsed_has_flag, parsed_flag_value
@@ -47,6 +48,7 @@ func print_help() {
     "  kujo run dispatch.kujo inspect <run-id> [--output-root outputs] [--json]",
     "  kujo run dispatch.kujo resume <run-id> [--workflow research-report] [--policy-profile staging] [--yes] [--non-interactive] [--output-root outputs]",
     "  kujo run dispatch.kujo resume-decision <decision.json> [--output-root outputs] [--checkpoint cp_SHA256] [--non-interactive]",
+    "  kujo run dispatch.kujo recover inspect|plan|apply <run-id> [plan.json] [--operator id] [--output-root outputs] [--json]",
     "  kujo run dispatch.kujo checkpoint <run-id> [--output-root outputs]",
     "  kujo run dispatch.kujo templates [--json]",
     "  kujo run dispatch.kujo runs [--output-root outputs] [--status completed] [--workflow research] [--topic ai] [--tags prod] [--issues-only] [--limit 50] [--offset 0] [--json] [--diagnostics]",
@@ -1451,6 +1453,26 @@ func run_v2_resume_decision(decision, parsed, command_args, config, tool_policy_
     if result["ok"] == false&&dict_get_or(result, "cancelled", false) == false {exit_error(to_json(result["error"]))}
 }
 
+func run_recover(command_args) {
+    parsed := parse_cli_args(command_args, {"flags":{"--output-root":{"takes_value":true,"default":"outputs"},"--json":{"takes_value":false,"default":false},"--operator":{"takes_value":true,"default":""}}})
+    if parsed["ok"] == false {exit_error(parsed["error"]["message"])}
+    args := parsed_positionals_or_empty(parsed)
+    if len(args) < 2 {exit_error("recover requires inspect|plan|apply and run ID")}
+    root := parsed_flag_value(parsed,"--output-root","outputs");result := {}
+    if args[0] == "inspect"&&len(args) == 2 {result = inspect_retained_run(root,args[1])}
+    else if args[0] == "plan"&&len(args) == 2 {result = plan_retained_reconciliation(root,args[1])}
+    else if args[0] == "apply"&&len(args) == 3 {result = apply_retained_reconciliation(root,args[1],parse_json(read_file_beneath(dirname(args[2]),basename(args[2]),1048576)),parsed_flag_value(parsed,"--operator",""))}
+    else {exit_error("recover requires inspect|plan <run> or apply <run> <plan.json> --operator <id>")}
+    if parsed_has_flag(parsed,"--json") {print(to_json(result))}
+    else {
+        print("Retained-host recovery: " + args[1])
+        if has_key(result,"assessment") {report := result["assessment"];print("State revision: " + to_string(report["state_revision"]));print("Journal sequence: " + to_string(report["journal_sequence"]));print("Classification: " + report["classification"]);print("Safe repairs: " + to_json(report["safe_repairs"]));print("Unresolved: " + to_json(report["unresolved"]));print("Orphans: " + to_json(report["orphans"]))} else {print(to_json(result))}
+        print("Continuation is not authorized. Consumed work stays consumed.")
+        if has_key(result,"plan") {print("Plan: " + to_json(result["plan"]))}
+    }
+    if result["ok"] == false {exit(1)}
+}
+
 func run_checkpoint(command_args) {
     parsed := parse_cli_args(command_args, {"flags": {"--output-root": {"takes_value": true, "default": "outputs"}}})
     if parsed["ok"] == false {exit_error(parsed["error"]["message"])}
@@ -2170,6 +2192,10 @@ if command == "resume" {
 }
 if command == "resume-decision" {
     run_resume_decision(command_args)
+    return
+}
+if command == "recover" {
+    run_recover(command_args)
     return
 }
 if command == "checkpoint" {

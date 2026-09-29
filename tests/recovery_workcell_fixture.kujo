@@ -1,0 +1,20 @@
+from workcell.src.evidence.execution_result import build_reexecution_descriptor
+from workcell.src.evidence.preservation import build_preservation_outcome
+from workcell.src.workspace.workspace import create_workspace, cleanup_workspace
+
+root := args()[0]
+if args()[1] == "create" {
+    workspace := create_workspace(root + "/source", "git-worktree", "wc-" + replace(uuid_v4(), "-", ""))
+    if workspace["ok"] != true {throw(to_json(workspace))}
+    preserved := cleanup_workspace(workspace, true)
+    if preserved["ok"] != true {throw(to_json(preserved))}
+    outcome := build_preservation_outcome({"run_id":"retained-proof", "step_id":"action", "attempt_id":"1", "output_dir":root, "workspace_path":workspace["workspace_path"], "requested_mode":"filesystem", "cleanup_status":"preserved", "provider":"local-git-worktree", "retain_until":"2099-01-01T00:00:00Z"})
+    if outcome["ok"] != true {throw(to_json(outcome))}
+    descriptor := build_reexecution_descriptor({"name":"retained-proof", "version":1, "network":{"mode":"none"}}, {"source":{"repository":workspace["source_root"], "commit":workspace["source_commit"]}}, root)
+    write_file(root + "/owned-workspace.json", to_json(workspace))
+    print(to_json({"preservation":outcome["outcome"], "descriptor":descriptor, "workspace":workspace["workspace_path"]}))
+} else {
+    result := cleanup_workspace(parse_json(read_file(root + "/owned-workspace.json")), false)
+    if result["ok"] != true {throw(to_json(result))}
+    print(to_json(result))
+}

@@ -87,6 +87,7 @@ run_suite() {
 	if [[ "${DISPATCH_TEST_VERBOSE:-false}" == true ]]; then cat "$log"; fi
 }
 run_suite typescript_build npm --prefix interop/typescript-participant run build
+run_suite retained_recovery env KUJO_BIN="$KUJO_BIN" node tests/retained_recovery_integration.mjs
 run_suite effect_set env KUJO_BIN="$KUJO_BIN" node tests/effect_set_integration.mjs
 run_suite effect_continuation env KUJO_BIN="$KUJO_BIN" node tests/effect_continuation_integration.mjs
 run_suite sequential_effects env -u SEQUENTIAL_FAMILY -u SEQUENTIAL_ADMISSION_ONLY KUJO_BIN="$KUJO_BIN" node tests/sequential_effect_integration.mjs
