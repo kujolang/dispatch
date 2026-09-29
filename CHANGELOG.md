@@ -1,135 +1,48 @@
-Unreleased: additive bounded multi-effect assessment and append-only freshness proof; independent Go CLI/MCP recording participant and shared vectors. Read-only local experiment, no production continuation, historical wire or alpha/beta policy change. See docs/contracts/effect-set/decision.md.
-
-Unreleased interoperability evidence: a standalone Python beta consumer independently
-
-- Unreleased experimental participant SDK API: independent TypeScript/Python codecs, closed installed registrations, exact-byte correlation and recording-only helpers; shared conformance and real crash/replay regressions. No publication or replay-policy change.
-validates published commitments, three real-profile observations, pinned authority
-and restart behavior. Alpha retained; no core admission/schema behavior changed.
-
 # Changelog
 
-Unreleased: experimental participant npm tarball and Python wheel/sdist packaging, closed public APIs, pinned local assets, clean installed conformance and real installed-package Git crash/replay proofs. No publication, wire, verifier or replay-policy change.
+Version source: `kennel.toml`; CLI and `kujo.toml` must agree. Historical release
+entries are retained below. Experimental contract versions are independent of
+Dispatch's version.
 
-Unreleased: independent external Python native generic participant, closed owner extension, strict UTF-8/JSON codec and published-vector agreement. Cross-runtime TypeScript parity, offline package isolation, real Git SIGKILL/review/replay and four-process one-use contention preserve existing Dispatch authority. No generic schema or replay-policy change.
-
-Unreleased: native external TypeScript adoption of the generic interoperability core. Independent bounded codec/closed extension, one-use local host, real Workcell Git pre/post-commit SIGKILL and fresh-controller beta review/replay. Existing core/readers/verifier/policy and historical handoffs remain unchanged; package is experimental and unpublished.
-
-Unreleased: experimental `kujo.interop-handoff/v1alpha1` correlation core with closed participant/family extensions. Four existing readers validate historical handoffs then share subject and exact-reference checks; historical bytes, beta verification and replay policy remain unchanged. Frozen-reader differential and real restart/replay regressions cover migration.
-
-Unreleased: bounded non-Ability Workcell Git process correlation reader, real pre/post-CAS SIGKILL and checkpoint/replay fixtures, and four-participant comparison. Existing Git verifier, beta policy and v1 execution-result remain unchanged.
-
-Unreleased: local HTTP Ability correlation reader, real socket timeout/loss/duplicate fixtures and locked beta review/replay. No core replay policy changes.
-
-Unreleased: Experimental local MCP Ability correlation reader and real STDIO restart/review/replay fixtures; replay remains under existing persisted beta authority.
-
-Unreleased: prepare opt-in v1beta1 assurance with portable commitment vectors, owner profile specifications and real alpha/beta migration rehearsal. Keep alpha parsing and immutable alpha runs; new beta runs require explicit required/deny policy and a beta controller feature. No execution-result/v1 or global enablement change.
-
-
-Unreleased: reject malformed, oversized, expired or binding-invalid selected alpha assurance before optional unsupported-profile fallback. Add seven shared live-profile regressions and a beta contract inventory/review/profile template. Alpha remains opt-in; portable commitment vectors and migration rehearsal block beta freeze. No runtime or execution-result schema changes.
-
-Unreleased: opt-in persisted effect-assurance negotiation binds mode/fallback, exact profile/version and trusted configuration revision to run state and journal. Locked admission rechecks installed authority, verifier bytes, freshness and revocation. Protected storage refuses old controllers; checkpoints and signed bundles retain policy, and imported runs without surviving journal authority cannot resume. Legacy v1 replay rules and effect/result schemas are unchanged. See docs/persisted-assurance-negotiation.md and its audit evidence.
-
-## Unreleased — effect assurance prototype and compatibility
-
-- Add the canonical compatibility/migration specification, opt-in reference policy evaluator, bounded advisory capability catalog and shared live-adapter conformance. No global enablement or v1 result change.
-
-- Validate application-owned Ability identity, dual business/receipt commits, live revocation and expiry through the opt-in Wave C resolver. Stable Ability and execution-result/v1 contracts remain unchanged.
-
-Unreleased experimental addition: [effect assurance validation](docs/effect-assurance.md) with SQLite and Git adapters; legacy v1 replay behavior is unchanged.
-
-## Unreleased
-
-- Add immutable bounded `dispatch.review-checkpoint/v1` review snapshots and
-  optional locked checkpoint validation on v2 `resume-decision`. Preserve existing
-  effect uncertainty, revision admission and decision-claim recovery behavior.
-- Prove separate-process continuation with real offline Workcell preservation,
-  Eval results and RunLedger correlation; no action replay or live-provider claim.
-
-- Reject all terminal runs, including rejected runs, at direct runner admission;
-  share terminal classification with state management.
-
-- Pin the failure-gate candidate to the Kujo source runtime with confined directory durability; reject older runtimes before running the release gate.
-
-- Added opt-in portable evaluation-result consumption, workflow control policy
-  mapping, persisted scheduler barriers, and a hash-linked control event journal.
-- Added `kujo.intervention-request/v2` emission and revision-bound
-  `kujo.intervention-decision/v2` handling while retaining the v1 approval path.
-- Added effect metadata and fail-closed retry admission; Dispatch does not infer
-  rollback or clean-state re-execution when a provider contract is absent.
-- Added provider-backed `retry_clean` preparation using portable re-execution
-  descriptors while retaining fail-closed effect-safety checks.
-- Enforced persisted DAG admission barriers for workflow and transitive
-  descendant scopes, allowing unrelated branches to drain before review.
-- Preserved provider-owned preservation outcomes and re-execution descriptors
-  across policy resolution without importing their producers.
-
-All notable changes to this project will be documented in this file.
-
-This project follows Keep a Changelog and Semantic Versioning.
-
-## Versioning Policy
-
-- Source of truth version: `kennel.toml` -> `[package].version`.
-- Version format: `MAJOR.MINOR.PATCH`.
-- `MAJOR`: incompatible CLI/output or contract changes.
-- `MINOR`: backward-compatible features and behavior expansions.
-- `PATCH`: backward-compatible fixes, security remediations, and documentation corrections.
-- Pre-1.0 policy:
-  - Breaking changes MAY be released in minor increments while the package is experimental.
-  - Breaking changes MUST still be explicitly called out in changelog entries.
-
-## Changelog Entry Policy
-
-Each release section should include only shipped changes and use these headings when applicable:
-
-- Added
-- Changed
-- Deprecated
-- Removed
-- Fixed
-- Security
-
-## [Unreleased]
+## [1.3.0] - 2026-09-29
 
 ### Added
 
-- Review requests explain currently unavailable actions and preserve custom reason codes within the portable vocabulary; local lifecycle fixtures prove retained/clean workspace replay and sink-enforced deduplication.
-
-- Producer-neutral execution failure policies, explicit evaluator errors, and an offline Workcell/Eval failure-review proof with RunLedger/CaseFile handoffs.
+- Durable evaluation/failure policy boundaries, hash-linked control journal,
+  revision-bound intervention decisions and immutable review checkpoints.
+- Conservative effect-aware retry and provider-backed clean re-execution with
+  retained evaluator input and explicit preservation evidence.
+- Experimental effect-assurance beta with SQLite, Workcell Git CAS and Ability
+  profiles, exact-byte binding, portable commitments and live freshness/revocation
+  checks. Persisted immutable negotiation survives controller replacement;
+  alpha remains supported and beta requires explicit required/deny opt-in.
+- Experimental interoperability alpha for Agents SDK, MCP STDIO, HTTP and Git
+  processes, plus native TypeScript/Python participants and generic correlation.
+  Package/distribution/source-blind agent rehearsals do not publish SDKs or
+  establish human usability.
+- Read-only experimental bounded effect-set assessment and independent Go
+  CLI/MCP evidence. This is not production multi-effect continuation or a change
+  to the single-effect beta admission domain.
 
 ### Fixed
 
-- Control-enabled workflows require evidenced replay safety, retained evaluator inputs, real preservation and declared adapter modes; bare idempotency keys no longer authorize replay. V2 decisions lock the full transaction and reject stale/conflicting duplicates. Durable control records detect journal/checkpoint crash gaps before continuation.
-
-### Fixed
-
-- Supply a stable tool-handler effect idempotency key so external sinks can
-  deduplicate crash-before-checkpoint replays; document the at-least-once
-  limitation rather than implying the local step cache is exactly-once.
-- Preserve persisted token budgets and block further model rounds at exact exhaustion.
-- Propagate planner/writer model failures even when routing is disabled.
-- Reject forbidden library output roots and streaming step path separators before writing.
-- Replace age-based run-lock recovery with process-owned POSIX advisory locks; retain the lock inode across release and recover after worker exit.
-- Reject silent VM-smoke failures and verify SQLite authority over stale mirrors.
-- Serialize lifecycle webhook JSONL framing across processes with a persistent sink lock.
-- Allow installed Dispatch shims to load only their bundled absolute workflow examples and resolve the legacy installer bridge path without widening arbitrary config paths.
+- Process-owned POSIX locks prevent age-based takeover; worker exit releases
+  ownership without unlinking persistent lock files.
+- Terminal runs, stale/conflicting decisions, journal/checkpoint gaps and missing
+  replay evidence fail closed. Bare idempotency assertions do not grant replay.
+- Preserve token budgets, propagate model failures, confine output/stream paths,
+  serialize webhook framing and preserve SQLite authority over stale mirrors.
+- Installed bridge resolution accepts only the documented legacy path alias.
+- Build the independent TypeScript codec before clean-checkout effect-set tests.
 
 ### Changed
 
-- Move the internal SDK adapter and bridge script into `src/bridge/`; keep `dispatch.kujo` as the root package entrypoint and update the default bridge-script path. Existing `DISPATCH_SDK_BRIDGE_SCRIPT` overrides remain supported.
-- Require Kujo 1.4.0 for process-owned POSIX locking; do not mix workers with older lock protocols on a run directory. The 1.3 candidate is not tagged or certified until its release checklist passes.
-- Add isolated bridge, concurrent webhook, and copyable first-workflow/plugin policy checks.
-- Extract CLI config-path checks into a small module to keep the Kujo interpreter's type inference warning-free.
-- Record repeated state/catalog/trace memory and time measurements, with lossless tombstone retention explicitly documented.
-- Clarify enterprise-readiness limits in the README and add a prioritized follow-up review.
-- Reduce redaction traversal allocations, reuse persistence serialization, and append webhook sink events without rewriting history.
-- Keep complete release-gate logs behind concise suite receipts; use `DISPATCH_TEST_VERBOSE=true` for full passing output.
-- Add hardening, lock-contention, smoke-gate regression tests and reproducible redaction/sink workloads.
-- Add scripted v1.2 paused-run upgrade/backup rollback and real pinned
-  clean-install checks; run the pinned AI SDK and Agents SDK gates and repeated
-  state-scale samples on both CI platforms.
-- Rehearse upgrades and rollback under the separate pinned Kujo executables
-  used by Dispatch 1.2 and 1.3, including both persisted-state backends.
+- Require Kujo 1.6.0; pin released AI SDK 1.1.1, Agents SDK 1.1.2, Workcell 1.2.0,
+  Ability 1.2.0 and MCP 1.2.0 in their respective installer/validation closures.
+- Keep complete concise-gate transcripts, upgrade/backup rollback rehearsals,
+  installed workloads and state-scale measurements.
+- SDK bridge internals live in `src/bridge/`; configured operator overrides remain
+  supported. Public workflow/CLI contracts remain compatible.
 
 ## [1.2.0] - 2026-08-27
 

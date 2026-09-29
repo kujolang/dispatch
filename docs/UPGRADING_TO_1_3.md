@@ -1,15 +1,14 @@
 # Upgrading Dispatch from 1.2 to 1.3
 
-Dispatch 1.3 is a development candidate. Its process-owned POSIX run locks
-and confined directory durability require the exact Kujo source commit pinned
-in `release/dispatch-v1.3.0.refs`; even the released 1.5.0 tag predates the
-directory barrier. The old 1.2 release uses an age-reclaimable file
+Dispatch 1.3 requires released Kujo 1.6.0 on Linux/macOS. Its process-owned
+POSIX run locks and confined directory durability use the exact release closure
+in `release/dispatch-v1.3.0.refs`. Kujo 1.5.0 predates the directory barrier. The old 1.2 release uses an age-reclaimable file
 that can admit overlapping workers. Do not point 1.2 and 1.3 workers at the
 same output root during a rolling deployment.
 
 1. Stop every Dispatch 1.2 worker and confirm no run is executing. Retain a
    backup of the output root, including SQLite state when enabled.
-2. Install or build the 1.3 candidate with the immutable Kujo commit recorded
+2. Install or build 1.3.0 with the immutable Kujo commit recorded
    in `release/dispatch-v1.3.0.refs`. Do not use the 1.2 runtime with 1.3
    source: its native `file_lock` and `file_unlock` functions are missing.
 3. On a single host, run the offline gate and resume a paused legacy run in
@@ -26,7 +25,7 @@ Rehearse the quiesced paused-run upgrade and backup rollback for both filesystem
 and SQLite state:
 
 ```bash
-KUJO_BIN=/path/to/pinned/kujo-1.4 KUJO_OLD_BIN=/path/to/pinned/kujo-1.0.2 \
+KUJO_BIN=/path/to/pinned/kujo-1.6 KUJO_OLD_BIN=/path/to/pinned/kujo-1.0.2 \
   bash tests/upgrade_rehearsal_tests.sh
 ```
 
