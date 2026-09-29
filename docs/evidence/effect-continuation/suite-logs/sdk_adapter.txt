@@ -1,0 +1,20 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ custom providers cannot select arbitrary process secret variables (21ms)
+  ✓ parse json from output supports trailing json line (9ms)
+  ✓ parse error details are redacted by default (14ms)
+  ✓ parse error details include raw output when debug enabled (16ms)
+  ✓ execution error message redacts stderr by default (14ms)
+  ✓ execution error message includes stderr when debug enabled (10ms)
+  ✓ bridge spawn command is direct argv without shell wrapper (12ms)
+  ✓ bridge timeout is configurable with a safe default (21ms)
+  ✓ bridge payload carries route provenance and structured output policy (30ms)
+  ✓ offline fixture model calls return in process without bridge execution (15ms)
+
+Tests: 10 total, 10 passed, 0 failed
+Time:  180ms
+============================================================
+
+All tests passed! ✨

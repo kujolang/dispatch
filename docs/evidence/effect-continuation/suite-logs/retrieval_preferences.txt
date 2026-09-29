@@ -1,0 +1,13 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ step run and workflow preference precedence preserves explicit clearing (241ms)
+  ✓ loaded workflow delivers run preference to tool and preserves it through disk reload (1948ms)
+  ✓ retry and approval resume preserve run selection and a later explicit clear (4065ms)
+
+Tests: 3 total, 3 passed, 0 failed
+Time:  6353ms
+============================================================
+
+All tests passed! ✨

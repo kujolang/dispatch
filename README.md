@@ -734,3 +734,7 @@ private-address guard. This runtime override broadens private-network access;
 it is not a producer/model option and should not be enabled for untrusted routes.
 The default remains deny-private. The release localhost fixture uses no real
 provider credentials and does not certify a remote deployment.
+Experimental Wave C/D: [one selected local effect](docs/contracts/effect-set/one-effect-admission.md)
+adds locked selection and one-use admission for a verified not-started SQLite
+effect. The assessor remains read-only; parent replay and automatic remainder
+execution remain prohibited.

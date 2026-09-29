@@ -1,0 +1,19 @@
+test_action_attempts (test_codec.CodecTests) ... ok
+test_assets (test_codec.CodecTests) ... ok
+test_closed_extensions (test_codec.CodecTests) ... ok
+test_correlations (test_codec.CodecTests) ... ok
+test_isolated_environment (test_codec.CodecTests) ... ok
+test_limits (test_codec.CodecTests) ... ok
+test_python_numbers (test_codec.CodecTests) ... ok
+test_request (test_codec.CodecTests) ... ok
+test_roundtrip (test_codec.CodecTests) ... ok
+test_unicode (test_codec.CodecTests) ... ok
+test_vectors (test_codec.CodecTests) ... ok
+test_wire_mutations (test_codec.CodecTests) ... ok
+test_neutral_corpus (test_codec.ParityCorpusTests) ... ok
+test_shared_contract (test_sdk.SDKTests) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.361s
+
+OK

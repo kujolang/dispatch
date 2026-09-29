@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ cli args parser handles flags and positionals with schema (237ms)
+  ✓ dependency scheduling supports parallel-ready DAG steps (2567ms)
+  ✓ policy profile aliases work via config and cli override (23190ms)
+  ✓ built-in sample plugin injects a tool and agent handler and observes events (2604ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  28718ms
+============================================================
+
+All tests passed! ✨

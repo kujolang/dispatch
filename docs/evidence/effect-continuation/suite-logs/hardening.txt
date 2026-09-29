@@ -1,0 +1,18 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ persisted token budgets survive workflow reload without exposing credentials (676ms)
+  ✓ workflow loader rejects non-object steps with structured errors (154ms)
+  ✓ webhook sink appends preserve exact existing JSONL framing (183ms)
+  ✓ exhausted model token envelope blocks the next model round (155ms)
+  ✓ streaming rejects step ids that escape the run directory (140ms)
+  ✓ redaction preserves nested shapes and leaves the original data untouched (136ms)
+  ✓ library run creation rejects forbidden output roots before writing (272ms)
+  ✓ unrouted built-in agents propagate live model failures (191ms)
+
+Tests: 8 total, 8 passed, 0 failed
+Time:  2051ms
+============================================================
+
+All tests passed! ✨

@@ -1,0 +1,92 @@
+from src.core.effect_continuation import select_effect, admit_effect, inspect_effect
+from src.core.assurance_admission import create_negotiated_run
+from src.core.assurance_configuration import implementation_digest, configuration_revision
+from src.core.state import load_run_state, persist_run_state
+from src.core.runner import run_workflow
+from src.core.step import create_step
+from src.workflows.workflow import create_workflow
+from src.tools.tool import create_tool_registry, create_tool, register_tool
+from src.core.portable_commitments import portable_json
+from src.core.utils import dict_get_or, ensure_dir
+from src.adapters.sqlite_effect import sqlite_effect_init, sqlite_effect_apply, sqlite_effect_observe
+args := args();root := args[0];mode := args[1]
+func require(value) {if value != true {throw("continuation_fixture_failed")}}
+func config() {return parse_json(read_file_beneath(root,"host.json",65536))}
+func put(value) {
+    artifact_bytes := portable_json(value);ref := "sha256:" + sha256(artifact_bytes)
+    if file_exists(root + "/artifacts/" + sha256(artifact_bytes) + ".json") == false {write_file_atomic_beneath(root,"artifacts/" + sha256(artifact_bytes) + ".json",artifact_bytes,false)}
+    return ref
+}
+func inventory() {return [{"root":os_getcwd(),"path":"tests/effect_continuation_fixture.kujo"},{"root":os_getcwd(),"path":"src/core/effect_continuation.kujo"},{"root":os_getcwd(),"path":"src/adapters/sqlite_effect.kujo"}]}
+func installed(revision,state) {
+    cfg := config()
+    host := dict_get_or(cfg,"effect_set",{})
+    host["read_artifact"] := func(ref) {return read_file_beneath(root,"artifacts/" + substring(ref,7,71) + ".json",8192)}
+    return {"status":dict_get_or(cfg,"status","active"),"descriptor":cfg["descriptor"],"authority_sha256":cfg["descriptor"]["authority_sha256"],"implementation":inventory(),"verify":func(subject) {return null},"effect_set":host}
+}
+func boundary(point) {
+    if mode == point {print("CRASH:" + point);sleep(30000)}
+    if mode == "expire-after-admission"&&point == "after_admission" {
+        cfg := config(); sidecar := parse_json(cfg["effect_set"]["set_raw"]); evidence := parse_json(read_file_beneath(root,"artifacts/" + substring(sidecar["observations"][0],7,71) + ".json",8192))
+        while now_utc_seconds() < evidence["valid_until"] {sleep(50)}
+    }
+    if starts_with(mode,"change-after-admission:")&&point == "after_admission" {
+        cfg := config();field := substring(mode,len("change-after-admission:"),len(mode))
+        if field == "status" {cfg["status"] := "revoked"}
+        else {host := cfg["effect_set"];host["environment_valid"] := false;cfg["effect_set"] := host}
+        write_file(root + "/host.json",to_json(cfg),true)
+    }
+}
+options := {"assurance_host":installed,"effect_boundary":boundary}
+func workflow() {
+    return create_workflow({"id":"effect-continuation","name":"One effect","description":"Bounded continuation", "input_schema":{"type":"dict"},"output_schema":{"type":"dict"},"agents":{},"tools":["action"],"steps":[create_step("action","Effects","tool",{"tool_name":"action","input_from":["input"],"output_key":"action","effect_class":"external_non_idempotent","reexecution_modes":["same_workspace"]})],"routing":{"enabled":false},"control":{"policy_id":"effect-continuation","policy_version":"1","policies":[{"when":{"result":"execution","status":"indeterminate"},"decide":{"disposition":"require_intervention","reason":"Partial effects","allowed_actions":["retry_step","abort"]}}]},"default_retry_policy":{"max_attempts":1},"approval_config":{"auto_approve":false},"memory_config":{},"budgets":{},"max_parallel_steps":1})
+}
+func action(input,context) {
+    cfg := config();intents := cfg["intents"]
+    require(sqlite_effect_apply(root + "/sink.db",intents[0],"")["ok"]);require(sqlite_effect_apply(root + "/sink.db",intents[1],"")["ok"])
+    stamp := format_date(now(),"YYYY-MM-DDTHH:mm:ssZ")
+    result := {"schema":"kujo.execution-result/v1","result_id":context["run_id"] + ":parent","subject":{"run_id":context["run_id"],"step_id":"action","attempt_id":"1"},"producer":{"name":"local-set-host","version":"1"},"status":"indeterminate","classification":"unknown","started_at":stamp,"finished_at":stamp,"attempt":1,"effects":[{"effect_id":"A","class":"external_non_idempotent","state":"unknown"},{"effect_id":"B","class":"external_non_idempotent","state":"unknown"},{"effect_id":"C","class":"external_idempotent","state":"not_started"},{"effect_id":"D","class":"external_idempotent","state":"not_started"}],"evidence":[]}
+    result["preservation_outcome"] := {"schema":"kujo.preservation-outcome/v1","result_id":"retained","subject":result["subject"],"requested_mode":"filesystem","actual_mode":"filesystem","status":"satisfied","provider":{"name":"local"},"reconstructability":"same_filesystem","evidence":[],"created_at":stamp,"retain_until":"2099-01-01T00:00:00Z","cleanup":{"owner":"host","handle":"local"}}
+    return {"ok":true,"data":result}
+}
+if mode == "init" {
+    cfg := config();sqlite_effect_init(root + "/sink.db");ensure_dir(root + "/artifacts")
+    db := db_connect("sqlite",root + "/sink.db")
+    db_execute(db,"CREATE TABLE mutation_audit(request TEXT)",[])
+    db_execute(db,"CREATE TRIGGER audit_attempt BEFORE INSERT ON logical_effects BEGIN INSERT INTO mutation_audit(request) VALUES(NEW.request); END",[])
+    db_close(db)
+    descriptor := {"schema":"dispatch.assurance-configuration/v1beta1","mode":"required","fallback":"deny","profile":"dispatch.sqlite-unique","profile_version":"1beta1","issuer":"sqlite-local","mechanism":"sqlite_unique_transaction","verifier_id":"local-set-host","verifier_version":"1","verifier_sha256":implementation_digest(inventory()),"authority_sha256":sha256(root)}
+    cfg["descriptor"] := descriptor;write_file(root + "/host.json",to_json(cfg),true)
+    created := create_negotiated_run(workflow(),{},root + "/runs",{},descriptor,installed);require(created["ok"])
+    registry := register_tool(create_tool_registry(),create_tool("action","Effect set",{"type":"dict"},{"type":"dict"},action,null))
+    executed := run_workflow(workflow(),created["run_state"],registry,options);require(executed["ok"])
+    state := executed["run_state"];require(state["status"] == "paused")
+    write_file(root + "/pointer.json",to_json({"run_id":state["run_id"],"run_dir":state["run_dir"]}),true)
+    result := state["steps"][0]["execution_result"];raw := portable_json(result)
+    now := parse_int(to_string(floor(now_utc_seconds())));entries := [];ids := ["A","B","C","D"]
+    for i in range(0,4) {
+        intent := cfg["intents"][i]
+        entries = push(entries,{"effect_id":ids[i],"operation":"create","target_ref":"sha256:" + intent["target_sha256"],"scope_ref":"sha256:" + intent["scope_sha256"],"key_ref":"sha256:" + intent["key_sha256"],"request_ref":"sha256:" + intent["request_sha256"],"profile":"dispatch.sqlite-unique","profile_revision":"1beta1","authority":"sqlite-local"})
+    }
+    registration := {"adapter":"local-sqlite","revision":"1","participant":"host"}
+    plan := {"schema":"dispatch.effect-plan/v1alpha1","subject":result["subject"],"config_ref":"sha256:" + configuration_revision(descriptor),"registration_ref":"sha256:" + sha256(portable_json(registration)),"preserve_until":now + 3000,"effects":entries}
+    refs := []
+    for i in range(0,4) {
+        live := sqlite_effect_observe(root + "/sink.db",cfg["intents"][i]);require(live["ok"])
+        refs = push(refs,put({"schema":"dispatch.effect-observation/v1alpha1","plan_ref":"sha256:" + sha256(portable_json(plan)),"result_ref":"sha256:" + sha256(raw),"effect_id":ids[i],"state":live["observation"]["observed_state"],"observed_at":now-1,"valid_until":now + dict_get_or(cfg,"evidence_seconds",1800),"evidence_ref":live["observation"]["evidence_ref"]}))
+    }
+    sidecar := {"schema":"dispatch.effect-set/v1alpha1","result_ref":"sha256:" + sha256(raw),"plan_ref":"sha256:" + sha256(portable_json(plan)),"observations":refs}
+    cfg["effect_set"] := {"plan":plan,"result_raw":raw,"set_raw":portable_json(sidecar),"registration":registration,"intents":cfg["intents"],"sink_path":root + "/sink.db","environment_ref":"sha256:" + sha256(root),"environment_valid":true}
+    write_file(root + "/host.json",to_json(cfg),true);print(to_json({"ok":true}))
+} else {
+    pointer := parse_json(read_file(root + "/pointer.json"));run_id := pointer["run_id"]
+    loaded := load_run_state(root + "/runs",run_id)
+    if mode == "race" {print("READY");while file_exists(root + "/race-release") == false {sleep(10)}}
+    if mode == "load" {print(to_json(loaded))}
+    else if mode == "inspect" {print(to_json(inspect_effect(root + "/runs",run_id,options)))}
+    else if mode == "generic" {print(to_json(run_workflow(workflow(),loaded["run_state"],create_tool_registry(),options)))}
+    else if mode == "audit" {db := db_connect("sqlite",root + "/sink.db");print(to_json(db_query(db,"SELECT request FROM mutation_audit ORDER BY request",[])));db_close(db)}
+    else if mode == "count" {db := db_connect("sqlite",root + "/sink.db");print(to_json(db_query(db,"SELECT request FROM logical_effects ORDER BY request",[])));db_close(db)}
+    else if mode == "select"||mode == "before_selection"||mode == "after_selection" {effect_id := "C";if len(args) > 2 {effect_id = args[2]};print(to_json(select_effect(root + "/runs",run_id,effect_id,options)))}
+    else {attempt := loaded["run_state"]["effect_continuation"]["selection"]["attempt_id"];print(to_json(admit_effect(root + "/runs",run_id,attempt,options)))}
+}

@@ -1,0 +1,1 @@
+PASS persisted negotiation: closed policy, guarded codec, exact configuration commitments

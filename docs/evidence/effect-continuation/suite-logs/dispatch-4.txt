@@ -1,0 +1,15 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ templates command supports text and json output (2032ms)
+  ✓ state repair can recover inconsistent running metadata (847ms)
+  ✓ doctor and cleanup persist mutation audit artifacts (3704ms)
+  ✓ optional tool step is skipped instead of failing the run when denied by policy (21169ms)
+  ✓ resume applies requested trace limits to persisted traces (12394ms)
+
+Tests: 5 total, 5 passed, 0 failed
+Time:  40327ms
+============================================================
+
+All tests passed! ✨

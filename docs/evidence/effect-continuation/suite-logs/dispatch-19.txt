@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ step schema validation enforces input and output contracts (3263ms)
+  ✓ rejected approval ends workflow with failure (12257ms)
+  ✓ dispatch run tags persist and runs supports tags filter (2052ms)
+  ✓ dispatch CLI supports structured input, workflow-file, and plugin flags (34649ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  52348ms
+============================================================
+
+All tests passed! ✨

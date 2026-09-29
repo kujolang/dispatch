@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ approval decision handling supports approve reject and pause (238ms)
+  ✓ run listing filters and catalog support automation workflows (2827ms)
+  ✓ workflow config file supports parsing and cli override precedence (22121ms)
+  ✓ dispatch blocks unsafe webhook sink paths and supports cancel-after-step (4693ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  30009ms
+============================================================
+
+All tests passed! ✨

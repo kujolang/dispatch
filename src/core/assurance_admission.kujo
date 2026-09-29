@@ -63,6 +63,7 @@ export func select_run_assurance(output_root, run_id, expected, raw) {
 
 export func resume_negotiated_review(workflow, state, tools, options, decision) {
     admission := func(current) {
+        if has_key(current,"effect_continuation") {return denied("effect_parent_replay_prohibited")}
         if assurance_protected(current) == false {return denied("assurance_policy_required")}
         checkpoint := dict_get_or(options, "checkpoint_id", "")
         if checkpoint != "" {checked := validate_review_checkpoint(current, checkpoint); if checked["ok"] == false {return checked}}

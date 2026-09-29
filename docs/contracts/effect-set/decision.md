@@ -49,3 +49,10 @@ Go codec; it is not counted as another independent implementation. Go's standard
 library suffices. Rust is evaluated but a fourth codec adds less evidence than
 freshness/crash tests in this slice; Kujo, TypeScript and Python remain independent
 comparators. No new public SDK, registry or transport authentication is introduced.
+
+## Addendum: one selected SQLite effect
+
+The [one-effect admission proof](one-effect-admission.md) adds a separate Dispatch
+operator API. The assessor remains read-only. The API uses existing protected
+configuration/state, advisory run locks, immutable records and exclusive one-use
+claims; it neither resets the parent step nor implements remainder scheduling.

@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ tool payload adapters support custom mapping (227ms)
+  ✓ agent registry dispatch executes mapped and custom handlers (361ms)
+  ✓ doctor incremental mode supports recent count and explicit run IDs (6480ms)
+  ✓ report title reflects the workflow name (245ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  7443ms
+============================================================
+
+All tests passed! ✨

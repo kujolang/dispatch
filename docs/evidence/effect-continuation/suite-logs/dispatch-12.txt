@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ retry delay supports deterministic jitter (224ms)
+  ✓ report payload and markdown include lifecycle metadata (20573ms)
+  ✓ dispatch runs json exposes filtered and page catalogs (14704ms)
+  ✓ idempotency key reuses cached output instead of re-executing (1125ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  36763ms
+============================================================
+
+All tests passed! ✨

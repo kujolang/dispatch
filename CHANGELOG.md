@@ -11,6 +11,8 @@ Dispatch's version.
 
 ### Added
 
+- Experimental host-owned selection and one-use admission for exactly one not-started SQLite effect after a verified complete prefix. Parent replay and automatic remainder execution remain prohibited; see `docs/contracts/effect-set/one-effect-admission.md`.
+
 - Durable evaluation/failure policy boundaries, hash-linked control journal,
   revision-bound intervention decisions and immutable review checkpoints.
 - Conservative effect-aware retry and provider-backed clean re-execution with

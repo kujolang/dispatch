@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ tool registry registers and executes tools (242ms)
+  ✓ trace markdown includes event counts and timeline (274ms)
+  ✓ src import smoke fixture runs successfully (835ms)
+  ✓ workflow template registry exposes the approval handoff template (651ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  2132ms
+============================================================
+
+All tests passed! ✨
