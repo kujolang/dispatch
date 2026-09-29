@@ -1,0 +1,31 @@
+from src.core.preservation_binding import bind_preservation
+from src.core.portable_commitments import portable_json
+mut passed := 0
+mut failed := 0
+func expect(name, condition) {if condition {passed += 1;print("PASS " + name)} else {failed += 1;print("FAIL " + name)}}
+subject := {"run_id":"run", "step_id":"parent", "attempt_id":"1"}
+environment := "sha256:" + sha256("host")
+inline := {"schema":"kujo.preservation-outcome/v1", "subject":subject, "evidence":[]}
+expect("historical inline recipe unchanged", bind_preservation(inline, subject, environment, null)["reference"] == "sha256:" + sha256(portable_json(inline)))
+preservation := inline;preservation["evidence"] := [{"$ref":"receipt.json"}]
+raw := "  " + to_json(preservation) + "\n"
+metadata := {"schema":"kujo.evidence-ref/v1", "subject":subject, "integrity":{"status":"sha256", "sha256":sha256("evidence")}}
+func source(document, meta, content, env) {return {"document_raw":document, "environment_ref":env, "resolve":func(selector) {if selector != "receipt.json" {throw("unauthorized")};return {"metadata_raw":to_json(meta), "content_raw":content, "environment_ref":env}}}}
+valid := source(raw, metadata, "evidence", environment)
+bound := bind_preservation(preservation, subject, environment, valid)
+expect("reference binds original bytes", bound["preimage"]["document_ref"] == "sha256:" + sha256(raw)&&bound["artifacts"][0] == raw)
+expect("document and evidence have distinct identities", bound["preimage"]["references"][0]["content_ref"] == "sha256:" + sha256("evidence"))
+func rejects(p, sub, env, src) {try {bind_preservation(p, sub, env, src);return false} except err {return true}}
+expect("wrong content digest rejected", rejects(preservation, subject, environment, source(raw, metadata, "changed", environment)))
+expect("wrong environment rejected", rejects(preservation, subject, "sha256:" + sha256("other"), valid))
+wrong := subject;wrong["run_id"] := "other"
+expect("wrong run rejected", rejects(preservation, wrong, environment, valid))
+wrong_metadata := metadata;wrong_metadata["subject"] := wrong
+expect("wrong evidence subject rejected", rejects(preservation, subject, environment, source(raw, wrong_metadata, "evidence", environment)))
+for entry in [{"$ref":null}, {"$ref":""}, {"$ref":"receipt.json", "extra":true}, {"$ref":"https://untrusted.invalid/evidence"}, {"$ref":"../outside"}, {"$ref":"missing.json"}] {
+    changed := preservation;changed["evidence"] := [entry]
+    expect("malformed or unauthorized reference rejected " + to_json(entry), rejects(changed, subject, environment, source(to_json(changed), metadata, "evidence", environment)))
+}
+expect("wrong original document rejected", rejects(preservation, subject, environment, source(to_json(inline), metadata, "evidence", environment)))
+expect("old codec still rejects refs", rejects(preservation, subject, environment, null))
+print("Passed: " + to_string(passed));print("Failed: " + to_string(failed));if failed > 0 {exit(1)}
