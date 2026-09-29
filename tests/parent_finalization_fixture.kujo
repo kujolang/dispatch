@@ -142,6 +142,8 @@ if mode == "init" {
         race_loaded := load_run_state(root + "/runs", run_id);require(race_loaded["ok"])
         race_state := race_loaded["run_state"]
         require(race_state["revision"] == request["candidate"]["revision"]&&race_state["control_journal"]["last_sha256"] == request["candidate"]["journal"])
+        independent := assess_parent_finalization(root + "/runs", run_id, request["decision"], options)
+        require(independent["ok"]&&to_json(independent["candidate"]) == to_json(request["candidate"]))
         print("READY");while file_exists(root + "/race-release") == false {sleep(10)}
     }
     if request["operation"] == "generic-review" {state := load_run_state(root + "/runs", run_id)["run_state"];print(to_json(prepare_verified_intervention(state, request["decision"], func(current) {return {"ok":true}})))}
