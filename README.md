@@ -753,3 +753,11 @@ sources under the run lock, and performs only proven mechanical repairs. It neve
 resumes execution. See the [operator contract](docs/contracts/recovery/retained-host.md)
 for supported publication gaps, immutable evidence, consumed-attempt protection,
 unsupported recovery cases and the machine-readable output contract.
+
+### Experimental parent finalization
+
+Installed local controllers can separately assess and finalize the last unresolved
+protected parent after verifying effects, outputs, evaluation and operator review.
+See [the bounded contract](docs/contracts/parent-finalization/protocol.md) and
+[Wave F crosswalk](docs/contracts/parent-finalization/wave-f-crosswalk.md).
+Finalization does not schedule work, replay effects or change participant authority.

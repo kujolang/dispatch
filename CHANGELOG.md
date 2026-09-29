@@ -4,7 +4,17 @@ Version source: `kennel.toml`; CLI and `kujo.toml` must agree. Historical releas
 entries are retained below. Experimental contract versions are independent of
 Dispatch's version.
 
-## Unreleased — bounded sequential continuation
+## Unreleased — bounded parent finalization
+
+- Bind existing Workcell preservation `$ref` evidence through an additive exact-byte
+  document/evidence commitment and an installed bounded resolver.
+- Add explicit installed-host assessment and locked terminal finalization for the
+  last unresolved protected parent. Effects, outputs, evaluation, review and
+  preservation remain separate prerequisites; finalization schedules no work.
+- Reconstruct only an exact durable terminal decision through retained-host repair.
+  Add real-process crash/contention proof and a concrete Wave F crosswalk.
+
+## Earlier unreleased — bounded sequential continuation
 
 - Add a separately feature-gated append-only lifecycle: explicit evidence rebind
   or cancellation for unconsumed selections, permanent admission consumption,
