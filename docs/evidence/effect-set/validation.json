@@ -1,0 +1,130 @@
+{
+  "schema": "dispatch.effect-set-proof-validation/v1",
+  "date": "2026-09-29",
+  "status": "pass",
+  "repositories": {
+    "kujo": "07ceef6a2f0d601f22b83b68c929a425a4a2c289",
+    "dispatch": "78eba76aa588ed0e75f418cff6aba22b153d920b",
+    "workcell": "1940da0639b70b702c1b1077dda51ca39b065216",
+    "agents-sdk": "af0aa28f5960232cbafa7cf528a32db8cb36c7a9",
+    "eval": "6a5ab09e5c24cc1a842b374afccb64da40db2874",
+    "watchdog": "e18e437afb221a597d48295b432b0ff356931158",
+    "runledger": "97cb607a062efeecc7fcdc4e4a4e0308f90d45fe",
+    "scent": "969f0fdc853c88cd051248a6ebcd9ce0434d9f43",
+    "rag": "85743f88c152d7c65f59d4697111faf85e36d8eb",
+    "mcp": "a7ec0dd8e6bcae303ab1431b4586dfe3e91f3a5a",
+    "leash": "56c59c90b81433482683e72a411748ca82a61b24",
+    "ability": "d6c970785f8d8bea04de0dce37920c2d0ca1c067"
+  },
+  "agents_sdk_fetched_main": "978354a9f0f7dfe34fce87f0bd83367cc80cb837",
+  "implementation_commit": "78eba76aa588ed0e75f418cff6aba22b153d920b",
+  "runtime": {
+    "path": "../kujo/target/release/kujo",
+    "version": "kujo 1.6.0",
+    "source_commit": "59b9c532f002d2d22d9901f0fc7ceb2b19abd575",
+    "sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47"
+  },
+  "toolchains": {
+    "go": "go version go1.25.3 darwin/amd64",
+    "node": "v26.7.0",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "commands": [
+    {
+      "cwd": "kujo",
+      "command": "cargo build --release --locked",
+      "status": "pass",
+      "log": "kujo-build.log"
+    },
+    {
+      "cwd": "kujo",
+      "command": "cargo fmt --check",
+      "status": "pass"
+    },
+    {
+      "cwd": "kujo",
+      "command": "cargo test --test readme_contracts --test docs_examples",
+      "status": "pass",
+      "log": "kujo-docs.log"
+    },
+    {
+      "cwd": "dispatch",
+      "command": "KUJO_BIN=../kujo/target/release/kujo node tests/effect_set_integration.mjs",
+      "status": "pass",
+      "log": "crash-proof.json"
+    },
+    {
+      "cwd": "dispatch",
+      "command": "node tests/go_participant_conformance.mjs",
+      "status": "pass",
+      "log": "go-conformance.json"
+    },
+    {
+      "cwd": "dispatch",
+      "command": "../kujo/target/release/kujo run tests/portable_commitments.kujo tests/vectors/effect-set.json",
+      "status": "pass",
+      "log": "kujo-vectors.json"
+    },
+    {
+      "cwd": "dispatch/interop/go-participant",
+      "command": "gofmt -l main.go; go vet ./...",
+      "status": "pass"
+    },
+    {
+      "cwd": "dispatch",
+      "command": "KUJO_BIN=$PWD/../kujo/target/release/kujo DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+      "status": "pass",
+      "log": "dispatch-release-gate.log",
+      "source_note": "Historical suites unchanged from baseline; new-suite final focused reruns are at implementation_commit. Full gate began on the initial working patch before final new-suite refinements."
+    },
+    {
+      "cwd": "kujo, dispatch",
+      "command": "git diff --check",
+      "status": "pass"
+    }
+  ],
+  "initial_failures": [
+    {
+      "command": "KUJO_BIN=$PWD/target/release/kujo node ../dispatch/tests/effect_set_integration.mjs",
+      "cwd": "kujo",
+      "status": "fail",
+      "reason": "Incorrect cwd; Dispatch-relative fixture absent. Corrected cwd without weakening assertions."
+    },
+    {
+      "command": "node ../dispatch/tests/go_participant_conformance.mjs",
+      "cwd": "kujo",
+      "status": "fail",
+      "reason": "Incorrect cwd; Dispatch-relative Go build directory absent. Corrected cwd."
+    }
+  ],
+  "limitations": [
+    "Read-only local experiment; production partial-effect admission remains unimplemented.",
+    "Full gate started before final refinements of only the newly added suites; affected suites rerun against committed final source.",
+    "No full runtime release sweep for docs-only Kujo changes. Existing tiny_http vendor warnings remain visible.",
+    "No separate full release gates for unchanged Workcell/Agents SDK/related repositories; relevant adapter coverage is in Dispatch gate.",
+    "No live remote providers, authentication, machine-loss or power-loss proof.",
+    "Agents SDK pre-existing untracked maintenance work preserved."
+  ],
+  "artifacts": {
+    "crash-proof.json": {
+      "sha256": "9bda539a0c3151d1fb0a65bcae64659e4977946e366a424bce3ceecfe49749c2"
+    },
+    "dispatch-release-gate.log": {
+      "sha256": "1eadf596ff2e571a6d87a1cc923325659c282c1571dc3d1ed7a4f15ebd424f7d"
+    },
+    "go-conformance.json": {
+      "sha256": "16871e6b780faaa660db8554109c57e1fc8596ecdd0e3ee8401c3d14768caf7f"
+    },
+    "kujo-build.log": {
+      "sha256": "92fcd4ac7fa54ca2db5a73a471e5e3ae96fcc6164d80bca00da344ec345952a2"
+    },
+    "kujo-docs.log": {
+      "sha256": "2a7fd54c31f7646b342d8143f1a4be865927b6b56421e118d4b84bf9b59c56a0"
+    },
+    "kujo-vectors.json": {
+      "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203"
+    }
+  },
+  "gate_suites": 78,
+  "canonical_skips": "No Dispatch gate suites skipped. Unchanged-repository full gates and full Kujo runtime sweep are outside this docs/runtime-unchanged scope; see limitations."
+}

@@ -1,0 +1,1 @@
+{"ok":true,"checks":115,"mcpChecks":5,"malformedChecks":9,"wireSHA256":"f87fd01de248eca96c685282b3ead0a95578f77f6c597f598fc9d587f0bec262","independence":"Go standard library; CLI and MCP share one codec"}
