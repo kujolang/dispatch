@@ -123,6 +123,14 @@ func analyze(state) {
     reconstructed := state
     for i in range(at, sequence) {reconstructed = advance(reconstructed, events[i])}
     view := recovery_lifecycle_view(reconstructed)
+    if view["anchor"] != null {
+        anchor := view["anchor"];matched := false
+        parent := parse_json(read_file_beneath(root, "effect-lifecycle/" + substring(anchor["result_ref"], 7, 71) + ".parent", 1048576))
+        for step in state["steps"] {
+            if step["id"] == anchor["subject"]["step_id"] {demand(same(step["execution_result"], parent), "parent_checkpoint_mismatch");matched = true}
+        }
+        demand(matched&&anchor["subject"]["run_id"] == state["run_id"], "parent_checkpoint_mismatch")
+    }
     claims := [];unresolved := [];orphans := [];evidence_conditions := []
     for file in files {
         path := file["path"]

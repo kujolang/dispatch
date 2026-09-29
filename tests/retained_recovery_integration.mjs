@@ -1,5 +1,5 @@
 import fs from 'node:fs';import {join,resolve} from 'node:path';import {tmpdir} from 'node:os';import {spawn,spawnSync} from 'node:child_process';import {createHash} from 'node:crypto';import assert from 'node:assert/strict';
-let cwd=process.cwd();
+let cwd=process.cwd(),recoveryFixtureCwd;
 const kujo=process.env.KUJO_BIN||'kujo',root=fs.mkdtempSync(join(tmpdir(),'sequential-effects-'));
 const hash=x=>createHash('sha256').update(x).digest('hex'), read=p=>JSON.parse(fs.readFileSync(p,'utf8')),write=(p,v)=>fs.writeFileSync(p,JSON.stringify(v));
 const env={...process.env,KUJO_MODULE_PATH:resolve('..'),DISPATCH_OFFLINE_FIXTURE:'true',DISPATCH_ALLOW_ANY_OUTPUT_ROOT:'true'};
@@ -46,7 +46,7 @@ for(const name of ['orphan-control','exact-duplicate','cancel-tail','rebind-tail
   if(name==='stale-plan'){const plan=recovery(d);damage(d,dir=>fs.writeFileSync(join(dir,'effect-lifecycle','unexpected.claim'),'bad'));assert.equal(recovery(d,'apply',plan.plan).ok,false)}
   else{if(name==='revoked'){const cfg=read(join(d,'host.json'));cfg.status='revoked';write(join(d,'host.json'),cfg)}
    if(name==='expired'||name==='missing-workspace'){const st=JSON.parse(before.split('\n').slice(1).join('\n'));if(name==='expired')st.steps[0].execution_result.preservation_outcome.retain_until='2000-01-01T00:00:00Z';else {const cfg=read(join(d,'host.json'));cfg.effect_set.environment_valid=false;write(join(d,'host.json'),cfg)}fs.writeFileSync(statePath(d),'DISPATCH_ASSURANCE_STATE_V1BETA1\n'+JSON.stringify(st))}
-   repair(d);if(['revoked','expired','missing-workspace'].includes(name))assert.equal(active(d,'admit').ok,false);
+   if(name==='expired'){assert.equal(recovery(d).ok,false)}else repair(d);if(['revoked','missing-workspace'].includes(name))assert.equal(active(d,'admit').ok,false);
   }
  } else{
   if(name==='missing-claim')assert.equal(active(d,'admit').ok,true);
@@ -86,7 +86,8 @@ for(const point of ['after_admission','after_mutation','after_observation']){
  for(const dir of ['schemas','examples'])fs.symlinkSync(resolve(dir),join(copy,dir));fs.symlinkSync(resolve('../workcell'),join(root,'controllers','workcell'));fs.mkdirSync(join(copy,'tests'));fs.copyFileSync(resolve('tests/sequential_effect_fixture.kujo'),join(copy,'tests/sequential_effect_fixture.kujo'));
  const journal=join(copy,'src/core/control_journal.kujo');let code=fs.readFileSync(journal,'utf8');const point='    append_file(path, line)';assert.ok(code.includes(point));code=code.replace(point,'    if env("RECOVERY_CRASH") == kind {print("CRASH:immutable_control");sleep(30000)}\n'+point);fs.writeFileSync(journal,code);
  const lifecycle=join(copy,'src/core/sequential_effects.kujo');let lifecycleCode=fs.readFileSync(lifecycle,'utf8');const admitPoint='        state = append(state, "admitted",';assert.ok(lifecycleCode.includes(admitPoint));lifecycleCode=lifecycleCode.replace(admitPoint,'        if env("RECOVERY_CRASH") == "claim_written" {print("CRASH:immutable_control");sleep(30000)}\n'+admitPoint);fs.writeFileSync(lifecycle,lifecycleCode);
- cwd=copy;
+ const producerPath=join(copy,'tests/sequential_effect_fixture.kujo');let producer=fs.readFileSync(producerPath,'utf8');const returnPoint='    return {"ok":true, "data":result}';assert.ok(producer.includes(returnPoint));producer=producer.replace(returnPoint,'    if has_key(cfg, "recovery_preservation") {result["preservation_outcome"] := cfg["recovery_preservation"];result["reexecution_descriptor"] := cfg["recovery_descriptor"]}\n'+returnPoint);fs.writeFileSync(producerPath,producer);
+ recoveryFixtureCwd=copy;cwd=copy;
  for(const phase of ['effect_lifecycle_recorded','retained_host_reconciled','claim_written']){
   const d=setup('sqlite','native-crash-'+phase);assert.equal(refresh(d).ok,true);assert.equal(select(d).ok,true);let argv;
   if(phase==='claim_written'){const view=inspect(d);argv=['run','tests/sequential_effect_fixture.kujo',d,'operate',requestFile(d,{operation:'admit',expected:view.cursor,attempt_id:view.lifecycle.active})]}
@@ -104,15 +105,17 @@ for(const point of ['after_admission','after_mutation','after_observation']){
 
 
 {
- const d=setup('sqlite','workcell-retention');assert.equal(refresh(d).ok,true);assert.equal(select(d).ok,true);
- const source=join(d,'source');fs.mkdirSync(source);command('git',['init','-q',source]);fs.writeFileSync(join(source,'file'),'retained source');command('git',['-C',source,'add','file']);command('git',['-C',source,'-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-qm','fixture']);
- const ownerCall=mode=>{const p=spawnSync(kujo,['run',resolve('tests/recovery_workcell_fixture.kujo'),d,mode],{cwd:resolve('../workcell'),env:{...env,KUJO_MODULE_PATH:resolve('..')+':'+resolve('../workcell')},encoding:'utf8',timeout:60000});assert.equal(p.status,0,p.stdout+p.stderr);assert.equal(p.stderr,'');return JSON.parse(p.stdout)};const owned=ownerCall('create');
- const st=JSON.parse(fs.readFileSync(statePath(d),'utf8').split('\n').slice(1).join('\n'));st.steps[0].execution_result.preservation_outcome=owned.preservation;st.steps[0].execution_result.reexecution_descriptor=owned.descriptor;fs.writeFileSync(statePath(d),'DISPATCH_ASSURANCE_STATE_V1BETA1\n'+JSON.stringify(st));
- damage(d,dir=>{const p=join(dir,'control-events.jsonl');fs.writeFileSync(p,fs.readFileSync(p,'utf8').trim().split('\n').slice(0,-1).join('\n'))});
- const fixed=repair(d);assert.equal(fixed.assessment.environment[0].workspace_available,true);assert.equal(active(d,'admit').ok,false);proofs.push('real-workcell-retention-not-admission');
+ const ownerRoot=join(root,'workcell-owner');fs.mkdirSync(ownerRoot);const source=join(ownerRoot,'source');fs.mkdirSync(source);command('git',['init','-q',source]);fs.writeFileSync(join(source,'file'),'retained source');command('git',['-C',source,'add','file']);command('git',['-C',source,'-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-qm','fixture']);
+ const ownerCall=mode=>{const p=spawnSync(kujo,['run',resolve('tests/recovery_workcell_fixture.kujo'),ownerRoot,mode],{cwd:resolve('../workcell'),env:{...env,KUJO_MODULE_PATH:resolve('..')+':'+resolve('../workcell')},encoding:'utf8',timeout:60000});assert.equal(p.status,0,p.stdout+p.stderr);assert.equal(p.stderr,'');return JSON.parse(p.stdout)};
+ const owned=ownerCall('create'),original=cwd;owned.preservation.retain_until=new Date(Date.now()+20000).toISOString().replace(/\.\d{3}Z$/,'Z');
+ cwd=recoveryFixtureCwd;
+ const d=setup('sqlite','workcell-retention',{recovery_preservation:owned.preservation,recovery_descriptor:owned.descriptor});assert.equal(refresh(d).ok,true);assert.equal(select(d).ok,true);
+ const loseIndex=()=>damage(d,dir=>{const p=join(dir,'control-events.jsonl');fs.writeFileSync(p,fs.readFileSync(p,'utf8').trim().split('\n').slice(0,-1).join('\n'))});loseIndex();
+ const fixed=repair(d);assert.equal(fixed.assessment.environment[0].workspace_available,true);assert.equal(truth(d),2);proofs.push('real-workcell-retention-not-admission');
+ await new Promise(r=>setTimeout(r,Math.max(0,Date.parse(owned.preservation.retain_until)-Date.now()+100)));
+ loseIndex();const expired=repair(d);assert.equal(expired.assessment.environment[0].expired,true);assert.equal(active(d,'admit').ok,false);assert.equal(truth(d),2);proofs.push('real-workcell-preservation-expired-during-outage');
  ownerCall('cleanup');assert.equal(recovery(d).assessment.environment[0].workspace_available,false);proofs.push('real-workcell-workspace-missing');
- const changed=JSON.parse(fs.readFileSync(statePath(d),'utf8').split('\n').slice(1).join('\n'));changed.steps[0].execution_result.preservation_outcome.retain_until='2000-01-01T00:00:00Z';changed.steps[0].execution_result.reexecution_descriptor.source.commit=hash('invalid-materialization');fs.writeFileSync(statePath(d),'DISPATCH_ASSURANCE_STATE_V1BETA1\n'+JSON.stringify(changed));
- const report=recovery(d);assert.equal(report.assessment.environment[0].expired,true);assert.equal(report.assessment.environment[0].verification,'owner_adapter_required');assert.equal(active(d,'admit').ok,false);proofs.push('workcell-expiry-and-unverified-materialization');
+ const current=JSON.parse(fs.readFileSync(statePath(d),'utf8').split('\n').slice(1).join('\n'));current.steps[0].execution_result.reexecution_descriptor.source.commit=hash('invalid-materialization');fs.writeFileSync(statePath(d),'DISPATCH_ASSURANCE_STATE_V1BETA1\n'+JSON.stringify(current));assert.equal(recovery(d).ok,false);proofs.push('corrupt-materialization-reference-rejected');cwd=original;
 }
 {
  const d=setup('git','changed-target');assert.equal(refresh(d).ok,true);assert.equal(select(d).ok,true);const prior=fs.readFileSync(statePath(d),'utf8');assert.equal(active(d,'admit').ok,true);const cfg=read(join(d,'host.json'));const oid=git(d,['hash-object','-w','--stdin'],'unrelated');git(d,['update-ref','refs/kujo-targets/'+cfg.intents[2].target_sha256,oid]);fs.writeFileSync(statePath(d),prior);repair(d);assert.equal(active(d,'verify').ok,false);assert.equal(active(d,'admit').ok,false);proofs.push('workcell-git-changed-target');
