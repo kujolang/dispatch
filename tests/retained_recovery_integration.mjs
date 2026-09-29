@@ -18,6 +18,7 @@ function setup(family,name,extra={}){const d=join(root,family+'-'+name);fs.mkdir
 
 function recovery(d,action='plan',plan){const ptr=read(join(d,'pointer.json'));let args=['run','dispatch.kujo','recover',action,ptr.run_id];if(plan){const p=join(d,'repair.json');write(p,plan);args.push(p,'--operator','test-operator')}args.push('--output-root',join(d,'runs'),'--json');const p=spawnSync(kujo,args,{encoding:'utf8',env,cwd,timeout:60000});assert.equal(p.stderr,'',p.stderr);return JSON.parse(p.stdout.trim())}
 function statePath(d){return join(read(join(d,'pointer.json')).run_dir,'state.json')}
+function truth(d){const cfg=read(join(d,'host.json'));if(cfg.family==='git')return git(d,['for-each-ref','--format=%(refname)','refs/kujo-effects/']).split('\n').filter(Boolean).length;return Number(command('sqlite3',[join(d,'sink.db'),'SELECT count(*) FROM mutation_audit;']))}
 const proofs=[];
 for(const family of ['sqlite','git']){
  const d=setup(family,'recovery');assert.equal(refresh(d).ok,true);assert.equal(select(d).ok,true);
@@ -27,14 +28,14 @@ for(const family of ['sqlite','git']){
  assert.equal(planned.assessment.lifecycle.attempts[admitted.lifecycle.active].consumed,true);
  const applied=recovery(d,'apply',planned.plan);assert.equal(applied.ok,true,JSON.stringify(applied));
  const reloaded=inspect(d);assert.equal(reloaded.ok,true,JSON.stringify(reloaded));assert.equal(reloaded.lifecycle.attempts[admitted.lifecycle.active].consumed,true);
- assert.equal(active(d,'admit').ok,false);assert.equal(recovery(d,'apply',planned.plan).ok,false);
+ assert.equal(active(d,'admit').ok,false);assert.equal(recovery(d,'apply',planned.plan).ok,false);assert.equal(truth(d),3);
  proofs.push(family+'-stale-state-consumption');
 }
 
 async function killAt(d,request,point){snapshots.delete(d);const p=spawn(kujo,['run','tests/sequential_effect_fixture.kujo',d,point,requestFile(d,request)],{env,cwd,stdio:['ignore','pipe','pipe']});let out='',err='';const timer=setTimeout(()=>p.kill('SIGKILL'),60000);p.stdout.on('data',b=>{out+=b;if(out.includes('CRASH:'+point))p.kill('SIGKILL')});p.stderr.on('data',b=>err+=b);const status=await new Promise(r=>p.on('exit',(code,signal)=>r({code,signal})));clearTimeout(timer);assert.ok(out.includes('CRASH:'+point),out+err);assert.equal(status.signal,'SIGKILL');assert.equal(err,'')}
 
 function damage(d,fn){const p=read(join(d,'pointer.json'));fn(p.run_dir)}
-function repair(d){const plan=recovery(d);assert.equal(plan.ok,true,JSON.stringify(plan));assert.ok(plan.plan.repairs.length);const result=recovery(d,'apply',plan.plan);assert.equal(result.ok,true,JSON.stringify(result));assert.equal(inspect(d).ok,true);return plan}
+function repair(d){const beforeTruth=truth(d);const plan=recovery(d);assert.equal(plan.ok,true,JSON.stringify(plan));assert.ok(plan.plan.repairs.length);const result=recovery(d,'apply',plan.plan);assert.equal(result.ok,true,JSON.stringify(result));assert.equal(inspect(d).ok,true);assert.equal(truth(d),beforeTruth);return plan}
 for(const name of ['orphan-control','exact-duplicate','cancel-tail','rebind-tail','torn','conflict','hash','ahead','missing-claim','lifecycle-orphan','stale-plan','revoked','expired','missing-workspace']){
  const d=setup('sqlite',name);assert.equal(refresh(d).ok,true);assert.equal(select(d).ok,true);
  const before=fs.readFileSync(statePath(d),'utf8');
@@ -66,7 +67,7 @@ for(const point of ['after_admission','after_mutation','after_observation']){
  fs.writeFileSync(statePath(d),before);repair(d);const view=inspect(d);assert.equal(view.lifecycle.attempts[selected.lifecycle.active].consumed,true);assert.equal(active(d,'admit').ok,false);
  if(point==='after_mutation'){assert.equal(active(d,'verify').ok,true);assert.equal(inspect(d).lifecycle.attempts[selected.lifecycle.active].observation.observed_state,'committed')}
  if(point==='after_admission'){assert.equal(active(d,'verify').ok,true);assert.equal(inspect(d).lifecycle.attempts[selected.lifecycle.active].observation.observed_state,'not_started');assert.equal(active(d,'admit').ok,false)}
- proofs.push('sigkill-'+point)
+ assert.equal(truth(d),point==='after_admission'?2:3);proofs.push('sigkill-'+point)
 }
 
 
@@ -76,7 +77,7 @@ for(const point of ['after_admission','after_mutation','after_observation']){
  damage(d,dir=>{const p=join(dir,'control-events.jsonl');fs.writeFileSync(p,fs.readFileSync(p,'utf8').trim().split('\n').slice(0,-1).join('\n'))});
  const plan=recovery(d).plan,p=join(d,'repair.json');write(p,plan);const ptr=read(join(d,'pointer.json'));
  const contender=()=>new Promise((resolve,reject)=>{const child=spawn(kujo,['run','dispatch.kujo','recover','apply',ptr.run_id,p,'--operator','race','--output-root',join(d,'runs'),'--json'],{env,cwd});let out='',err='';child.stdout.on('data',b=>out+=b);child.stderr.on('data',b=>err+=b);child.on('exit',()=>{try{assert.equal(err,'');resolve(JSON.parse(out))}catch(e){reject(e)}})});
- const results=await Promise.all([contender(),contender()]);assert.equal(results.filter(x=>x.ok).length,1);assert.equal(inspect(d).ok,true);proofs.push('fresh-operator-contention');
+ const results=await Promise.all([contender(),contender()]);assert.equal(results.filter(x=>x.ok).length,1);assert.equal(inspect(d).ok,true);assert.equal(truth(d),2);proofs.push('fresh-operator-contention');
 }
 // Fault injection is confined to a disposable source copy. Production has no
 // environment-controlled crash switch. Kill the actual immutable-write path.
@@ -95,7 +96,7 @@ for(const point of ['after_admission','after_mutation','after_observation']){
    damage(d,dir=>{const p=join(dir,'control-events.jsonl');fs.writeFileSync(p,fs.readFileSync(p,'utf8').trim().split('\n').slice(0,-1).join('\n'))});const plan=recovery(d).plan;const p=join(d,'repair.json');write(p,plan);argv=['run','dispatch.kujo','recover','apply',read(join(d,'pointer.json')).run_id,p,'--operator','crash-operator','--output-root',join(d,'runs'),'--json'];
   }
   const child=spawn(kujo,argv,{env:{...env,RECOVERY_CRASH:phase},cwd});let out='',err='';const timer=setTimeout(()=>child.kill('SIGKILL'),60000);child.stdout.on('data',b=>{out+=b;if(out.includes('CRASH:immutable_control'))child.kill('SIGKILL')});child.stderr.on('data',b=>err+=b);await new Promise(r=>child.on('exit',r));clearTimeout(timer);assert.ok(out.includes('CRASH:immutable_control'),out+err);assert.equal(err,'');
-  if(phase==='claim_written'){const report=recovery(d);assert.equal(report.assessment.consumed_claims.length,1);assert.equal(report.assessment.lifecycle.attempts[report.assessment.lifecycle.active].consumed,true);assert.equal(report.assessment.lifecycle.attempts[report.assessment.lifecycle.active].admission_recorded,false);assert.equal(active(d,'admit').ok,false);proofs.push('native-write-sigkill-claim-consumption');continue}
+  if(phase==='claim_written'){const report=recovery(d);assert.equal(report.assessment.consumed_claims.length,1);assert.equal(report.assessment.lifecycle.attempts[report.assessment.lifecycle.active].consumed,true);assert.equal(report.assessment.lifecycle.attempts[report.assessment.lifecycle.active].admission_recorded,false);assert.equal(active(d,'admit').ok,false);assert.equal(truth(d),2);proofs.push('native-write-sigkill-claim-consumption');continue}
   repair(d);const current=inspect(d);assert.equal(current.ok,true);if(phase==='effect_lifecycle_recorded')assert.equal(active(d,'admit').ok,false);proofs.push('native-write-sigkill-'+phase);
  }
  cwd=original;
