@@ -86,7 +86,7 @@ export func evaluate_run_assurance(state, options) {
 }
 # Recheck before execution. A persisted admission record is not cached permission.
 export func check_negotiated_execution(state, options) {
-    if has_key(state,"effect_continuation") {return denial("effect_parent_replay_prohibited")}
+    if (has_key(state,"effect_continuation")||has_key(state,"effect_lifecycle")) {return denial("effect_parent_replay_prohibited")}
     resolved := resolve_run_configuration(state, options)
     if resolved["ok"] == false||dict_get_or(resolved, "legacy", false) {return resolved}
     answer := {"ok": true}

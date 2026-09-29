@@ -87,6 +87,8 @@ run_suite() {
 }
 run_suite effect_set env KUJO_BIN="$KUJO_BIN" node tests/effect_set_integration.mjs
 run_suite effect_continuation env KUJO_BIN="$KUJO_BIN" node tests/effect_continuation_integration.mjs
+run_suite sequential_effects env -u SEQUENTIAL_FAMILY -u SEQUENTIAL_ADMISSION_ONLY KUJO_BIN="$KUJO_BIN" node tests/sequential_effect_integration.mjs
+run_suite effect_lifecycle_vectors "$KUJO_BIN" run tests/portable_commitments.kujo tests/vectors/effect-lifecycle.json
 run_suite effect_selection_vectors "$KUJO_BIN" run tests/portable_commitments.kujo tests/vectors/effect-selection.json
 run_suite effect_set_vectors "$KUJO_BIN" run tests/portable_commitments.kujo tests/vectors/effect-set.json
 run_suite go_participant node tests/go_participant_conformance.mjs

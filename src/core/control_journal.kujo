@@ -58,6 +58,7 @@ func reconcile_control_journal(run_state) {
     selected := null
     replay := null
     continuation := null
+    lifecycle := null
     if file_exists(path) {
         body := ""
         try {body = read_file_beneath(run_state["run_dir"], "control-events.jsonl", 8388608)} except err {
@@ -80,6 +81,7 @@ func reconcile_control_journal(run_state) {
                 if event["kind"] == "assurance_sidecar_selected" {selected = event["details"]["selection"]}
                 if event["kind"] == "assurance_replay_admitted" {replay = event["details"]["replay"]}
                 if contains(["effect_selected","effect_admitted","effect_observed"],event["kind"]) {continuation = event["details"]["continuation"]}
+                if event["kind"] == "effect_lifecycle_recorded" {lifecycle = event["details"]["effect_lifecycle"]}
                 previous = event["event_sha256"]
             }
         } except err {
@@ -92,6 +94,7 @@ func reconcile_control_journal(run_state) {
     }
     if to_json(selected) != to_json(dict_get_or(run_state, "assurance_selection", null))||to_json(replay) != to_json(dict_get_or(run_state, "assurance_replay", null)) {return {"ok": false, "error": {"code": "assurance_journal_state_mismatch", "message": "Assurance selection or replay differs from retained authority.", "retryable": false}}}
     if to_json(continuation) != to_json(dict_get_or(run_state,"effect_continuation",null)) {return {"ok":false,"code":"effect_journal_state_mismatch"}}
+    if to_json(lifecycle) != to_json(dict_get_or(run_state,"effect_lifecycle",null)) {return {"ok":false,"code":"effect_lifecycle_journal_mismatch"}}
     return {"ok": true, "run_state": run_state}
 }
 

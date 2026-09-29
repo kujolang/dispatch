@@ -17,7 +17,7 @@ func put(value) {
     if file_exists(root + "/artifacts/" + sha256(artifact_bytes) + ".json") == false {write_file_atomic_beneath(root,"artifacts/" + sha256(artifact_bytes) + ".json",artifact_bytes,false)}
     return ref
 }
-func inventory() {return [{"root":os_getcwd(),"path":"tests/effect_continuation_fixture.kujo"},{"root":os_getcwd(),"path":"src/core/effect_continuation.kujo"},{"root":os_getcwd(),"path":"src/adapters/sqlite_effect.kujo"}]}
+func inventory() {return [{"root":os_getcwd(),"path":"tests/effect_continuation_fixture.kujo"},{"root":os_getcwd(),"path":"src/core/effect_continuation.kujo"},{"root":os_getcwd(),"path":"src/adapters/sqlite_effect.kujo"},{"root":os_getcwd(),"path":"src/adapters/sqlite_continuation.kujo"},{"root":os_getcwd(),"path":"src/core/effect_context.kujo"}]}
 func installed(revision,state) {
     cfg := config()
     host := dict_get_or(cfg,"effect_set",{})
