@@ -7,7 +7,7 @@ const root=path.resolve('tests/tmp/http-ability-'+Date.now());fs.mkdirSync(path.
 const sha=x=>crypto.createHash('sha256').update(x).digest('hex');
 const canonical=x=>x===null||typeof x!=='object'?JSON.stringify(x):Array.isArray(x)?'['+x.map(canonical).join(',')+']':'{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+canonical(x[k])).join(',')+'}';
 const token=crypto.randomBytes(32).toString('hex'),canary='WAVED_HTTP_PRIVATE_PAYLOAD_746e';
-const env={...process.env,ABILITY_GATEWAY_SESSION:token,DISPATCH_OFFLINE_FIXTURE:'true',DISPATCH_ALLOW_ANY_OUTPUT_ROOT:'true'};
+const env={...process.env,ABILITY_GATEWAY_SESSION:token,DISPATCH_OFFLINE_FIXTURE:'true',DISPATCH_DEBUG_ERRORS:'true',DISPATCH_ALLOW_ANY_OUTPUT_ROOT:'true'};
 function cmd(exe,args,where=cwd){const r=spawnSync(exe,args,{cwd:where,env,encoding:'utf8',timeout:120000,maxBuffer:4*1024*1024});assert.equal(r.status,0,r.stderr+'\n'+r.stdout);assert.equal(r.stderr,'');return r.stdout.trim();}
 const gateway=(mode,arg='')=>JSON.parse(cmd(runtime,['run','examples/application-assurance/gateway.kujo',root,mode,arg],ability));
 const phase=name=>JSON.parse(cmd(runtime,['run','tests/persisted_negotiation_fixture.kujo',root,name]));

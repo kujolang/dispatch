@@ -100,7 +100,11 @@ func mcp_check(config, root, raw, assurance_raw) {
 }
 func http_process(config, root, attempt, mode) {
     response := spawn_process([config["node"], config["cwd"] + "/examples/controlled-http/participant.mjs", root, to_string(attempt), mode], {"cwd": os_getcwd(), "inherit_env": false, "env": {"ABILITY_GATEWAY_SESSION": env("ABILITY_GATEWAY_SESSION")}, "max_output_bytes": 8192, "timeout_ms": 90000})
-    require(response.success&&response.stderr == ""&&response.stdout_truncated == false)
+    if response.success == false||response.stderr != ""||response.stdout_truncated {
+        # Offline fixture diagnostics only; never expose the gateway session token.
+        detail := replace(to_string(response.stderr), to_string(env("ABILITY_GATEWAY_SESSION")), "[redacted-session]")
+        throw("HTTP participant fixture failed: " + detail)
+    }
     return parse_json(response.stdout)
 }
 func http_check(config, root, raw, assurance_raw) {
