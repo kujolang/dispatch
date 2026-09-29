@@ -1,0 +1,156 @@
+{
+  "source_commit": "e4d17263e73890a683e95ed0cb32f785f27df05e",
+  "suites": [
+    {
+      "name": "parent_finalization",
+      "log_path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/parent_finalization.log",
+      "sha256": "63d531d36fea812eb45a69c3ea60b704d311ddb16fa7e2c87197874f8390234c",
+      "results": [
+        {
+          "ok": true,
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/parent-finalization-ixEmCx",
+          "checks": 31,
+          "proofs": [
+            "pending effects block parent",
+            "cancelled required selection is not completion",
+            "unresolved operator review blocks",
+            "real Workcell refs and original bytes preserved",
+            "stale authority",
+            "changed registration",
+            "wrong environment",
+            "operator authorization revoked",
+            "stale evaluation",
+            "wrong evaluation subject",
+            "missing/replaced output.txt",
+            "missing/replaced output-evidence.json",
+            "missing/replaced workcell/receipt.json",
+            "retained workspace missing",
+            "changed retained Git HEAD",
+            "stale run revision",
+            "new unresolved child",
+            "expired preservation",
+            "independent sink uncertainty blocks",
+            "legitimate new assessment invalidates candidate",
+            "generic approved review cannot bypass finalization",
+            "separate finalization without effect replay",
+            "Eval fail maps through existing policy",
+            "SIGKILL before decision remains nonterminal",
+            "SIGKILL after terminal reply loss is final",
+            "two independently assessed fresh controllers one durable finalization",
+            "producer success still requires parent finalization",
+            "anchored required descendant blocks terminal transition",
+            "mutable optional flag cannot waive anchored required child",
+            "live authority revoked inside finalization boundary",
+            "orphan durable finalization recovered by fresh controllers"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "node_contracts",
+      "log_path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/node_contracts.log",
+      "sha256": "42781b40a80c1d24c70e66b79108240013f9b319ad52b37e0b5fa42859b9333b",
+      "results": [
+        {
+          "checks": 12,
+          "ok": true
+        }
+      ]
+    },
+    {
+      "name": "node_composition",
+      "log_path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/node_composition.log",
+      "sha256": "a9aa022a97c3d3f9228a35abf014d00e3ddd5fb979737b21432735a9e6f615c0",
+      "results": [
+        {
+          "ok": true,
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-MGPLzA",
+          "checks": 19,
+          "scenarios": [
+            "producer output exists without finalization: consumer blocked",
+            "unresolved producer effect prevents finalization",
+            "output missing prevents producer finalization",
+            "evaluation failure and operator revocation block terminal authority",
+            "effect completion and passing Eval still do not finalize producer",
+            "exact source name type digest revision and producer binding",
+            "binding survives fresh load; artifact mutation and absence deny execution",
+            "stale installed authority denies consumer",
+            "consumer executes independently with pinned provenance",
+            "all required independently finalized nodes complete existing DAG",
+            "historical consumer provenance cannot become a later producer version",
+            "completion-only edge does not transfer an artifact",
+            "bounded join requires both independently finalized producers",
+            "consumer failure cannot rewrite finalized producer",
+            "producer execution failure blocks dependent",
+            "fresh controller before_node_binding",
+            "fresh controller after_node_binding",
+            "fresh controller after_node_start_requested",
+            "consumed initial admission survives crash without fabricating execution"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "node_policy",
+      "log_path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/node_policy.log",
+      "sha256": "260bb2c5f885c85add5c9fd7ce68b31bd67ba72914f41b094a97da4943f82e97",
+      "results": [
+        {
+          "ok": true,
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-Ev6rNU",
+          "checks": 4,
+          "scenarios": [
+            "needs-changes evaluation blocks producer dependency",
+            "producer tool permission is not inherited by consumer",
+            "ordinary cancellation blocks consumer",
+            "failed terminal follows existing Eval policy and cannot satisfy dependency"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "node_recovery",
+      "log_path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/node_recovery.log",
+      "sha256": "b4ca141a05c9f4a0a91334e0152500f33e1d4ca2fdfde40d646982c16b5afe16",
+      "results": [
+        {
+          "contention": [
+            {
+              "ok": false,
+              "reason": "run_lock_timeout"
+            },
+            {
+              "ok": true,
+              "reason": "node_requires_independent_finalization"
+            }
+          ],
+          "admissions": 1
+        },
+        {
+          "ok": true,
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-ri6tCc",
+          "checks": 5,
+          "scenarios": [
+            "two fresh graph controllers: one consumer admission and action",
+            "real observation crash: repair retains consumption and requires separate finalization",
+            "raw output orphan cannot synthesize a binding",
+            "real immutable orphan node_inputs_bound reconciled without implicit execution",
+            "real immutable orphan node_terminal_observed reconciled without implicit execution"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "node_vectors",
+      "log_path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/node_vectors.log",
+      "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203",
+      "results": [
+        {
+          "checker": "kujo",
+          "ok": true,
+          "vectors": 7
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,454 @@
+FILE compatibility-correction-2.log
+EXIT 0
+SHA256 c25c6a76bb73cde8f72212449bdb950b378d21790664b9e50e00087f36273eda
+
+============================================================
+Test Results
+============================================================
+  ✓ submitted idempotency key does not authorize replay (64ms)
+  ✓ observed unknown partial effects override a pure configuration (56ms)
+  ✓ sink enforced idempotency needs an evidence reference (59ms)
+  ✓ destroyed workspace cannot be retried in place (67ms)
+  ✓ retained filesystem permits a declared same workspace adapter (71ms)
+  ✓ an evaluator decision cannot target an unrelated action (66ms)
+  ✓ terminal states reject continuation (104ms)
+  ✓ evaluation crash is indeterminate rather than failed quality (61ms)
+  ✓ negative checks and unknown contract versions fail closed (55ms)
+  ✓ policy outcome is producer neutral and deterministic (399ms)
+  ✓ evidence cannot promote itself to policy authority (72ms)
+  ✓ journal detects orphan append and tampered history (171ms)
+  ✓ expired preservation cannot authorize same workspace replay (63ms)
+  ✓ null idempotency metadata is not enforcement evidence (54ms)
+  ✓ continuation source cannot contradict its action (69ms)
+  ✓ tampered control history is detected even when JSON is valid (146ms)
+  ✓ an atomic event beyond an absent journal requires recovery (58ms)
+  ✓ review requests explain unavailable replay without granting new actions (74ms)
+  ✓ policy action availability work is bounded and duplicate actions reject (114ms)
+  ✓ compensation metadata does not prove external reversal or admit replay (59ms)
+
+Tests: 20 total, 20 passed, 0 failed
+Time:  2041ms
+============================================================
+
+All tests passed! ✨
+
+
+FILE compatibility-correction.log
+EXIT 1
+SHA256 4e313264d7595cdfccbb0fc5f67442af1a36e62d6ab82aaa093443ec7feca2a5
+
+============================================================
+Test Results
+============================================================
+  ✗ submitted idempotency key does not authorize replay (36ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ observed unknown partial effects override a pure configuration (26ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ sink enforced idempotency needs an evidence reference (31ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ destroyed workspace cannot be retried in place (27ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ retained filesystem permits a declared same workspace adapter (28ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ an evaluator decision cannot target an unrelated action (26ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ terminal states reject continuation (26ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ evaluation crash is indeterminate rather than failed quality (28ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ negative checks and unknown contract versions fail closed (26ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ policy outcome is producer neutral and deterministic (30ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ evidence cannot promote itself to policy authority (26ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ journal detects orphan append and tampered history (30ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ expired preservation cannot authorize same workspace replay (26ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ null idempotency metadata is not enforcement evidence (29ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ continuation source cannot contradict its action (25ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ tampered control history is detected even when JSON is valid (30ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ an atomic event beyond an absent journal requires recovery (25ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ review requests explain unavailable replay without granting new actions (28ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ policy action availability work is bounded and duplicate actions reject (26ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  ✗ compensation metadata does not prove external reversal or admit replay (32ms)
+    Error: Setup failed: Module not found: tests.control_boundary_fixtures; Check that 'tests.control_boundary_fixtures' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+
+Tests: 20 total, 0 passed, 20 failed
+Time:  650ms
+============================================================
+
+20 test(s) failed
+
+
+FILE development-1.log
+EXIT 1
+SHA256 7384b0f6b196a6aac0c1f626e0d2d829c8685b13adee9bc7d09a97b7050631bf
+ROOT /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-st1rfL/two
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"error":{"code":"workflow_runtime_error","details":{"internal":"Error { line: 0, message: node_start_denied, stack: [<function with 4 params>, run_workflow_impl, run_workflow_unlocked, advance_composed_step, demand] }"},"message":"Workflow execution failed unexpectedly.","retryable":false},"ok":false,"paused":false,"run_state":{"approvals":[],"artifact_contract_version":1,"assurance_negotiation":{"config_revision":"08c5d96f173e5145ca4c17b4b461b846e38d0d83eb1ec6d8cdef20c78cab2cc1","fallback":"deny","mode":"required","policy_sha256":"b55dd10364cd1d0592b0f0bedab0da0a38d3ea44675ff8840abdf45746f8c6be","profile":"dispatch.sqlite-unique","profile_version":"1beta1","schema":"dispatch.assurance-negotiation/v1beta1"},"assurance_store":"filesystem","budget_usage":{"elapsed_ms":0,"estimated_cost_usd":0,"input_tokens":0,"output_tokens":0,"steps":0,"total_tokens":0},"control_boundaries":[],"control_decisions":[],"control_journal":{"last_sha256":"09f77debe3c63757a5f8a33d57821e10b7bfbff560fa012a8b6bb2553d939d39","path":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-st1rfL/two/runs/run-1790715472191-7677/control-events.jsonl","schema":"kujo.control-journal/v1","sequence":1},"created_at":"2026-09-29 20:57:52","current_step_index":0,"data":{"input":{}},"errors":[],"final_output":null,"handoffs":[],"health":{"artifacts":{"otel_traces_json":true,"report_json":false,"report_md":false,"state_json":true,"trace_json":true,"trace_md":true},"issues":[],"step_status_counts":{"completed":0,"failed":0,"other":0,"paused":0,"pending":2,"running":0}},"idempotency":{},"input":{},"memory":{"agents":{},"history":[],"step_outputs":{},"workflow":{"created_at":"2026-09-29 20:57:52","topic":""}},"migrations":[],"options":{"assurance_negotiation":{"config_revision":"08c5d96f173e5145ca4c17b4b461b846e38d0d83eb1ec6d8cdef20c78cab2cc1","fallback":"deny","mode":"required","policy_sha256":"b55dd10364cd1d0592b0f0bedab0da0a38d3ea44675ff8840abdf45746f8c6be","profile":"dispatch.sqlite-unique","profile_version":"1beta1","schema":"dispatch.assurance-negotiation/v1beta1"}},"output_root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-st1rfL/two/runs","provider_health":{},"required_features":["effect-assurance-negotiation/v1beta1","node-composition/v1alpha1"],"retry_counts":{},"revision":1,"route_attempts":{},"route_decisions":{},"run_dir":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-st1rfL/two/runs/run-1790715472191-7677","run_id":"run-1790715472191-7677","schema_name":"dispatch-run-state","schema_version":2,"started_at_ms":1790715472245,"status":"running","steps":[{"agent_id":"","approval_gate":{},"approval_required":false,"attempts":0,"compensation":null,"config":{"depends_on":[],"node_execution":{"inputs":[],"outputs":[{"json_schema":{"$id":"kujo.example/node-summary/v1","additionalProperties":false,"properties":{"node":{"type":"string"},"schema":{"const":"kujo.example/node-summary/v1"},"sources":{"items":{"type":"string"},"type":"array"},"value":{"type":"integer"}},"required":["schema","node","value","sources"],"type":"object"},"name":"report","type_id":"kujo.example/node-summary/v1"}],"run_id":"run-1790715470703-8733","schema":"dispatch.run-backed-node/v1alpha1","step_id":"action"},"tool_name":"installed_node"},"depends_on":[],"effect_class":"unknown","error":null,"evaluation":{},"evaluation_result_path":"","finished_at":"","handoff":{},"id":"A","idempotency_key":"","input":null,"input_from":[],"input_schema":null,"metadata":{},"name":"A","optional":false,"output":null,"output_key":"","output_schema":null,"parallel_safe":false,"retry_policy":null,"route_decision":null,"route_evaluation":null,"routing":{},"routing_constraints":{},"started_at":"","status":"pending","timeout_ms":0,"tool_name":"installed_node","type":"tool"},{"agent_id":"","approval_gate":{},"approval_required":false,"attempts":0,"compensation":null,"config":{"depends_on":["A"],"node_execution":{"inputs":[{"name":"input","source_node":"A","source_output":"report","type_id":"kujo.example/node-summary/v1"}],"outputs":[{"json_schema":{"$id":"kujo.example/node-summary/v1","additionalProperties":false,"properties":{"node":{"type":"string"},"schema":{"const":"kujo.example/node-summary/v1"},"sources":{"items":{"type":"string"},"type":"array"},"value":{"type":"integer"}},"required":["schema","node","value","sources"],"type":"object"},"name":"report","type_id":"kujo.example/node-summary/v1"}],"run_id":"run-1790715471518-9079","schema":"dispatch.run-backed-node/v1alpha1","step_id":"action"},"tool_name":"installed_node"},"depends_on":["A"],"effect_class":"unknown","error":null,"evaluation":{},"evaluation_result_path":"","finished_at":"","handoff":{},"id":"B","idempotency_key":"","input":null,"input_from":[],"input_schema":null,"metadata":{},"name":"B","optional":false,"output":null,"output_key":"","output_schema":null,"parallel_safe":false,"retry_policy":null,"route_decision":null,"route_evaluation":null,"routing":{},"routing_constraints":{},"started_at":"","status":"pending","timeout_ms":0,"tool_name":"installed_node","type":"tool"}],"tags":[],"trace":{"artifact_contract_version":1,"event_count_total":0,"events":[],"finished_at":"","limits":{"max_events":400,"max_payload_chars":2400},"run_id":"run-1790715472191-7677","schema_name":"dispatch-trace","schema_version":1,"started_at":"2026-09-29 20:57:52","status":"running","trace_id":"ea7716a9a2014d6c06d60cf40f02843c","truncated":{"events_dropped":0,"max_events":400,"max_payload_chars":2400,"payloads_truncated":0},"workflow_name":"Static node DAG"},"updated_at":"2026-09-29 20:57:52","workflow_definition":{"active_plugins":[],"agents":{},"approval_config":{"auto_approve":false},"budgets":{},"control":{"policies":[],"policy_id":"graph","policy_version":"1"},"default_retry_policy":{"max_attempts":1},"description":"Separate data and scheduling","id":"static-composition","input_schema":{"type":"dict"},"max_parallel_steps":1,"memory_config":{},"metadata":{"node_composition":"dispatch.node-composition/v1alpha1"},"name":"Static node DAG","output_schema":{"type":"dict"},"routing":{"enabled":false},"steps":[{"agent_id":"","approval_gate":{},"approval_required":false,"attempts":0,"compensation":null,"config":{"depends_on":[],"node_execution":{"inputs":[],"outputs":[{"json_schema":{"$id":"kujo.example/node-summary/v1","additionalProperties":false,"properties":{"node":{"type":"string"},"schema":{"const":"kujo.example/node-summary/v1"},"sources":{"items":{"type":"string"},"type":"array"},"value":{"type":"integer"}},"required":["schema","node","value","sources"],"type":"object"},"name":"report","type_id":"kujo.example/node-summary/v1"}],"run_id":"run-1790715470703-8733","schema":"dispatch.run-backed-node/v1alpha1","step_id":"action"},"tool_name":"installed_node"},"depends_on":[],"effect_class":"unknown","error":null,"evaluation":{},"evaluation_result_path":"","finished_at":"","handoff":{},"id":"A","idempotency_key":"","input":null,"input_from":[],"input_schema":null,"metadata":{},"name":"A","optional":false,"output":null,"output_key":"","output_schema":null,"parallel_safe":false,"retry_policy":null,"route_decision":null,"route_evaluation":null,"routing":{},"routing_constraints":{},"started_at":"","status":"pending","timeout_ms":0,"tool_name":"installed_node","type":"tool"},{"agent_id":"","approval_gate":{},"approval_required":false,"attempts":0,"compensation":null,"config":{"depends_on":["A"],"node_execution":{"inputs":[{"name":"input","source_node":"A","source_output":"report","type_id":"kujo.example/node-summary/v1"}],"outputs":[{"json_schema":{"$id":"kujo.example/node-summary/v1","additionalProperties":false,"properties":{"node":{"type":"string"},"schema":{"const":"kujo.example/node-summary/v1"},"sources":{"items":{"type":"string"},"type":"array"},"value":{"type":"integer"}},"required":["schema","node","value","sources"],"type":"object"},"name":"report","type_id":"kujo.example/node-summary/v1"}],"run_id":"run-1790715471518-9079","schema":"dispatch.run-backed-node/v1alpha1","step_id":"action"},"tool_name":"installed_node"},"depends_on":["A"],"effect_class":"unknown","error":null,"evaluation":{},"evaluation_result_path":"","finished_at":"","handoff":{},"id":"B","idempotency_key":"","input":null,"input_from":[],"input_schema":null,"metadata":{},"name":"B","optional":false,"output":null,"output_key":"","output_schema":null,"parallel_safe":false,"retry_policy":null,"route_decision":null,"route_evaluation":null,"routing":{},"routing_constraints":{},"started_at":"","status":"pending","timeout_ms":0,"tool_name":"installed_node","type":"tool"}],"tools":[]},"workflow_id":"static-composition","workflow_name":"Static node DAG"}}
+
+false !== true
+
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_integration.mjs:24:34
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+FILE development-2.log
+EXIT 1
+SHA256 7057373a54d04b5aba845911cb50afc3474836a40d9a89711d2386a10cd80e19
+ROOT /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-iD91Ei/two
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"error":{"code":"workflow_runtime_error","details":{"internal":"Error { line: 0, message: node_start_denied, stack: [<function with 4 params>, run_workflow_impl, run_workflow_unlocked, advance_composed_step, demand] }"},"message":"Workflow execution failed unexpectedly.","retryable":false},"ok":false,"paused":false,"run_state":{"approvals":[],"artifact_contract_version":1,"assurance_negotiation":{"config_revision":"c81c72e2a367fd96d21091f9086994e2a849743c52f474c4c889a065e5d19bc0","fallback":"deny","mode":"required","policy_sha256":"25029963f582c986df151a4f54c4061ad4f9aafca871d69e66b5ad0c29e9d43e","profile":"dispatch.sqlite-unique","profile_version":"1beta1","schema":"dispatch.assurance-negotiation/v1beta1"},"assurance_store":"filesystem","budget_usage":{"elapsed_ms":0,"estimated_cost_usd":0,"input_tokens":0,"output_tokens":0,"steps":0,"total_tokens":0},"control_boundaries":[],"control_decisions":[],"control_journal":{"last_sha256":"b6dc50d618bf17d00685d79914f05bab29bb3160400617e5ccaa8b45d79aaab1","path":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-iD91Ei/two/runs/run-1790715535054-9194/control-events.jsonl","schema":"kujo.control-journal/v1","sequence":1},"created_at":"2026-09-29 20:58:55","current_step_index":0,"data":{"input":{}},"errors":[],"final_output":null,"handoffs":[],"health":{"artifacts":{"otel_traces_json":true,"report_json":false,"report_md":false,"state_json":true,"trace_json":true,"trace_md":true},"issues":[],"step_status_counts":{"completed":0,"failed":0,"other":0,"paused":0,"pending":2,"running":0}},"idempotency":{},"input":{},"memory":{"agents":{},"history":[],"step_outputs":{},"workflow":{"created_at":"2026-09-29 20:58:55","topic":""}},"migrations":[],"options":{"assurance_negotiation":{"config_revision":"c81c72e2a367fd96d21091f9086994e2a849743c52f474c4c889a065e5d19bc0","fallback":"deny","mode":"required","policy_sha256":"25029963f582c986df151a4f54c4061ad4f9aafca871d69e66b5ad0c29e9d43e","profile":"dispatch.sqlite-unique","profile_version":"1beta1","schema":"dispatch.assurance-negotiation/v1beta1"}},"output_root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-iD91Ei/two/runs","provider_health":{},"required_features":["effect-assurance-negotiation/v1beta1","node-composition/v1alpha1"],"retry_counts":{},"revision":1,"route_attempts":{},"route_decisions":{},"run_dir":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-iD91Ei/two/runs/run-1790715535054-9194","run_id":"run-1790715535054-9194","schema_name":"dispatch-run-state","schema_version":2,"started_at_ms":1790715535071,"status":"running","steps":[{"agent_id":"","approval_gate":{},"approval_required":false,"attempts":0,"compensation":null,"config":{"depends_on":[],"node_execution":{"inputs":[],"outputs":[{"json_schema":{"$id":"kujo.example/node-summary/v1","additionalProperties":false,"properties":{"node":{"type":"string"},"schema":{"const":"kujo.example/node-summary/v1"},"sources":{"items":{"type":"string"},"type":"array"},"value":{"type":"integer"}},"required":["schema","node","value","sources"],"type":"object"},"name":"report","type_id":"kujo.example/node-summary/v1"}],"run_id":"run-1790715533546-7829","schema":"dispatch.run-backed-node/v1alpha1","step_id":"action"},"tool_name":"installed_node"},"depends_on":[],"effect_class":"unknown","error":null,"evaluation":{},"evaluation_result_path":"","finished_at":"","handoff":{},"id":"A","idempotency_key":"","input":null,"input_from":[],"input_schema":null,"metadata":{},"name":"A","optional":false,"output":null,"output_key":"","output_schema":null,"parallel_safe":false,"retry_policy":null,"route_decision":null,"route_evaluation":null,"routing":{},"routing_constraints":{},"started_at":"","status":"pending","timeout_ms":0,"tool_name":"installed_node","type":"tool"},{"agent_id":"","approval_gate":{},"approval_required":false,"attempts":0,"compensation":null,"config":{"depends_on":["A"],"node_execution":{"inputs":[{"name":"input","source_node":"A","source_output":"report","type_id":"kujo.example/node-summary/v1"}],"outputs":[{"json_schema":{"$id":"kujo.example/node-summary/v1","additionalProperties":false,"properties":{"node":{"type":"string"},"schema":{"const":"kujo.example/node-summary/v1"},"sources":{"items":{"type":"string"},"type":"array"},"value":{"type":"integer"}},"required":["schema","node","value","sources"],"type":"object"},"name":"report","type_id":"kujo.example/node-summary/v1"}],"run_id":"run-1790715534416-5944","schema":"dispatch.run-backed-node/v1alpha1","step_id":"action"},"tool_name":"installed_node"},"depends_on":["A"],"effect_class":"unknown","error":null,"evaluation":{},"evaluation_result_path":"","finished_at":"","handoff":{},"id":"B","idempotency_key":"","input":null,"input_from":[],"input_schema":null,"metadata":{},"name":"B","optional":false,"output":null,"output_key":"","output_schema":null,"parallel_safe":false,"retry_policy":null,"route_decision":null,"route_evaluation":null,"routing":{},"routing_constraints":{},"started_at":"","status":"pending","timeout_ms":0,"tool_name":"installed_node","type":"tool"}],"tags":[],"trace":{"artifact_contract_version":1,"event_count_total":0,"events":[],"finished_at":"","limits":{"max_events":400,"max_payload_chars":2400},"run_id":"run-1790715535054-9194","schema_name":"dispatch-trace","schema_version":1,"started_at":"2026-09-29 20:58:55","status":"running","trace_id":"4d243d5dc7b76babe9dc1b92b07f4b4c","truncated":{"events_dropped":0,"max_events":400,"max_payload_chars":2400,"payloads_truncated":0},"workflow_name":"Static node DAG"},"updated_at":"2026-09-29 20:58:55","workflow_definition":{"active_plugins":[],"agents":{},"approval_config":{"auto_approve":false},"budgets":{},"control":{"policies":[],"policy_id":"graph","policy_version":"1"},"default_retry_policy":{"max_attempts":1},"description":"Separate data and scheduling","id":"static-composition","input_schema":{"type":"dict"},"max_parallel_steps":1,"memory_config":{},"metadata":{"node_composition":"dispatch.node-composition/v1alpha1"},"name":"Static node DAG","output_schema":{"type":"dict"},"routing":{"enabled":false},"steps":[{"agent_id":"","approval_gate":{},"approval_required":false,"attempts":0,"compensation":null,"config":{"depends_on":[],"node_execution":{"inputs":[],"outputs":[{"json_schema":{"$id":"kujo.example/node-summary/v1","additionalProperties":false,"properties":{"node":{"type":"string"},"schema":{"const":"kujo.example/node-summary/v1"},"sources":{"items":{"type":"string"},"type":"array"},"value":{"type":"integer"}},"required":["schema","node","value","sources"],"type":"object"},"name":"report","type_id":"kujo.example/node-summary/v1"}],"run_id":"run-1790715533546-7829","schema":"dispatch.run-backed-node/v1alpha1","step_id":"action"},"tool_name":"installed_node"},"depends_on":[],"effect_class":"unknown","error":null,"evaluation":{},"evaluation_result_path":"","finished_at":"","handoff":{},"id":"A","idempotency_key":"","input":null,"input_from":[],"input_schema":null,"metadata":{},"name":"A","optional":false,"output":null,"output_key":"","output_schema":null,"parallel_safe":false,"retry_policy":null,"route_decision":null,"route_evaluation":null,"routing":{},"routing_constraints":{},"started_at":"","status":"pending","timeout_ms":0,"tool_name":"installed_node","type":"tool"},{"agent_id":"","approval_gate":{},"approval_required":false,"attempts":0,"compensation":null,"config":{"depends_on":["A"],"node_execution":{"inputs":[{"name":"input","source_node":"A","source_output":"report","type_id":"kujo.example/node-summary/v1"}],"outputs":[{"json_schema":{"$id":"kujo.example/node-summary/v1","additionalProperties":false,"properties":{"node":{"type":"string"},"schema":{"const":"kujo.example/node-summary/v1"},"sources":{"items":{"type":"string"},"type":"array"},"value":{"type":"integer"}},"required":["schema","node","value","sources"],"type":"object"},"name":"report","type_id":"kujo.example/node-summary/v1"}],"run_id":"run-1790715534416-5944","schema":"dispatch.run-backed-node/v1alpha1","step_id":"action"},"tool_name":"installed_node"},"depends_on":["A"],"effect_class":"unknown","error":null,"evaluation":{},"evaluation_result_path":"","finished_at":"","handoff":{},"id":"B","idempotency_key":"","input":null,"input_from":[],"input_schema":null,"metadata":{},"name":"B","optional":false,"output":null,"output_key":"","output_schema":null,"parallel_safe":false,"retry_policy":null,"route_decision":null,"route_evaluation":null,"routing":{},"routing_constraints":{},"started_at":"","status":"pending","timeout_ms":0,"tool_name":"installed_node","type":"tool"}],"tools":[]},"workflow_id":"static-composition","workflow_name":"Static node DAG"}}
+
+false !== true
+
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_integration.mjs:24:34
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+FILE development-3.log
+EXIT not captured
+SHA256 c22939bf4bed7b8e07ad35b476e77a84920c243dad8bcb34af05f6627db85634
+ROOT /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-e0rRVi/two
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"code":"workflow_runtime_error","details":{"internal":"Error { line: 0, message: node_start_denied, stack: [<function with 4 params>, run_workflow_impl, run_workflow_unlocked, advance_composed_step, demand] }"},"message":"Workflow execution failed unexpectedly.","retryable":false}
+
+false !== true
+
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_integration.mjs:24:34
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+FILE development-4.log
+EXIT 1
+SHA256 db95143924b44f30904501c3760e6d58535d2b50eec780595761849e20a3ecbb
+ROOT /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-PkAr52/two
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"code":"workflow_runtime_error","details":{"internal":"Error { line: 0, message: producer_not_finalized, stack: [<function with 4 params>, run_workflow_impl, run_workflow_unlocked, advance_composed_step, completed, demand] }"},"message":"Workflow execution failed unexpectedly.","retryable":false}
+
+false !== true
+
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_integration.mjs:26:30
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+FILE development-5.log
+EXIT 1
+SHA256 129baa8620a89f2a54b787f017eccf7b64f9708f6aa2beebd4ca992c06e6263b
+ROOT /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-inANTY/two
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"code":"workflow_runtime_error","details":{"internal":"Error { line: 0, message: producer_not_finalized:run-1790715732637-5735, stack: [<function with 4 params>, run_workflow_impl, run_workflow_unlocked, advance_composed_step, completed, demand] }"},"message":"Workflow execution failed unexpectedly.","retryable":false}
+
+false !== true
+
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_integration.mjs:26:30
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+FILE development-6.log
+EXIT 0
+SHA256 7b231504d88b2c44ef77bed6c55cf03bf42abbe25314fe3f898a9b04ec529d37
+ROOT /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-IgG8Bo/two
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-IgG8Bo","checks":1}
+
+
+FILE development-7.log
+EXIT 1
+SHA256 633da817282d285cda806d78f9f7d38bdd94a624ca3c8ce9bc68568eb323d71b
+ROOT /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-GJSkSp/two
+PASS producer output exists without finalization: consumer blocked
+PASS unresolved producer effect prevents finalization
+PASS output missing prevents producer finalization
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"authority":"informational","candidate":{"binding":{"boundary_id":"boundary_73f83215c2f3e73933908bed","config_revision":"0985b83434c0fb697909ec50ca8a7a1e795f139672a9ea60b5e87bda218abe43","effect_id":"C","environment_ref":"sha256:279ef985d5af6e4b8e5aa694452b09586c02d03790dee82cd7b789f419bde44c","plan_ref":"sha256:4cc7fe907d7bab014209f8dfac680ebb91f55b4ecba6a112df349bf3f65e4f63","position":0,"preservation_ref":"sha256:8e750447a36b45d9a3e4f1d1182754d1878ecd8e1c574aeee5067b8a94f240e1","registration_ref":"sha256:b946e42c826b85ee8fd95db9eafb00474da65f77b090a3d49608be4b998100cf","result_ref":"sha256:4b5be03d3d1f28889e6e1546da7078b85f2e1917d3207b54a3e475ddc2a7899d","set_ref":"sha256:f943fecf36f82ec582380148381ddef8d02f4742081a15d93dee751f5924475e","subject":{"attempt_id":"1","run_id":"run-1790716169465-8644","step_id":"action"}},"candidate_id":"16bf911041e9c5b8c508e8fc9c5b3b5b06fa3f4fe7b9acb0269bc60e1517a7c8","decision_ref":"sha256:adcd02f5a177197b393ae6064206ac9683f86164440a4fa797c749d752429cab","evaluation_ref":"sha256:52b537f89b1445056fde9324764719c4ca95f1b818c0b0a386b30da62a57269a","journal":"b28459bb04670c61d579ec5aeece99674e2a5ebb3a2dbb3f73dd9d5d40c7fe80","outcome":"failed","outputs":[{"content_ref":"sha256:1db9c598ab297ebc40d98e244ad69e0977d9de8881474468821a878f7ba602df","evidence_ref":"sha256:4ef471d3644fb1b8c938510e4d03d45393959b691eabb4b1bf3787d97b81c336","name":"report"}],"policy_ref":"sha256:797f1d5477252396cdb653a783fb69667fec01b3b3f513f18b77afebede80a91","revision":11,"schema":"dispatch.parent-finalization-candidate/v1alpha1","source_sha256":"4bb62122637fe872a47d8e47abb11938d2220fde6481ede61ed4ce76ff636efb","subject":{"attempt_id":"1","run_id":"run-1790716169465-8644","step_id":"action"}},"ok":true,"status":"eligible"}
+
+true !== false
+
+    at denied (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_integration.mjs:25:31)
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_integration.mjs:33:297
+    at check (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_integration.mjs:23:25)
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_integration.mjs:33:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: true,
+  expected: false,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+FILE development-8.log
+EXIT 0
+SHA256 9483102488bba383ad9d4243d353009277fd154f898a6e0d5513aa95b171e980
+ROOT /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-mup0PL/two
+PASS producer output exists without finalization: consumer blocked
+PASS unresolved producer effect prevents finalization
+PASS output missing prevents producer finalization
+PASS evaluation failure and operator revocation block terminal authority
+PASS effect completion and passing Eval still do not finalize producer
+PASS exact source name type digest revision and producer binding
+PASS binding survives fresh load; artifact mutation and absence deny execution
+PASS stale installed authority denies consumer
+PASS consumer executes independently with pinned provenance
+PASS all required independently finalized nodes complete existing DAG
+PASS completion-only edge does not transfer an artifact
+PASS bounded join requires both independently finalized producers
+PASS consumer failure cannot rewrite finalized producer
+PASS producer execution failure blocks dependent
+PASS fresh controller before_node_binding
+PASS fresh controller after_node_binding
+PASS fresh controller after_node_start_requested
+PASS consumed initial admission survives crash without fabricating execution
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-mup0PL","checks":18,"scenarios":["producer output exists without finalization: consumer blocked","unresolved producer effect prevents finalization","output missing prevents producer finalization","evaluation failure and operator revocation block terminal authority","effect completion and passing Eval still do not finalize producer","exact source name type digest revision and producer binding","binding survives fresh load; artifact mutation and absence deny execution","stale installed authority denies consumer","consumer executes independently with pinned provenance","all required independently finalized nodes complete existing DAG","completion-only edge does not transfer an artifact","bounded join requires both independently finalized producers","consumer failure cannot rewrite finalized producer","producer execution failure blocks dependent","fresh controller before_node_binding","fresh controller after_node_binding","fresh controller after_node_start_requested","consumed initial admission survives crash without fabricating execution"]}
+
+
+FILE focused-failure-development.log
+EXIT 1
+SHA256 0017b05606582ab0cfee2a18ceb3c574bc9139f817f7469532b45b9b5605681d
+
+============================================================
+Test Results
+============================================================
+  ✓ submitted idempotency key does not authorize replay (59ms)
+  ✓ observed unknown partial effects override a pure configuration (53ms)
+  ✓ sink enforced idempotency needs an evidence reference (58ms)
+  ✓ destroyed workspace cannot be retried in place (59ms)
+  ✓ retained filesystem permits a declared same workspace adapter (68ms)
+  ✓ an evaluator decision cannot target an unrelated action (64ms)
+  ✓ terminal states reject continuation (99ms)
+  ✓ evaluation crash is indeterminate rather than failed quality (58ms)
+  ✓ negative checks and unknown contract versions fail closed (58ms)
+  ✓ policy outcome is producer neutral and deterministic (228ms)
+  ✓ evidence cannot promote itself to policy authority (67ms)
+  ✗ journal detects orphan append and tampered history (127ms)
+    Error: Assertion failed: expected true, got false
+  ✓ expired preservation cannot authorize same workspace replay (71ms)
+  ✓ null idempotency metadata is not enforcement evidence (61ms)
+  ✓ continuation source cannot contradict its action (74ms)
+  ✓ tampered control history is detected even when JSON is valid (103ms)
+  ✓ an atomic event beyond an absent journal requires recovery (53ms)
+  ✓ review requests explain unavailable replay without granting new actions (75ms)
+  ✓ policy action availability work is bounded and duplicate actions reject (120ms)
+  ✓ compensation metadata does not prove external reversal or admit replay (56ms)
+
+Tests: 20 total, 19 passed, 1 failed
+Time:  1759ms
+============================================================
+
+1 test(s) failed
+
+
+FILE focused-failure-final.log
+EXIT 0
+SHA256 08497960bdb6f27fa9ae7b9efe8bce1ff45e8caed163b109b28cc4edd771710f
+
+============================================================
+Test Results
+============================================================
+  ✓ submitted idempotency key does not authorize replay (59ms)
+  ✓ observed unknown partial effects override a pure configuration (55ms)
+  ✓ sink enforced idempotency needs an evidence reference (57ms)
+  ✓ destroyed workspace cannot be retried in place (66ms)
+  ✓ retained filesystem permits a declared same workspace adapter (68ms)
+  ✓ an evaluator decision cannot target an unrelated action (61ms)
+  ✓ terminal states reject continuation (104ms)
+  ✓ evaluation crash is indeterminate rather than failed quality (56ms)
+  ✓ negative checks and unknown contract versions fail closed (54ms)
+  ✓ policy outcome is producer neutral and deterministic (228ms)
+  ✓ evidence cannot promote itself to policy authority (62ms)
+  ✓ journal detects orphan append and tampered history (120ms)
+  ✓ expired preservation cannot authorize same workspace replay (66ms)
+  ✓ null idempotency metadata is not enforcement evidence (56ms)
+  ✓ continuation source cannot contradict its action (70ms)
+  ✓ tampered control history is detected even when JSON is valid (107ms)
+  ✓ an atomic event beyond an absent journal requires recovery (61ms)
+  ✓ review requests explain unavailable replay without granting new actions (77ms)
+  ✓ policy action availability work is bounded and duplicate actions reject (125ms)
+  ✓ compensation metadata does not prove external reversal or admit replay (55ms)
+
+Tests: 20 total, 20 passed, 0 failed
+Time:  1757ms
+============================================================
+
+All tests passed! ✨
+
+
+FILE node-contracts-final.log
+EXIT 0
+SHA256 42781b40a80c1d24c70e66b79108240013f9b319ad52b37e0b5fa42859b9333b
+{"checks":12,"ok":true}
+
+
+FILE node-contracts.log
+EXIT 4
+SHA256 9f0c7b8538a6f351041e5bb9c9d6e14a290bce5917893747927b933a36bba777
+[KUJOVM001] [vm] Runtime Error: json_schema_validate() unsupported schema keyword 'uniqueItems'
+  --> 0:0
+
+
+
+FILE policy-development-1.log
+EXIT 0
+SHA256 e7ba9d30c2edd1b41309b14b8a9b0b80877907fa51693d84335cd89171b7e49e
+PASS needs-changes evaluation blocks producer dependency
+PASS producer tool permission is not inherited by consumer
+PASS ordinary cancellation blocks consumer
+PASS failed terminal follows existing Eval policy and cannot satisfy dependency
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-sDXRdf","checks":4,"scenarios":["needs-changes evaluation blocks producer dependency","producer tool permission is not inherited by consumer","ordinary cancellation blocks consumer","failed terminal follows existing Eval policy and cannot satisfy dependency"]}
+
+
+FILE recovery-development-1.log
+EXIT 1
+SHA256 93fe8550093967dc1a7fcb2b17c37d725ee166b5978b0db55183dd22f73f6dba
+PASS two fresh graph controllers: one consumer admission and action
+PASS real observation crash: repair retains consumption and requires separate finalization
+PASS raw output orphan cannot synthesize a binding
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: [KUJOVM001] [vm] Runtime Error: Unsafe module import 'workcell.src.workspace.workspace': resolved path '/Users/robertdevore/2026/Kujolang/kujo-repos/workcell/src/workspace/workspace.kujo' escapes module search root '/private/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-UOsvde/controllers'
+  --> 0:0
+
+
+
+4 !== 0
+
+    at command (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_helpers.mjs:12:149)
+    at run (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_helpers.mjs:14:205)
+    at setup (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_helpers.mjs:16:956)
+    at prepare (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_recovery.mjs:7:30)
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_recovery.mjs:26:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 4,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+FILE recovery-development-2.log
+EXIT 1
+SHA256 c9765e007d9e84772c56cba15468767c90fb2fe56956f5627771aa8d4f46c594
+PASS two fresh graph controllers: one consumer admission and action
+PASS real observation crash: repair retains consumption and requires separate finalization
+PASS raw output orphan cannot synthesize a binding
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"continuation":"not_authorized","error":"Error { line: 0, message: Missing map key: \"human_intervention\", stack: [] }","ok":false}
+
+false !== true
+
+    at repair (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_recovery.mjs:9:280)
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-wave-f/tests/node_composition_recovery.mjs:29:127 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+FILE recovery-development-3.log
+EXIT 0
+SHA256 5c0a11af764ade1608be02a2808be227b8f689b9c12b0bc2e91b5d2d07dd91ac
+PASS two fresh graph controllers: one consumer admission and action
+PASS real observation crash: repair retains consumption and requires separate finalization
+PASS raw output orphan cannot synthesize a binding
+PASS real immutable orphan node_inputs_bound reconciled without implicit execution
+PASS real immutable orphan node_terminal_observed reconciled without implicit execution
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-khYR8e","checks":5,"scenarios":["two fresh graph controllers: one consumer admission and action","real observation crash: repair retains consumption and requires separate finalization","raw output orphan cannot synthesize a binding","real immutable orphan node_inputs_bound reconciled without implicit execution","real immutable orphan node_terminal_observed reconciled without implicit execution"]}
