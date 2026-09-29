@@ -1,4 +1,5 @@
 # Installed run-backed step adapter. The existing runner owns dependency scheduling.
+from src.core.graph_transition import heterogeneous_graph, graph_contract
 from src.core.state import load_run_state, acquire_run_lock, release_run_lock, persist_run_state
 from src.core.assurance_state import assurance_protected, validate_assurance_anchor
 from src.core.assurance_configuration import resolve_run_configuration
@@ -8,7 +9,7 @@ from src.core.node_transition import composition_graph, composition_node, node_r
 from src.core.utils import dict_get_or, ensure_dir
 func demand(ok, reason) {if ok != true {throw(reason)}}
 func same(a, b) {return to_json(a) == to_json(b)}
-func spec(state, id) {for step in state["workflow_definition"]["steps"] {if step["id"] == id {return step}};throw("node_missing")}
+export func spec(state, id) {for step in state["workflow_definition"]["steps"] {if step["id"] == id {return step}};throw("node_missing")}
 func ancestors(state, id) {
     found := spec(state, id)["depends_on"]
     for pass in range(0, 8) {
@@ -24,15 +25,24 @@ export func validate_composed_definition(state) {
     demand(len(steps) > 0&&len(steps) <= 8&&definition["max_parallel_steps"] == 1, "node_graph_limit")
     ids := [];runs := []
     for step in steps {
-        demand(step["type"] == "tool"&&step["optional"] == false&&step["parallel_safe"] == false&&step["idempotency_key"] == "", "node_step_unsupported")
+        demand(step["type"] == "tool"&&(step["optional"] == false||heterogeneous_graph(state))&&step["parallel_safe"] == false&&step["idempotency_key"] == "", "node_step_unsupported")
         demand(contains(ids, step["id"]) == false, "duplicate_node");ids = push(ids, step["id"])
+        contract := graph_contract(step)
+        if heterogeneous_graph(state) {
+            demand(contains(["parent-finalization/v1alpha1", "evaluation-result/v1", "intervention-decision/v2"], contract), "terminal_contract_unsupported")
+            if contract != "parent-finalization/v1alpha1" {
+                demand(has_key(step["config"], "node_execution") == 0&&len(step["config"]["inputs"]) <= 8, "nonexecuting_node_contract_invalid")
+                if contract == "evaluation-result/v1" {demand(len(step["config"]["inputs"]) == 1&&type(step["config"]["evaluator"]) == "dict", "evaluation_contract_invalid")}
+                continue
+            }
+        } else {demand(contract == "parent-finalization/v1alpha1", "heterogeneous_opt_in_required")}
         node := step["config"]["node_execution"]
         demand(node["schema"] == "dispatch.run-backed-node/v1alpha1"&&len(node["inputs"]) <= 8&&len(node["outputs"]) <= 8&&len(step["depends_on"]) <= 8, "node_contract_invalid")
         demand(contains(runs, node["run_id"]) == false, "duplicate_node_run");runs = push(runs, node["run_id"])
     }
     for step in steps {
         prior := ancestors(state, step["id"]);names := []
-        for input in step["config"]["node_execution"]["inputs"] {
+        for input in node_input_edges(step) {
             demand(contains(prior, input["source_node"])&&contains(names, input["name"]) == false, "node_data_edge_invalid");names = push(names, input["name"])
         }
     }
@@ -40,7 +50,7 @@ export func validate_composed_definition(state) {
     for step in state["steps"] {demand(same(step["config"], spec(state, step["id"])["config"]), "node_definition_changed")}
     return true
 }
-func runtime(graph, options) {
+export func runtime(graph, options) {
     validate_composed_definition(graph);demand(reconcile_control_journal(graph)["ok"], "node_graph_recovery_required")
     checked := resolve_run_configuration(graph, options);demand(checked["ok"], "node_graph_authority_stale")
     host := checked["installed"]["node_host"];demand(type(host["resolve"]) == "function"&&type(host["start"]) == "function", "node_host_required");return host
@@ -55,20 +65,21 @@ func endpoint(graph, id, host) {
     demand(same(state["workflow_definition"]["steps"][0]["config"]["node_outputs"], declared["outputs"]), "node_output_contract_mismatch")
     return {"state":state, "entry":entry, "declaration":declared}
 }
-func completed(node) {
+func completed(node, success) {
     state := node["state"];demand(has_key(state, "parent_finalization") != 0, "producer_not_finalized:" + state["run_id"])
     receipt := state["parent_finalization"];validate_parent_artifacts(state, receipt)
     candidate := receipt["candidate"]
-    demand(state["status"] == "completed"&&candidate["outcome"] == "completed"&&state["steps"][0]["status"] == "completed", "producer_not_successful")
+    demand(state["status"] == candidate["outcome"]&&state["steps"][0]["status"] == candidate["outcome"], "producer_terminal_mismatch")
+    if success {demand(candidate["outcome"] == "completed", "producer_not_successful")}
     demand(candidate["subject"]["run_id"] == state["run_id"]&&candidate["subject"]["step_id"] == node["declaration"]["step_id"], "producer_identity_mismatch")
     result_ref := candidate["binding"]["result_ref"]
     raw := read_file_beneath(state["run_dir"], "effect-lifecycle/" + substring(result_ref, 7, 71) + ".parent", 1048576)
     demand("sha256:" + sha256(raw) == result_ref&&same(parse_json(raw), state["steps"][0]["execution_result"]), "producer_result_mismatch")
-    identity := {"subject":candidate["subject"], "result_ref":result_ref, "finalization_ref":"sha256:" + sha256(to_json(receipt)), "finalized_revision":receipt["resulting_revision"], "outcome":"completed"}
+    identity := {"subject":candidate["subject"], "result_ref":result_ref, "finalization_ref":"sha256:" + sha256(to_json(receipt)), "finalized_revision":receipt["resulting_revision"], "outcome":candidate["outcome"]}
     return {"identity":identity, "receipt":receipt, "result_raw":raw, "artifacts":[to_json(receipt), raw]}
 }
 func output(graph, id, name, type_id, host) {
-    node := endpoint(graph, id, host);terminal := completed(node);declaration := null
+    node := endpoint(graph, id, host);terminal := completed(node, true);declaration := null
     for item in node["declaration"]["outputs"] {if item["name"] == name {declaration = item}}
     demand(declaration != null&&declaration["type_id"] == type_id&&declaration["json_schema"]["$id"] == type_id, "producer_output_type_mismatch")
     selected := null
@@ -90,7 +101,7 @@ func output(graph, id, name, type_id, host) {
 func prepare(graph, id, host) {
     node := endpoint(graph, id, host);step := spec(graph, id);predecessors := [];inputs := [];raws := [];refs := []
     for dependency in step["depends_on"] {
-        terminal := completed(endpoint(graph, dependency, host));predecessors = push(predecessors, {"node_id":dependency, "terminal":terminal["identity"]})
+        terminal := node_terminal(graph, dependency, host, true);predecessors = push(predecessors, {"node_id":dependency, "terminal":terminal["identity"]})
         for raw in terminal["artifacts"] {raws = push(raws, raw)}
     }
     for edge in node["declaration"]["inputs"] {
@@ -101,10 +112,10 @@ func prepare(graph, id, host) {
     total := 0;unique := []
     for raw in raws {ref := "sha256:" + sha256(raw);if contains(refs, ref) == false {refs = push(refs, ref);unique = push(unique, raw);total = total + byte_length(raw)}}
     demand(total <= 4194304, "node_binding_limit")
-    binding := {"schema":"dispatch.node-input-binding/v1alpha1", "graph":{"run_id":graph["run_id"], "workflow_ref":"sha256:" + sha256(to_json(graph["workflow_definition"]))}, "node_id":id, "consumer":{"run_id":node["state"]["run_id"], "step_id":node["declaration"]["step_id"], "attempt_id":"1"}, "predecessors":predecessors, "inputs":inputs, "artifacts":refs}
+    binding := {"schema":input_binding_schema(graph), "graph":{"run_id":graph["run_id"], "workflow_ref":"sha256:" + sha256(to_json(graph["workflow_definition"]))}, "node_id":id, "consumer":{"run_id":node["state"]["run_id"], "step_id":node["declaration"]["step_id"], "attempt_id":"1"}, "predecessors":predecessors, "inputs":inputs, "artifacts":refs}
     return {"binding":binding, "artifacts":unique, "node":node}
 }
-func retain(state, raws) {
+export func retain(state, raws) {
     ensure_dir(state["run_dir"] + "/node-input")
     for raw in raws {
         path := "node-input/" + sha256(raw) + ".raw"
@@ -178,13 +189,22 @@ export func read_bound_node_input(state, name) {
 export func advance_composed_step(graph, index, options) {
     loaded := load_run_state(graph["output_root"], graph["run_id"]);demand(loaded["ok"], "node_graph_missing");graph = loaded["run_state"]
     host := runtime(graph, options);id := graph["steps"][index]["id"]
+    if graph_contract(spec(graph, id)) != "parent-finalization/v1alpha1" {
+        checked := local_node_inputs(graph, id, host)
+        if has_key(dict_get_or(graph, "graph_node_bindings", {}), id) == 0 {
+            retain(graph, checked["artifacts"])
+            latest := local_node_inputs(graph, id, host);demand(same(checked["binding"], latest["binding"]), "stale_graph_input")
+            graph = persist_node_transition(graph, "graph_node_bound", checked["binding"])
+        } else {demand(same(graph["graph_node_bindings"][id], checked["binding"]), "graph_input_immutable")}
+        return {"ok":true, "paused":true, "reason":"node_terminal_evidence_required", "run_state":graph}
+    }
     checked := prepare(graph, id, host)
     boundary := dict_get_or(options, "node_boundary", null)
     if type(boundary) == "function" {boundary("before_node_binding", id)}
     child := bind_locked(graph, id, checked["binding"], host)
     if type(boundary) == "function" {boundary("after_node_binding", id)}
     if has_key(child, "parent_finalization") {
-        terminal := completed(endpoint(graph, id, host));retain(graph, terminal["artifacts"])
+        terminal := node_terminal(graph, id, host, false);retain(graph, terminal["artifacts"])
         references := [];for raw in terminal["artifacts"] {references = push(references, "sha256:" + sha256(raw))}
         graph = persist_node_transition(graph, "node_terminal_observed", {"node_id":id, "terminal":terminal["identity"], "artifacts":references})
         return {"ok":true, "paused":false, "run_state":graph}
@@ -198,4 +218,57 @@ export func advance_composed_step(graph, index, options) {
     graph["status"] := "paused";steps := graph["steps"];step := steps[index];step["status"] := "paused";steps[index] := step;graph["steps"] := steps;graph["current_step_index"] := index
     graph = persist_run_state(graph)
     return {"ok":true, "paused":true, "reason":"node_requires_independent_finalization", "run_state":graph}
+}
+
+func input_binding_schema(graph) {if heterogeneous_graph(graph) {return "dispatch.node-input-binding/v1alpha2"};return "dispatch.node-input-binding/v1alpha1"}
+func node_input_edges(step) {if graph_contract(step) == "parent-finalization/v1alpha1" {return step["config"]["node_execution"]["inputs"]};return step["config"]["inputs"]}
+# Closed host-owned terminal variants. A descriptive kind is never consulted.
+export func node_terminal(graph, id, host, success) {
+    step := spec(graph, id);contract := graph_contract(step)
+    prior := dict_get_or(dict_get_or(graph, "node_completions", {}), id, null)
+    if heterogeneous_graph(graph)&&prior != null&&prior["terminal"]["outcome"] == "cancelled"&&step["optional"] {
+        receipt := parse_json(node_raw(graph, prior["terminal"]["facts_ref"]))
+        if dict_get_or(dict_get_or(receipt, "candidate", {}), "fact_type", "") == "optional_cancel" {
+            demand(success == false, "node_dependency_not_successful");raws := [];for ref in prior["artifacts"] {raws = push(raws, node_raw(graph, ref))}
+            return {"identity":prior["terminal"], "receipt":receipt, "artifacts":raws}
+        }
+    }
+    if contract == "parent-finalization/v1alpha1" {
+        node := endpoint(graph, id, host);terminal := completed(node, success)
+        if heterogeneous_graph(graph) {
+            old := terminal["identity"]
+            terminal["identity"] := {"schema":"dispatch.node-terminal/v1alpha1", "node_id":id, "contract":contract, "subject":old["subject"], "facts_ref":old["finalization_ref"], "finalized_revision":old["finalized_revision"], "outcome":old["outcome"], "authority_ref":"sha256:" + node["state"]["assurance_negotiation"]["config_revision"]}
+        }
+        return terminal
+    }
+    observed := graph["node_completions"][id];identity := observed["terminal"]
+    demand(identity["contract"] == contract, "node_terminal_contract_mismatch")
+    raws := [];for ref in observed["artifacts"] {raws = push(raws, node_raw(graph, ref))}
+    receipt := parse_json(node_raw(graph, identity["facts_ref"]))
+    demand(receipt["candidate"]["node_id"] == id&&receipt["resulting_revision"] == identity["finalized_revision"]&&receipt["candidate"]["outcome"] == identity["outcome"], "node_terminal_receipt_mismatch")
+    if success {demand(identity["outcome"] == "completed", "node_dependency_not_successful")}
+    return {"identity":identity, "receipt":receipt, "artifacts":raws}
+}
+export func local_node_inputs(graph, id, host) {
+    step := spec(graph, id);predecessors := [];inputs := [];raws := [];refs := []
+    for dependency in step["depends_on"] {
+        terminal := node_terminal(graph, dependency, host, true)
+        predecessors = push(predecessors, {"node_id":dependency, "terminal":terminal["identity"]})
+        for raw in terminal["artifacts"] {raws = push(raws, raw)}
+    }
+    for edge in node_input_edges(step) {
+        bound := output(graph, edge["source_node"], edge["source_output"], edge["type_id"], host)
+        item := bound["input"];item["name"] := edge["name"];inputs = push(inputs, item)
+        for raw in bound["artifacts"] {raws = push(raws, raw)}
+    }
+    total := 0;unique := []
+    for raw in raws {ref := "sha256:" + sha256(raw);if contains(refs, ref) == false {refs = push(refs, ref);unique = push(unique, raw);total = total + byte_length(raw)}}
+    demand(total <= 4194304, "node_binding_limit")
+    return {"binding":{"schema":"dispatch.node-terminal-input/v1alpha1", "node_id":id, "graph":{"run_id":graph["run_id"], "workflow_ref":"sha256:" + sha256(to_json(graph["workflow_definition"]))}, "instance_id":"1", "predecessors":predecessors, "inputs":inputs, "artifacts":refs}, "artifacts":unique}
+}
+export func program_node_state(graph, id, host) {return endpoint(graph, id, host)["state"]}
+
+export func validate_node_outputs(graph, id, host) {
+    for item in spec(graph, id)["config"]["node_execution"]["outputs"] {output(graph, id, item["name"], item["type_id"], host)}
+    return true
 }

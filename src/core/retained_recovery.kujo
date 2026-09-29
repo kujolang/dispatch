@@ -1,3 +1,4 @@
+from src.core.graph_transition import graph_event
 from src.core.node_transition import apply_node_transition, node_history_projection, node_recovery_safe, node_claim_path, node_reference, node_raw, validate_node_binding_bytes
 # Operator-only retained-host reconciliation. No adapter execution is imported.
 from src.core.parent_transition import apply_parent_decision, validate_parent_artifacts
@@ -39,7 +40,7 @@ func event_check(state, event, sequence, previous) {
 func advance(state, event) {
     demand((state["status"] == "paused"&&dict_get_or(dict_get_or(state, "current_control_boundary", {}), "status", "") == "open")||has_key(state, "parent_finalization")||node_recovery_safe(state), "unsupported_active_state")
     demand(event["state_revision"] == state["revision"], "state_revision_divergence")
-    if contains(["node_inputs_bound", "node_execution_admitted", "node_start_requested", "node_terminal_observed"], event["kind"]) {state = apply_node_transition(state, event["kind"], event["details"])}
+    if graph_event(event["kind"])||contains(["node_inputs_bound", "node_execution_admitted", "node_start_requested", "node_terminal_observed"], event["kind"]) {state = apply_node_transition(state, event["kind"], event["details"])}
     else if event["kind"] == "parent_finalized" {state = apply_parent_decision(state, event["details"])}
     else if event["kind"] == "effect_lifecycle_recorded" {
         before := dict_get_or(state, "effect_lifecycle", []);after := event["details"]["effect_lifecycle"]
@@ -179,6 +180,8 @@ func analyze(state) {
     }
     node_binding := dict_get_or(reconstructed, "node_input_binding", null)
     node_refs := [];if node_binding != null {node_refs = node_binding["artifacts"]}
+    for id in keys(dict_get_or(reconstructed, "graph_node_bindings", {})) {for ref in reconstructed["graph_node_bindings"][id]["artifacts"] {node_refs = push(node_refs, ref)}}
+    if has_key(reconstructed, "graph_finalization") {for ref in reconstructed["graph_finalization"]["artifacts"] {node_refs = push(node_refs, ref)}}
     for id in keys(dict_get_or(reconstructed, "node_completions", {})) {for ref in reconstructed["node_completions"][id]["artifacts"] {node_refs = push(node_refs, ref)}}
     for file in files {
         path := file["path"]

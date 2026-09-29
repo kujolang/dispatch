@@ -89,6 +89,11 @@ run_suite() {
 run_suite typescript_build npm --prefix interop/typescript-participant run build
 run_suite preservation_binding "$KUJO_BIN" run tests/preservation_binding_tests.kujo
 run_suite parent_finalization env KUJO_BIN="$KUJO_BIN" node tests/parent_finalization_integration.mjs
+run_suite heterogeneous_contracts "$KUJO_BIN" run tests/heterogeneous_contract_tests.kujo
+run_suite heterogeneous_integration env KUJO_BIN="$KUJO_BIN" node tests/heterogeneous_integration.mjs
+run_suite heterogeneous_policy env KUJO_BIN="$KUJO_BIN" node tests/heterogeneous_policy.mjs
+run_suite heterogeneous_recovery env KUJO_BIN="$KUJO_BIN" node tests/heterogeneous_recovery.mjs
+run_suite heterogeneous_vectors "$KUJO_BIN" run tests/portable_commitments.kujo tests/vectors/heterogeneous-terminals.json
 run_suite node_contracts "$KUJO_BIN" run tests/node_contract_tests.kujo
 run_suite node_composition env KUJO_BIN="$KUJO_BIN" node tests/node_composition_integration.mjs
 run_suite node_policy env KUJO_BIN="$KUJO_BIN" node tests/node_composition_policy.mjs

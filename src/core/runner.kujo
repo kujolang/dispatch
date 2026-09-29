@@ -1,5 +1,6 @@
 from src.core.node_composition import validate_composed_definition, advance_composed_step
 from src.core.node_transition import composition_graph
+from src.core.graph_transition import heterogeneous_graph, graph_contract
 from src.core.control import parent_completion_review
 from src.core.assurance_state import node_controller_features, assurance_protected, validate_assurance_anchor
 from src.core.assurance_configuration import check_negotiated_execution, resolve_run_configuration
@@ -1311,6 +1312,7 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
     run_state["status"] := "running"
     total_steps := len(run_state["steps"])
     index := run_state["current_step_index"]
+    if heterogeneous_graph(run_state) {index = 0}
     cycle_progress := false
     precomputed_results := {}
 
@@ -1319,6 +1321,7 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
         if checked["ok"] == false {return checked}
         budget_error := budget_limit_error(workflow, run_state, true)
         if type(budget_error) == "dict" {
+            if heterogeneous_graph(run_state) {return pause_graph_outcome(run_state, "graph_budget_blocked")}
             run_state["status"] := "failed"
             run_state["errors"] := push(run_state["errors"], {"step_id": "workflow", "error": budget_error, "timestamp": format_date(now(), "YYYY-MM-DD HH:mm:ss")})
             run_state["trace"] := append_trace(run_state["trace"], "workflow_budget_exceeded", "workflow", budget_error["message"], budget_error["details"])
@@ -1333,9 +1336,11 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
         }
         if index >= total_steps {
             if all_steps_completed(run_state["steps"]) {
+                if heterogeneous_graph(run_state) {return pause_graph_outcome(run_state, "graph_terminal_decision_required")}
                 break
             }
             if cycle_progress == false {
+                if heterogeneous_graph(run_state) {return pause_graph_outcome(run_state, "graph_dependency_blocked")}
                 boundary := dict_get_or(run_state, "current_control_boundary", null)
                 if type(boundary) == "dict"&&dict_get_or(boundary, "status", "") == "open"&&dict_get_or(boundary, "quiescing", false) {
                     return finish_control_quiescence(run_state)
@@ -1375,6 +1380,7 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
         }
         cancel_before_step := cancellation_requested(step, options, run_state, false)
         if cancel_before_step["cancel"] {
+            if heterogeneous_graph(run_state) {return pause_graph_outcome(run_state, "graph_cancellation_requires_decision")}
             return build_cancelled_result(run_state, cancel_before_step["reason"], options)
         }
         if step_dependencies_satisfied(run_state["steps"], step) == false {
@@ -1382,7 +1388,7 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
             continue
         }
         existing_status := dict_get_or(step, "status", "pending")
-        if existing_status == "completed"||existing_status == "skipped" {
+        if existing_status == "completed"||existing_status == "skipped"||heterogeneous_graph(run_state)&&contains(["failed", "cancelled", "rejected"], existing_status) {
             index := index + 1
             run_state["current_step_index"] := index
             continue
@@ -1390,7 +1396,11 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
 
         if composition_graph(run_state) {
             composed := advance_composed_step(run_state, index, options)
-            if composed["ok"] == false||composed["paused"] {return composed}
+            if composed["ok"] == false {return composed}
+            if composed["paused"] {
+                if heterogeneous_graph(run_state)&&graph_contract(step) != "parent-finalization/v1alpha1" {run_state = composed["run_state"];index = index + 1;continue}
+                return composed
+            }
             run_state = composed["run_state"]
             index = index + 1;cycle_progress = true
             run_state["current_step_index"] := index
@@ -1878,3 +1888,10 @@ export observe_dispatch_attempt := observe_dispatch_attempt
 
 # Internal entrypoint for the CLI decision transaction, which already owns the run lock.
 export run_workflow_under_lock := run_workflow_unlocked
+
+# A derived readiness scan cannot publish graph terminal authority.
+func pause_graph_outcome(state, reason) {
+    loaded := load_run_state(state["output_root"], state["run_id"]);if loaded["ok"] == false {return loaded};state = loaded["run_state"]
+    state["status"] := "paused";state["current_step_index"] := 0;state = persist_run_state(state)
+    return {"ok":true, "paused":true, "reason":reason, "run_state":state}
+}

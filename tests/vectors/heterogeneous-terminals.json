@@ -1,0 +1,207 @@
+{
+  "schema": "dispatch.commitment-vectors/v1",
+  "algorithm": "sha256",
+  "encoding": "utf-8",
+  "output": "lowercase-hex-unprefixed",
+  "vectors": [
+    {
+      "name": "human-approved",
+      "recipe": "portable_json",
+      "input": {
+        "schema": "dispatch.node-terminal/v1alpha1",
+        "node_id": "H",
+        "contract": "intervention-decision/v2",
+        "subject": {
+          "run_id": "graph",
+          "step_id": "H",
+          "decision_instance": "1"
+        },
+        "facts_ref": "sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6",
+        "finalized_revision": 19,
+        "outcome": "completed",
+        "authority_ref": "sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68"
+      },
+      "preimage_utf8": "{\"authority_ref\":\"sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68\",\"contract\":\"intervention-decision/v2\",\"facts_ref\":\"sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6\",\"finalized_revision\":19,\"node_id\":\"H\",\"outcome\":\"completed\",\"schema\":\"dispatch.node-terminal/v1alpha1\",\"subject\":{\"decision_instance\":\"1\",\"run_id\":\"graph\",\"step_id\":\"H\"}}",
+      "sha256": "ee79b25938dfd1e4b05d5dcd7ff81563ccc87953e3badf408165661ab8fcabca"
+    },
+    {
+      "name": "human-denied",
+      "recipe": "portable_json",
+      "input": {
+        "schema": "dispatch.node-terminal/v1alpha1",
+        "node_id": "H",
+        "contract": "intervention-decision/v2",
+        "subject": {
+          "run_id": "graph",
+          "step_id": "H",
+          "decision_instance": "1"
+        },
+        "facts_ref": "sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6",
+        "finalized_revision": 19,
+        "outcome": "rejected",
+        "authority_ref": "sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68"
+      },
+      "preimage_utf8": "{\"authority_ref\":\"sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68\",\"contract\":\"intervention-decision/v2\",\"facts_ref\":\"sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6\",\"finalized_revision\":19,\"node_id\":\"H\",\"outcome\":\"rejected\",\"schema\":\"dispatch.node-terminal/v1alpha1\",\"subject\":{\"decision_instance\":\"1\",\"run_id\":\"graph\",\"step_id\":\"H\"}}",
+      "sha256": "b3291f99fff2526a2209ec7b3dab99e49ef4bf1b6844f97bf40b12b45c29d4b3"
+    },
+    {
+      "name": "evaluation-terminal",
+      "recipe": "portable_json",
+      "input": {
+        "schema": "dispatch.node-terminal/v1alpha1",
+        "node_id": "H",
+        "contract": "evaluation-result/v1",
+        "subject": {
+          "run_id": "graph",
+          "step_id": "H",
+          "decision_instance": "1"
+        },
+        "facts_ref": "sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6",
+        "finalized_revision": 19,
+        "outcome": "completed",
+        "authority_ref": "sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68"
+      },
+      "preimage_utf8": "{\"authority_ref\":\"sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68\",\"contract\":\"evaluation-result/v1\",\"facts_ref\":\"sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6\",\"finalized_revision\":19,\"node_id\":\"H\",\"outcome\":\"completed\",\"schema\":\"dispatch.node-terminal/v1alpha1\",\"subject\":{\"decision_instance\":\"1\",\"run_id\":\"graph\",\"step_id\":\"H\"}}",
+      "sha256": "411ebcb56bb5fdac0c3cd68c14512c80fa50d509115b0b5882bb7668ca31545a"
+    },
+    {
+      "name": "different-terminal-revision",
+      "recipe": "portable_json",
+      "input": {
+        "schema": "dispatch.node-terminal/v1alpha1",
+        "node_id": "H",
+        "contract": "intervention-decision/v2",
+        "subject": {
+          "run_id": "graph",
+          "step_id": "H",
+          "decision_instance": "1"
+        },
+        "facts_ref": "sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6",
+        "finalized_revision": 20,
+        "outcome": "completed",
+        "authority_ref": "sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68"
+      },
+      "preimage_utf8": "{\"authority_ref\":\"sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68\",\"contract\":\"intervention-decision/v2\",\"facts_ref\":\"sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6\",\"finalized_revision\":20,\"node_id\":\"H\",\"outcome\":\"completed\",\"schema\":\"dispatch.node-terminal/v1alpha1\",\"subject\":{\"decision_instance\":\"1\",\"run_id\":\"graph\",\"step_id\":\"H\"}}",
+      "sha256": "a7d0757b1d5484e68174345487279045e1f3a851cdc29c5a8acce52516707fc4"
+    },
+    {
+      "name": "different-authority",
+      "recipe": "portable_json",
+      "input": {
+        "schema": "dispatch.node-terminal/v1alpha1",
+        "node_id": "H",
+        "contract": "intervention-decision/v2",
+        "subject": {
+          "run_id": "graph",
+          "step_id": "H",
+          "decision_instance": "1"
+        },
+        "facts_ref": "sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6",
+        "finalized_revision": 19,
+        "outcome": "completed",
+        "authority_ref": "sha256:4bb47f186df233e48b09d241ee4defb821add0c35ac8311469fe1522c6813dd5"
+      },
+      "preimage_utf8": "{\"authority_ref\":\"sha256:4bb47f186df233e48b09d241ee4defb821add0c35ac8311469fe1522c6813dd5\",\"contract\":\"intervention-decision/v2\",\"facts_ref\":\"sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6\",\"finalized_revision\":19,\"node_id\":\"H\",\"outcome\":\"completed\",\"schema\":\"dispatch.node-terminal/v1alpha1\",\"subject\":{\"decision_instance\":\"1\",\"run_id\":\"graph\",\"step_id\":\"H\"}}",
+      "sha256": "c2438466ca973d899b23c5eb0e6ca7ee4faa0013d9c3504bbb832f98d083a432"
+    },
+    {
+      "name": "consumer-with-human-prerequisite",
+      "recipe": "portable_json",
+      "input": {
+        "schema": "dispatch.node-input-binding/v1alpha2",
+        "graph": {
+          "run_id": "graph",
+          "workflow_ref": "sha256:5bf0c8be1e4a38fb76f5a35d6ee5cf5964872d47128e917e9287f6f71ea3c479"
+        },
+        "node_id": "B",
+        "consumer": {
+          "run_id": "consumer",
+          "step_id": "action",
+          "attempt_id": "1"
+        },
+        "predecessors": [
+          {
+            "node_id": "H",
+            "terminal": {
+              "schema": "dispatch.node-terminal/v1alpha1",
+              "node_id": "H",
+              "contract": "intervention-decision/v2",
+              "subject": {
+                "run_id": "graph",
+                "step_id": "H",
+                "decision_instance": "1"
+              },
+              "facts_ref": "sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6",
+              "finalized_revision": 19,
+              "outcome": "completed",
+              "authority_ref": "sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68"
+            }
+          }
+        ],
+        "inputs": [
+          {
+            "producer_node": "A",
+            "producer_subject": {
+              "run_id": "producer",
+              "step_id": "action",
+              "attempt_id": "1"
+            },
+            "result_ref": "sha256:dab1f9f0f88f2131eea4a3df0415d3e492c2151ccdc9c9e16e340ce78796ec7b",
+            "finalization_ref": "sha256:9d344158ebdfdeba22837fcafdd28995e05b9c2c06df37fedd4dd7aa162fb89e",
+            "finalized_revision": 17,
+            "output_name": "report",
+            "type_id": "kujo.example/node-summary/v1",
+            "schema_ref": "sha256:df0ad6e43880f09c90ebf95f19110178aba6890df0010ebda7485029e2b543b4",
+            "evidence_ref": "sha256:45447b7afbd5e544f7d0f1df0fccd26014d9850130abd3f020b89ff96b82079f",
+            "content_ref": "sha256:4d7459b3eb4d7c8f99bbbf2baafb44db2dfdf2843ee16e956385a7dd0718bf16",
+            "name": "input"
+          }
+        ],
+        "artifacts": [
+          "sha256:9d344158ebdfdeba22837fcafdd28995e05b9c2c06df37fedd4dd7aa162fb89e",
+          "sha256:dab1f9f0f88f2131eea4a3df0415d3e492c2151ccdc9c9e16e340ce78796ec7b",
+          "sha256:45447b7afbd5e544f7d0f1df0fccd26014d9850130abd3f020b89ff96b82079f",
+          "sha256:4d7459b3eb4d7c8f99bbbf2baafb44db2dfdf2843ee16e956385a7dd0718bf16"
+        ]
+      },
+      "preimage_utf8": "{\"artifacts\":[\"sha256:9d344158ebdfdeba22837fcafdd28995e05b9c2c06df37fedd4dd7aa162fb89e\",\"sha256:dab1f9f0f88f2131eea4a3df0415d3e492c2151ccdc9c9e16e340ce78796ec7b\",\"sha256:45447b7afbd5e544f7d0f1df0fccd26014d9850130abd3f020b89ff96b82079f\",\"sha256:4d7459b3eb4d7c8f99bbbf2baafb44db2dfdf2843ee16e956385a7dd0718bf16\"],\"consumer\":{\"attempt_id\":\"1\",\"run_id\":\"consumer\",\"step_id\":\"action\"},\"graph\":{\"run_id\":\"graph\",\"workflow_ref\":\"sha256:5bf0c8be1e4a38fb76f5a35d6ee5cf5964872d47128e917e9287f6f71ea3c479\"},\"inputs\":[{\"content_ref\":\"sha256:4d7459b3eb4d7c8f99bbbf2baafb44db2dfdf2843ee16e956385a7dd0718bf16\",\"evidence_ref\":\"sha256:45447b7afbd5e544f7d0f1df0fccd26014d9850130abd3f020b89ff96b82079f\",\"finalization_ref\":\"sha256:9d344158ebdfdeba22837fcafdd28995e05b9c2c06df37fedd4dd7aa162fb89e\",\"finalized_revision\":17,\"name\":\"input\",\"output_name\":\"report\",\"producer_node\":\"A\",\"producer_subject\":{\"attempt_id\":\"1\",\"run_id\":\"producer\",\"step_id\":\"action\"},\"result_ref\":\"sha256:dab1f9f0f88f2131eea4a3df0415d3e492c2151ccdc9c9e16e340ce78796ec7b\",\"schema_ref\":\"sha256:df0ad6e43880f09c90ebf95f19110178aba6890df0010ebda7485029e2b543b4\",\"type_id\":\"kujo.example/node-summary/v1\"}],\"node_id\":\"B\",\"predecessors\":[{\"node_id\":\"H\",\"terminal\":{\"authority_ref\":\"sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68\",\"contract\":\"intervention-decision/v2\",\"facts_ref\":\"sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6\",\"finalized_revision\":19,\"node_id\":\"H\",\"outcome\":\"completed\",\"schema\":\"dispatch.node-terminal/v1alpha1\",\"subject\":{\"decision_instance\":\"1\",\"run_id\":\"graph\",\"step_id\":\"H\"}}}],\"schema\":\"dispatch.node-input-binding/v1alpha2\"}",
+      "sha256": "830c12b0d96fd6dee94612f5d21d6d4f111930af4e64e305aea96844f4918dcb"
+    },
+    {
+      "name": "graph-required-outcomes",
+      "recipe": "portable_json",
+      "input": {
+        "schema": "dispatch.graph-outcome-candidate/v1alpha1",
+        "graph": {
+          "run_id": "graph",
+          "workflow_ref": "sha256:4c4ed1afbfdaa1e4c3bf7bbb82d730cecb7e384da91eea4f3cc093fd545524d6"
+        },
+        "nodes": [
+          {
+            "node_id": "H",
+            "required": true,
+            "terminal": {
+              "schema": "dispatch.node-terminal/v1alpha1",
+              "node_id": "H",
+              "contract": "intervention-decision/v2",
+              "subject": {
+                "run_id": "graph",
+                "step_id": "H",
+                "decision_instance": "1"
+              },
+              "facts_ref": "sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6",
+              "finalized_revision": 19,
+              "outcome": "completed",
+              "authority_ref": "sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68"
+            },
+            "reason": "terminal"
+          }
+        ],
+        "outcome": "completed",
+        "policy": "required-success/no-unfinished-admission/v1alpha1"
+      },
+      "preimage_utf8": "{\"graph\":{\"run_id\":\"graph\",\"workflow_ref\":\"sha256:4c4ed1afbfdaa1e4c3bf7bbb82d730cecb7e384da91eea4f3cc093fd545524d6\"},\"nodes\":[{\"node_id\":\"H\",\"reason\":\"terminal\",\"required\":true,\"terminal\":{\"authority_ref\":\"sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68\",\"contract\":\"intervention-decision/v2\",\"facts_ref\":\"sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6\",\"finalized_revision\":19,\"node_id\":\"H\",\"outcome\":\"completed\",\"schema\":\"dispatch.node-terminal/v1alpha1\",\"subject\":{\"decision_instance\":\"1\",\"run_id\":\"graph\",\"step_id\":\"H\"}}}],\"outcome\":\"completed\",\"policy\":\"required-success/no-unfinished-admission/v1alpha1\",\"schema\":\"dispatch.graph-outcome-candidate/v1alpha1\"}",
+      "sha256": "d0824ffe9de80231fe9a8b08c35e165945438d5b14b3c71419d36c8a33715e6c"
+    }
+  ]
+}

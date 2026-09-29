@@ -1,0 +1,15 @@
+from src.core.assurance_state import node_controller_features, decode_authoritative_state
+from src.core.graph_transition import graph_contract
+from src.core.portable_commitments import portable_json
+vectors := parse_json(read_file("tests/vectors/heterogeneous-terminals.json"));checks := 0
+for vector in vectors["vectors"] {
+    assert(portable_json(vector["input"]) == vector["preimage_utf8"]&&sha256(portable_json(vector["input"])) == vector["sha256"], "canonical commitment")
+    if vector["input"]["schema"] == "dispatch.node-terminal/v1alpha1" {assert(json_schema_validate(vector["input"], parse_json(read_file("schemas/node-terminal-v1alpha1.schema.json")))["valid"], "terminal schema")}
+    if vector["input"]["schema"] == "dispatch.node-input-binding/v1alpha2" {assert(json_schema_validate(vector["input"], parse_json(read_file("schemas/node-input-binding-v1alpha2.schema.json")))["valid"], "additive binding schema")}
+    checks = checks + 1
+}
+state := {"workflow_definition":{"metadata":{"graph_outcome":"dispatch.graph-outcome/v1alpha1"}}}
+assert(contains(node_controller_features(state, []), "heterogeneous-terminals/v1alpha1"), "required feature")
+denied := false;try {decode_authoritative_state(to_json(state))} except err {denied = true};assert(denied, "unprotected terminal contract rejects")
+assert(graph_contract({"config":{"kind":"human_review"}}) == "parent-finalization/v1alpha1", "kind alone grants no terminal semantics")
+print(to_json({"ok":true, "checks":checks + 3}))

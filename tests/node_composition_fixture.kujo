@@ -1,3 +1,5 @@
+from src.core.graph_outcome import graph_terminal_operation
+from src.core.node_transition import node_raw
 from src.core.node_composition import assess_node_inputs, bind_node_inputs, validate_bound_node_inputs, read_bound_node_input
 from src.core.node_execution import run_bound_node
 from src.core.runner import run_workflow
@@ -25,14 +27,14 @@ func pointer(path) {return parse_json(read_file(path + "/pointer.json"))}
 func state(path) {p := pointer(path);loaded := load_run_state(path + "/runs", p["run_id"]);need(loaded["ok"]);return loaded["run_state"]}
 func inventory() {
     files := []
-    for path in ["src/core/node_transition.kujo", "src/core/node_composition.kujo", "src/core/node_execution.kujo", "src/core/runner.kujo", "src/core/assurance_state.kujo", "src/core/assurance_configuration.kujo", "src/core/control_journal.kujo", "src/core/sequential_effects.kujo", "src/core/effect_context.kujo", "src/core/parent_finalization.kujo", "src/core/parent_transition.kujo", "src/core/preservation_binding.kujo", "src/core/state.kujo", "src/adapters/sqlite_continuation.kujo", "tests/node_composition_fixture.kujo"] {files = push(files, {"root":os_getcwd(), "path":path})}
+    for path in ["src/core/graph_outcome.kujo", "src/core/graph_transition.kujo", "src/core/node_transition.kujo", "src/core/node_composition.kujo", "src/core/node_execution.kujo", "src/core/runner.kujo", "src/core/assurance_state.kujo", "src/core/assurance_configuration.kujo", "src/core/control_journal.kujo", "src/core/sequential_effects.kujo", "src/core/parent_finalization.kujo", "src/core/preservation_binding.kujo", "src/core/state.kujo", "src/adapters/sqlite_continuation.kujo", "tests/node_composition_fixture.kujo"] {files = push(files, {"root":os_getcwd(), "path":path})}
     files = push(files, {"root":os_getcwd() + "/../workcell", "path":"src/evidence/retained_workspace.kujo"});return files
 }
 func descriptor(path) {return {"schema":"dispatch.assurance-configuration/v1beta1", "mode":"required", "fallback":"deny", "profile":"dispatch.sqlite-unique", "profile_version":"1beta1", "issuer":"sqlite-local", "mechanism":"sqlite_unique_transaction", "verifier_id":"node-host", "verifier_version":"1", "verifier_sha256":implementation_digest(inventory()), "authority_sha256":sha256(path)}}
-func graph_options() {return {"assurance_host":graph_host, "node_boundary":func(point, id) {if env("NODE_TARGET") == id {boundary(point)}}}}
+func graph_options() {return {"assurance_host":graph_host, "graph_boundary":func(point) {if env("GRAPH_REVOKE") == point {config := cfg(base);config["operator_enabled"] := false;write_file(base + "/host.json", to_json(config), true)};boundary(point)}, "node_boundary":func(point, id) {if env("NODE_TARGET") == id {boundary(point)}}}}
 func graph_host(revision, current) {
     config := cfg(base)
-    host := {"resolve":func(id) {path := base + "/" + id;return {"root":path + "/runs", "run_id":pointer(path)["run_id"], "options":node_options(path)}}, "start":func(id, binding) {
+    host := {"authorize_graph":func(actor, graph, intent) {return actor["id"] == "local-operator"&&actor["authenticated_by"] == "installed-local-host"&&actor["authorization"] == "graph-finalization"&&dict_get_or(cfg(base), "operator_enabled", true)}, "authorize_decision":func(decision, graph, binding) {return decision["actor"]["id"] == "local-operator"&&decision["actor"]["authenticated_by"] == "installed-local-host"&&decision["actor"]["authorization"] == "graph-review"&&dict_get_or(cfg(base), "operator_enabled", true)}, "read_evaluation":func(id, binding) {return read_file_beneath(base + "/" + id, "evaluation.json", 1048576)}, "resolve":func(id) {path := base + "/" + id;return {"root":path + "/runs", "run_id":pointer(path)["run_id"], "options":node_options(path)}}, "start":func(id, binding) {
         command := spawn_process([env("KUJO_BIN"), "run", "tests/node_composition_fixture.kujo", base, "start", id], {"cwd":os_getcwd(), "inherit_env":true, "timeout_ms":120000, "max_output_bytes":1048576})
         need(command.success&&command.stderr == "");write_file(base + "/" + id + "/start-response.json", command.stdout, true);return parse_json(command.stdout)
     }}
@@ -66,8 +68,17 @@ func workflow(path) {
 }
 func graph_workflow() {
     definition := parse_json(read_file(base + "/graph.json"));steps := []
-    for node in definition["nodes"] {steps = push(steps, create_step(node["id"], node["id"], "tool", {"tool_name":"installed_node", "depends_on":node["depends_on"], "node_execution":{"schema":"dispatch.run-backed-node/v1alpha1", "run_id":pointer(base + "/" + node["id"])["run_id"], "step_id":"action", "inputs":node["inputs"], "outputs":outputs()}}))}
-    return create_workflow({"id":"static-composition", "metadata":{"node_composition":"dispatch.node-composition/v1alpha1"}, "name":"Static node DAG", "description":"Separate data and scheduling", "input_schema":{"type":"dict"}, "output_schema":{"type":"dict"}, "agents":{}, "tools":[], "steps":steps, "routing":{"enabled":false}, "control":{"policy_id":"graph", "policy_version":"1", "policies":[]}, "default_retry_policy":{"max_attempts":1}, "approval_config":{"auto_approve":false}, "memory_config":{}, "budgets":{}, "max_parallel_steps":1})
+    heterogeneous := false
+    for node in definition["nodes"] {
+        node_config := {"tool_name":"installed_node", "depends_on":node["depends_on"], "optional":dict_get_or(node, "optional", false), "kind":dict_get_or(node, "kind", "program")}
+        contract := dict_get_or(node, "terminal_contract", "parent-finalization/v1alpha1")
+        if has_key(node, "terminal_contract") {heterogeneous = true;node_config["terminal_contract"] := contract}
+        if contract == "parent-finalization/v1alpha1" {node_config["node_execution"] := {"schema":"dispatch.run-backed-node/v1alpha1", "run_id":pointer(base + "/" + node["id"])["run_id"], "step_id":"action", "inputs":node["inputs"], "outputs":outputs()}}
+        else {node_config["inputs"] := node["inputs"];if contract == "evaluation-result/v1" {node_config["evaluator"] := {"name":"eval", "version":"2.0.0", "configuration_sha256":sha256(read_file(base + "/" + node["id"] + "/eval-config.json"))}}}
+        steps = push(steps, create_step(node["id"], node["id"], "tool", node_config))
+    }
+    metadata := {"node_composition":"dispatch.node-composition/v1alpha1"};if heterogeneous {metadata["graph_outcome"] := "dispatch.graph-outcome/v1alpha1"}
+    return create_workflow({"id":"static-composition", "metadata":metadata, "name":"Static node DAG", "description":"Separate data and scheduling", "input_schema":{"type":"dict"}, "output_schema":{"type":"dict"}, "agents":{}, "tools":[], "steps":steps, "routing":{"enabled":false}, "control":dict_get_or(definition, "control", {"policy_id":"graph", "policy_version":"1", "policies":[]}), "default_retry_policy":{"max_attempts":1}, "approval_config":{"auto_approve":false}, "memory_config":{}, "budgets":{}, "max_parallel_steps":1})
 }
 func action(input, context) {
     config := cfg(root);current := state(root);sources := [];value := dict_get_or(config, "seed", 1)
@@ -113,6 +124,14 @@ if mode == "init-node" {
     config := {"descriptor":descriptor(base)};write_file(base + "/host.json", to_json(config), true)
     created := create_negotiated_run(graph_workflow(), {}, base + "/runs", {}, config["descriptor"], graph_host);need(created["ok"])
     write_file(base + "/pointer.json", to_json({"run_id":created["run_state"]["run_id"], "run_dir":created["run_state"]["run_dir"]}), true);print(to_json({"ok":true}))
+} else if mode == "graph-op" {
+    request := parse_json(read_file(arguments[3]));print(to_json(graph_terminal_operation(base + "/runs", pointer(base)["run_id"], request, graph_options())))
+} else if mode == "evaluate" {
+    graph := state(base);binding := graph["graph_node_bindings"][node_id];input := binding["inputs"][0]
+    value := parse_json(node_raw(graph, input["content_ref"]));failed := 0;if value["value"] != dict_get_or(cfg(root), "expected_value", 1) {failed = 1}
+    stamp := parse_int(to_string(floor(now_utc_seconds()))) * 1000
+    evaluation := build_evaluation_result({"passed":1 - failed, "failed":failed}, root + "/eval-config.json", {"subject":input["producer_subject"], "input_evidence_ids":[input["result_ref"], input["content_ref"]]}, stamp, stamp, [])
+    write_file(root + "/evaluation.json", to_json(evaluation), true);print(to_json({"ok":true, "evaluation":evaluation}))
 } else if mode == "drive" {print(to_json(run_workflow(graph_workflow(), state(base), create_tool_registry(), graph_options())))}
 else if mode == "start" {
     current := state(root);registry := register_tool(create_tool_registry(), create_tool("action", "Node", {"type":"dict"}, {"type":"dict"}, action, null))

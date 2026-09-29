@@ -1,4 +1,6 @@
 # Pure additive projections shared by the existing journal and retained recovery.
+from src.core.graph_transition import heterogeneous_graph, graph_contract, graph_event, apply_graph_transition, graph_history_projection
+from src.core.assurance_state import node_controller_features
 from src.core.utils import dict_get_or
 from src.core.portable_commitments import portable_json
 from src.core.parent_transition import parent_state_body
@@ -13,7 +15,7 @@ export func node_raw(state, reference) {
 }
 export func node_claim_path(binding) {return "node-input/" + substring(node_reference(binding), 7, 71) + ".claim"}
 export func validate_node_binding_bytes(state, binding) {
-    require(binding["schema"] == "dispatch.node-input-binding/v1alpha1"&&binding["consumer"]["run_id"] == state["run_id"], "node_binding_subject_mismatch")
+    require(contains(["dispatch.node-input-binding/v1alpha1", "dispatch.node-input-binding/v1alpha2"], binding["schema"])&&binding["consumer"]["run_id"] == state["run_id"], "node_binding_subject_mismatch")
     require(len(binding["inputs"]) <= 8&&len(binding["predecessors"]) <= 8, "node_input_limit")
     for reference in binding["artifacts"] {node_raw(state, reference)}
     for input in binding["inputs"] {
@@ -40,10 +42,13 @@ export func node_transition_details(state, data) {
 export func apply_node_transition(state, kind, details) {
     require(details["source_sha256"] == sha256(parent_state_body(state))&&details["prior_revision"] == state["revision"]&&details["prior_journal"] == state["control_journal"]["last_sha256"], "node_transition_source_mismatch")
     data := details["data"]
+    if graph_event(kind) {return apply_graph_transition(state, kind, data)}
+    if heterogeneous_graph(state) {require(has_key(state, "graph_finalization") == 0, "graph_already_finalized")}
     if kind == "node_inputs_bound" {
         require(composition_node(state)&&has_key(state, "node_input_binding") == 0&&len(state["steps"]) == 1&&state["steps"][0]["status"] == "pending", "node_binding_not_initial")
         require(data["consumer"]["step_id"] == state["steps"][0]["id"]&&data["consumer"]["attempt_id"] == "1", "node_binding_subject_mismatch")
         validate_node_binding_bytes(state, data);state["node_input_binding"] := data
+        state["required_features"] := node_controller_features(state, state["required_features"])
     } else if kind == "node_execution_admitted" {
         require(composition_node(state)&&has_key(state, "node_execution_admission") == 0&&state["steps"][0]["status"] == "pending", "node_already_admitted")
         require(data["binding_ref"] == node_reference(state["node_input_binding"]), "node_admission_binding_mismatch")
@@ -58,13 +63,15 @@ export func apply_node_transition(state, kind, details) {
     } else if kind == "node_terminal_observed" {
         require(composition_graph(state), "node_graph_required")
         observed := dict_get_or(state, "node_completions", {});id := data["node_id"]
-        require(has_key(observed, id) == 0&&data["terminal"]["outcome"] == "completed", "node_terminal_conflict")
+        require(has_key(observed, id) == 0&&(data["terminal"]["outcome"] == "completed"||heterogeneous_graph(state)), "node_terminal_conflict")
         steps := state["steps"];matched := false
         for i in range(0, len(steps)) {
             step := steps[i]
             if step["id"] == id {
-                require(contains(["pending", "paused"], step["status"])&&step["config"]["node_execution"]["run_id"] == data["terminal"]["subject"]["run_id"], "node_terminal_subject_mismatch")
-                step["status"] := "completed";step["output"] := data["terminal"];steps[i] := step;state["current_step_index"] := i + 1;matched = true
+                expected_run := state["run_id"];if graph_contract(step) == "parent-finalization/v1alpha1" {expected_run = step["config"]["node_execution"]["run_id"]}
+                require(contains(["pending", "paused"], step["status"])&&expected_run == data["terminal"]["subject"]["run_id"], "node_terminal_subject_mismatch")
+                if heterogeneous_graph(state) {require(data["terminal"]["schema"] == "dispatch.node-terminal/v1alpha1"&&data["terminal"]["node_id"] == id&&data["terminal"]["contract"] == graph_contract(step)&&contains(["completed", "failed", "rejected", "cancelled"], data["terminal"]["outcome"]), "node_terminal_contract_mismatch")}
+                step["status"] := data["terminal"]["outcome"];step["output"] := data["terminal"];steps[i] := step;state["current_step_index"] := i + 1;matched = true
             }
         }
         require(matched, "node_missing")
@@ -75,6 +82,7 @@ export func apply_node_transition(state, kind, details) {
     return state
 }
 export func node_history_projection(state, events) {
+    graph_history_projection(state, events)
     binding := null;admission := null;completed := {};dispatches := {}
     for event in events {
         kind := event["kind"]
@@ -88,12 +96,12 @@ export func node_history_projection(state, events) {
     if binding != null {validate_node_binding_bytes(state, binding)}
     validate_node_claim(state)
     if composition_graph(state) {
-        for step in state["steps"] {if contains(["completed", "skipped"], step["status"]) {require(step["status"] == "completed"&&has_key(completed, step["id"]), "node_terminal_authority_missing")}}
+        for step in state["steps"] {if contains(["completed", "skipped", "failed", "cancelled", "rejected"], step["status"]) {require(step["status"] != "skipped"&&has_key(completed, step["id"]), "node_terminal_authority_missing")}}
     }
     for id in keys(completed) {
         for reference in completed[id]["artifacts"] {node_raw(state, reference)}
         matched := false
-        for step in state["steps"] {if step["id"] == id {require(step["status"] == "completed"&&to_json(step["output"]) == to_json(completed[id]["terminal"]), "node_terminal_state_mismatch");matched = true}}
+        for step in state["steps"] {if step["id"] == id {require(step["status"] == completed[id]["terminal"]["outcome"]&&to_json(step["output"]) == to_json(completed[id]["terminal"]), "node_terminal_state_mismatch");matched = true}}
         require(matched, "node_missing")
     }
     return true
