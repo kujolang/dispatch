@@ -34,7 +34,7 @@
       "cwd": "kujo",
       "command": "cargo build --release --locked",
       "status": "pass",
-      "log": "kujo-build.log"
+      "log": "kujo-build.txt"
     },
     {
       "cwd": "kujo",
@@ -45,7 +45,7 @@
       "cwd": "kujo",
       "command": "cargo test --test readme_contracts --test docs_examples",
       "status": "pass",
-      "log": "kujo-docs.log"
+      "log": "kujo-docs.txt"
     },
     {
       "cwd": "dispatch",
@@ -74,7 +74,7 @@
       "cwd": "dispatch",
       "command": "KUJO_BIN=$PWD/../kujo/target/release/kujo DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
       "status": "pass",
-      "log": "dispatch-release-gate.log",
+      "log": "dispatch-release-gate.txt",
       "source_note": "Historical suites unchanged from baseline; new-suite final focused reruns are at implementation_commit. Full gate began on the initial working patch before final new-suite refinements."
     },
     {
@@ -109,16 +109,16 @@
     "crash-proof.json": {
       "sha256": "9bda539a0c3151d1fb0a65bcae64659e4977946e366a424bce3ceecfe49749c2"
     },
-    "dispatch-release-gate.log": {
+    "dispatch-release-gate.txt": {
       "sha256": "1eadf596ff2e571a6d87a1cc923325659c282c1571dc3d1ed7a4f15ebd424f7d"
     },
     "go-conformance.json": {
       "sha256": "16871e6b780faaa660db8554109c57e1fc8596ecdd0e3ee8401c3d14768caf7f"
     },
-    "kujo-build.log": {
+    "kujo-build.txt": {
       "sha256": "92fcd4ac7fa54ca2db5a73a471e5e3ae96fcc6164d80bca00da344ec345952a2"
     },
-    "kujo-docs.log": {
+    "kujo-docs.txt": {
       "sha256": "2a7fd54c31f7646b342d8143f1a4be865927b6b56421e118d4b84bf9b59c56a0"
     },
     "kujo-vectors.json": {
