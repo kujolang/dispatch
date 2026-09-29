@@ -13,7 +13,7 @@ Agents SDK 1.1.2 form the pinned installer closure. Workcell 1.2.0, Ability 1.2.
 and MCP 1.2.0 are the tested optional integration cohort.
 
 Stop old workers and back up the full output root before upgrading. Never mix
-pre-1.3 lock protocols with new workers. See [upgrade and backup rollback](UPGRADING_TO_1_3.md).
+pre-1.3 lock protocols with new workers. See [upgrade and backup rollback](https://github.com/kujolang/dispatch/blob/v1.3.0/docs/UPGRADING_TO_1_3.md).
 Operator-specific staging and live-provider certification remain deployment
 responsibilities; offline and localhost fixture evidence is not a live-provider claim.
 
@@ -36,7 +36,7 @@ lock service is claimed. Windows is not certified for this POSIX controller rele
 
 ## Verification
 
-The active [release checklist](release-checklist.md) and exact-source hosted
+The active [release checklist](https://github.com/kujolang/dispatch/blob/v1.3.0/docs/release-checklist.md) and exact-source hosted
 Linux/macOS gates govern publication. Historical audit receipts remain historical.
 
 ## Review callback hardening
