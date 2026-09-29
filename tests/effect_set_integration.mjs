@@ -22,7 +22,7 @@ run('init');await killAt('participant','CRASH_BOUNDARY');await killAt('record','
 const first=JSON.parse(run('assess'));
 assert.equal(first.ok,true);assert.equal(first.parent_replay,'prohibited');
 assert.deepEqual(first.effects.map(e=>e.observed_state),['committed','unknown','not_started','not_started']);
-assert.equal(first.effects[2].next_action,'inspect_or_revalidate');
+assert.equal(first.effects[2].next_action,'inspect_or_revalidate');assert.equal(first.effects[2].blocked_by,'B');assert.equal(first.effects[3].blocked_by,'B');
 const expired=JSON.parse(run('assess',now+30));assert.equal(expired.effects[0].historical_observation,'committed');assert.equal(expired.effects[0].observed_state,'unknown');assert.equal(expired.effects[0].freshness,'stale');
 const oldFiles=Object.fromEntries(readdirSync(join(root,'artifacts')).map(f=>[f,readFileSync(join(root,'artifacts',f),'utf8')]));
 run('renew',now+30);const renewed=JSON.parse(run('assess',now+30));assert.equal(renewed.effects[0].observed_state,'committed');for(const [f,raw] of Object.entries(oldFiles))assert.equal(readFileSync(join(root,'artifacts',f),'utf8'),raw);

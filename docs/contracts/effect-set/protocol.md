@@ -130,7 +130,9 @@ position, so no redundant ordinal is added. Repeated authority/target/scope/key
 tuples reject as ambiguous even when effect IDs differ; key spelling is not a
 proof that two separately named effects occurred. A missing observation is unknown,
 not proof of absence. `blocked` is a control condition for a later unstarted effect,
-not a new execution-result state. Compensation is untouched in the original result;
+not a new execution-result state. Assessment rows expose `blocked_by` as the
+first incomplete prefix effect ID (or null), independently of their own observed
+state and freshness. Compensation is untouched in the original result;
 this assessor neither verifies compensation nor uses it as replay permission.
 
 The host MUST supply its current immutable plan, confined artifact reader and

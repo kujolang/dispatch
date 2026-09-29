@@ -28,7 +28,7 @@ export func assess_effect_set(result_raw, set_raw, trusted_plan, read_artifact, 
         if trusted_plan["preserve_until"] < 0||trusted_plan["preserve_until"] > 253402300799 {return denied("plan_invalid")}
         entries := trusted_plan["effects"]
         if type(entries) != "array"||len(entries) < 1||len(entries) > 8||len(entries) != len(result["effects"])||type(doc["observations"]) != "array"||len(doc["observations"]) != len(entries) {return denied("plan_invalid")}
-        rows := []; seen := []; sink_keys := []; all_complete := true; prefix_complete := true
+        rows := []; seen := []; sink_keys := []; all_complete := true; prefix_complete := true; blocking_effect := null
         fresh_environment := at_seconds < trusted_plan["preserve_until"]
         for index in range(0, len(entries)) {
             entry := entries[index]; effect := result["effects"][index]
@@ -65,8 +65,8 @@ export func assess_effect_set(result_raw, set_raw, trusted_plan, read_artifact, 
             if observed == "committed" {next_action = "retain_completion"}
             else {all_complete = false}
             if observed == "not_started"&&effect["state"] == "not_started"&&prefix_complete {next_action = "candidate_for_locked_admission"}
-            rows = push(rows, {"effect_id": entry["effect_id"], "reported_state": effect["state"], "historical_observation": historical, "observed_state": observed, "freshness": freshness, "evidence_ref": evidence, "next_action": next_action})
-            if observed != "committed" {prefix_complete = false}
+            rows = push(rows, {"effect_id": entry["effect_id"], "reported_state": effect["state"], "historical_observation": historical, "observed_state": observed, "freshness": freshness, "evidence_ref": evidence, "next_action": next_action, "blocked_by": blocking_effect})
+            if observed != "committed" {prefix_complete = false; if blocking_effect == null {blocking_effect = entry["effect_id"]}}
         }
         condition := "partial_or_uncertain"
         if all_complete {condition = "all_observed_complete"}
