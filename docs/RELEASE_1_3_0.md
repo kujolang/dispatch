@@ -38,3 +38,12 @@ lock service is claimed. Windows is not certified for this POSIX controller rele
 
 The active [release checklist](release-checklist.md) and exact-source hosted
 Linux/macOS gates govern publication. Historical audit receipts remain historical.
+
+## Review callback hardening
+
+`resume-decision` applies the same configured tool allow/deny policy as ordinary
+resume, including model-requested tools. Invalid policies fail before decision
+state is changed. A legacy approval authorizes its identified step only; later
+gates still require review. Concurrent deliveries of the same legacy decision
+share one lock across validation, claim, execution and final persistence. An
+interrupted claimed decision requires recovery rather than automatic replay.

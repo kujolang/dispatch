@@ -6,6 +6,8 @@ Dispatch's version.
 
 ## [1.3.0] - 2026-09-29
 
+- Preserve configured tool authorization during v1/v2 `resume-decision`; scope legacy approvals to their reviewed step and serialize decision claim/execution/publication under the run lock.
+
 ### Added
 
 - Durable evaluation/failure policy boundaries, hash-linked control journal,

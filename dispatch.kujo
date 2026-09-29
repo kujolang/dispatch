@@ -4,7 +4,7 @@ from src.cli.cli_args import parse_cli_args, parsed_has_flag, parsed_flag_value
 from src.cli.output import print_lines, print_kv, print_error, exit_error, print_item, print_nested_item, print_report_path_if_present, read_package_version, run_version, build_contract_metadata, build_artifact_paths, print_run_completion, print_artifact_summary
 from src.core.control_journal import append_control_event, reconcile_control_journal
 from src.core.decision import normalize_decision
-from src.core.hooks import webhook_outbox_status, replay_webhook_outbox
+from src.core.hooks import webhook_outbox_status, replay_webhook_outbox, validate_webhook_options
 from src.core.intervention import validate_intervention_decision, prepare_intervention_continuation
 from src.core.plugins import create_plugin_registry, register_plugin, apply_plugins_to_runtime
 from src.core.routing import validate_workflow_routing, resolve_route, routing_policy_version, supported_route_provider
@@ -1328,11 +1328,11 @@ func load_amended_inputs(input_ref) {
     return {"ok": true, "input": amended, "path": path, "sha256": sha256(body)}
 }
 
-func run_v2_resume_decision(decision, parsed, command_args) {
+func run_v2_resume_decision(decision, parsed, command_args, config, tool_policy_settings) {
     run_id := trim(to_string(dict_get_or(decision, "run_id", "")))
     decision_id := trim(to_string(dict_get_or(decision, "decision_id", "")))
     if run_id == "" {exit_error("Dispatch v2 decisions require the additive run_id routing field.")}
-    output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
+    output_root := resolve_output_root_or_exit(dispatch_resolve_string_flag(parsed, command_args, "--output-root", config, ["output_root", "output-root"], "outputs"))
     loaded := load_run_state(output_root, run_id)
     if loaded["ok"] == false {exit_error(loaded["error"]["message"])}
     lock := acquire_run_lock(loaded["run_state"])
@@ -1420,13 +1420,14 @@ func run_v2_resume_decision(decision, parsed, command_args) {
     workflow := dispatch_resolve_resume_workflow(run_state, "", topic, false)
     sources_dir := parsed_flag_value(parsed, "--sources-dir", default_sources_dir())
     tool_registry := register_default_tools(sources_dir)
-    plugin_runtime := dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, {})
+    plugin_runtime := dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, config)
     workflow = plugin_runtime["workflow"]
     tool_registry = plugin_runtime["tool_registry"]
     result := run_workflow_under_lock(workflow, run_state, tool_registry, {
         "auto_approve": false,
         "interactive": false,
         "command_name": "resume-decision",
+        "tool_authorization_policy": tool_policy_settings["policy"],
         "webhook_sink": resolve_webhook_sink_or_exit(parsed_flag_value(parsed, "--webhook-sink", "")),
         "webhook_url": trim(parsed_flag_value(parsed, "--webhook-url", "")),
         "leash_url": trim(parsed_flag_value(parsed, "--leash-url", "")),
@@ -1464,6 +1465,9 @@ func run_resume_decision(command_args) {
     parsed := parse_cli_args(command_args, {
         "flags": {
             "--config": {"takes_value": true, "default": ""},
+            "--policy-profile": {"takes_value": true, "default": ""},
+            "--allow-tools": {"takes_value": true, "default": ""},
+            "--deny-tools": {"takes_value": true, "default": ""},
             "--checkpoint": {"takes_value": true, "default": ""},
             "--output-root": {"takes_value": true, "default": "outputs"},
             "--sources-dir": {"takes_value": true, "default": default_sources_dir()},
@@ -1476,6 +1480,14 @@ func run_resume_decision(command_args) {
     if parsed["ok"] == false {
         exit_error(parsed["error"]["message"])
     }
+    # Resolve operator policy before a decision can claim or mutate persisted state.
+    config_result := load_command_config(parsed_flag_value(parsed, "--config", ""))
+    if config_result["ok"] == false {exit_error(config_result["message"])}
+    config := config_result["config"]
+    tool_policy_settings := dispatch_resolve_tool_policy_settings(parsed, command_args, config)
+    if dict_get_or(tool_policy_settings, "ok", false) == false {exit_error(dict_get_or(tool_policy_settings, "message", "Invalid tool policy configuration."))}
+    webhook_validation := validate_webhook_options({"webhook_url": trim(parsed_flag_value(parsed, "--webhook-url", "")), "leash_url": trim(parsed_flag_value(parsed, "--leash-url", ""))})
+    if webhook_validation["ok"] == false {exit_error(to_json(webhook_validation["error"]))}
     positionals := parsed_positionals_or_empty(parsed)
     if len(positionals) < 1 {
         exit_error("decision JSON path is required for resume-decision command.")
@@ -1487,7 +1499,7 @@ func run_resume_decision(command_args) {
         exit_error("Decision payload could not be read as JSON.")
     }
     if dict_get_or(decision, "schema", "") == "kujo.intervention-decision/v2" {
-        run_v2_resume_decision(decision, parsed, command_args)
+        run_v2_resume_decision(decision, parsed, command_args, config, tool_policy_settings)
         return
     }
     if parsed_flag_value(parsed, "--checkpoint", "") != "" {exit_error("Review checkpoints require a v2 intervention decision.")}
@@ -1512,12 +1524,20 @@ func run_resume_decision(command_args) {
     if key_exists(decision_map, decision_value) == false {
         exit_error("Unsupported decision value: " + decision_value)
     }
-    output_root := resolve_output_root_or_exit(parsed_flag_value(parsed, "--output-root", "outputs"))
+    output_root := resolve_output_root_or_exit(dispatch_resolve_string_flag(parsed, command_args, "--output-root", config, ["output_root", "output-root"], "outputs"))
     loaded := load_run_state(output_root, run_id)
     if loaded["ok"] == false {
         exit_error(loaded["error"]["message"])
     }
+    lock := acquire_run_lock(loaded["run_state"])
+    if lock["ok"] == false {exit_error(to_json(lock["error"]))}
+    # Validation, claim, execution and receipt publication share one lock.
+    loaded = load_run_state(output_root, run_id)
+    if loaded["ok"] == false {exit_error(to_json(loaded["error"]))}
     run_state := loaded["run_state"]
+    recovered := reconcile_control_journal(run_state)
+    if recovered["ok"] == false {exit_error(to_json(recovered["error"]))}
+    run_state = recovered["run_state"]
     human_event := dict_get_or(run_state, "human_intervention", {})
     if dict_get_or(human_event, "event_id", "") != event_id||dict_get_or(dict_get_or(human_event, "run", {}), "step_id", "") != step_id {
         exit_error("Resume request does not match the currently suspended event and step.")
@@ -1533,11 +1553,14 @@ func run_resume_decision(command_args) {
     if type(decision_history) != "dict" {
         decision_history := {}
     }
+    if has_key(decision_history, decision_id)&&dict_get_or(decision_history[decision_id], "status", "") == "claimed" {exit_error("control_recovery_required: decision was claimed; do not replay automatically")}
     if has_key(decision_history, decision_id)&&dict_get_or(decision_history[decision_id], "status", "") == "applied" {
+        release_run_lock(lock)
         print(to_json({"status": "already_applied", "run_id": run_id, "decision_id": decision_id}))
         return
     }
     if dict_get_or(run_state, "status", "") != "paused"&&dict_get_or(run_state, "status", "") != "needs_changes" {
+        release_run_lock(lock)
         print(to_json({"status": "already_terminal", "run_id": run_id, "decision_id": decision_id, "run_status": dict_get_or(run_state, "status", "")}))
         return
     }
@@ -1555,14 +1578,16 @@ func run_resume_decision(command_args) {
     run_state := persist_run_state(run_state)
     sources_dir := parsed_flag_value(parsed, "--sources-dir", default_sources_dir())
     tool_registry := register_default_tools(sources_dir)
-    plugin_runtime := dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, {})
+    plugin_runtime := dispatch_apply_plugins(workflow, tool_registry, parsed, command_args, config)
     workflow = plugin_runtime["workflow"]
     tool_registry = plugin_runtime["tool_registry"]
     options := {
         "auto_approve": false,
         "interactive": false,
         "command_name": "resume-decision",
+        "tool_authorization_policy": tool_policy_settings["policy"],
         "simulated_decision": decision_map[decision_value],
+        "simulated_decision_step_id": step_id,
         "simulated_note": dict_get_or(decision, "response", ""),
         "webhook_sink": resolve_webhook_sink_or_exit(parsed_flag_value(parsed, "--webhook-sink", "")),
         "webhook_url": trim(parsed_flag_value(parsed, "--webhook-url", "")),
@@ -1577,7 +1602,7 @@ func run_resume_decision(command_args) {
         options["simulated_decision"] := ""
         options["cancel_requested"] := true
     }
-    result := run_workflow(workflow, run_state, tool_registry, options)
+    result := run_workflow_under_lock(workflow, run_state, tool_registry, options)
     final_state := result["run_state"]
     final_history := dict_get_or(final_state, "human_decisions", {})
     decision_record := dict_get_or(final_history, decision_id, {})
@@ -1589,6 +1614,7 @@ func run_resume_decision(command_args) {
     final_history[decision_id] := decision_record
     final_state["human_decisions"] := final_history
     final_state := persist_run_state(final_state)
+    release_run_lock(lock)
     print_run_completion(final_state)
     resume_status := dict_get_or(final_state, "status", "unknown")
     if result["paused"] {
