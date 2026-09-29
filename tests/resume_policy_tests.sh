@@ -4,7 +4,17 @@ cd "$(dirname "$0")/.."
 KUJO_BIN="${KUJO_BIN:-kujo}"
 root="tests/tmp/resume-policy-$$"
 mkdir -p "$root"
-trap 'probe_code=$?; if [[ "$probe_code" -ne 0 ]]; then echo "Resume policy failure: ${case_root:-setup}" >&2; if [[ -f "${case_root:-}/result.log" ]]; then tail -20 "$case_root/result.log" >&2; fi; if [[ -n "${run_id:-}" && -f "${case_root:-}/$run_id/state.json" ]]; then jq '[.. | objects | select(has("code")) | {code,message}] | unique' "$case_root/$run_id/state.json" >&2; fi; fi' EXIT
+report_failure() {
+  probe_code=$?
+  if [[ "$probe_code" -ne 0 ]]; then
+    echo "Resume policy failure: ${case_root:-setup}" >&2
+    if [[ -f "${case_root:-}/result.log" ]]; then tail -20 "$case_root/result.log" >&2; fi
+    if [[ -n "${run_id:-}" && -f "${case_root:-}/$run_id/state.json" ]]; then
+      jq '[.. | objects | select(has("code")) | {code,message}] | unique' "$case_root/$run_id/state.json" >&2
+    fi
+  fi
+}
+trap report_failure EXIT
 export DISPATCH_POLICY_PROFILE=development
 export DISPATCH_OFFLINE_FIXTURE=false
 # Fixture-only diagnostics contain no credentials or user inputs.
