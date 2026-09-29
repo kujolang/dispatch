@@ -1,3 +1,14 @@
+## Unreleased — bounded effect continuation
+
+- Add host-owned selection, durable attempt identity and one-use admission for
+  exactly one not-started SQLite effect after a verified complete prefix.
+- Revalidate under the existing run lock and inside the SQLite writer transaction;
+  retain crash uncertainty and independently observe lost replies without replay.
+- Reject parent replay and unsupported readers for runs with a selected effect.
+  Existing result, alpha/beta and participant bytes remain unchanged.
+- Add cross-language selection vectors, competing-controller and crash/TOCTOU
+  gates. See `docs/contracts/effect-set/one-effect-admission.md` for the bounded API.
+
 Unreleased: additive bounded multi-effect assessment and append-only freshness proof; independent Go CLI/MCP recording participant and shared vectors. Read-only local experiment, no production continuation, historical wire or alpha/beta policy change. See docs/contracts/effect-set/decision.md.
 
 Unreleased interoperability evidence: a standalone Python beta consumer independently
@@ -226,14 +237,3 @@ Each release section should include only shipped changes and use these headings 
   existing beta admission. Matching references do not authorize replay.
 - Add a real multi-process SDK publication/receipt-failure/review/replay fixture
   to the release gate, with identity substitutions and standalone SDK coverage.
-
-### Experimental bounded effect continuation (unreleased)
-
-- Add host-owned selection, durable attempt identity and one-use admission for
-  exactly one not-started SQLite effect after a verified complete prefix.
-- Revalidate under the existing run lock and inside the SQLite writer transaction;
-  retain crash uncertainty and independently observe lost replies without replay.
-- Reject parent replay and unsupported readers for runs with a selected effect.
-  Existing result, alpha/beta and participant bytes remain unchanged.
-- Add cross-language selection vectors, competing-controller and crash/TOCTOU
-  gates. See `docs/contracts/effect-set/one-effect-admission.md` for the bounded API.

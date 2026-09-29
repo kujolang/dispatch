@@ -1,0 +1,1 @@
+PASS configuration/negotiation schemas: closed fields and required fallback denied

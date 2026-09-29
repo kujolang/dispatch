@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ approval rejects invalid simulated decision values (235ms)
+  ✓ cleanup command supports dry-run and apply pruning (2216ms)
+  ✓ tool policy parsing and enforcement supports allow deny normalization (227ms)
+  ✓ crud reliability report includes purpose-built reliability sections (260ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  3050ms
+============================================================
+
+All tests passed! ✨

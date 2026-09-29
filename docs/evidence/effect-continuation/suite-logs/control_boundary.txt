@@ -1,0 +1,24 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ evaluation failure can pause at a durable review boundary (1268ms)
+  ✓ evaluation failure can fail the workflow without failing the action (912ms)
+  ✓ evaluation warning can continue (1448ms)
+  ✓ descendant boundary drains an unrelated DAG branch before pausing (1921ms)
+  ✓ evaluation result cannot issue an orchestration action (106ms)
+  ✓ portable evaluation result resolves through workflow policy (138ms)
+  ✓ provider preservation and reexecution contracts cross policy without coupling (1240ms)
+  ✓ revision-bound intervention resumes without rerunning the producer (113ms)
+  ✓ retry evaluation creates an explicit new pending attempt (111ms)
+  ✓ stale intervention decision is rejected (109ms)
+  ✓ unsafe retry is rejected without an idempotency contract (109ms)
+  ✓ retry clean refuses to emulate a provider snapshot (112ms)
+  ✓ retry clean prepares a fresh provider-backed attempt (120ms)
+  ✓ retry clean still rejects unsafe external effects (107ms)
+
+Tests: 14 total, 14 passed, 0 failed
+Time:  8027ms
+============================================================
+
+All tests passed! ✨

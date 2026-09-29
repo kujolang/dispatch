@@ -58,7 +58,7 @@ before mutation are followed by fresh checks. Participants do not receive it.
 participant wire extension. Its closed output contains:
 
 - `binding`: parent subject, exact result/set/plan references, selected effect ID
-  and position, persisted config revision, registration/environment/preservation
+  and zero-based position, persisted config revision, registration/environment/preservation
   references and current boundary ID;
 - `prior_revision` and `prior_journal` sequence/hash;
 - `attempt_id`: SHA-256 of the canonical selection without this field.

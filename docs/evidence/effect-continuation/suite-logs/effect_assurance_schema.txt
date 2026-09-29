@@ -1,0 +1,1 @@
+PASS assurance schema: valid example, required fields, digests, closed properties

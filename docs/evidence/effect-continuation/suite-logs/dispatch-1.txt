@@ -1,0 +1,15 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ workflow creation includes required sections (361ms)
+  ✓ state persistence saves and reloads run (758ms)
+  ✓ dispatch blocks unsafe config paths without opt in (652ms)
+  ✓ dispatch unknown command prints usage snapshot (617ms)
+  ✓ invalid step output is not committed to the idempotency cache (986ms)
+
+Tests: 5 total, 5 passed, 0 failed
+Time:  3556ms
+============================================================
+
+All tests passed! ✨

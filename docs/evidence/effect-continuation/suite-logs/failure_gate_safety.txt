@@ -1,0 +1,30 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ submitted idempotency key does not authorize replay (40ms)
+  ✓ observed unknown partial effects override a pure configuration (33ms)
+  ✓ sink enforced idempotency needs an evidence reference (34ms)
+  ✓ destroyed workspace cannot be retried in place (43ms)
+  ✓ retained filesystem permits a declared same workspace adapter (46ms)
+  ✓ an evaluator decision cannot target an unrelated action (40ms)
+  ✓ terminal states reject continuation (86ms)
+  ✓ evaluation crash is indeterminate rather than failed quality (45ms)
+  ✓ negative checks and unknown contract versions fail closed (39ms)
+  ✓ policy outcome is producer neutral and deterministic (187ms)
+  ✓ evidence cannot promote itself to policy authority (44ms)
+  ✓ journal detects orphan append and tampered history (85ms)
+  ✓ expired preservation cannot authorize same workspace replay (46ms)
+  ✓ null idempotency metadata is not enforcement evidence (38ms)
+  ✓ continuation source cannot contradict its action (47ms)
+  ✓ tampered control history is detected even when JSON is valid (82ms)
+  ✓ an atomic event beyond an absent journal requires recovery (35ms)
+  ✓ review requests explain unavailable replay without granting new actions (51ms)
+  ✓ policy action availability work is bounded and duplicate actions reject (84ms)
+  ✓ compensation metadata does not prove external reversal or admit replay (35ms)
+
+Tests: 20 total, 20 passed, 0 failed
+Time:  1236ms
+============================================================
+
+All tests passed! ✨

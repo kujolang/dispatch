@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ load run state fails safely on malformed json (565ms)
+  ✓ output root validation blocks dangerous paths and allows safe relative roots (209ms)
+  ✓ cli negative path matrix returns deterministic errors (1257ms)
+  ✓ doctor does not mark pending steps completed from index alone (592ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  2732ms
+============================================================
+
+All tests passed! ✨

@@ -1,0 +1,9 @@
+PASS sqlite before_commit: real SIGKILL, 45 assurance cases, Dispatch replay, one logical effect
+PASS sqlite after_commit: real SIGKILL, 45 assurance cases, Dispatch replay, one logical effect
+PASS sqlite expired: real effect, continuation blocked, state intact
+PASS sqlite non-idempotent: real effect, continuation blocked, state intact
+PASS git before_commit: real SIGKILL, 45 assurance cases, Dispatch replay, one logical effect
+PASS git after_commit: real SIGKILL, 45 assurance cases, Dispatch replay, one logical effect
+PASS git expired: real effect, continuation blocked, state intact
+PASS git non-idempotent: real effect, continuation blocked, state intact
+Evidence: /Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/effect-assurance-1790689753706/proof.json

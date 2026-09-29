@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ lifecycle hooks emit callback and webhook sink events (1346ms)
+  ✓ redaction preserves non-secret token metrics (202ms)
+  ✓ run export and import support round trip bundles (1572ms)
+  ✓ bundle import requires a valid state artifact (211ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  3440ms
+============================================================
+
+All tests passed! ✨

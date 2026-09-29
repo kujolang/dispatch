@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ tool registry rejects invalid sources directories (255ms)
+  ✓ plugin registration injects custom tool and agent (366ms)
+  ✓ high volume run index listing remains deterministic (15011ms)
+  ✓ native atomic file writes content and leaves no temp residue (279ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  16031ms
+============================================================
+
+All tests passed! ✨

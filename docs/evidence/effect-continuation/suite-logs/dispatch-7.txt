@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ module-level source tool handler returns search results (248ms)
+  ✓ handoff creation includes required fields (238ms)
+  ✓ mutation audit rotation keeps active log bounded and rolls over (336ms)
+  ✓ webhook sink option appends lifecycle events as jsonl (10624ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  11576ms
+============================================================
+
+All tests passed! ✨

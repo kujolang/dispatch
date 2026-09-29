@@ -1,0 +1,1217 @@
+{
+  "schema": "dispatch.one-effect-admission-validation/v1",
+  "date": "2026-09-29",
+  "status": "pass",
+  "starting_commits": {
+    "dispatch": "8fbc5fa930ff5d1ffdc833bc07f9766192711b36",
+    "kujo": "dbb474161f43aa0273cf0dce850ae69a836fe4db"
+  },
+  "implementation_commit": "0176882e049e7970ca4b2982205101801320ac22",
+  "kujo_documentation_commit": "ce1307482776893b563f67b867889b9a6dc617a4",
+  "commit_scope": "Implementation/source commits above; subsequent Dispatch commits contain only documentation/evidence. Final pushed heads are recorded in the session handoff and final report.",
+  "related_unmodified": {
+    "workcell": "1940da0639b70b702c1b1077dda51ca39b065216",
+    "agents-sdk": "af0aa28f5960232cbafa7cf528a32db8cb36c7a9",
+    "ability": "d6c970785f8d8bea04de0dce37920c2d0ca1c067"
+  },
+  "runtime": {
+    "path": "../kujo/target/release/kujo",
+    "version": "1.6.0",
+    "sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47"
+  },
+  "toolchains": {
+    "node": "v26.7.0",
+    "go": "go1.25.3 darwin/amd64",
+    "rustc": "1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "commands": [
+    {
+      "cwd": "dispatch",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/effect_set_integration.mjs",
+      "status": "pass",
+      "log": "baseline-effects.txt",
+      "phase": "before implementation",
+      "assessment_cases": 29
+    },
+    {
+      "cwd": "dispatch",
+      "command": "node tests/go_participant_conformance.mjs",
+      "status": "pass",
+      "log": "baseline-go.txt",
+      "phase": "before implementation",
+      "checks": 115,
+      "mcp_checks": 5,
+      "malformed_checks": 9
+    },
+    {
+      "cwd": "dispatch",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/effect_continuation_integration.mjs",
+      "status": "pass",
+      "log": "continuation-focused.txt",
+      "checks": 39,
+      "failed": 0
+    },
+    {
+      "cwd": "dispatch",
+      "command": "node tests/go_participant_conformance.mjs",
+      "status": "pass",
+      "log": "go-focused.txt",
+      "checks": 119,
+      "mcp_checks": 5,
+      "malformed_checks": 9,
+      "new_vectors": 4,
+      "languages": [
+        "Kujo",
+        "TypeScript",
+        "Python",
+        "Go"
+      ]
+    },
+    {
+      "cwd": "dispatch",
+      "command": "../kujo/target/release/kujo run tests/portable_commitments.kujo tests/vectors/effect-selection.json",
+      "status": "pass",
+      "log": "kujo-vectors.txt",
+      "vectors": 4
+    },
+    {
+      "cwd": "dispatch",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+      "status": "pass",
+      "log": "dispatch-canonical.txt",
+      "source_frozen": true,
+      "suites": 74,
+      "failed_suites": 0,
+      "workflow_shards": 24,
+      "workflow_tests": 101,
+      "release_workloads": 3
+    },
+    {
+      "cwd": "kujo",
+      "command": "cargo fmt --check",
+      "status": "pass",
+      "log": "kujo-fmt.txt"
+    },
+    {
+      "cwd": "kujo",
+      "command": "cargo test --test docs_examples --test readme_contracts",
+      "status": "pass",
+      "log": "kujo-docs.txt",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "cwd": "kujo",
+      "command": "cargo build --release --locked",
+      "status": "pass",
+      "log": "kujo-build.txt"
+    }
+  ],
+  "development_failures": [
+    {
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/effect_continuation_integration.mjs",
+      "resolved": "Fixture artifact helper reused global raw binding; changed helper binding. Parent-attempt check aligned with existing default attempt 1. Diagnostic output removed; no assertions weakened."
+    },
+    {
+      "command": "git diff --check",
+      "resolved": "Removed trailing blank line after moving new changelog entry."
+    }
+  ],
+  "warnings": [
+    "Existing vendored tiny_http unused SequentialWriter import and unused MustBeShareDummy trait in Kujo checks/build; retained in transcripts.",
+    "Existing npm unknown user/env config python warnings in TypeScript package checks and Strata CLI; no warnings suppressed."
+  ],
+  "environmental_failures": [],
+  "explicit_omissions": [
+    "No new focused scenarios or canonical Dispatch suite groups skipped.",
+    "Standalone Workcell/Agents SDK gates not rerun because neither repository changed; relevant historical integrations ran through the canonical Dispatch gate.",
+    "Full Kujo runtime test suite not rerun for documentation-only changes; affected docs/example tests, formatting and locked release build passed.",
+    "Remote authenticated trust, malicious-host verification, multi-host/machine-loss recovery, public SDK publication, protocol freeze, A2A, compensation, cross-sink atomicity, exactly-once and universal rollback are excluded.",
+    "One selection per run; explicit evidence rebinding/renewal of an unconsumed selection and generalized remainder scheduling are deferred."
+  ],
+  "suites": [
+    {
+      "suite": "ability_assurance",
+      "status": "pass",
+      "log": "suite-logs/ability_assurance.txt",
+      "counts": []
+    },
+    {
+      "suite": "assurance_capabilities",
+      "status": "pass",
+      "log": "suite-logs/assurance_capabilities.txt",
+      "counts": []
+    },
+    {
+      "suite": "assurance_compatibility",
+      "status": "pass",
+      "log": "suite-logs/assurance_compatibility.txt",
+      "counts": []
+    },
+    {
+      "suite": "beta_contracts",
+      "status": "pass",
+      "log": "suite-logs/beta_contracts.txt",
+      "counts": []
+    },
+    {
+      "suite": "beta_migration",
+      "status": "pass",
+      "log": "suite-logs/beta_migration.txt",
+      "counts": []
+    },
+    {
+      "suite": "control_boundary",
+      "status": "pass",
+      "log": "suite-logs/control_boundary.txt",
+      "counts": [
+        {
+          "total": 14,
+          "passed": 14,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "decision_claim",
+      "status": "pass",
+      "log": "suite-logs/decision_claim.txt",
+      "counts": []
+    },
+    {
+      "suite": "dispatch-1",
+      "status": "pass",
+      "log": "suite-logs/dispatch-1.txt",
+      "counts": [
+        {
+          "total": 5,
+          "passed": 5,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-10",
+      "status": "pass",
+      "log": "suite-logs/dispatch-10.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-11",
+      "status": "pass",
+      "log": "suite-logs/dispatch-11.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-12",
+      "status": "pass",
+      "log": "suite-logs/dispatch-12.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-13",
+      "status": "pass",
+      "log": "suite-logs/dispatch-13.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-14",
+      "status": "pass",
+      "log": "suite-logs/dispatch-14.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-15",
+      "status": "pass",
+      "log": "suite-logs/dispatch-15.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-16",
+      "status": "pass",
+      "log": "suite-logs/dispatch-16.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-17",
+      "status": "pass",
+      "log": "suite-logs/dispatch-17.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-18",
+      "status": "pass",
+      "log": "suite-logs/dispatch-18.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-19",
+      "status": "pass",
+      "log": "suite-logs/dispatch-19.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-2",
+      "status": "pass",
+      "log": "suite-logs/dispatch-2.txt",
+      "counts": [
+        {
+          "total": 5,
+          "passed": 5,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-20",
+      "status": "pass",
+      "log": "suite-logs/dispatch-20.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-21",
+      "status": "pass",
+      "log": "suite-logs/dispatch-21.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-22",
+      "status": "pass",
+      "log": "suite-logs/dispatch-22.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-23",
+      "status": "pass",
+      "log": "suite-logs/dispatch-23.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-24",
+      "status": "pass",
+      "log": "suite-logs/dispatch-24.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-3",
+      "status": "pass",
+      "log": "suite-logs/dispatch-3.txt",
+      "counts": [
+        {
+          "total": 5,
+          "passed": 5,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-4",
+      "status": "pass",
+      "log": "suite-logs/dispatch-4.txt",
+      "counts": [
+        {
+          "total": 5,
+          "passed": 5,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-5",
+      "status": "pass",
+      "log": "suite-logs/dispatch-5.txt",
+      "counts": [
+        {
+          "total": 5,
+          "passed": 5,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-6",
+      "status": "pass",
+      "log": "suite-logs/dispatch-6.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-7",
+      "status": "pass",
+      "log": "suite-logs/dispatch-7.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-8",
+      "status": "pass",
+      "log": "suite-logs/dispatch-8.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "dispatch-9",
+      "status": "pass",
+      "log": "suite-logs/dispatch-9.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "effect_assurance",
+      "status": "pass",
+      "log": "suite-logs/effect_assurance.txt",
+      "counts": []
+    },
+    {
+      "suite": "effect_assurance_schema",
+      "status": "pass",
+      "log": "suite-logs/effect_assurance_schema.txt",
+      "counts": []
+    },
+    {
+      "suite": "effect_continuation",
+      "status": "pass",
+      "log": "suite-logs/effect_continuation.txt",
+      "counts": []
+    },
+    {
+      "suite": "effect_selection_vectors",
+      "status": "pass",
+      "log": "suite-logs/effect_selection_vectors.txt",
+      "counts": []
+    },
+    {
+      "suite": "effect_set",
+      "status": "pass",
+      "log": "suite-logs/effect_set.txt",
+      "counts": []
+    },
+    {
+      "suite": "effect_set_vectors",
+      "status": "pass",
+      "log": "suite-logs/effect_set_vectors.txt",
+      "counts": []
+    },
+    {
+      "suite": "failure_gate_execution",
+      "status": "pass",
+      "log": "suite-logs/failure_gate_execution.txt",
+      "counts": [
+        {
+          "total": 6,
+          "passed": 6,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "failure_gate_safety",
+      "status": "pass",
+      "log": "suite-logs/failure_gate_safety.txt",
+      "counts": [
+        {
+          "total": 20,
+          "passed": 20,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "git_participant_after",
+      "status": "pass",
+      "log": "suite-logs/git_participant_after.txt",
+      "counts": []
+    },
+    {
+      "suite": "git_participant_before",
+      "status": "pass",
+      "log": "suite-logs/git_participant_before.txt",
+      "counts": []
+    },
+    {
+      "suite": "go_participant",
+      "status": "pass",
+      "log": "suite-logs/go_participant.txt",
+      "counts": []
+    },
+    {
+      "suite": "hardening",
+      "status": "pass",
+      "log": "suite-logs/hardening.txt",
+      "counts": [
+        {
+          "total": 8,
+          "passed": 8,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "http_application_error",
+      "status": "pass",
+      "log": "suite-logs/http_application_error.txt",
+      "counts": []
+    },
+    {
+      "suite": "http_response_loss",
+      "status": "pass",
+      "log": "suite-logs/http_response_loss.txt",
+      "counts": []
+    },
+    {
+      "suite": "http_timeout_before",
+      "status": "pass",
+      "log": "suite-logs/http_timeout_before.txt",
+      "counts": []
+    },
+    {
+      "suite": "interop_history",
+      "status": "pass",
+      "log": "suite-logs/interop_history.txt",
+      "counts": []
+    },
+    {
+      "suite": "interop_oracles",
+      "status": "pass",
+      "log": "suite-logs/interop_oracles.txt",
+      "counts": []
+    },
+    {
+      "suite": "mcp_ability",
+      "status": "pass",
+      "log": "suite-logs/mcp_ability.txt",
+      "counts": []
+    },
+    {
+      "suite": "mcp_stdio_loss",
+      "status": "pass",
+      "log": "suite-logs/mcp_stdio_loss.txt",
+      "counts": []
+    },
+    {
+      "suite": "operational_controls",
+      "status": "pass",
+      "log": "suite-logs/operational_controls.txt",
+      "counts": [
+        {
+          "total": 9,
+          "passed": 9,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "participant_sdk_parity",
+      "status": "pass",
+      "log": "suite-logs/participant_sdk_parity.txt",
+      "counts": []
+    },
+    {
+      "suite": "persisted_negotiation",
+      "status": "pass",
+      "log": "suite-logs/persisted_negotiation.txt",
+      "counts": []
+    },
+    {
+      "suite": "persisted_negotiation_adapters",
+      "status": "pass",
+      "log": "suite-logs/persisted_negotiation_adapters.txt",
+      "counts": []
+    },
+    {
+      "suite": "persisted_negotiation_contracts",
+      "status": "pass",
+      "log": "suite-logs/persisted_negotiation_contracts.txt",
+      "counts": []
+    },
+    {
+      "suite": "persisted_negotiation_legacy",
+      "status": "pass",
+      "log": "suite-logs/persisted_negotiation_legacy.txt",
+      "counts": []
+    },
+    {
+      "suite": "persisted_negotiation_schemas",
+      "status": "pass",
+      "log": "suite-logs/persisted_negotiation_schemas.txt",
+      "counts": []
+    },
+    {
+      "suite": "policy_precedence",
+      "status": "pass",
+      "log": "suite-logs/policy_precedence.txt",
+      "counts": [
+        {
+          "total": 3,
+          "passed": 3,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "portable_clean_room",
+      "status": "pass",
+      "log": "suite-logs/portable_clean_room.txt",
+      "counts": []
+    },
+    {
+      "suite": "portable_commitments",
+      "status": "pass",
+      "log": "suite-logs/portable_commitments.txt",
+      "counts": []
+    },
+    {
+      "suite": "python_integration",
+      "status": "pass",
+      "log": "suite-logs/python_integration.txt",
+      "counts": []
+    },
+    {
+      "suite": "python_isolation",
+      "status": "pass",
+      "log": "suite-logs/python_isolation.txt",
+      "counts": []
+    },
+    {
+      "suite": "python_package",
+      "status": "pass",
+      "log": "suite-logs/python_package.txt",
+      "counts": []
+    },
+    {
+      "suite": "python_parity",
+      "status": "pass",
+      "log": "suite-logs/python_parity.txt",
+      "counts": []
+    },
+    {
+      "suite": "reexecution_lifecycle",
+      "status": "pass",
+      "log": "suite-logs/reexecution_lifecycle.txt",
+      "counts": []
+    },
+    {
+      "suite": "retrieval_preferences",
+      "status": "pass",
+      "log": "suite-logs/retrieval_preferences.txt",
+      "counts": [
+        {
+          "total": 3,
+          "passed": 3,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "review_checkpoint",
+      "status": "pass",
+      "log": "suite-logs/review_checkpoint.txt",
+      "counts": [
+        {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "routing",
+      "status": "pass",
+      "log": "suite-logs/routing.txt",
+      "counts": [
+        {
+          "total": 31,
+          "passed": 31,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "sdk_ability",
+      "status": "pass",
+      "log": "suite-logs/sdk_ability.txt",
+      "counts": []
+    },
+    {
+      "suite": "sdk_adapter",
+      "status": "pass",
+      "log": "suite-logs/sdk_adapter.txt",
+      "counts": [
+        {
+          "total": 10,
+          "passed": 10,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "state_store_sqlite",
+      "status": "pass",
+      "log": "suite-logs/state_store_sqlite.txt",
+      "counts": [
+        {
+          "total": 1,
+          "passed": 1,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "suite": "typescript_after",
+      "status": "pass",
+      "log": "suite-logs/typescript_after.txt",
+      "counts": []
+    },
+    {
+      "suite": "typescript_before",
+      "status": "pass",
+      "log": "suite-logs/typescript_before.txt",
+      "counts": []
+    },
+    {
+      "suite": "typescript_package",
+      "status": "pass",
+      "log": "suite-logs/typescript_package.txt",
+      "counts": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "baseline-effects.txt",
+      "bytes": 3816,
+      "sha256": "fce5f2868a95387ac7c141895fe30897328a0e811686369e1c78bff5145b4a97"
+    },
+    {
+      "path": "baseline-go.txt",
+      "bytes": 205,
+      "sha256": "16871e6b780faaa660db8554109c57e1fc8596ecdd0e3ee8401c3d14768caf7f"
+    },
+    {
+      "path": "continuation-focused.txt",
+      "bytes": 979,
+      "sha256": "f68bf6bf33b588afda07387239dbe8c08d0205883d8df6e1a61f4d05707e2077"
+    },
+    {
+      "path": "dispatch-canonical.txt",
+      "bytes": 10618,
+      "sha256": "1465832e804249b44fd3be3063237402c26c3c9bf4c49c5255a6b6f098d66533"
+    },
+    {
+      "path": "go-focused.txt",
+      "bytes": 205,
+      "sha256": "4ebded6ee13a0c539d33b5f1420968980fe4b8e6fcf097385b73ce6ccee72acf"
+    },
+    {
+      "path": "kujo-build.txt",
+      "bytes": 730,
+      "sha256": "abcb9b3d46642a5fe3dccd0641dc740945a9c3c6db1aad6aba4d9b2e36629f03"
+    },
+    {
+      "path": "kujo-docs.txt",
+      "bytes": 1537,
+      "sha256": "69158e49791723afa1289ced6f03e84756d447463fb15732fb4d5ee354808ba9"
+    },
+    {
+      "path": "kujo-fmt.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "kujo-vectors.txt",
+      "bytes": 41,
+      "sha256": "c609139c4a563176624c0ca76051dcd9b01ddf6c3c02c7b8f22c1be3e0e0ac75"
+    },
+    {
+      "path": "suite-logs/ability_assurance.txt",
+      "bytes": 1774,
+      "sha256": "8c9a76865635c4365115626deb345fc92a9ea63a60998fd9187f41a2225f681c"
+    },
+    {
+      "path": "suite-logs/assurance_capabilities.txt",
+      "bytes": 90,
+      "sha256": "59e2d9253c4c80fec2597c57607cc743a2484ad79f959893db24d0c409450f93"
+    },
+    {
+      "path": "suite-logs/assurance_compatibility.txt",
+      "bytes": 75,
+      "sha256": "24ea6fa02433c4e78ab02b0a54b1983390fdc037dee2167a1b138794acf52715"
+    },
+    {
+      "path": "suite-logs/beta_contracts.txt",
+      "bytes": 75,
+      "sha256": "8cf1f333a0a356f50b46b22b8ca56c5be9e9ce423eb16ff385f90f3914bc141a"
+    },
+    {
+      "path": "suite-logs/beta_migration.txt",
+      "bytes": 2477,
+      "sha256": "2ccd660cd3f48124fec22642fbf1a78a4b5d2444b3b629ff559ed461dcfa41aa"
+    },
+    {
+      "path": "suite-logs/control_boundary.txt",
+      "bytes": 1264,
+      "sha256": "97821075c1933767c2f4647ebc6d191ca6ab5198604924bdbf55fa74d8176f53"
+    },
+    {
+      "path": "suite-logs/decision_claim.txt",
+      "bytes": 82,
+      "sha256": "f0700708134088c7d6c802f6f8405e8504abfdef68beacab7a8424e872ecaade"
+    },
+    {
+      "path": "suite-logs/dispatch-1.txt",
+      "bytes": 585,
+      "sha256": "81ba2d1df90cefa4a82f19ef79bac8202697e1ca4327dfe8d50503115a8eee40"
+    },
+    {
+      "path": "suite-logs/dispatch-10.txt",
+      "bytes": 542,
+      "sha256": "48797ace7198cc1d6549c9f2915241a6e8ba3c191da4f3f175535c9492e040b0"
+    },
+    {
+      "path": "suite-logs/dispatch-11.txt",
+      "bytes": 544,
+      "sha256": "fe15f0ed03b8284f6026132763f135cfcfd9275cb25df4c129d29915f0760eef"
+    },
+    {
+      "path": "suite-logs/dispatch-12.txt",
+      "bytes": 544,
+      "sha256": "ca116cea6c383cc51b39757031f69699861e9874ac3d2cb6f82063277385601a"
+    },
+    {
+      "path": "suite-logs/dispatch-13.txt",
+      "bytes": 592,
+      "sha256": "2a713018f076437fb6957f727d18e4b903d5f8b2e877421e2e6eba4ed1b8b6be"
+    },
+    {
+      "path": "suite-logs/dispatch-14.txt",
+      "bytes": 567,
+      "sha256": "c69511ec4bf0b192b498ae3cad4c0536b88567263fa0fd46c3f562ab6ed7542e"
+    },
+    {
+      "path": "suite-logs/dispatch-15.txt",
+      "bytes": 582,
+      "sha256": "0a1772b35c094dd55c6f4ddabe0681416d5a5fa52331a8be83f0b37689355768"
+    },
+    {
+      "path": "suite-logs/dispatch-16.txt",
+      "bytes": 577,
+      "sha256": "a897fec8f851192879976b18165eb906069f4f8a17c26989038673cc28bc4706"
+    },
+    {
+      "path": "suite-logs/dispatch-17.txt",
+      "bytes": 537,
+      "sha256": "7ede61cc9c0d429f143963c3eeba12ca664b897fd49f1cdead7254c2bc879ed8"
+    },
+    {
+      "path": "suite-logs/dispatch-18.txt",
+      "bytes": 542,
+      "sha256": "fd554825cf5578371b293921ad73e64ee1d82cf7270d86e0a2f360cffa986b61"
+    },
+    {
+      "path": "suite-logs/dispatch-19.txt",
+      "bytes": 565,
+      "sha256": "c32b69c6009ec8a637af96b1a0e3a358d866344a5399f3f284dc2a26ca880c3b"
+    },
+    {
+      "path": "suite-logs/dispatch-2.txt",
+      "bytes": 604,
+      "sha256": "65f62794c9288b3cd6f4005e8204f3e2516f9b23c94b99473fb8ab44bf67b73b"
+    },
+    {
+      "path": "suite-logs/dispatch-20.txt",
+      "bytes": 548,
+      "sha256": "06f6af8bfadc4e77b667a9dae1b84d8f112df6a18582a5efd0a5f419953fa573"
+    },
+    {
+      "path": "suite-logs/dispatch-21.txt",
+      "bytes": 522,
+      "sha256": "f430cb7de84a68cb719bc4a26796f5393166041a952f0c9ee8595403cd591856"
+    },
+    {
+      "path": "suite-logs/dispatch-22.txt",
+      "bytes": 540,
+      "sha256": "7c638d075523149a773ec8b750da9b2f05a343919eee5dc4a74e95341b2721d5"
+    },
+    {
+      "path": "suite-logs/dispatch-23.txt",
+      "bytes": 566,
+      "sha256": "7ea2105b7745e7fca4a507ea0d59120a76f8513c89e05b0e982b4d0dfee5d72a"
+    },
+    {
+      "path": "suite-logs/dispatch-24.txt",
+      "bytes": 527,
+      "sha256": "983b734e0dd1d73ae1f09126db0fde1d4d18be71131203a9f3f3967c6b17e520"
+    },
+    {
+      "path": "suite-logs/dispatch-3.txt",
+      "bytes": 633,
+      "sha256": "642199176550208053c7b6b9c2798e0a27fb5c4716792db6df6b6b79e3ed8017"
+    },
+    {
+      "path": "suite-logs/dispatch-4.txt",
+      "bytes": 639,
+      "sha256": "c675778cfd3031722092966015b784e5d0e99767df41401b5b49b63f624d7fd7"
+    },
+    {
+      "path": "suite-logs/dispatch-5.txt",
+      "bytes": 649,
+      "sha256": "2fe9df544dc5ab89614567063b5d9a08178c128f6b3119cb4e1ae3ecbdb2485d"
+    },
+    {
+      "path": "suite-logs/dispatch-6.txt",
+      "bytes": 527,
+      "sha256": "aa943118b53809f3b3266edbd12590d76e08548b85198e61f1e465fbb3bc666e"
+    },
+    {
+      "path": "suite-logs/dispatch-7.txt",
+      "bytes": 545,
+      "sha256": "ad5de84f3c1eee0d155ca00dd288657aa6aed80ce4d8d86dc71eb3fc87d9c84d"
+    },
+    {
+      "path": "suite-logs/dispatch-8.txt",
+      "bytes": 539,
+      "sha256": "b4bd5a0f077a3a583a3e7493f346f6e05fb58f9f07757c865a4ade6c2b510c22"
+    },
+    {
+      "path": "suite-logs/dispatch-9.txt",
+      "bytes": 570,
+      "sha256": "4665bb9b169d94bab1d28cbef9b690c71a510ce0e44d8224dcfeac7071dbe4d2"
+    },
+    {
+      "path": "suite-logs/effect_assurance.txt",
+      "bytes": 780,
+      "sha256": "c60ed91ad1563ed77956eb68a01cb4fa6e5b48b6315f5c625a3065261c2a276a"
+    },
+    {
+      "path": "suite-logs/effect_assurance_schema.txt",
+      "bytes": 82,
+      "sha256": "d95aba4532c54939c2a30a721827e022b0a2f332b589242c310d95e8b89b5934"
+    },
+    {
+      "path": "suite-logs/effect_continuation.txt",
+      "bytes": 979,
+      "sha256": "c872c50ccccef2a7da77e29fc4e90d7059a20897524c99ee28200097f90bb362"
+    },
+    {
+      "path": "suite-logs/effect_selection_vectors.txt",
+      "bytes": 41,
+      "sha256": "c609139c4a563176624c0ca76051dcd9b01ddf6c3c02c7b8f22c1be3e0e0ac75"
+    },
+    {
+      "path": "suite-logs/effect_set.txt",
+      "bytes": 3816,
+      "sha256": "2c454d3c4b2ab915643e59c8532d8d375fa5f1022dbdb7d1dd18d40f2f58cfd6"
+    },
+    {
+      "path": "suite-logs/effect_set_vectors.txt",
+      "bytes": 41,
+      "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203"
+    },
+    {
+      "path": "suite-logs/failure_gate_execution.txt",
+      "bytes": 778,
+      "sha256": "6ceecd91102d06e960c05bfb75d26d877515698e58a99f3619e6bb75fcdb59a1"
+    },
+    {
+      "path": "suite-logs/failure_gate_safety.txt",
+      "bytes": 1675,
+      "sha256": "7005802426c3117aec3be2661447e14190c5a32d75c24baf98c072675333938a"
+    },
+    {
+      "path": "suite-logs/git_participant_after.txt",
+      "bytes": 809,
+      "sha256": "8cc9302f9694ea765edf4084ac4d3abd4e99969ff875fabea3cf3d1e6467a1c2"
+    },
+    {
+      "path": "suite-logs/git_participant_before.txt",
+      "bytes": 812,
+      "sha256": "e7468952611c4ebc1b7199966ffd31867dc4da75c46ab0f3d12f56806d9b4ad7"
+    },
+    {
+      "path": "suite-logs/go_participant.txt",
+      "bytes": 205,
+      "sha256": "4ebded6ee13a0c539d33b5f1420968980fe4b8e6fcf097385b73ce6ccee72acf"
+    },
+    {
+      "path": "suite-logs/hardening.txt",
+      "bytes": 893,
+      "sha256": "138b29efa61871f61d33eb9c52817e3b3a70d3b18cd8801e3919d30d89e15bad"
+    },
+    {
+      "path": "suite-logs/http_application_error.txt",
+      "bytes": 854,
+      "sha256": "bdeb0d9ba6e3318c154e63d0396975e3a6fb7ac76c6d63404d04369df5395586"
+    },
+    {
+      "path": "suite-logs/http_response_loss.txt",
+      "bytes": 846,
+      "sha256": "adfb698383c0f878d04393485059b2d3717d1a8a93e9401c34e1f4c1693445db"
+    },
+    {
+      "path": "suite-logs/http_timeout_before.txt",
+      "bytes": 841,
+      "sha256": "9c406038a2a54b9376552b1e5bd07366481201d04cc2afce7af47941dbe884d9"
+    },
+    {
+      "path": "suite-logs/interop_history.txt",
+      "bytes": 127,
+      "sha256": "e4d0b65a5d3fcbbbab2bcd5f3dc04dc966ce041f01ae17c829852db283741279"
+    },
+    {
+      "path": "suite-logs/interop_oracles.txt",
+      "bytes": 40,
+      "sha256": "ccb5b6b0475728fb2435f59803211d47cff242001d02f2730272aa247a39edb6"
+    },
+    {
+      "path": "suite-logs/mcp_ability.txt",
+      "bytes": 1049,
+      "sha256": "b113e44d6a47c30305710d5077273ba8b80e505331e23f9a89bf32ac11a4d7ba"
+    },
+    {
+      "path": "suite-logs/mcp_stdio_loss.txt",
+      "bytes": 1044,
+      "sha256": "691551437e5ebac21d2a2549b5a71d09ab96b26fd4919bb0c91673131dc4cc6e"
+    },
+    {
+      "path": "suite-logs/operational_controls.txt",
+      "bytes": 960,
+      "sha256": "d53bd20437e7819727fb0483bb680eca4ca426638713861f136b19b5062e1342"
+    },
+    {
+      "path": "suite-logs/participant_sdk_parity.txt",
+      "bytes": 172,
+      "sha256": "2d94d6b4bf5a14c819c19f3f500fb9391295ff2bd08d00e68448181df4e9fb0e"
+    },
+    {
+      "path": "suite-logs/persisted_negotiation.txt",
+      "bytes": 1983,
+      "sha256": "9505903f21d434339ef12473f0ff16400398492dbb776e7036ade9bfebd159b7"
+    },
+    {
+      "path": "suite-logs/persisted_negotiation_adapters.txt",
+      "bytes": 735,
+      "sha256": "f3521b71134fa527a8beeb17f28ab5834f6406df63aab22fad8ef16441b0c351"
+    },
+    {
+      "path": "suite-logs/persisted_negotiation_contracts.txt",
+      "bytes": 90,
+      "sha256": "bb138e49d767e9482d8e99a70bb3408f9abcf11fc3a6c7e5fd29248cda42a8a3"
+    },
+    {
+      "path": "suite-logs/persisted_negotiation_legacy.txt",
+      "bytes": 81,
+      "sha256": "badc442072a3c9bfd5230e985d5058444eaaea7c5a5a57311e43993053364f52"
+    },
+    {
+      "path": "suite-logs/persisted_negotiation_schemas.txt",
+      "bytes": 83,
+      "sha256": "f4b329501ccd6595f478681867b4b03a9e3aa2f865bba8eb3ca5fd784e2495dd"
+    },
+    {
+      "path": "suite-logs/policy_precedence.txt",
+      "bytes": 507,
+      "sha256": "a1ecdf99bffa59ad52ab449dc3829e93c3816ba12c98be2018fa18ff3368db79"
+    },
+    {
+      "path": "suite-logs/portable_clean_room.txt",
+      "bytes": 356,
+      "sha256": "369f742418f60d5314006633381b0fa417dbd35b45150cdda7ebb75fe0d0fef7"
+    },
+    {
+      "path": "suite-logs/portable_commitments.txt",
+      "bytes": 42,
+      "sha256": "6374b98979775b0e93e24a795520804c41ea55b74e6a16d1b0dab7298aa4b44f"
+    },
+    {
+      "path": "suite-logs/python_integration.txt",
+      "bytes": 771,
+      "sha256": "60715ffb233d11f0d9e6dcf81e81a89b7efb261fb4b3d1f857a83cda57c65c5e"
+    },
+    {
+      "path": "suite-logs/python_isolation.txt",
+      "bytes": 1792,
+      "sha256": "a4485ec36f6d8ff4a9730fa1bcc1ea7a9dfffedc196894d126f07fdd1e494fcf"
+    },
+    {
+      "path": "suite-logs/python_package.txt",
+      "bytes": 783,
+      "sha256": "887b0371544624a0eeec9b103973dad499534031475a329d848c2ad286b4c2e2"
+    },
+    {
+      "path": "suite-logs/python_parity.txt",
+      "bytes": 122,
+      "sha256": "4b4988f27db2bb0ab909456f968785d3b2971d3c679a5a6b62a3a2244cd0b581"
+    },
+    {
+      "path": "suite-logs/reexecution_lifecycle.txt",
+      "bytes": 235,
+      "sha256": "bf1cfc0f9c4f2f62fdabdcbb523ee156f8d7795cf673fcb0423d976c9c273916"
+    },
+    {
+      "path": "suite-logs/retrieval_preferences.txt",
+      "bytes": 547,
+      "sha256": "56351ed64f2d1088b765f2e809086d3821ba3129b9800309573a29d464b6de52"
+    },
+    {
+      "path": "suite-logs/review_checkpoint.txt",
+      "bytes": 583,
+      "sha256": "99ddb9756bb46c85dbee951af3941283be36595abdf36e9e772189afcc4e5c77"
+    },
+    {
+      "path": "suite-logs/routing.txt",
+      "bytes": 2815,
+      "sha256": "4bdc430cf5ec3d752975aa88e2cdb70d4b16ec6c22ff5c03ed70bc19a8475969"
+    },
+    {
+      "path": "suite-logs/sdk_ability.txt",
+      "bytes": 933,
+      "sha256": "65f1e026f3266912539a7f0a60f29a62cf7a19c4b5846892f9c69901816b17ea"
+    },
+    {
+      "path": "suite-logs/sdk_adapter.txt",
+      "bytes": 977,
+      "sha256": "c281a742f53051a7ef471237e816968a99cccd66f57d6394ccd86c6353c59bef"
+    },
+    {
+      "path": "suite-logs/state_store_sqlite.txt",
+      "bytes": 347,
+      "sha256": "d25aaa0366fa667f97843c14d603b9f02be24423126aa3b208dbeb2665bc4f43"
+    },
+    {
+      "path": "suite-logs/typescript_after.txt",
+      "bytes": 529,
+      "sha256": "a0adb723802c2f94f380ca640a78b72f14d941a12be0a72daf434427f469916e"
+    },
+    {
+      "path": "suite-logs/typescript_before.txt",
+      "bytes": 530,
+      "sha256": "33193bbd83d3a94217112e5cc6328981c51eaf5d0e0dcb81c39dbd2a49db4cc8"
+    },
+    {
+      "path": "suite-logs/typescript_package.txt",
+      "bytes": 20159,
+      "sha256": "84f6971ae2d378f2014a78425d306ea769bd347355b0d1c592bc45e3fb233420"
+    },
+    {
+      "path": "release-workloads.json",
+      "bytes": 193,
+      "sha256": "bcd4f29713ef3d9a19c8b0939f60c7374156e600f4419b95dfbe05cb82cac59c"
+    }
+  ],
+  "unit_test_summary": {
+    "total": 210,
+    "passed": 210,
+    "failed": 0,
+    "note": "Sum of Tests: summaries; excludes separately reported custom integration assertions and portable-vector checks."
+  }
+}
