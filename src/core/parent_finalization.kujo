@@ -5,7 +5,7 @@ from src.core.sequential_effects import finalization_effect_facts
 from src.core.assurance_configuration import resolve_run_configuration
 from src.core.intervention import validate_intervention_decision
 from src.core.control import resolve_control_decision, validate_evaluation_result
-from src.core.parent_transition import parent_state_body, apply_parent_decision, validate_parent_artifacts
+from src.core.parent_transition import parent_state_body, apply_parent_decision, validate_parent_artifacts, validate_parent_topology
 from src.core.portable_commitments import portable_json
 from src.core.utils import dict_get_or, ensure_dir
 func demand(ok, code) {if ok != true {throw(code)}}
@@ -14,6 +14,7 @@ func facts(state, options, decision) {
     demand(reconcile_control_journal(state)["ok"], "recovery_required")
     demand(has_key(state, "parent_finalization") == 0, "already_finalized")
     demand(dict_get_or(state, "parent_finalization_required", false), "parent_not_opted_in")
+    validate_parent_topology(state)
     subject_id := state["current_control_boundary"]["step_id"]
     parent := null;definition := null
     for step in state["steps"] {
