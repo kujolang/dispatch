@@ -721,3 +721,16 @@ authorizes replay; existing persisted beta admission remains authoritative.
 [Experimental participant packages](packages/README.md) provide unpublished npm
 and Python artifacts for pure correlation/recording APIs. They contain no effect
 executor, admission, assurance or replay authority.
+
+### Trusted localhost provider development
+
+An HTTP localhost custom provider requires an exact entry in
+`DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS`, plus both
+`DISPATCH_ALLOW_INSECURE_LOCAL_CUSTOM_PROVIDER=true` and
+`KUJO_AI_SDK_ALLOW_INSECURE_LOCALHOST=true`. The normal subprocess bridge also
+retains Kujo's private-network denial. Only a trusted development host may set
+`KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS=1` for that process to opt out of the
+private-address guard. This runtime override broadens private-network access;
+it is not a producer/model option and should not be enabled for untrusted routes.
+The default remains deny-private. The release localhost fixture uses no real
+provider credentials and does not certify a remote deployment.

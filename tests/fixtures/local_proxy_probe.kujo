@@ -1,0 +1,3 @@
+from src.bridge.sdk_adapter import call_agent_model
+result := call_agent_model({"model": {"provider": "custom", "model": "local-release-probe", "base_url": env("DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS"), "api_key_env": "CUSTOM_API_KEY"}}, "Release transport probe", {"offline_fixture": false, "timeout_ms": 10000})
+print(to_json(result))

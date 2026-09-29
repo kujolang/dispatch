@@ -9,8 +9,10 @@ invalid-policy nonmutation, a second approval gate, four concurrent deliveries,
 and unsigned callback rejection. Final release validation and public artifact
 receipts are recorded separately when complete.
 
-A real HTTP POST through the allowlisted custom-provider bridge was exercised
-against a localhost fixture (`local-release-probe`). It required both Dispatch
-and AI SDK localhost opt-ins. This proves that bridge's configured HTTP route,
-not external provider certification or permission to weaken the normal SDK
-adapter's private-network policy.
+`tests/local_proxy_integration.mjs` exercises a real HTTP POST through the normal
+SDK subprocess and allowlisted custom-provider bridge against a localhost fixture
+(`local-release-probe`). It explicitly enables the trusted-host Kujo private-network
+override and both SDK/Dispatch localhost opt-ins. Without the runtime override,
+the same request was denied before reaching the socket. This proves the configured
+HTTP route, not external provider certification; default private-network denial
+is unchanged.

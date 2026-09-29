@@ -67,6 +67,7 @@ bash tests/smoke_gate_tests.sh
 KUJO_BIN="$KUJO_BIN" bash tests/run_lock_concurrency_tests.sh
 KUJO_BIN="$KUJO_BIN" bash tests/webhook_sink_concurrency_tests.sh
 KUJO_BIN="$KUJO_BIN" bash tests/bridge_process_tests.sh
+KUJO_BIN="$KUJO_BIN" node tests/local_proxy_integration.mjs
 KUJO_BIN="$KUJO_BIN" bash tests/showcase_walkthrough_tests.sh
 
 echo "Running focused integration suites..."
