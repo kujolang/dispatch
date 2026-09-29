@@ -3,7 +3,7 @@
 This checklist governs the official 1.3.0 release with Kujo 1.6.0. The
 [earlier candidate checklist](audits/release-checklist-pre-1.6.md) and
 [1.2 checklist](release-checklist-1.2.md) are historical evidence, not validation
-of this candidate. No public release exists until the publication checks pass.
+of this candidate. The official release is published. [Final execution receipt](audits/dispatch-1.3.0-release.md) records the exact tagged source and public verification. This checklist update is post-publication evidence; it does not change the tag or archive.
 
 ## Identity and dependencies
 
@@ -19,26 +19,26 @@ of this candidate. No public release exists until the publication checks pass.
 
 ## Candidate validation
 
-- [ ] Full release gate on Linux and macOS at the final candidate revision:
+- [x] Full release gate on Linux and macOS at the final candidate revision:
   runtime contracts, locks, webhooks, 24 contract shards, restart/review, bounded
   workloads, Wave C profiles and Wave D participant integrations.
-- [ ] Pinned AI SDK and Agents SDK offline gates, including installed dependencies.
-- [ ] Installed source closure, legacy upgrade on both state backends, scale checks.
-- [ ] Participant package/private-distribution/automated adopter gates. Packages
+- [x] Pinned AI SDK and Agents SDK offline gates, including installed dependencies.
+- [x] Installed source closure, legacy upgrade on both state backends, scale checks.
+- [x] Participant package/private-distribution/automated adopter gates. Packages
   remain unpublished; no human usability claim follows from agent fixtures.
-- [ ] Approved local HTTP provider-route check and failure/restart/soak evidence.
+- [x] Approved local HTTP provider-route check and failure/restart/soak evidence.
   A localhost fixture validates transport, not a remote provider deployment.
-- [ ] External sink idempotency demonstrated by the real SQLite/Git/Ability paths.
-- [ ] Sealed security review, reportable findings resolved with regressions,
+- [x] External sink idempotency demonstrated by the real SQLite/Git/Ability paths.
+- [x] Sealed security review, reportable findings resolved with regressions,
   and ShipCheck against the candidate.
-- [ ] Reviewed commits pushed; clean tree; both hosted OS gates green.
+- [x] Reviewed commits pushed; clean tree; both hosted OS gates green.
 
 ## Publication (authorized by the release request)
 
-- [ ] Tag `v1.3.0` targets the tested source.
-- [ ] Source archive/checksum, provenance and attestation published; downloaded
+- [x] Tag `v1.3.0` targets the tested source.
+- [x] Source archive/checksum, provenance and attestation published; downloaded
   bytes verified; released-tag clean installations pass on Linux and macOS.
-- [ ] Kennel catalog reconciled; install defaults and public documentation updated
+- [x] Kennel catalog reconciled; install defaults and public documentation updated
   only after the release artifacts exist.
 
 Deployment-specific capacity, retention and live-provider certification remain
