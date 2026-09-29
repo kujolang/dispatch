@@ -170,3 +170,28 @@ trust, hostile storage, multi-host authority, general scheduler, compensation,
 cross-sink atomicity, exactly-once, universal rollback, remote renewal, protocol
 freeze, A2A and stable/public participant SDK. Recovery is not replay. Consumed
 work stays consumed. Uncertainty survives until independent evidence resolves it.
+
+### Discovered Workcell selection compatibility limit
+
+The real retained-worktree fixture uses Workcell's `create_workspace`,
+`cleanup_workspace(..., true)`, preservation outcome and reexecution descriptor,
+then Dispatch's existing review/checkpoint path. It proves repair with a present
+workspace, actual preservation expiry during an outage, later owner cleanup,
+unknown-effect retry denial and a damaged retained checkpoint. It does not certify
+OCI isolation or materialization from arbitrary exports.
+
+An attempted combination with the existing sequential selection fixture exposed
+an unresolved compatibility limit: Workcell preservation evidence uses valid v1
+`$ref` keys, while `portable-json/v1` permits only its published ASCII key grammar.
+The selection context commits preservation with that portable codec, so this
+combination rejects with `commitment_key_invalid`. Parent result bytes can remain
+noncanonical, but the separate preservation binding still has this restriction.
+The earlier Workcell Git selection proof used bounded synthetic preservation with
+an empty evidence list; it did not establish this richer owner-evidence case.
+
+Recovery inventory/review repair handles the real v1 preservation document without
+changing its bytes. Do not interpret that as successful sequential admission of
+this document. Resolving the selection binding needs an explicit compatibility
+recipe and cross-language vectors; silently broadening historical codecs or
+stripping owner evidence would be wrong. This is a prerequisite to a fully combined
+Workcell environment/child-effect/parent-lifecycle proof, and is retained for review.

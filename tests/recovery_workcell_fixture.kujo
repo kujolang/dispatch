@@ -1,3 +1,19 @@
+from src.core.checkpoint import publish_review_checkpoint
+from src.core.intervention import prepare_intervention_continuation
+from src.core.runner import run_workflow
+from src.core.state import create_run_state, load_run_state
+from src.core.step import create_step
+from src.tools.tool import create_tool_registry, create_tool, register_tool
+from src.workflows.workflow import create_workflow
+
+func retained_action(input, context) {
+    location := context["input"]["root"]
+    write_file(location + "/action-ran", "1", false)
+    retained := parse_json(read_file(location + "/preservation-input.json"))
+    stamp := format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
+    result := {"schema":"kujo.execution-result/v1", "result_id":"retained-workcell", "subject":{"run_id":context["run_id"], "step_id":"action", "attempt_id":"1"}, "producer":{"name":"workcell-retained-fixture", "version":"1"}, "attempt":1, "status":"indeterminate", "classification":"unknown", "started_at":stamp, "finished_at":stamp, "effects":[{"effect_id":"retained", "class":"external_non_idempotent", "state":"unknown"}], "evidence":[], "preservation_outcome":retained["preservation"], "reexecution_descriptor":retained["descriptor"]}
+    return {"ok":true, "data":result}
+}
 from workcell.src.evidence.execution_result import build_reexecution_descriptor
 from workcell.src.evidence.preservation import build_preservation_outcome
 from workcell.src.workspace.workspace import create_workspace, cleanup_workspace
@@ -13,6 +29,22 @@ if args()[1] == "create" {
     descriptor := build_reexecution_descriptor({"name":"retained-proof", "version":1, "network":{"mode":"none"}}, {"source":{"repository":workspace["source_root"], "commit":workspace["source_commit"]}}, root)
     write_file(root + "/owned-workspace.json", to_json(workspace))
     print(to_json({"preservation":outcome["outcome"], "descriptor":descriptor, "workspace":workspace["workspace_path"]}))
+} else if args()[1] == "init-dispatch" {
+    workflow := create_workflow({"id":"retained-workcell", "name":"Retained Workcell", "description":"Recovery environment proof", "input_schema":{"type":"dict"}, "output_schema":{"type":"dict"}, "agents":{}, "tools":["action"], "steps":[create_step("action", "Retained action", "tool", {"tool_name":"action", "input_from":["input"], "output_key":"action", "effect_class":"external_non_idempotent", "reexecution_modes":["same_workspace"]})], "routing":{"enabled":false}, "control":{"policy_id":"retained", "policy_version":"1", "policies":[{"when":{"result":"execution", "status":"indeterminate"}, "decide":{"disposition":"require_intervention", "reason":"Unknown effect", "allowed_actions":["retry_step", "abort"]}}]}, "default_retry_policy":{"max_attempts":1}, "approval_config":{"auto_approve":false}, "memory_config":{}, "budgets":{}, "max_parallel_steps":1})
+    registry := register_tool(create_tool_registry(), create_tool("action", "Retained action", {"type":"dict"}, {"type":"dict"}, retained_action, null))
+    options := {"output_root":root + "/runs", "interactive":false, "auto_approve":false}
+    executed := run_workflow(workflow, create_run_state(workflow, {"root":root}, options["output_root"], options), registry, options)
+    if executed["ok"] != true||executed["paused"] != true {throw(to_json(executed))}
+    state := executed["run_state"]
+    checkpoint := publish_review_checkpoint(root + "/runs", state["run_id"])
+    if checkpoint["ok"] != true {throw(to_json(checkpoint))}
+    write_file(root + "/pointer.json", to_json({"run_id":state["run_id"], "run_dir":state["run_dir"]}))
+    print(to_json({"ok":true, "checkpoint":checkpoint}))
+} else if args()[1] == "retry-check" {
+    pointer := parse_json(read_file(root + "/pointer.json"));state := load_run_state(root + "/runs", pointer["run_id"])["run_state"]
+    checked := prepare_intervention_continuation(state, {"action":"retry_step"})
+    if checked["ok"] == true {throw("preservation_must_not_authorize_unknown_replay")}
+    print(to_json({"ok":true, "retry_denied":true}))
 } else {
     result := cleanup_workspace(parse_json(read_file(root + "/owned-workspace.json")), false)
     if result["ok"] != true {throw(to_json(result))}
