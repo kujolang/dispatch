@@ -8,7 +8,7 @@
   },
   "tested_commits": {
     "dispatch": "95ddd04cc9a3903a37364393fa0009f4f3a0cf38",
-    "kujo": "c8df3878a56030fe0b11c6cfdb9c72ff7ef8ad28",
+    "kujo": "6f8b00ff7551160fd6d8c9550e3f39639d76a027",
     "workcell": "1413e44e287662575322c7052d744b29d4e983bb"
   },
   "runtime": {
@@ -381,7 +381,9 @@
   "kujo": {
     "fmt": "pass",
     "docs_tests": "7 passed, 0 failed",
-    "locked_release_build": "pass"
+    "locked_release_build": "pass",
+    "pre_rebase_tested_commit": "c8df3878a56030fe0b11c6cfdb9c72ff7ef8ad28",
+    "concurrent_integration": "Preserved origin/main CI-only commit 763faff, rebased documentation commits after non-fast-forward push rejection, reran exact format/docs/locked build commands successfully."
   },
   "workcell": {
     "modified": false,
@@ -1337,6 +1339,27 @@
       "path": "retained-samples.json.gz",
       "sha256": "36745351690571d39b88b5a927bed10c1ec58d74913fbbae13c2b5236db708ed",
       "uncompressed_sha256": "938e0fdf378754457e0b391c6e5b9586b17262e556e270d48492da028a011942"
+    },
+    {
+      "path": "logs/kujo-fmt-rebased.log.gz",
+      "sha256": "abfbb86f9f5ddfbd9fc1a72c43ab384702ce8bae86b60f3324748485e235e61e",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/kujo-docs-rebased.log.gz",
+      "sha256": "cbf2fdb8e54863ded897509844bfac87f240207f32f84bfc72d92c0bf9679037",
+      "bytes": 776,
+      "uncompressed_sha256": "7b6eeaaea10568f3f66269b72a78560f3953c95feff9d73c01eb9f9961d2dc05",
+      "uncompressed_bytes": 1880
+    },
+    {
+      "path": "logs/kujo-build-rebased.log.gz",
+      "sha256": "1ae274ebe08ea33e519d809fef4d35888f60ee9d0f61b347e11f49f11e9818ee",
+      "bytes": 386,
+      "uncompressed_sha256": "a25596971320afc990abe70d845fed5ec4fe11ecb91f62d7ec70917416127d0a",
+      "uncompressed_bytes": 730
     }
   ]
 }

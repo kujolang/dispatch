@@ -1,7 +1,7 @@
 # Retained-host recovery verification
 
 Tested Dispatch source: `95ddd04cc9a3903a37364393fa0009f4f3a0cf38`.
-Tested Kujo documentation: `c8df3878a56030fe0b11c6cfdb9c72ff7ef8ad28`.
+Tested Kujo documentation: `6f8b00ff7551160fd6d8c9550e3f39639d76a027`.
 Workcell unchanged: `1413e44e287662575322c7052d744b29d4e983bb`.
 
 The focused recovery suite passed 29 scenarios. The complete Dispatch canonical
@@ -25,3 +25,7 @@ See the [recovery contract](../../contracts/recovery/retained-host.md).
 
 This evidence-only closure commit follows the tested source and changes no runtime,
 contract implementation, schema, test or historical participant vector.
+
+Kujo documentation commits were rebased over concurrent CI-only commit `763faff`.
+The affected checks were rerun successfully on the resulting commit; runtime bytes
+remain identical. The original test pin is retained in `validation.json`.
