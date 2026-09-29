@@ -4,6 +4,7 @@ cd "$(dirname "$0")/.."
 KUJO_BIN="${KUJO_BIN:-kujo}"
 root="tests/tmp/resume-policy-$$"
 mkdir -p "$root"
+trap 'probe_code=$?; if [[ "$probe_code" -ne 0 ]]; then echo "Resume policy failure: ${case_root:-setup}" >&2; if [[ -f "${case_root:-}/result.log" ]]; then tail -20 "$case_root/result.log" >&2; fi; fi' EXIT
 export DISPATCH_POLICY_PROFILE=development
 export DISPATCH_OFFLINE_FIXTURE=false
 export DISPATCH_SDK_BRIDGE_SCRIPT="$PWD/tests/fixtures/policy_model_bridge.kujo"
@@ -12,6 +13,7 @@ for version in v2 v1; do
   for kind in direct model; do
     for source in env config allow; do
       case_root="$root/$version-$kind-$source"
+      echo "Resume policy case: $version/$kind/$source"
       mkdir -p "$case_root"
       "$KUJO_BIN" run tests/resume_policy_fixture.kujo "$case_root" "$version" "$kind"
       export DISPATCH_DENIED_TOOLS=''
