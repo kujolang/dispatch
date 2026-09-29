@@ -1,0 +1,7 @@
+# Operator-installed offline subprocess fixture. No network or credentials.
+payload := parse_json(env("DISPATCH_BRIDGE_PAYLOAD"))
+calls := []
+if len(payload["messages"]) < 3 {
+    calls = [{"id": "policy-call", "type": "function", "function": {"name": "timestamp_tool", "arguments": "{}"}}]
+}
+print(to_json({"ok": true, "provider": "fixture", "model": "policy-fixture", "output_text": "done", "tool_calls": calls, "usage": {"total_tokens": 1}}))

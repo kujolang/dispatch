@@ -1,0 +1,8 @@
+# Exact released companion sources for 1.3.0 integration validation.
+# Workcell/Ability/MCP are opt-in integrations, not mandatory base installer packages.
+kujo=44af277848173664f72ca85f2a1b3b98d634ecdd
+ai-sdk=5184a122590dd5698770b50d99b69ed11c7ec84a
+agents-sdk=5a9d5525e511a293b743b1c44d9ef270fd491f9f
+workcell=4ec4227f8190e05a329c2ee2975d77fce7872313
+ability=2dc7d4e9eb25e987544ac48793cd11d1999c45e0
+mcp=427a8b9ecfaee97cd66c6b35137bd1dc5fb16b54

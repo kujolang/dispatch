@@ -160,9 +160,6 @@ func resolve_bridge_paths() {
 
 func build_bridge_spawn_command(paths) {
 	return [
-		"/usr/bin/env",
-		"-C",
-		dict_get_or(paths, "ai_sdk_path", "../ai-sdk"),
 		dict_get_or(paths, "kujo_bin", "kujo"),
 		"run",
 		dict_get_or(paths, "bridge_script", "src/bridge/bridge_chat.kujo"),
@@ -347,6 +344,7 @@ func call_agent_model(agent, user_prompt, options) {
 	command := build_bridge_spawn_command(paths)
 
 	process_result := spawn_process(command, {
+		"cwd": dict_get_or(paths, "ai_sdk_path", "../ai-sdk"),
 		"inherit_env": true,
 		"env": {
 			"DISPATCH_BRIDGE_PAYLOAD": payload_json,

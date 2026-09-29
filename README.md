@@ -1,25 +1,14 @@
-Independent beta consumer adoption: [rehearsal and evidence](docs/audits/independent-beta-adoption.md). Beta is preferred for new experimental integrations within its explicit required/deny domain; existing alpha runs remain alpha. Global enablement is unchanged.
-
 # Dispatch
 
-Experimental [participant SDK API prototypes](docs/audits/participant-sdk-api.md) retain independent TypeScript/Python codecs and recording-only helpers. Unpublished; Dispatch remains admission authority.
-
-Experimental native generic participants: independent [Python adoption](docs/audits/wave-d-python.md) and [TypeScript adoption](docs/audits/wave-d-typescript.md) reuse the existing correlation API; Dispatch remains replay authority.
-
-Proposed beta adoption work: [portable commitments and alpha/beta coexistence](docs/contracts/beta-migration.md). Alpha rules below remain supported; beta is a separate opt-in required-policy path, not an automatic upgrade.
-
-
-Unreleased experimental addition: [effect assurance validation](docs/effect-assurance.md) with SQLite, Git and Ability adapters; legacy v1 replay behavior is unchanged.
-
-Compatibility authority: [effect assurance compatibility and migration](docs/effect-assurance-compatibility.md). This defines experimental profile negotiation, explicit fallback and required-policy boundaries. [Persisted negotiation](docs/persisted-assurance-negotiation.md) now binds opt-in run authority to immutable operator policy/configuration revisions across controller replacement. Existing audit documents remain historical evidence; global admission is unchanged.
-
-Source-main addition: [durable review checkpoints](docs/review-checkpoints.md)
-bind paused authority and journal evidence before a fresh controller continues.
-This is an unreleased, existing-store review boundary, not portable crash recovery.
-
-[![Version](https://img.shields.io/badge/version-1.3.0--candidate-black)](https://github.com/kujolang/dispatch)
+[![Version](https://img.shields.io/badge/version-1.3.0-black)](https://github.com/kujolang/dispatch/releases/tag/v1.3.0)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 [![built with Kujo](https://img.shields.io/badge/built%20with-Kujo-white.svg)](https://github.com/kujolang/kujo)
+
+Dispatch 1.3 adds durable failure/review controls and restart-safe replay admission.
+See [release notes](docs/RELEASE_1_3_0.md) and the [upgrade guide](docs/UPGRADING_TO_1_3.md).
+Effect assurance beta and participant interoperability alpha remain experimental,
+opt-in, and under a trusted local host. Separate participant SDK packages remain
+unpublished. A correlation match never authorizes replay.
 
 Dispatch is a workflow orchestration engine for reliable AI systems built in Kujo.
 
@@ -34,12 +23,13 @@ multi-tenant service. Start with the credential-free fixture below, then use
 model and [the 1.3 follow-up review](docs/audits/next-review-v1.3-2026-09-22.md) for open work.
 For an existing deployment, read [the 1.3 upgrade guide](docs/UPGRADING_TO_1_3.md)
 before changing the runtime or sharing an output root with older workers.
-Current source validation selects the Kujo 1.6.0 candidate in
-`release/kujo-1.6.0-rc.refs` (unpublished); `release/dispatch-v1.3.0.refs`
-remains an older immutable compatibility closure. The runtime is required for process-owned POSIX locks and confined directory
-durability barriers. The released Kujo 1.5.0 tag predates the barrier;
-do not mix it with pre-1.3 workers on a run directory. Live providers,
-platform isolation, and deployment-specific controls require separate validation.
+The supported release runtime is **Kujo 1.6.0 on Linux/macOS (POSIX)**.
+`release/dispatch-v1.3.0.refs` pins the installer closure;
+`release/dispatch-v1.3.0-validation.refs` pins the released companion integration
+cohort. Older candidate manifests remain historical evidence. The runtime supplies
+process-owned locks and confined directory durability. Quiesce old workers before
+upgrading; never mix lock protocols on a run directory. Live provider and target
+infrastructure certification remain deployment-specific.
 
 [Try your first workflow](docs/first-workflow.md) for a credential-free
 workflow-to-trace tour and an example of a plugin with a scoped tool allowlist.
@@ -225,7 +215,7 @@ SDK's `create_model_catalog`/`provider_model_catalog`, not a copied routing tabl
 
 ## Prerequisites
 
-- Kujo 1.6.0 candidate source runtime at `0d7189bd05ca56a6d6006e6a8552558be7b0c914` (POSIX), pinned in `release/kujo-1.6.0-rc.refs`
+- Kujo 1.6.0 on Linux/macOS, pinned to released source `44af277848173664f72ca85f2a1b3b98d634ecdd`
 - AI SDK installed by the Kujo `ai` profile, or a local clone for source development
 - `dispatch` checked out locally
 
@@ -731,6 +721,19 @@ authorizes replay; existing persisted beta admission remains authoritative.
 [Experimental participant packages](packages/README.md) provide unpublished npm
 and Python artifacts for pure correlation/recording APIs. They contain no effect
 executor, admission, assurance or replay authority.
+
+### Trusted localhost provider development
+
+An HTTP localhost custom provider requires an exact entry in
+`DISPATCH_ALLOWED_CUSTOM_PROVIDER_ORIGINS`, plus both
+`DISPATCH_ALLOW_INSECURE_LOCAL_CUSTOM_PROVIDER=true` and
+`KUJO_AI_SDK_ALLOW_INSECURE_LOCALHOST=true`. The normal subprocess bridge also
+retains Kujo's private-network denial. Only a trusted development host may set
+`KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS=1` for that process to opt out of the
+private-address guard. This runtime override broadens private-network access;
+it is not a producer/model option and should not be enabled for untrusted routes.
+The default remains deny-private. The release localhost fixture uses no real
+provider credentials and does not certify a remote deployment.
 
 Experimental Wave C/D: [one selected local effect](docs/contracts/effect-set/one-effect-admission.md)
 adds locked selection and one-use admission for a verified not-started SQLite

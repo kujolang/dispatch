@@ -24,6 +24,12 @@ func resolve_approval(request_obj, options) {
 	interactive := to_bool(dict_get_or(options, "interactive", true), true)
 	simulated_decision := dict_get_or(options, "simulated_decision", "")
 	simulated_note := dict_get_or(options, "simulated_note", "")
+	# Callback decisions are step-scoped; explicit CLI-wide decisions remain global.
+	decision_step := dict_get_or(options, "simulated_decision_step_id", "")
+	if decision_step != "" && decision_step != dict_get_or(request_obj, "step_id", "") {
+		simulated_decision = ""
+		simulated_note = ""
+	}
 
 	if to_bool(auto_approve, false) {
 		request_obj["decision"] := "approved"

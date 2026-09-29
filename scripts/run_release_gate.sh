@@ -67,6 +67,7 @@ bash tests/smoke_gate_tests.sh
 KUJO_BIN="$KUJO_BIN" bash tests/run_lock_concurrency_tests.sh
 KUJO_BIN="$KUJO_BIN" bash tests/webhook_sink_concurrency_tests.sh
 KUJO_BIN="$KUJO_BIN" bash tests/bridge_process_tests.sh
+KUJO_BIN="$KUJO_BIN" node tests/local_proxy_integration.mjs
 KUJO_BIN="$KUJO_BIN" bash tests/showcase_walkthrough_tests.sh
 
 echo "Running focused integration suites..."
@@ -85,6 +86,7 @@ run_suite() {
 	echo "$name passed. $(grep '^Tests:' "$log" | tail -1) Evidence: $log"
 	if [[ "${DISPATCH_TEST_VERBOSE:-false}" == true ]]; then cat "$log"; fi
 }
+run_suite typescript_build npm --prefix interop/typescript-participant run build
 run_suite effect_set env KUJO_BIN="$KUJO_BIN" node tests/effect_set_integration.mjs
 run_suite effect_continuation env KUJO_BIN="$KUJO_BIN" node tests/effect_continuation_integration.mjs
 run_suite sequential_effects env -u SEQUENTIAL_FAMILY -u SEQUENTIAL_ADMISSION_ONLY KUJO_BIN="$KUJO_BIN" node tests/sequential_effect_integration.mjs
@@ -129,6 +131,7 @@ run_suite effect_assurance_schema "$KUJO_BIN" run tests/effect_assurance_schema.
 run_suite effect_assurance env KUJO_BIN="$KUJO_BIN" node tests/effect_assurance_integration.mjs
 run_suite ability_assurance env KUJO_BIN="$KUJO_BIN" bash tests/ability_assurance_integration.sh
 run_suite reexecution_lifecycle "$KUJO_BIN" run tests/reexecution_lifecycle_fixture.kujo
+run_suite resume_policy env KUJO_BIN="$KUJO_BIN" bash tests/resume_policy_tests.sh
 run_suite decision_claim env KUJO_BIN="$KUJO_BIN" bash tests/decision_claim_contract.sh
 run_suite sdk_adapter "$KUJO_BIN" test-run tests/sdk_adapter_tests.kujo -v
 run_suite policy_precedence "$KUJO_BIN" test-run tests/policy_precedence_tests.kujo -v

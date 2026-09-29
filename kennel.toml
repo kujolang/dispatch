@@ -15,10 +15,10 @@ readme = "README.md"
 stage = "production"
 stability = "stable"
 public_api = true
-notes = "The Dispatch 1.3 CLI and workflow contracts are public; Requires the exact source-runtime pin in release/dispatch-v1.3.0.refs for POSIX locks and directory durability; released Kujo 1.5.0 lacks the latter."
+notes = "The Dispatch 1.3 CLI and workflow contracts are public; Requires Kujo 1.6.0 for POSIX locks and directory durability. Assurance beta and interoperability alpha remain experimental and opt-in."
 
 [kujo]
-minimum_version = "1.5.0"
+minimum_version = "1.6.0"
 entry = "dispatch.kujo"
 sources = ["."]
 includes = ["README.md", "HOWTO.md", "BLOG_ROUTER.md", "CHANGELOG.md", "docs", "examples", "release", "scripts", "src", "tests", "dispatch.kujo", "kujo.toml"]
@@ -30,7 +30,7 @@ output = "dist"
 artifacts = []
 
 [dependencies]
-ai-sdk = { source = "github:kujolang/ai-sdk", commit = "849dbbbba7a734938320dd9569d1ed7aa6240298" }
+ai-sdk = { source = "github:kujolang/ai-sdk", commit = "5184a122590dd5698770b50d99b69ed11c7ec84a" }
 
 [dev-dependencies]
 

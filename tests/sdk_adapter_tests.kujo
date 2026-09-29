@@ -67,13 +67,11 @@ test "bridge spawn command is direct argv without shell wrapper" {
 		"kujo_bin": "/usr/local/bin/kujo",
 		"bridge_script": "/tmp/bridge_chat.kujo"
 	})
-	assert_equal(cmd[0], "/usr/bin/env")
-	assert_equal(cmd[1], "-C")
-	assert_equal(cmd[2], "/tmp/ai-sdk")
-	assert_equal(cmd[3], "/usr/local/bin/kujo")
-	assert_equal(cmd[4], "run")
-	assert_equal(cmd[5], "/tmp/bridge_chat.kujo")
-	assert_equal(cmd[6], "--interpreter")
+    assert_equal(len(cmd), 4)
+    assert_equal(cmd[0], "/usr/local/bin/kujo")
+    assert_equal(cmd[1], "run")
+    assert_equal(cmd[2], "/tmp/bridge_chat.kujo")
+    assert_equal(cmd[3], "--interpreter")
 }
 
 test "bridge timeout is configurable with a safe default" {
