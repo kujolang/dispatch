@@ -49,3 +49,9 @@ Transcript presentation trims trailing whitespace and surplus final blank lines.
 For each affected transcript, `validation.json` records its original digest and
 points to a gzip artifact retaining the exact original bytes. All diagnostic and
 result text remains present; the compressed originals were round-trip verified.
+
+After the full gate, final remote release documentation and Kujo ignore-rule
+updates were merged. Dispatch executable source, tests, scripts and package
+manifests were verified identical to the tested tree. Kujo’s seven documentation
+and repository checks passed again; exact merge IDs and that receipt are recorded
+in `post_gate_integrations`.

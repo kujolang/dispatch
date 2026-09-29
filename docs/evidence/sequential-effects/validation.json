@@ -298,8 +298,8 @@
   "artifacts": [
     {
       "path": "README.md",
-      "bytes": 3271,
-      "sha256": "61a53ff140c9bb562c0f3611817f01274d1c33dcc40d73ed712657e15211fa4f"
+      "bytes": 3619,
+      "sha256": "4a68dd86b586b27e625f968b3a33324bbb4854a93d6af4efe8fd9fe7337fc758"
     },
     {
       "path": "logs/baseline-continuation.txt",
@@ -747,6 +747,11 @@
       "sha256": "5292b7e901010263d4959cf9cabb28e0816305b2316be9a49b6dd94278c94874"
     },
     {
+      "path": "logs/kujo-doc-contracts-final.txt",
+      "bytes": 1879,
+      "sha256": "b720766b15133c12b4053dbafe67f921f45f358397c569b0b3bee3dd15b69002"
+    },
+    {
       "path": "logs/kujo-doc-contracts-merged.txt",
       "bytes": 1879,
       "sha256": "bb624629e8e712ebbb82cd1d30024731841be2a699943802a38fca922048560d"
@@ -795,6 +800,11 @@
       "path": "logs/raw/kujo-contracts.txt.gz",
       "bytes": 542,
       "sha256": "ab0607621fd5b87d1791e2505bc5a81626bc4c0b316a93b6cb3f4092111e3960"
+    },
+    {
+      "path": "logs/raw/kujo-doc-contracts-final.txt.gz",
+      "bytes": 774,
+      "sha256": "5b53f27715a04addab454fd50bcc4aa1fb2f67415e6e6b12bcb02f66c0e93403"
     },
     {
       "path": "logs/raw/kujo-doc-contracts-merged.txt.gz",
@@ -945,7 +955,27 @@
         "original_sha256": "60bb6893282cfcc9834e5fe487232eb676cc99ef8ef62b427ea1af5bd8714329",
         "original_bytes": 15646,
         "original_gzip": "logs/raw/workcell-npm-tests.txt.gz"
+      },
+      {
+        "path": "logs/kujo-doc-contracts-final.txt",
+        "original_sha256": "33b5a6ae3ca3dc640fd2d83df682b3406470cce49a60d5cf1cf53a8513dace78",
+        "original_bytes": 1880,
+        "original_gzip": "logs/raw/kujo-doc-contracts-final.txt.gz"
       }
     ]
+  },
+  "post_gate_integrations": {
+    "dispatch_upstream": "9c3a90a57d1fa7e16b95d523daa255df223b6514",
+    "dispatch_merge": "64d88ee843e3002b29abb6053ab349686a4d3db1",
+    "kujo_upstream": "8a84fb7ce4d1dd3abaf290736939f1b7883b4d03",
+    "kujo_merge": "4decd0c49545ed9904faeadd2d325deb926f6283",
+    "scope": "Release documentation/evidence and Kujo ignore rules only. Dispatch src/tests/scripts/entrypoint/package manifests match tested b6f1d30 exactly; no executable-source change.",
+    "validation": {
+      "command": "cargo test --locked --test readme_contracts --test repo_hygiene_contract --test markdown_unchecked_contract",
+      "cwd": "kujo",
+      "passed": 7,
+      "failed": 0,
+      "log": "logs/kujo-doc-contracts-final.txt"
+    }
   }
 }
