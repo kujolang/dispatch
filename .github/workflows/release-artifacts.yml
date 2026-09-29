@@ -33,6 +33,12 @@ jobs:
           node-version: "26.7.0"
           package-manager-cache: false
 
+      - name: Install pinned Go proof toolchain
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: '1.25.3'
+          cache: false
+
       - name: Install pinned Python participant dependencies
         run: bash interop/python-participant/bootstrap.sh
 
@@ -141,7 +147,7 @@ jobs:
     steps:
       - name: Install pinned Dispatch closure
         run: |
-          curl -fsSL "https://raw.githubusercontent.com/kujolang/kujo/44af277848173664f72ca85f2a1b3b98d634ecdd/install.sh" \
+          curl -fsSL "https://raw.githubusercontent.com/kujolang/kujo/fc53093f35e4236682bbbf5ab1ccc8d2b4df990c/install.sh" \
             | bash -s -- --package dispatch \
                 --release-manifest "https://raw.githubusercontent.com/kujolang/dispatch/${GITHUB_REF_NAME}/release/dispatch-v1.3.0.refs"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"

@@ -45,8 +45,11 @@ jobs:
           node-version: "26.7.0"
           package-manager-cache: false
 
-      - name: Verify Go proof toolchain
-        run: go version # Hosted images supply Go >= 1.22; no third-party modules.
+      - name: Install pinned Go proof toolchain
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: '1.25.3'
+          cache: false
 
       - name: Install pinned Python participant dependencies
         run: bash interop/python-participant/bootstrap.sh
@@ -110,6 +113,13 @@ jobs:
             exit 1
           fi
 
+      - name: Checkout reviewed post-publication installer
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/kujo
+          ref: fc53093f35e4236682bbbf5ab1ccc8d2b4df990c
+          path: .ci/installer
+
       - name: Verify immutable dependency closure and installer parser
         run: |
           grep -qx "kujo=44af277848173664f72ca85f2a1b3b98d634ecdd" release/dispatch-v1.3.0.refs
@@ -122,7 +132,7 @@ jobs:
           test "$(git -C .ci/ai-sdk rev-parse HEAD)" = "5184a122590dd5698770b50d99b69ed11c7ec84a"
           test "$(git -C .ci/agents-sdk rev-parse HEAD)" = "5a9d5525e511a293b743b1c44d9ef270fd491f9f"
           test -f .ci/ai-sdk/scripts/generate_model_catalog.kujo
-          bash .ci/kujo/tests/install_release_manifest.sh
+          bash .ci/installer/tests/install_release_manifest.sh
 
       - name: Install reviewed Kujo release
         uses: kujolang/kujo/.github/actions/setup-kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c
@@ -216,7 +226,7 @@ jobs:
           candidate_manifest="$RUNNER_TEMP/dispatch-candidate.refs"
           sed "s/^dispatch=v1.3.0$/dispatch=${GITHUB_SHA}/" release/dispatch-v1.3.0.refs > "$candidate_manifest"
           grep -qx "dispatch=$(git rev-parse HEAD)" "$candidate_manifest"
-          bash .ci/kujo/install.sh --package dispatch --source \
+          bash .ci/installer/install.sh --package dispatch --source \
             --release-manifest "$candidate_manifest" \
             --prefix "$candidate_dir/root" --bin-dir "$candidate_dir/bin"
           bash tests/installed_package_tests.sh "$candidate_dir/root"
