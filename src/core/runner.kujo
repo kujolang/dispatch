@@ -1,3 +1,4 @@
+from src.core.control import parent_completion_review
 from src.core.assurance_state import assurance_protected, validate_assurance_anchor
 from src.core.assurance_configuration import check_negotiated_execution, resolve_run_configuration
 from src.agents.agent import run_agent, run_agent_with_agent
@@ -146,6 +147,14 @@ func pause_from_control_decision(run_state, step, step_index, decision, control_
     run_state["control_boundaries"] := push(dict_get_or(run_state, "control_boundaries", []), boundary)
     run_state["current_control_boundary"] := boundary
     run_state["control_barrier"] := {"boundary_id": boundary_id, "status": "closed_to_admission", "scope": dict_get_or(decision, "scope", {}), "blocked_step_ids": blocked_step_ids, "in_flight": dict_get_or(decision, "in_flight", "allow_finish")}
+    # Explicit finalization contracts keep this parent nonterminal until the
+    # separate locked decision; historical workflows retain their existing path.
+    if has_key(dict_get_or(step, "config", {}), "parent_finalization") {
+        if assurance_protected(run_state) == false {throw("parent_finalization_requires_protected_run")}
+        run_state["parent_finalization_required"] := true
+        if contains(run_state["required_features"], "parent-finalization/v1alpha1") == false {run_state["required_features"] := push(run_state["required_features"], "parent-finalization/v1alpha1")}
+        steps := run_state["steps"];parent := steps[step_index];parent["status"] := "paused";parent["finished_at"] := "";steps[step_index] := parent;run_state["steps"] := steps
+    }
     # Persist the admission barrier before journaling or requesting review.
     run_state = persist_run_state(run_state)
     journaled := append_control_event(run_state, "policy_decision", dict_get_or(step, "id", ""), [dict_get_or(decision, "decision_id", ""), dict_get_or(control_evaluation, "result_id", "")], {"disposition": dict_get_or(decision, "disposition", ""), "scope": dict_get_or(decision, "scope", {})})
@@ -1286,6 +1295,9 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
     if assurance_protected(run_state) {journal_check := reconcile_control_journal(run_state); if journal_check["ok"] == false {return journal_check}}
     checked := check_negotiated_execution(run_state, options)
     if checked["ok"] == false {return checked}
+    for configured_step in workflow["steps"] {
+        if has_key(dict_get_or(configured_step, "config", {}), "parent_finalization")&&(assurance_protected(run_state) == false||len(keys(dict_get_or(workflow, "control", {}))) == 0) {return {"ok":false, "code":"parent_finalization_requires_protected_control"}}
+    }
     routing_validation := validate_workflow_routing(workflow)
     if dict_get_or(routing_validation, "ok", false) == false {
         return {"ok": false, "paused": false, "run_state": run_state, "error": {"code": "invalid_routing_config", "message": "Workflow routing configuration is invalid.", "retryable": false, "details": dict_get_or(routing_validation, "errors", [])}}
@@ -1666,6 +1678,11 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
         })
 
         control_resolution := resolve_control_decision(workflow, step, output_value)
+        if has_key(dict_get_or(step, "config", {}), "parent_finalization")&&dict_get_or(control_resolution, "ok", false) {
+            facts := dict_get_or(control_resolution, "evaluation_result", {})
+            if dict_get_or(facts, "schema", "") != "kujo.execution-result/v1" {control_resolution = {"ok":false, "error":{"code":"parent_execution_result_required", "message":"Finalization parent requires execution-result/v1.", "retryable":false}}}
+            else if dict_get_or(control_resolution["decision"], "disposition", "") == "continue" {review := parent_completion_review(workflow, step, facts);control_resolution["decision"] := review["decision"]}
+        }
         if dict_get_or(control_resolution, "ok", false) == false {
             control_error := dict_get_or(control_resolution, "error", {"code": "invalid_control_result", "message": "Workflow control result is invalid.", "retryable": false})
             invalid_decision := {

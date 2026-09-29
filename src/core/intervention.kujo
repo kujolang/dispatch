@@ -133,6 +133,7 @@ func prepare_intervention_continuation_impl(run_state, decision) {
     boundary := dict_get_or(run_state, "current_control_boundary", {})
     target_step_id := dict_get_or(continuation, "target_step_id", dict_get_or(boundary, "step_id", ""))
     if target_step_id != dict_get_or(boundary, "step_id", "") {return intervention_error("invalid_continuation_target", "A decision cannot replay an unrelated step.")}
+    if (action == "resume_from_boundary"||action == "approve_override")&&dict_get_or(run_state, "parent_finalization_required", false) {return intervention_error("parent_finalization_required", "Use explicit locked parent finalization for this protected parent.")}
     if action == "resume_from_boundary"||action == "approve_override" {
         steps := dict_get_or(run_state, "steps", [])
         idx := find_step_index(steps, target_step_id)

@@ -56,7 +56,9 @@ func fold(state) {
     if len(refs) > 0 {
         last_event := read_artifact(state, refs[len(refs) - 1])
         last_control := parse_json(read_file_beneath(state["run_dir"], "control-records/" + to_string(state["control_journal"]["sequence"]) + ".json", 1048576))
-        if last_control["kind"] == "retained_host_reconciled" {
+        if last_control["kind"] == "parent_finalized" {
+            require(last_control["details"]["resulting_revision"] == state["revision"]&&last_event["prior_revision"] < state["revision"])
+        } else if last_control["kind"] == "retained_host_reconciled" {
             require(last_control["state_revision"] + 1 == state["revision"])
             require(last_control["details"]["schema"] == "dispatch.reconciliation-receipt/v1alpha1")
             require(last_control["details"]["resulting_revision"] == state["revision"])
@@ -75,6 +77,7 @@ func append(state, kind, data) {
     record_ref := put(state, record);history = push(history, record_ref)
     state["effect_lifecycle"] := history
     state["required_features"] := [assurance_feature(state["assurance_negotiation"]), "sequential-effects/v1alpha1"]
+        if dict_get_or(state, "parent_finalization_required", false) {state["required_features"] := push(state["required_features"], "parent-finalization/v1alpha1")}
     logged := append_control_event(state, "effect_lifecycle_recorded", state["current_control_boundary"]["step_id"], [record_ref], {"effect_lifecycle":history})
     state = logged["run_state"];request := state["human_intervention"];request["state_revision"] := state["revision"] + 1;state["human_intervention"] := request
     state = persist_run_state(state);require(sync_directory_beneath(state["run_dir"], "."));return state
@@ -147,6 +150,14 @@ func operate(root, id, request, options, state) {
         }
         basis := {"schema":"dispatch.effect-set/v1alpha1", "plan_ref":facts["binding"]["plan_ref"], "result_ref":facts["binding"]["result_ref"], "observations":refs}
         put(state, plan)
+        preservation := facts["preservation"]
+        if has_key(preservation, "preimage") {put(state, preservation["preimage"])}
+        for raw in preservation["artifacts"] {
+            path := "effect-lifecycle/" + sha256(raw) + ".preservation"
+            if file_exists(state["run_dir"] + "/" + path) {require(read_file_beneath(state["run_dir"], path, 1048576) == raw)}
+            else {require(write_file_atomic_beneath(state["run_dir"], path, raw, false))}
+        }
+        require(sync_directory_beneath(state["run_dir"], "effect-lifecycle"))
         # Preserve exact original parent bytes, including noncanonical JSON.
         parent_path := "effect-lifecycle/" + substring(facts["binding"]["result_ref"], 7, 71) + ".parent"
         if file_exists(state["run_dir"] + "/" + parent_path) == false {require(write_file_atomic_beneath(state["run_dir"], parent_path, facts["host"]["result_raw"], false));require(sync_directory_beneath(state["run_dir"], "effect-lifecycle"))}
@@ -217,3 +228,22 @@ export func sequential_effect_operation(root, id, request, options) {
 
 # Recovery reads retained knowledge only; it never resolves admission context.
 export func recovery_lifecycle_view(state) {return fold(state)}
+
+# Informational prerequisites only. Calling this never selects or admits work.
+export func finalization_effect_facts(state, options) {
+    require(has_key(state, "effect_continuation") == 0)
+    view := fold(state)
+    if view["anchor"] == null||view["assessed_revision"] <= view["last_terminal_revision"] {throw("parent_assessment_required")}
+    for attempt in keys(view["attempts"]) {
+        item := view["attempts"][attempt]
+        if item["cancelled"] {require(item["consumed"] == false&&file_exists(state["run_dir"] + "/" + claim_path(attempt)) == false)}
+        else {
+            require(item["consumed"]&&dict_get_or(item["observation"], "observed_state", "") == "committed")
+            require(read_file_beneath(state["run_dir"], claim_path(attempt), 8192) == portable_json(item["selection"]))
+        }
+    }
+    plan := read_artifact(state, view["anchor"]["plan_ref"])
+    facts := context(state, options, plan["effects"][0]["effect_id"], view["basis_ref"], false)
+    if facts["assessment"]["condition"] != "all_observed_complete" {throw("blocked_by_uncertainty")}
+    return facts
+}

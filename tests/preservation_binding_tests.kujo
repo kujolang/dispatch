@@ -13,6 +13,8 @@ metadata := {"schema":"kujo.evidence-ref/v1", "subject":subject, "integrity":{"s
 func source(document, meta, content, env) {return {"document_raw":document, "environment_ref":env, "resolve":func(selector) {if selector != "receipt.json" {throw("unauthorized")};return {"metadata_raw":to_json(meta), "content_raw":content, "environment_ref":env}}}}
 valid := source(raw, metadata, "evidence", environment)
 bound := bind_preservation(preservation, subject, environment, valid)
+vector := parse_json(read_file("tests/vectors/parent-finalization.json"))["vectors"][0]
+expect("implementation matches portable vector", portable_json(bound["preimage"]) == vector["preimage_utf8"])
 expect("reference binds original bytes", bound["preimage"]["document_ref"] == "sha256:" + sha256(raw)&&bound["artifacts"][0] == raw)
 expect("document and evidence have distinct identities", bound["preimage"]["references"][0]["content_ref"] == "sha256:" + sha256("evidence"))
 func rejects(p, sub, env, src) {try {bind_preservation(p, sub, env, src);return false} except err {return true}}

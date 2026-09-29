@@ -1,0 +1,153 @@
+from src.core.intervention import prepare_verified_intervention
+from src.core.parent_finalization import assess_parent_finalization, finalize_parent
+from src.core.retained_recovery import inspect_retained_run, plan_retained_reconciliation, apply_retained_reconciliation
+from workcell.src.evidence.preservation import write_preservation_outcome
+from workcell.src.evidence.retained_workspace import observe_retained_workspace
+from workcell.src.workspace.workspace import create_workspace
+from eval.src.control_contracts import build_evaluation_result
+from src.adapters.git_continuation import git_continuation_adapter
+from src.adapters.sqlite_continuation import sqlite_continuation_adapter
+from src.adapters.sqlite_effect import sqlite_effect_init, sqlite_effect_apply, sqlite_effect_observe
+from src.core.assurance_admission import create_negotiated_run
+from src.core.assurance_configuration import implementation_digest, configuration_revision
+from src.core.portable_commitments import portable_json
+from src.core.runner import run_workflow
+from src.core.sequential_effects import sequential_effect_operation
+from src.core.state import load_run_state, persist_run_state
+from src.core.step import create_step
+from src.core.utils import dict_get_or, ensure_dir
+from src.tools.tool import create_tool_registry, create_tool, register_tool
+from src.workflows.workflow import create_workflow
+from workcell.src.evidence.git_effect import git_effect_apply, git_effect_observe
+args := args();root := args[0];mode := args[1]
+func require(value) {if value != true {throw("continuation_fixture_failed")}}
+func config() {return parse_json(read_file_beneath(root, "host.json", 65536))}
+func put(value) {
+    artifact_bytes := portable_json(value);ref := "sha256:" + sha256(artifact_bytes)
+    if file_exists(root + "/artifacts/" + sha256(artifact_bytes) + ".json") == false {write_file_atomic_beneath(root, "artifacts/" + sha256(artifact_bytes) + ".json", artifact_bytes, false)}
+    return ref
+}
+func inventory() {
+    files := []
+    for path in ["src/core/state.kujo", "src/core/control.kujo", "src/core/control_journal.kujo", "src/core/assurance_state.kujo", "src/core/assurance_configuration.kujo", "src/core/effect_set.kujo", "src/core/portable_commitments.kujo", "src/core/sequential_effects.kujo", "src/core/effect_context.kujo", "src/core/preservation_binding.kujo", "src/core/parent_finalization.kujo", "src/core/parent_transition.kujo", "src/adapters/sqlite_effect.kujo", "src/adapters/sqlite_continuation.kujo", "tests/parent_finalization_fixture.kujo"] {files = push(files, {"root":os_getcwd(), "path":path})}
+    files = push(files, {"root":os_getcwd() + "/../workcell", "path":"src/evidence/retained_workspace.kujo"})
+    return files
+}
+func resolve_preserved(selector) {
+    cfg := config()
+    for entry in cfg["preservation_sources"] {
+        if entry["selector"] == selector {
+            content := ""
+            if entry["kind"] == "workspace" {observed := observe_retained_workspace(cfg["workspace"]);require(observed["ok"]);content = to_json(observed["observation"])}
+            else {content = read_file_beneath(root, "workcell/" + entry["selector"], 1048576)}
+            return {"metadata_raw":entry["metadata_raw"], "content_raw":content, "environment_ref":cfg["effect_set"]["environment_ref"]}
+        }
+    }
+    throw("unauthorized_preservation_reference")
+}
+func installed(revision, state) {
+    cfg := config()
+    host := dict_get_or(cfg, "effect_set", {})
+    host["read_artifact"] := func(ref) {return read_file_beneath(root, "artifacts/" + substring(ref, 7, 71) + ".json", 8192)}
+    if has_key(cfg, "preservation_sources") {host["preservation_binding"] := {"document_raw":read_file_beneath(root, "workcell/preservation.json", 65536), "environment_ref":host["environment_ref"], "resolve":resolve_preserved}}
+    finalization := {"evaluation_raw":dict_get_or(cfg, "evaluation_raw", ""), "authorize_decision":func(decision, current) {return decision["actor"]["id"] == "local-operator"&&dict_get_or(config(), "operator_enabled", true)}, "read_output":func(reference) {require(reference == cfg["output_ref"]);return {"metadata_raw":read_file_beneath(root, "output-evidence.json", 16384), "content_raw":read_file_beneath(root, "output.txt", 1048576)}}}
+    return {"parent_finalization":finalization, "status":dict_get_or(cfg, "status", "active"), "descriptor":cfg["descriptor"], "authority_sha256":cfg["descriptor"]["authority_sha256"], "implementation":inventory(), "verify":func(subject) {return null}, "effect_set":host, "continuation_adapter":family_adapter()}
+}
+func family_adapter() {if config()["family"] == "git" {return git_continuation_adapter};return sqlite_continuation_adapter}
+func family_apply(index) {family_cfg := config();if family_cfg["family"] == "git" {return git_effect_apply(root + "/sink.git", family_cfg["intents"][index], family_cfg["old_oid"], family_cfg["new_oid"], "")};return sqlite_effect_apply(root + "/sink.db", family_cfg["intents"][index], "")}
+func family_observe(index) {family_cfg := config();if family_cfg["family"] == "git" {return git_effect_observe(root + "/sink.git", family_cfg["intents"][index], family_cfg["old_oid"], family_cfg["new_oid"])};return sqlite_effect_observe(root + "/sink.db", family_cfg["intents"][index])}
+func boundary(point) {
+    if mode == point {print("CRASH:" + point);sleep(30000)}
+    if mode == "revoke-finalization"&&point == "before_finalization" {changed_cfg := config();changed_cfg["status"] := "revoked";write_file(root + "/host.json", to_json(changed_cfg), true)}
+    if mode == "expire-after-admission"&&point == "after_admission" {
+        deadline_state := load_run_state(root + "/runs", parse_json(read_file(root + "/pointer.json"))["run_id"])["run_state"]
+        deadline_refs := deadline_state["effect_lifecycle"]
+        deadline_event := parse_json(read_file(deadline_state["run_dir"] + "/effect-lifecycle/" + substring(deadline_refs[len(deadline_refs) - 1], 7, 71) + ".json"))
+        deadline_basis := parse_json(read_file(deadline_state["run_dir"] + "/effect-lifecycle/" + substring(deadline_event["data"]["set_ref"], 7, 71) + ".json"))
+        deadline_observation := parse_json(read_file(deadline_state["run_dir"] + "/effect-lifecycle/" + substring(deadline_basis["observations"][0], 7, 71) + ".json"))
+        while now_utc_seconds() < deadline_observation["valid_until"] {sleep(50)}
+    }
+    if mode == "registration-after-admission"&&point == "after_admission" {changed_cfg := config();changed_host := changed_cfg["effect_set"];changed_registration := changed_host["registration"];changed_registration["revision"] := "2";changed_host["registration"] := changed_registration;changed_cfg["effect_set"] := changed_host;write_file(root + "/host.json", to_json(changed_cfg), true)}
+    if mode == "revoke-after-admission"&&point == "after_admission" {changed_cfg := config();changed_cfg["status"] := "revoked";write_file(root + "/host.json", to_json(changed_cfg), true)}
+}
+options := {"assurance_host":installed, "effect_boundary":boundary, "finalization_boundary":boundary, "evidence_seconds":dict_get_or(config(), "evidence_seconds", 300)}
+func workflow() {
+    built := create_workflow({"id":"effect-continuation", "name":"One effect", "description":"Bounded continuation", "input_schema":{"type":"dict"}, "output_schema":{"type":"dict"}, "agents":{}, "tools":["action"], "steps":[create_step("action", "Effects", "tool", {"tool_name":"action", "input_from":["input"], "output_key":"action", "effect_class":"external_non_idempotent", "reexecution_modes":["same_workspace"], "parent_finalization":{"schema":"dispatch.parent-finalization-policy/v1alpha1", "required_outputs":["report"], "evaluation":{"name":"eval", "version":"2.0.0", "configuration_sha256":sha256(read_file(root + "/eval-config.json"))}}})], "routing":{"enabled":false}, "control":{"policy_id":"effect-continuation", "policy_version":"1", "policies":[{"when":{"result":"execution", "status":"indeterminate"}, "decide":{"disposition":"require_intervention", "reason":"Partial effects", "allowed_actions":["retry_step", "approve_override", "abort"]}}]}, "default_retry_policy":{"max_attempts":1}, "approval_config":{"auto_approve":false}, "memory_config":{}, "budgets":{}, "max_parallel_steps":1})
+    if dict_get_or(config(), "descendant", false) {built["steps"] := push(built["steps"], create_step("descendant", "Required descendant", "tool", {"tool_name":"action", "depends_on":["action"], "input_from":["input"]}))}
+    return built
+}
+func action(input, context) {
+    cfg := config();intents := cfg["intents"]
+    require(family_apply(0)["ok"]);require(family_apply(1)["ok"])
+    stamp := format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
+    result := {"schema":"kujo.execution-result/v1", "result_id":context["run_id"] + ":parent", "subject":{"run_id":context["run_id"], "step_id":"action", "attempt_id":"1"}, "producer":{"name":"local-set-host", "version":"1"}, "status":dict_get_or(cfg, "reported_status", "indeterminate"), "classification":"unknown", "started_at":stamp, "finished_at":stamp, "attempt":1, "effects":[{"effect_id":"A", "class":"external_non_idempotent", "state":"unknown"}, {"effect_id":"B", "class":"external_non_idempotent", "state":"unknown"}, {"effect_id":"C", "class":"external_idempotent", "state":"not_started"}, {"effect_id":"D", "class":"external_idempotent", "state":"not_started"}], "evidence":[]}
+    ensure_dir(root + "/workcell")
+    workspace := create_workspace(root + "/source", "git-worktree", "wc-" + replace(uuid_v4(), "-", ""));require(workspace["ok"])
+    cfg["workspace"] := workspace
+    write_file(root + "/workcell/receipt.json", to_json({"workspace":workspace}), true)
+    preserved := write_preservation_outcome({"run_id":context["run_id"], "step_id":"action", "attempt_id":"1", "requested_mode":"filesystem", "cleanup_status":"preserved", "output_dir":root + "/workcell", "workspace_path":workspace["workspace_path"], "provider":"local", "retain_until":"2099-01-01T00:00:00Z", "source_root":workspace["source_root"], "workspace_strategy":workspace["strategy"]});require(preserved["ok"])
+    result["preservation_outcome"] := preserved["outcome"]
+    output_raw := "bounded parent artifact\n";write_file(root + "/output.txt", output_raw, true)
+    metadata := {"schema":"kujo.evidence-ref/v1", "id":"parent-output", "producer":{"name":"local", "version":"1"}, "subject":result["subject"], "kind":"artifact", "uri":"file:output.txt", "media_type":"text/plain", "created_at":stamp, "integrity":{"status":"sha256", "sha256":sha256(output_raw)}}
+    output_metadata := to_json(metadata);write_file(root + "/output-evidence.json", output_metadata, true)
+    cfg["output_ref"] := "sha256:" + sha256(output_metadata);result["output"] := {"report":cfg["output_ref"]}
+    sources := []
+    for entry in preserved["outcome"]["evidence"] {
+        selector := entry["$ref"];kind := "file";content := ""
+        if selector == workspace["workspace_path"] {kind = "workspace";content = to_json(observe_retained_workspace(workspace)["observation"])} else {content = read_file_beneath(root, "workcell/" + selector, 1048576)}
+        metadata["id"] := "preserved-" + sha256(selector);metadata["uri"] := selector;metadata["integrity"] := {"status":"sha256", "sha256":sha256(content)}
+        sources = push(sources, {"selector":selector, "kind":kind, "metadata_raw":to_json(metadata)})
+    }
+    cfg["preservation_sources"] := sources;write_file(root + "/host.json", to_json(cfg), true)
+    return {"ok":true, "data":result}
+}
+if mode == "init" {
+    cfg := config();ensure_dir(root + "/artifacts")
+    if cfg["family"] == "sqlite" {sqlite_effect_init(root + "/sink.db")
+        db := db_connect("sqlite", root + "/sink.db")
+        db_execute(db, "CREATE TABLE mutation_audit(request TEXT)", [])
+        db_execute(db, "CREATE TRIGGER audit_attempt BEFORE INSERT ON logical_effects BEGIN INSERT INTO mutation_audit(request) VALUES(NEW.request); END", [])
+        db_close(db)}
+    profile := "dispatch.sqlite-unique";issuer := "sqlite-local";mechanism := "sqlite_unique_transaction";operation := "create";sink := root + "/sink.db"
+    if cfg["family"] == "git" {profile = "workcell.git-cas";issuer = "workcell-local";mechanism = "git_ref_cas_transaction";operation = "update";sink = root + "/sink.git"}
+    descriptor := {"schema":"dispatch.assurance-configuration/v1beta1", "mode":"required", "fallback":"deny", "profile":profile, "profile_version":"1beta1", "issuer":issuer, "mechanism":mechanism, "verifier_id":"local-set-host", "verifier_version":"1", "verifier_sha256":implementation_digest(inventory()), "authority_sha256":sha256(root)}
+    cfg["descriptor"] := descriptor;write_file(root + "/host.json", to_json(cfg), true)
+    created := create_negotiated_run(workflow(), {}, root + "/runs", {}, descriptor, installed);require(created["ok"])
+    registry := register_tool(create_tool_registry(), create_tool("action", "Effect set", {"type":"dict"}, {"type":"dict"}, action, null))
+    executed := run_workflow(workflow(), created["run_state"], registry, options);require(executed["ok"])
+    state := executed["run_state"];require(state["status"] == "paused")
+    write_file(root + "/pointer.json", to_json({"run_id":state["run_id"], "run_dir":state["run_dir"]}), true)
+    cfg = config();result := state["steps"][0]["execution_result"];raw := to_json(result)
+    now := parse_int(to_string(floor(now_utc_seconds())));entries := [];ids := ["A", "B", "C", "D"]
+    for i in range(0, 4) {
+        intent := cfg["intents"][i]
+        entries = push(entries, {"effect_id":ids[i], "operation":operation, "target_ref":"sha256:" + intent["target_sha256"], "scope_ref":"sha256:" + intent["scope_sha256"], "key_ref":"sha256:" + intent["key_sha256"], "request_ref":"sha256:" + intent["request_sha256"], "profile":profile, "profile_revision":"1beta1", "authority":issuer})
+    }
+    registration := {"adapter":"local-" + cfg["family"], "revision":"1", "participant":"host"}
+    plan := {"schema":"dispatch.effect-plan/v1alpha1", "subject":result["subject"], "config_ref":"sha256:" + configuration_revision(descriptor), "registration_ref":"sha256:" + sha256(portable_json(registration)), "preserve_until":now + 3000, "effects":entries}
+    refs := []
+    for i in range(0, 4) {
+        live := family_observe(i);require(live["ok"])
+        refs = push(refs, put({"schema":"dispatch.effect-observation/v1alpha1", "plan_ref":"sha256:" + sha256(portable_json(plan)), "result_ref":"sha256:" + sha256(raw), "effect_id":ids[i], "state":live["observation"]["observed_state"], "observed_at":now - 1, "valid_until":now + dict_get_or(cfg, "evidence_seconds", 1800), "evidence_ref":live["observation"]["evidence_ref"]}))
+    }
+    sidecar := {"schema":"dispatch.effect-set/v1alpha1", "result_ref":"sha256:" + sha256(raw), "plan_ref":"sha256:" + sha256(portable_json(plan)), "observations":refs}
+    cfg["effect_set"] := {"plan":plan, "result_raw":raw, "set_raw":portable_json(sidecar), "registration":registration, "intents":cfg["intents"], "sink_path":sink, "old_oid":dict_get_or(cfg, "old_oid", ""), "new_oid":dict_get_or(cfg, "new_oid", ""), "environment_ref":"sha256:" + sha256(root), "environment_valid":true}
+    cfg["evaluation_raw"] := to_json(build_evaluation_result({"passed":1, "failed":0}, root + "/eval-config.json", {"subject":result["subject"], "input_evidence_ids":["sha256:" + sha256(raw), "sha256:" + sha256(read_file(root + "/output.txt"))]}, floor(now_utc_seconds()) * 1000, floor(now_utc_seconds()) * 1000, []))
+    write_file(root + "/host.json", to_json(cfg), true);print(to_json({"ok":true}))
+} else {
+    pointer := parse_json(read_file(root + "/pointer.json"));run_id := pointer["run_id"]
+    if mode == "generic" {loaded_parent := load_run_state(root + "/runs", run_id);print(to_json(run_workflow(workflow(), loaded_parent["run_state"], create_tool_registry(), options)));exit(0)}
+    request := parse_json(read_file(args[2]))
+    if mode == "race" {
+        race_loaded := load_run_state(root + "/runs", run_id);require(race_loaded["ok"])
+        race_state := race_loaded["run_state"]
+        require(race_state["revision"] == request["candidate"]["revision"]&&race_state["control_journal"]["last_sha256"] == request["candidate"]["journal"])
+        print("READY");while file_exists(root + "/race-release") == false {sleep(10)}
+    }
+    if request["operation"] == "generic-review" {state := load_run_state(root + "/runs", run_id)["run_state"];print(to_json(prepare_verified_intervention(state, request["decision"], func(current) {return {"ok":true}})))}
+    else if request["operation"] == "parent-inspect" {print(to_json(assess_parent_finalization(root + "/runs", run_id, dict_get_or(request, "decision", null), options)))}
+    else if request["operation"] == "finalize" {print(to_json(finalize_parent(root + "/runs", run_id, request["candidate"], request["decision"], options)))}
+    else if request["operation"] == "recovery-plan" {print(to_json(plan_retained_reconciliation(root + "/runs", run_id)))}
+    else if request["operation"] == "recovery-apply" {print(to_json(apply_retained_reconciliation(root + "/runs", run_id, request["plan"], "local-operator")))}
+    else {print(to_json(sequential_effect_operation(root + "/runs", run_id, request, options)))}
+}

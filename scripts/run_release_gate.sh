@@ -87,6 +87,9 @@ run_suite() {
 	if [[ "${DISPATCH_TEST_VERBOSE:-false}" == true ]]; then cat "$log"; fi
 }
 run_suite typescript_build npm --prefix interop/typescript-participant run build
+run_suite preservation_binding "$KUJO_BIN" run tests/preservation_binding_tests.kujo
+run_suite parent_finalization env KUJO_BIN="$KUJO_BIN" node tests/parent_finalization_integration.mjs
+run_suite parent_vectors "$KUJO_BIN" run tests/portable_commitments.kujo tests/vectors/parent-finalization.json
 run_suite retained_recovery env KUJO_BIN="$KUJO_BIN" node tests/retained_recovery_integration.mjs
 run_suite effect_set env KUJO_BIN="$KUJO_BIN" node tests/effect_set_integration.mjs
 run_suite effect_continuation env KUJO_BIN="$KUJO_BIN" node tests/effect_continuation_integration.mjs

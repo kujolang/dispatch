@@ -291,3 +291,8 @@ export resolve_control_decision := resolve_control_decision
 
 export validate_execution_result := validate_execution_result
 export execution_failure_result := execution_failure_result
+
+# Opt-in completion requires review even when the producer reports success.
+export func parent_completion_review(workflow, step, result) {
+    return build_policy_decision(workflow["control"], step, result, {"disposition":"require_intervention", "reason":"Parent finalization requires independently verified prerequisites.", "allowed_actions":["retry_step", "approve_override", "abort"], "scope":"workflow"})
+}

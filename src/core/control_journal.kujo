@@ -1,4 +1,5 @@
 from src.core.assurance_state import validate_assurance_anchor
+from src.core.parent_transition import validate_parent_artifacts
 from src.core.utils import dict_get_or, redact_sensitive_data, ensure_dir
 
 func append_control_event(run_state, kind, step_id, refs, details) {
@@ -59,6 +60,7 @@ func reconcile_control_journal(run_state) {
     replay := null
     continuation := null
     lifecycle := null
+    finalized := null
     if file_exists(path) {
         body := ""
         try {body = read_file_beneath(run_state["run_dir"], "control-events.jsonl", 8388608)} except err {
@@ -82,6 +84,10 @@ func reconcile_control_journal(run_state) {
                 if event["kind"] == "assurance_replay_admitted" {replay = event["details"]["replay"]}
                 if contains(["effect_selected","effect_admitted","effect_observed"],event["kind"]) {continuation = event["details"]["continuation"]}
                 if event["kind"] == "effect_lifecycle_recorded" {lifecycle = event["details"]["effect_lifecycle"]}
+                if event["kind"] == "parent_finalized" {
+                    if finalized != null {throw("duplicate_parent_finalization")}
+                    finalized = event["details"];validate_parent_artifacts(run_state, finalized)
+                }
                 previous = event["event_sha256"]
             }
         } except err {
@@ -95,6 +101,11 @@ func reconcile_control_journal(run_state) {
     if to_json(selected) != to_json(dict_get_or(run_state, "assurance_selection", null))||to_json(replay) != to_json(dict_get_or(run_state, "assurance_replay", null)) {return {"ok": false, "error": {"code": "assurance_journal_state_mismatch", "message": "Assurance selection or replay differs from retained authority.", "retryable": false}}}
     if to_json(continuation) != to_json(dict_get_or(run_state,"effect_continuation",null)) {return {"ok":false,"code":"effect_journal_state_mismatch"}}
     if to_json(lifecycle) != to_json(dict_get_or(run_state,"effect_lifecycle",null)) {return {"ok":false,"code":"effect_lifecycle_journal_mismatch"}}
+    if to_json(finalized) != to_json(dict_get_or(run_state, "parent_finalization", null)) {return {"ok":false,"code":"parent_finalization_journal_mismatch"}}
+    if finalized != null {
+        if run_state["status"] != finalized["candidate"]["outcome"]||run_state["current_control_boundary"]["status"] != "resolved" {return {"ok":false,"code":"parent_terminal_state_mismatch"}}
+        for step in run_state["steps"] {if step["id"] == finalized["candidate"]["subject"]["step_id"]&&step["status"] != finalized["candidate"]["outcome"] {return {"ok":false,"code":"parent_terminal_state_mismatch"}}}
+    }
     return {"ok": true, "run_state": run_state}
 }
 
