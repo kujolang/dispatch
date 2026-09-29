@@ -163,3 +163,11 @@ The journal also snapshots each intervention request before delivery. Its
 transport target, routing and callback metadata are redacted; typed review facts,
 preservation, authorized/unavailable actions and correlation identities remain
 inspectable independently of mutable workflow state.
+
+### Explicit retained-host repair
+
+The experimental [retained-host operator workflow](contracts/recovery/retained-host.md)
+can reconstruct a verified journal index and supported sequential lifecycle tails
+under the run lock. Torn or conflicting history remains rejected. Repair records
+operator attribution and exact source identities and advances the checkpoint last;
+it does not resume, infer effect completion or unconsume an attempt.

@@ -156,3 +156,10 @@ Dispatch's version.
   existing beta admission. Matching references do not authorize replay.
 - Add a real multi-process SDK publication/receipt-failure/review/replay fixture
   to the release gate, with identity substitutions and standalone SDK coverage.
+
+## Unreleased — retained-host operator reconciliation
+
+- Add experimental `recover inspect|plan|apply` with bounded JSON inventory,
+  source-bound plans, locked journal/lifecycle repair and immutable operator evidence.
+- Preserve consumed attempts, cancellation/rebinding history and uncertainty through
+  retained-host publication gaps; repair never resumes execution.

@@ -744,3 +744,12 @@ Experimental follow-up: [bounded sequential continuation](docs/contracts/effect-
 adds explicit unconsumed renewal/abandonment and separately admitted next effects
 using the same Dispatch control model over SQLite and Workcell Git. Validation
 status and the one-profile-per-run boundary are recorded in that contract.
+
+### Retained-host reconciliation (experimental)
+
+`recover inspect` and `recover plan` explain surviving local control evidence.
+`recover apply` requires an exact plan and local operator attribution, rechecks
+sources under the run lock, and performs only proven mechanical repairs. It never
+resumes execution. See the [operator contract](docs/contracts/recovery/retained-host.md)
+for supported publication gaps, immutable evidence, consumed-attempt protection,
+unsupported recovery cases and the machine-readable output contract.

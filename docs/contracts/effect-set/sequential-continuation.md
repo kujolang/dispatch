@@ -168,3 +168,11 @@ This is broader than adding another renewal test and narrower than machine-loss
 or distributed recovery. Remote authenticated participant trust should follow a
 separate threat-model and authority design; transport authentication would not
 solve these local recovery semantics.
+
+### Retained-host follow-up
+
+The bounded [reconciliation contract](../recovery/retained-host.md) now supports
+explicit mechanical recovery of complete immutable control records and stale
+lifecycle checkpoints. Lifecycle-only orphans remain review conditions. A recovery
+receipt advances the checkpoint without changing effect facts; existing admission
+checks still apply. Parent finalization remains the next separate architecture slice.
