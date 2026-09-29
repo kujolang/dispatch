@@ -40,9 +40,9 @@ npm warn Unknown user config "python". This will stop working in the next major 
 test at test/protocol.test.mjs:44:3
 ✖ e2b describes and resolves offline (411.980086ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   1 !== 0
-  
+
       at call (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:20:10)
       at TestContext.<anonymous> (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:45:18)
       at Test.runInAsyncScope (node:async_hooks:226:14)
@@ -60,9 +60,9 @@ test at test/protocol.test.mjs:44:3
 test at test/protocol.test.mjs:53:3
 ✖ e2b fixture lifecycle preserves ownership (332.453712ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   1 !== 0
-  
+
       at call (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:20:10)
       at TestContext.<anonymous> (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:55:25)
       at Test.runInAsyncScope (node:async_hooks:226:14)
@@ -82,9 +82,9 @@ test at test/protocol.test.mjs:53:3
 test at test/protocol.test.mjs:44:3
 ✖ vercel-sandbox describes and resolves offline (299.953674ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   1 !== 0
-  
+
       at call (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:20:10)
       at TestContext.<anonymous> (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:45:18)
       at Test.runInAsyncScope (node:async_hooks:226:14)
@@ -104,9 +104,9 @@ test at test/protocol.test.mjs:44:3
 test at test/protocol.test.mjs:53:3
 ✖ vercel-sandbox fixture lifecycle preserves ownership (304.629496ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   1 !== 0
-  
+
       at call (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:20:10)
       at TestContext.<anonymous> (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:55:25)
       at Test.runInAsyncScope (node:async_hooks:226:14)
@@ -126,9 +126,9 @@ test at test/protocol.test.mjs:53:3
 test at test/protocol.test.mjs:44:3
 ✖ daytona describes and resolves offline (306.537814ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   1 !== 0
-  
+
       at call (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:20:10)
       at TestContext.<anonymous> (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:45:18)
       at Test.runInAsyncScope (node:async_hooks:226:14)
@@ -148,9 +148,9 @@ test at test/protocol.test.mjs:44:3
 test at test/protocol.test.mjs:53:3
 ✖ daytona fixture lifecycle preserves ownership (297.230195ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   1 !== 0
-  
+
       at call (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:20:10)
       at TestContext.<anonymous> (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:55:25)
       at Test.runInAsyncScope (node:async_hooks:226:14)
@@ -170,9 +170,9 @@ test at test/protocol.test.mjs:53:3
 test at test/protocol.test.mjs:65:1
 ✖ live mode never accepts missing provider credentials (321.329815ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   1 !== 0
-  
+
       at call (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:20:10)
       at TestContext.<anonymous> (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:66:18)
       at Test.runInAsyncScope (node:async_hooks:226:14)
@@ -192,9 +192,9 @@ test at test/protocol.test.mjs:65:1
 test at test/protocol.test.mjs:72:1
 ✖ profile validation rejects unknown provider fields before provisioning (319.822129ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   1 !== 0
-  
+
       at call (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:20:10)
       at TestContext.<anonymous> (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:73:18)
       at Test.runInAsyncScope (node:async_hooks:226:14)
@@ -214,9 +214,9 @@ test at test/protocol.test.mjs:72:1
 test at test/protocol.test.mjs:78:1
 ✖ profile validation rejects routing fields an adapter does not implement (372.52051ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   1 !== 0
-  
+
       at call (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:20:10)
       at TestContext.<anonymous> (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:79:18)
       at Test.runInAsyncScope (node:async_hooks:226:14)
@@ -236,9 +236,9 @@ test at test/protocol.test.mjs:78:1
 test at test/protocol.test.mjs:84:1
 ✖ live resolution keeps operator guarantees claimed and unobserved (359.130672ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   1 !== 0
-  
+
       at call (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:20:10)
       at TestContext.<anonymous> (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:85:18)
       at Test.runInAsyncScope (node:async_hooks:226:14)
@@ -258,9 +258,9 @@ test at test/protocol.test.mjs:84:1
 test at test/protocol.test.mjs:92:1
 ✖ vercel memory requires an exact operator guarantee (311.88525ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   1 !== 0
-  
+
       at call (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:20:10)
       at TestContext.<anonymous> (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:94:20)
       at Test.runInAsyncScope (node:async_hooks:226:14)
@@ -280,9 +280,9 @@ test at test/protocol.test.mjs:92:1
 test at test/protocol.test.mjs:107:1
 ✖ adapter log events redact raw and encoded workload secrets (452.078096ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   1 !== 0
-  
+
       at call (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:20:10)
       at TestContext.<anonymous> (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:111:21)
       at Test.runInAsyncScope (node:async_hooks:226:14)
@@ -302,9 +302,9 @@ test at test/protocol.test.mjs:107:1
 test at test/protocol.test.mjs:156:1
 ✖ official destroy rejects a mismatched ownership tuple before deletion (354.867313ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   1 !== 0
-  
+
       at call (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:20:10)
       at TestContext.<anonymous> (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:158:23)
       at Test.runInAsyncScope (node:async_hooks:226:14)
@@ -324,9 +324,9 @@ test at test/protocol.test.mjs:156:1
 test at test/protocol.test.mjs:173:1
 ✖ official runtime integrity verification fails closed on tampering (371.512055ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   1 !== 0
-  
+
       at TestContext.<anonymous> (file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/test/protocol.test.mjs:180:10)
       at async Test.run (node:internal/test_runner/test:1404:7)
       at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {

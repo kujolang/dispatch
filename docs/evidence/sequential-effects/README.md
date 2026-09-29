@@ -44,3 +44,8 @@ canonical run was deliberately interrupted after the historical 29/39 checks and
 all 80 new scenarios passed; it is **not** reported as a completed canonical gate.
 The final full gate runs on merged source `b6f1d304d376a421f4647358bbc71e2662fbe7e3`,
 which contains lifecycle implementation `0e8d32f409a017286a2e1c37c9ff7410b7b54cee`.
+
+Transcript presentation trims trailing whitespace and surplus final blank lines.
+For each affected transcript, `validation.json` records its original digest and
+points to a gzip artifact retaining the exact original bytes. All diagnostic and
+result text remains present; the compressed originals were round-trip verified.

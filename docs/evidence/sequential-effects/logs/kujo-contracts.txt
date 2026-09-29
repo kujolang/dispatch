@@ -22,4 +22,3 @@ running 1 test
 test readme_covers_v1_status_cli_security_and_core_reference_links ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
-

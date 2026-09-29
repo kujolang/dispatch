@@ -298,8 +298,8 @@
   "artifacts": [
     {
       "path": "README.md",
-      "bytes": 2948,
-      "sha256": "0510cef5c6328079154f3bf567a9c36bcb26f1a8d4028d8664f7f1dbfc1522f9"
+      "bytes": 3271,
+      "sha256": "61a53ff140c9bb562c0f3611817f01274d1c33dcc40d73ed712657e15211fa4f"
     },
     {
       "path": "logs/baseline-continuation.txt",
@@ -703,8 +703,8 @@
     },
     {
       "path": "logs/canonical/typescript_build.txt",
-      "bytes": 221,
-      "sha256": "24158393e216186de823227cee0b3fad00cb08ca917a14338081aabd72a69373"
+      "bytes": 220,
+      "sha256": "089c64fd218680ffb659590d159bc4a458ad1927fc70a8d2ca922ea27b02c48d"
     },
     {
       "path": "logs/canonical/typescript_package.txt",
@@ -743,18 +743,18 @@
     },
     {
       "path": "logs/kujo-contracts.txt",
-      "bytes": 1020,
-      "sha256": "c6a221d1550c29451c5298c166a30f7b26ffdc0fbe27ef7326a4b069756e9bd6"
+      "bytes": 1019,
+      "sha256": "5292b7e901010263d4959cf9cabb28e0816305b2316be9a49b6dd94278c94874"
     },
     {
       "path": "logs/kujo-doc-contracts-merged.txt",
-      "bytes": 1880,
-      "sha256": "447feb32b40016ef8a39db525a4d245290b313e3274d6b74f7f4eecdede28f01"
+      "bytes": 1879,
+      "sha256": "bb624629e8e712ebbb82cd1d30024731841be2a699943802a38fca922048560d"
     },
     {
       "path": "logs/kujo-doc-contracts-rerun.txt",
-      "bytes": 1601,
-      "sha256": "3f70a952e8bfd2b3ee144a3056d402857fda6562dce552205fec1e39fba6eeeb"
+      "bytes": 1600,
+      "sha256": "151b8e462d8362991d0dd44c640835cb461154f938b1844434d7c1b753acc129"
     },
     {
       "path": "logs/kujo-doc-contracts.txt",
@@ -785,6 +785,36 @@
       "path": "logs/lifecycle-cross-language.txt",
       "bytes": 205,
       "sha256": "b045e85f6fbf6fe55d9d6f65aca75cc8d213227a6301d1f01ed6d9dc3e92a883"
+    },
+    {
+      "path": "logs/raw/canonical/typescript_build.txt.gz",
+      "bytes": 183,
+      "sha256": "6e59d15afbfb4911d92e2920510268fbad6e6c14ee7b229d1ea0bafaea89a7b5"
+    },
+    {
+      "path": "logs/raw/kujo-contracts.txt.gz",
+      "bytes": 542,
+      "sha256": "ab0607621fd5b87d1791e2505bc5a81626bc4c0b316a93b6cb3f4092111e3960"
+    },
+    {
+      "path": "logs/raw/kujo-doc-contracts-merged.txt.gz",
+      "bytes": 774,
+      "sha256": "67f118fee33c8fb8441d060ce41d00fde88d2a8dfc93accd1cba28443056e289"
+    },
+    {
+      "path": "logs/raw/kujo-doc-contracts-rerun.txt.gz",
+      "bytes": 711,
+      "sha256": "85d7fb4ff9e20666a2b6b8c6cbf6d6a9b8d6ac195f80cc17e0190e3be0cfb0eb"
+    },
+    {
+      "path": "logs/raw/workcell-integrity-rerun.txt.gz",
+      "bytes": 202,
+      "sha256": "1dfb308c9c1d40172f5d29edfbaf2f4497296b30696beb2ea74d805d02ec50c2"
+    },
+    {
+      "path": "logs/raw/workcell-npm-tests.txt.gz",
+      "bytes": 1740,
+      "sha256": "b5ab4efd653f505226dcdcb87c6f5e86e959d228b49e556210876f32fc92d6a4"
     },
     {
       "path": "logs/regression-continuation.txt",
@@ -823,8 +853,8 @@
     },
     {
       "path": "logs/workcell-integrity-rerun.txt",
-      "bytes": 254,
-      "sha256": "6d749172e63ea9d9e8f8ccec5a19acd74d86f489ff9528583fec71bbbeaad64a"
+      "bytes": 253,
+      "sha256": "b85f0c958e06807d267073b98f13244bb3a7d5152a30ddaaf0b37320794306bd"
     },
     {
       "path": "logs/workcell-integrity.txt",
@@ -848,8 +878,8 @@
     },
     {
       "path": "logs/workcell-npm-tests.txt",
-      "bytes": 15646,
-      "sha256": "60bb6893282cfcc9834e5fe487232eb676cc99ef8ef62b427ea1af5bd8714329"
+      "bytes": 15590,
+      "sha256": "84ad22da685f062ba2b6e58be9a1adfb3d7235e76fc96a5b2f3d12be837337a4"
     },
     {
       "path": "logs/workcell-quality-final.txt",
@@ -876,5 +906,46 @@
       "bytes": 261898,
       "sha256": "52454c3797979d0bbbd8c0feb48f7eebd6cc91c7f695ec4c2e652f3523723f1e"
     }
-  ]
+  ],
+  "transcript_normalization": {
+    "rule": "Presentation transcripts trim trailing whitespace and surplus final blank lines. Exact original bytes are retained in gzip artifacts; no diagnostic or result text is removed.",
+    "files": [
+      {
+        "path": "logs/canonical/typescript_build.txt",
+        "original_sha256": "24158393e216186de823227cee0b3fad00cb08ca917a14338081aabd72a69373",
+        "original_bytes": 221,
+        "original_gzip": "logs/raw/canonical/typescript_build.txt.gz"
+      },
+      {
+        "path": "logs/kujo-contracts.txt",
+        "original_sha256": "c6a221d1550c29451c5298c166a30f7b26ffdc0fbe27ef7326a4b069756e9bd6",
+        "original_bytes": 1020,
+        "original_gzip": "logs/raw/kujo-contracts.txt.gz"
+      },
+      {
+        "path": "logs/kujo-doc-contracts-merged.txt",
+        "original_sha256": "447feb32b40016ef8a39db525a4d245290b313e3274d6b74f7f4eecdede28f01",
+        "original_bytes": 1880,
+        "original_gzip": "logs/raw/kujo-doc-contracts-merged.txt.gz"
+      },
+      {
+        "path": "logs/kujo-doc-contracts-rerun.txt",
+        "original_sha256": "3f70a952e8bfd2b3ee144a3056d402857fda6562dce552205fec1e39fba6eeeb",
+        "original_bytes": 1601,
+        "original_gzip": "logs/raw/kujo-doc-contracts-rerun.txt.gz"
+      },
+      {
+        "path": "logs/workcell-integrity-rerun.txt",
+        "original_sha256": "6d749172e63ea9d9e8f8ccec5a19acd74d86f489ff9528583fec71bbbeaad64a",
+        "original_bytes": 254,
+        "original_gzip": "logs/raw/workcell-integrity-rerun.txt.gz"
+      },
+      {
+        "path": "logs/workcell-npm-tests.txt",
+        "original_sha256": "60bb6893282cfcc9834e5fe487232eb676cc99ef8ef62b427ea1af5bd8714329",
+        "original_bytes": 15646,
+        "original_gzip": "logs/raw/workcell-npm-tests.txt.gz"
+      }
+    ]
+  }
 }
