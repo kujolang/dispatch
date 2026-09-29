@@ -1,0 +1,30 @@
+{
+  "schema": "dispatch.release-security/v1",
+  "scan_id": "fe4884e2-bae0-488f-9623-2ae3cd5e9976",
+  "scanned_source": "4a6bbdcf3e48a5e6b7336cb07683f93529487b0d",
+  "fix_commit": "a0641defa64a1843c08ac11029512113bc3f718c",
+  "findings": [
+    {
+      "id": "csf_7685f6636f4b6dceb28d1eea",
+      "fix": "Resolve operator policy before decision state mutation; apply to direct/model tools in both versions."
+    },
+    {
+      "id": "csf_dc6e91dd40256fb3e0512415",
+      "fix": "Constrain legacy callback approval to its reviewed step."
+    },
+    {
+      "id": "csf_fb3ed3da37c059cb31bc950e",
+      "fix": "Hold run lock across authoritative load, validation, claim, execution and receipt publication; refuse automatic reuse of interrupted claims."
+    }
+  ],
+  "regression": "tests/resume_policy_tests.sh",
+  "local_result": "pass",
+  "additional_preflights": [
+    "Webhook destination/signing key validation before mutation",
+    "Journal reconciliation before legacy claim"
+  ],
+  "limitations": [
+    "The sealed scan reports findings at its immutable baseline, not a clean report for the later fix.",
+    "Remote trust, hostile local operator and exhaustive third-party dependency auditing were not claimed."
+  ]
+}
