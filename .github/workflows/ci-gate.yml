@@ -45,6 +45,9 @@ jobs:
           node-version: "26.7.0"
           package-manager-cache: false
 
+      - name: Verify Go proof toolchain
+        run: go version # Hosted images supply Go >= 1.22; no third-party modules.
+
       - name: Install pinned Python participant dependencies
         run: bash interop/python-participant/bootstrap.sh
 

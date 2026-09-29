@@ -85,6 +85,9 @@ run_suite() {
 	echo "$name passed. $(grep '^Tests:' "$log" | tail -1) Evidence: $log"
 	if [[ "${DISPATCH_TEST_VERBOSE:-false}" == true ]]; then cat "$log"; fi
 }
+run_suite effect_set env KUJO_BIN="$KUJO_BIN" node tests/effect_set_integration.mjs
+run_suite effect_set_vectors "$KUJO_BIN" run tests/portable_commitments.kujo tests/vectors/effect-set.json
+run_suite go_participant node tests/go_participant_conformance.mjs
 run_suite typescript_package npm --prefix interop/typescript-participant test
 run_suite python_package interop/python-participant/.venv/bin/python -I interop/python-participant/run.py test
 run_suite python_parity node tests/python_parity.mjs

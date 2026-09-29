@@ -1,3 +1,5 @@
+Unreleased: additive bounded multi-effect assessment and append-only freshness proof; independent Go CLI/MCP recording participant and shared vectors. Read-only local experiment, no production continuation, historical wire or alpha/beta policy change. See docs/contracts/effect-set/decision.md.
+
 Unreleased interoperability evidence: a standalone Python beta consumer independently
 
 - Unreleased experimental participant SDK API: independent TypeScript/Python codecs, closed installed registrations, exact-byte correlation and recording-only helpers; shared conformance and real crash/replay regressions. No publication or replay-policy change.

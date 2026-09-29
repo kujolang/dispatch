@@ -1,0 +1,80 @@
+from src.core.effect_set import assess_effect_set
+from src.core.interop_handoff import correlate_interop_handoff
+from src.core.portable_commitments import portable_json
+from src.core.control_journal import append_control_event, reconcile_control_journal
+from src.adapters.sqlite_effect import sqlite_effect_init, sqlite_effect_apply, sqlite_effect_observe
+
+func require(value) {if value != true {throw("effect_set_fixture_failed")}}
+args := args(); root := args[0]; mode := args[1]
+func put(root, value) {
+    raw := portable_json(value); digest := sha256(raw); path := "artifacts/" + digest + ".json"
+    if file_exists(root + "/" + path) == false {require(write_file_atomic_beneath(root, path, raw, false)); require(sync_directory_beneath(root, "artifacts"))}
+    else {require(read_file_beneath(root, path, 8192) == raw)}
+    return "sha256:" + digest
+}
+func get(root, reference) {return read_file_beneath(root, "artifacts/" + substring(reference, 7, 71) + ".json", 8192)}
+func config(root) {return parse_json(read_file_beneath(root, "host.json", 32768))}
+func observation(root, host, index, stamp) {
+    plan := host["plan"]; entry := plan["effects"][index]
+    live := sqlite_effect_observe(root + "/sink.db", host["intents"][index])
+    if live["ok"] == false {return null}
+    # B is deliberately a non-idempotent external domain with no installed verifier.
+    # SQLite used to stage its real side effect does not confer application authority.
+    if index == 1 {return null}
+    return {"schema": "dispatch.effect-observation/v1alpha1", "plan_ref": "sha256:" + sha256(portable_json(plan)), "result_ref": "sha256:" + sha256(host["result_raw"]), "effect_id": entry["effect_id"], "state": live["observation"]["observed_state"], "observed_at": stamp, "valid_until": stamp + 30, "evidence_ref": live["observation"]["evidence_ref"]}
+}
+if mode == "init" {
+    sqlite_effect_init(root + "/sink.db")
+    host := config(root)
+    write_file_atomic_beneath(root, "state.json", to_json({"run_id": "set-run", "run_dir": root, "revision": 1, "steps": [{"id": "action", "control_attempt": 1}]}), false)
+    print("INITIALIZED")
+} else if mode == "participant" {
+    host := config(root)
+    require(sqlite_effect_apply(root + "/sink.db", host["intents"][0], "")["ok"])
+    require(sqlite_effect_apply(root + "/sink.db", host["intents"][1], "after_commit")["ok"])
+    throw("participant_should_be_killed")
+} else if mode == "record"||mode == "renew" {
+    host := config(root); stamp := parse_int(args[2]); refs := []
+    for i in range(0,4) {item := observation(root, host, i, stamp); value := null; if item != null {value = put(root,item)}; refs = push(refs,value)}
+    sidecar := {"schema": "dispatch.effect-set/v1alpha1", "result_ref": "sha256:" + sha256(host["result_raw"]), "plan_ref": "sha256:" + sha256(portable_json(host["plan"])), "observations": refs}
+    set_ref := put(root,sidecar)
+    state := parse_json(read_file_beneath(root, "state.json", 1048576))
+    require(reconcile_control_journal(state)["ok"])
+    logged := append_control_event(state, "effect_set_observed", "action", [set_ref], {"set_ref": set_ref})
+    next := logged["run_state"]; next["effect_set_ref"] := set_ref
+    require(write_file_atomic_beneath(root, "state.json", to_json(next), true));require(sync_directory_beneath(root,"."))
+    print(set_ref)
+    if mode == "record" {print("CONTROLLER_DURABLE");sleep(30000)}
+} else if mode == "apply-first" {
+    host := config(root); print(to_json(sqlite_effect_apply(root + "/sink.db",host["intents"][0],"")))
+} else if mode == "assess" {
+    host := config(root); stamp := parse_int(args[2])
+    state := parse_json(read_file_beneath(root,"state.json",1048576));require(reconcile_control_journal(state)["ok"])
+    selected := get(root,state["effect_set_ref"])
+    read_artifact := func(reference) {return get(root,reference)}
+    verify := func(entry, previous) {
+        # Installed authority maps the full expected entry, not participant claims.
+        for i in range(0,4) {if to_json(entry) == to_json(host["plan"]["effects"][i]) {return observation(root,host,i,previous["observed_at"])}}
+        return null
+    }
+    print(to_json(assess_effect_set(host["result_raw"],selected,host["plan"],read_artifact,verify,stamp)))
+} else if mode == "count"||mode == "delete-first" {
+    db := db_connect("sqlite", root + "/sink.db")
+    if mode == "delete-first" {db_execute(db,"DELETE FROM logical_effects WHERE request=?",[config(root)["intents"][0]["request_sha256"]])}
+    print(to_json(db_query(db,"SELECT COUNT(*) AS n FROM logical_effects",[])));db_close(db)
+} else if mode == "correlate-go" {
+    wire := read_file_beneath(root,"go-handoff.json",6144); doc := parse_json(wire)
+    raw := read_file_beneath(root,"child-result.json",8192)
+    registration := {"namespace":"kujolang.go-process","participant_schema":"kujolang.go-process-correlation/v1alpha1","effect_schema":null,"validate":func(candidate,result) {return to_json(candidate) == read_file_beneath(root,"host-handoff.json",6144)}}
+    expected := parse_json(read_file_beneath(root,"host-handoff.json",6144))
+    print(to_json(correlate_interop_handoff(root,wire,{"subject":expected["subject"],"participant":expected["participant"]},raw,"",registration)))
+} else if mode == "cases" {
+    host := config(root);cases := parse_json(read_file_beneath(root,"cases.json",1048576));answers := []
+    for item in cases {
+        read_artifact := func(reference) {return item["artifacts"][reference]}
+        verify := func(entry,previous) {return item["live"][entry["effect_id"]]}
+        answer := assess_effect_set(item["result_raw"],item["set_raw"],item["plan"],read_artifact,verify,item["at"])
+        answers = push(answers,{"name":item["name"],"answer":answer})
+    }
+    print(to_json(answers))
+}
