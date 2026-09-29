@@ -1,0 +1,41 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ legacy static routing preserves requested agent model (182ms)
+  ✓ quality first routing applies capability and quality floor (243ms)
+  ✓ provider cost latency tool and schema constraints reject incompatible routes (284ms)
+  ✓ deterministic tie break and decision id ignore candidate declaration order (356ms)
+  ✓ agent substitution requires execution compatibility (258ms)
+  ✓ no route error includes candidate evaluations (201ms)
+  ✓ effective agent clone changes model without mutating source (147ms)
+  ✓ deterministic evaluation supports accepted and configured failure outcomes (151ms)
+  ✓ failure classifier separates retry fallback and terminal failures (154ms)
+  ✓ runner persists route before execution and records explicit fallback (2093ms)
+  ✓ plugin style compatible agent participates in deterministic selection (255ms)
+  ✓ context reliability risk and output schema constraints are hard filters (253ms)
+  ✓ routing rejects unknown constrained risk incompatible schemas and unsupported policy modes (245ms)
+  ✓ cost latency and balanced objectives produce deterministic distinct choices (835ms)
+  ✓ AI SDK catalog metadata is authoritative over agent candidate claims (215ms)
+  ✓ upgrade and reroute overrides enforce their distinct semantics (444ms)
+  ✓ runner records same-route retry separately from fallback (1596ms)
+  ✓ persisted decision is reused and sensitive route fields are redacted (2446ms)
+  ✓ declarative loader preserves workflow agent and step routing contracts (279ms)
+  ✓ model catalog references reject absolute and traversal paths by default (177ms)
+  ✓ narrower policy layers cannot weaken broader routing constraints (188ms)
+  ✓ strict routing validation rejects unknown fields and providers (186ms)
+  ✓ generic model handler executes a declarative routed agent (1597ms)
+  ✓ cost-bounded live routes reject missing authoritative pricing (1317ms)
+  ✓ cost budgets reserve growing context when output pricing is explicitly zero (1294ms)
+  ✓ generic model handler executes only model-requested tools with bounded idempotent replay (192ms)
+  ✓ generic model handler fails closed when tool authorization denies a request (181ms)
+  ✓ built-in deterministic agent handlers enforce tool authorization (188ms)
+  ✓ generic model handler decrements the total token envelope across rounds (193ms)
+  ✓ generic model handler persists incremental stream events (181ms)
+  ✓ route evaluation pauses for native human review and resumes stored output (2248ms)
+
+Tests: 31 total, 31 passed, 0 failed
+Time:  19321ms
+============================================================
+
+All tests passed! ✨

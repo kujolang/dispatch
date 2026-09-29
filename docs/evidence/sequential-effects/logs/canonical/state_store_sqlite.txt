@@ -1,0 +1,11 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ sqlite state store persists revisions and remains authoritative (808ms)
+
+Tests: 1 total, 1 passed, 0 failed
+Time:  817ms
+============================================================
+
+All tests passed! ✨

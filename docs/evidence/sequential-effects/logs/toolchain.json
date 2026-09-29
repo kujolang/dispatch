@@ -1,0 +1,32 @@
+{
+  "recorded_at": "2026-09-29T15:17:36.271Z",
+  "repositories": {
+    "dispatch": {
+      "head": "9f700059767730feffc05cb4ae26c649fe70dc0a",
+      "branch": "main"
+    },
+    "kujo": {
+      "head": "ce1307482776893b563f67b867889b9a6dc617a4",
+      "branch": "main"
+    },
+    "workcell": {
+      "head": "8f8680c175e0da4c1695e0f411137237eb0664ad",
+      "branch": "main"
+    }
+  },
+  "toolchain": {
+    "node": "v26.7.0",
+    "npm": "11.19.0",
+    "go": "go version go1.25.3 darwin/amd64",
+    "python3": "Python 3.10.5",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "git": "git version 2.42.0",
+    "sqlite3": "3.51.0 2025-06-12 13:14:41 f0ca7bba1c5e232e5d279fad6338121ab55af0c8c68c84cdfb18ba5114dcaapl (64-bit)",
+    "kujo": {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/kujo",
+      "sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+      "version": "kujo 1.6.0"
+    }
+  }
+}

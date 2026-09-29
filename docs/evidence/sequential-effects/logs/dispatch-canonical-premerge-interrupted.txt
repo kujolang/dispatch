@@ -1,0 +1,17 @@
+Runtime directory durability contract passed.
+Dispatch release gate
+Runtime: /Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/../kujo/target/release/kujo
+Shards: 24
+Source tests: 101
+
+Running smoke-gate regression checks...
+Source layout passed.
+Smoke gate tests passed (success, silent failure, diagnostics).
+Run locking, at-least-once crash replay, and external idempotency passed.
+Webhook JSONL validated: 150 unique events.
+Pinned installer bridge path resolved.
+Isolated bridge package smoke passed.
+First workflow and scoped plugin walkthrough passed.
+Running focused integration suites...
+effect_set passed.  Evidence: tests/tmp/dispatch-test-shards/logs/effect_set.log
+effect_continuation passed.  Evidence: tests/tmp/dispatch-test-shards/logs/effect_continuation.log

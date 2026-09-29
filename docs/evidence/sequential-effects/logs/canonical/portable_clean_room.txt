@@ -1,0 +1,4 @@
+{"checker":"independent-node","vectors":58,"ok":true}
+{"checker": "independent-python", "vectors": 58, "ok": true}
+{"checker":"independent-artifacts","artifacts":6,"structure_and_commitments":true,"live_authority":false}
+{"clean_room":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo-assurance-portability-8ev1rm","no_ecosystem_implementation":true}

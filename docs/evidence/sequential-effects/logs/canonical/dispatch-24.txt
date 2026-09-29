@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ dispatch runs rejects invalid numeric flags (427ms)
+  ✓ dispatch blocks unsafe output roots without opt in (395ms)
+  ✓ dispatch help usage snapshot remains compatible (919ms)
+  ✓ truncated trace payload previews redact sensitive values (164ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  2006ms
+============================================================
+
+All tests passed! ✨

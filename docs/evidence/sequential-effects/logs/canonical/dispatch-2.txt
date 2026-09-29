@@ -1,0 +1,15 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ workflow template selection supports known and unknown IDs (349ms)
+  ✓ run locks are process-owned and remain on disk for crash recovery (513ms)
+  ✓ dispatch blocks oversized config files (6657ms)
+  ✓ long run stress fixture keeps traces bounded (28369ms)
+  ✓ final report metadata reflects the completed run (16547ms)
+
+Tests: 5 total, 5 passed, 0 failed
+Time:  52566ms
+============================================================
+
+All tests passed! ✨

@@ -1,0 +1,15 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ workflow template introspection exposes summary metadata (503ms)
+  ✓ load run state backfills missing contract schema metadata (600ms)
+  ✓ canonical source path helpers enforce root boundaries (175ms)
+  ✓ corruption matrix covers malformed and missing artifact scenarios (20236ms)
+  ✓ persisted declarative workflow definitions can resume (3197ms)
+
+Tests: 5 total, 5 passed, 0 failed
+Time:  24850ms
+============================================================
+
+All tests passed! ✨

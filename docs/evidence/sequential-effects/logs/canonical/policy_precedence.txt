@@ -1,0 +1,13 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ policy precedence uses environment profile when config and cli are absent (17799ms)
+  ✓ policy precedence uses config profile when cli is absent (16700ms)
+  ✓ policy and config controls honor cli over config over env (3303ms)
+
+Tests: 3 total, 3 passed, 0 failed
+Time:  37833ms
+============================================================
+
+All tests passed! ✨

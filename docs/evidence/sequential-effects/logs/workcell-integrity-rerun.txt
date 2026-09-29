@@ -1,0 +1,5 @@
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/workcell-official-adapters@0.1.0 integrity:check
+> node scripts/update-integrity.mjs --check
+

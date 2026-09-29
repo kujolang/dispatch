@@ -1,0 +1,38 @@
+Workcell v1.2.0 — Kujo-native disposable Docker/Podman execution
+
+Usage:
+  workcell --help
+  workcell --version
+  workcell doctor [--repo <path>] [--backend docker|podman] [--json]
+  workcell init [--file <path>] [--force]
+  workcell validate [--file <path>] [--json] [--schema]
+  workcell inspect [--file <path>] [--repo <path>] [--json|--summary]
+  workcell run [--file <path>] [--repo <path>] [--output <dir>] [options]
+  workcell verify --run <dir> [--json]
+  workcell clean [--json] [--dry-run] [--prune-images] [--backend docker|podman]
+  workcell clean --preservation <preservation.json> [--at ISO8601] [--dry-run] [--json]
+  workcell backends [--manifest <path>] [--json]
+  workcell recover --journal <path> --manifest <path> [--profile <path>] [--dry-run] [--json]
+
+Run options:
+  --dry-run       Resolve and record the policy without starting a container
+  --keep-failed   Preserve a failed disposable workspace
+  --preserve-until-evaluated  Retain/export before cleanup, including successful actions (requires deadline)
+  --preservation-mode MODE  none, filesystem, handoff_bundle, snapshot, or live_pause
+  --retain-until ISO8601    Record the operator-owned preservation deadline
+  --no-pull       Do not pull a missing image
+  --rebuild       Rebuild a configured build context
+  --manifest      Explicit external backend manifest (v2)
+  --profiles      Explicit host profiles file (v2)
+  --profile       Host profile ID (v2)
+  --backend       Optional assertion matching the selected profile (v2)
+  --cancel-file   Cancel execution when this operator-owned path appears
+  --context       Bounded caller correlation JSON (v2 only)
+  --json          Emit one machine-readable JSON object
+  --summary       Emit a compact machine summary for inspect or run
+  --schema        Emit the versioned Workcell definition schema (validate only)
+
+Security defaults:
+  Docker default or explicit Podman backend, non-root identity, network none,
+  no-new-privileges, dropped capabilities, bounded resources, and declared artifacts only.
+  Dirty source repositories and unsafe mounts are rejected by default.

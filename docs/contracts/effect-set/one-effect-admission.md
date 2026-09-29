@@ -153,3 +153,10 @@ for a new evidence binding remains outside the one-attempt API.
 Observation is not authority. Participation is not authority. Selection is not
 execution. Admission is not proof of effect. Lost acknowledgement is not
 permission to replay.
+
+## Subsequent lifecycle tranche
+
+[Bounded sequential continuation](sequential-continuation.md) is a separate
+feature-gated API extending the shared authority checks to explicit renewal,
+abandonment, and next-effect selection in SQLite and Workcell Git runs. The
+historical one-effect API, state and vectors retain their original interpretation.

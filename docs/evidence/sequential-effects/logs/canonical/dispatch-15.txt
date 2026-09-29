@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ decision normalization matrix supports shared CLI and approval logic (158ms)
+  ✓ run pagination handles larger catalogs (5771ms)
+  ✓ policy profile aliases resolve and explicit lists override profile defaults (160ms)
+  ✓ declarative workflow loader validates and builds workflows from a spec (247ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  6416ms
+============================================================
+
+All tests passed! ✨

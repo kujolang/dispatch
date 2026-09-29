@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ cli args parser returns missing value and unknown flag errors (165ms)
+  ✓ summarize run reports artifact availability (15016ms)
+  ✓ dispatch runs supports workflow filter (4618ms)
+  ✓ engine invokes a registered event hook for lifecycle events (14106ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  34001ms
+============================================================
+
+All tests passed! ✨

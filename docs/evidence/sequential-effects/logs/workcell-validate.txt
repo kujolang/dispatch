@@ -1,0 +1,2 @@
+Valid Workcell definition: workcell.json
+Name: workcell-project-check  Backend: docker  Network: none

@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ cli args parser enforces required flags (153ms)
+  ✓ request changes pause can be resumed to completion (15579ms)
+  ✓ show inspect and doctor json envelopes are consistent (1515ms)
+  ✓ newly created run is registered in the catalog index while running (598ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  17937ms
+============================================================
+
+All tests passed! ✨

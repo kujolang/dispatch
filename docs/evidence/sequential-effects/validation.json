@@ -1,0 +1,880 @@
+{
+  "schema": "dispatch.sequential-effect-validation/v1",
+  "date": "2026-09-29",
+  "status": "pass",
+  "starting_commits": {
+    "dispatch": "9f700059767730feffc05cb4ae26c649fe70dc0a",
+    "kujo": "ce1307482776893b563f67b867889b9a6dc617a4",
+    "workcell": "8f8680c175e0da4c1695e0f411137237eb0664ad"
+  },
+  "implementation_commit": "0e8d32f409a017286a2e1c37c9ff7410b7b54cee",
+  "tested_dispatch_source": "b6f1d304d376a421f4647358bbc71e2662fbe7e3",
+  "workcell_commit": "1413e44e287662575322c7052d744b29d4e983bb",
+  "kujo_documentation_commit": "8cd8d606f53a7e924760e0e44103f27243ef949b",
+  "current_main_integrated": {
+    "dispatch": "7558d0b",
+    "kujo": "92b24a8"
+  },
+  "commit_scope": "Source and Kujo documentation commits above. Subsequent Dispatch commit contains only documentation/evidence; exact final pushed heads are recorded in Strata and the final report.",
+  "toolchain": {
+    "node": "v26.7.0",
+    "npm": "11.19.0",
+    "go": "go version go1.25.3 darwin/amd64",
+    "python3": "Python 3.10.5",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "git": "git version 2.42.0",
+    "sqlite3": "3.51.0 2025-06-12 13:14:41 f0ca7bba1c5e232e5d279fad6338121ab55af0c8c68c84cdfb18ba5114dcaapl (64-bit)",
+    "kujo": {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/kujo",
+      "sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+      "version": "kujo 1.6.0"
+    }
+  },
+  "commands": [
+    {
+      "cwd": "dispatch",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/effect_set_integration.mjs",
+      "status": "pass",
+      "phase": "baseline",
+      "log": "logs/baseline-effect-set.txt",
+      "assessment_cases": 29
+    },
+    {
+      "cwd": "dispatch",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/effect_continuation_integration.mjs",
+      "status": "pass",
+      "phase": "baseline",
+      "log": "logs/baseline-continuation.txt",
+      "checks": 39
+    },
+    {
+      "cwd": "dispatch",
+      "command": "node tests/go_participant_conformance.mjs",
+      "status": "pass",
+      "phase": "baseline",
+      "log": "logs/baseline-go.txt",
+      "checks": 119,
+      "mcp_checks": 5,
+      "malformed_checks": 9
+    },
+    {
+      "cwd": "workcell",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/git_effect_contract.mjs",
+      "status": "pass",
+      "phase": "baseline",
+      "log": "logs/baseline-git.txt"
+    },
+    {
+      "cwd": "dispatch",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/sequential_effect_integration.mjs",
+      "status": "pass",
+      "phase": "focused before final fixture strengthening",
+      "log": "logs/focused-sequential-final.txt",
+      "checks": 78
+    },
+    {
+      "cwd": "dispatch",
+      "command": "SEQUENTIAL_ADMISSION_ONLY=1 KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/sequential_effect_integration.mjs",
+      "status": "pass",
+      "phase": "focused strengthened pre-load barrier",
+      "log": "logs/focused-race-final.txt",
+      "checks": 2
+    },
+    {
+      "cwd": "dispatch",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+      "status": "pass",
+      "phase": "final",
+      "log": "logs/dispatch-canonical.txt",
+      "suite_groups": 78,
+      "failed_suite_groups": 0,
+      "named_unit_tests_including_workflow": {
+        "total": 210,
+        "passed": 210,
+        "failed": 0
+      },
+      "workflow_tests": 101,
+      "workflow_shards": 24,
+      "release_workloads": 3,
+      "sequential_scenarios": 80,
+      "go_checks": 125,
+      "go_mcp_checks": 5,
+      "go_malformed_checks": 9
+    },
+    {
+      "cwd": "dispatch",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/sequential_effect_integration.mjs",
+      "status": "pass",
+      "phase": "within canonical gate",
+      "log": "logs/canonical/sequential_effects.txt",
+      "checks": 80,
+      "failed": 0
+    },
+    {
+      "cwd": "dispatch",
+      "command": "../kujo/target/release/kujo run tests/portable_commitments.kujo tests/vectors/effect-lifecycle.json",
+      "status": "pass",
+      "phase": "within canonical gate",
+      "log": "logs/canonical/effect_lifecycle_vectors.txt",
+      "vectors": 6
+    },
+    {
+      "cwd": "dispatch",
+      "command": "node tests/go_participant_conformance.mjs",
+      "status": "pass",
+      "phase": "within canonical gate",
+      "log": "logs/canonical/go_participant.txt",
+      "checks": 125,
+      "mcp_checks": 5,
+      "malformed_checks": 9
+    },
+    {
+      "cwd": "workcell",
+      "command": "KUJO=\"$PWD/../kujo/target/release/kujo\" bash tests/run.sh",
+      "status": "pass",
+      "phase": "final",
+      "log": "logs/workcell-canonical.txt",
+      "pass_lines": 456,
+      "failed_assertions": 0
+    },
+    {
+      "cwd": "workcell",
+      "command": "npm ci --prefix adapters/official",
+      "status": "pass",
+      "phase": "environment repair",
+      "log": "logs/workcell-npm-ci.txt",
+      "audited_packages": 226,
+      "vulnerabilities_reported": 0
+    },
+    {
+      "cwd": "workcell",
+      "command": "npm test --prefix adapters/official",
+      "status": "pass",
+      "phase": "final",
+      "log": "logs/workcell-npm-tests-rerun.txt",
+      "passed": 23,
+      "failed": 0
+    },
+    {
+      "cwd": "workcell",
+      "command": "npm run integrity:check --prefix adapters/official",
+      "status": "pass",
+      "phase": "final",
+      "log": "logs/workcell-integrity-rerun.txt"
+    },
+    {
+      "cwd": "workcell",
+      "command": "KUJO=\"$PWD/../kujo/target/release/kujo\" bash tests/quality.sh",
+      "status": "pass",
+      "phase": "final",
+      "log": "logs/workcell-quality-final.txt"
+    },
+    {
+      "cwd": "workcell",
+      "command": "KUJO=\"$PWD/../kujo/target/release/kujo\" bash tests/release_report.sh",
+      "status": "pass",
+      "phase": "final",
+      "log": "logs/workcell-release-report.txt",
+      "passed": 249
+    },
+    {
+      "cwd": "workcell",
+      "command": "bash tests/markdown_links.sh",
+      "status": "pass",
+      "phase": "final",
+      "log": "logs/workcell-links.txt",
+      "tracked_markdown_files": 64
+    },
+    {
+      "cwd": "workcell",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/git_effect_contract.mjs",
+      "status": "pass",
+      "phase": "final",
+      "log": "logs/workcell-checked-final.txt"
+    },
+    {
+      "cwd": "workcell",
+      "command": "KUJO=\"$PWD/../kujo/target/release/kujo\" ./bin/workcell --help",
+      "status": "pass",
+      "phase": "final",
+      "log": "logs/workcell-help.txt"
+    },
+    {
+      "cwd": "workcell",
+      "command": "KUJO=\"$PWD/../kujo/target/release/kujo\" ./bin/workcell --version",
+      "status": "pass",
+      "phase": "final",
+      "log": "logs/workcell-version.txt"
+    },
+    {
+      "cwd": "workcell",
+      "command": "KUJO=\"$PWD/../kujo/target/release/kujo\" ./bin/workcell validate --file workcell.json",
+      "status": "pass",
+      "phase": "final",
+      "log": "logs/workcell-validate.txt"
+    },
+    {
+      "cwd": "kujo",
+      "command": "cargo fmt --check",
+      "status": "pass",
+      "phase": "final",
+      "log": "logs/kujo-fmt-merged.txt"
+    },
+    {
+      "cwd": "kujo",
+      "command": "cargo test --locked --test readme_contracts --test repo_hygiene_contract --test markdown_unchecked_contract",
+      "status": "pass",
+      "phase": "final",
+      "log": "logs/kujo-doc-contracts-merged.txt",
+      "passed": 7,
+      "failed": 0
+    },
+    {
+      "cwd": "kujo",
+      "command": "cargo build --release --locked",
+      "status": "pass",
+      "phase": "final",
+      "log": "logs/kujo-release-build-merged.txt"
+    }
+  ],
+  "proof_scope": {
+    "one_negotiated_family_per_run": true,
+    "legacy_selected_state_migration": false,
+    "parent_finalization": false,
+    "general_scheduler": false,
+    "remote_trust": false,
+    "public_sdk": false
+  },
+  "portable_data": {
+    "new_host_lifecycle_vectors": 6,
+    "languages": [
+      "Kujo",
+      "TypeScript",
+      "Python",
+      "Go"
+    ],
+    "participant_wire_changed": false,
+    "historical_vectors_changed": false
+  },
+  "failures_and_corrections": [
+    {
+      "log": "logs/focused-sequential.txt",
+      "reason": "Initial three-second Git evidence window expired before selection; twelve-second fixture retains real-expiry assertions."
+    },
+    {
+      "log": "logs/workcell-npm-tests.txt",
+      "passed": 9,
+      "failed": 14,
+      "reason": "Stale installed dependency inventory after current-main fast-forward; fixed by locked npm ci, not a lockfile change."
+    },
+    {
+      "log": "logs/workcell-integrity.txt",
+      "reason": "Same stale local installed inventory; final integrity check passes."
+    },
+    {
+      "log": "logs/kujo-doc-contracts.txt",
+      "failed": 1,
+      "reason": "Historical RC unchecked rows violated existing Markdown contract; converted to explicitly historical non-checkbox actions without claiming release completion."
+    },
+    {
+      "log": "logs/dispatch-canonical-premerge-interrupted.txt",
+      "status": "deliberately_interrupted",
+      "exit_code": 143,
+      "reason": "Remote main advanced; stopped after existing 29/39 and new 80 scenarios passed, then merged and reran the whole gate."
+    }
+  ],
+  "warnings": [
+    "Existing vendored tiny_http unused import and dead-code warnings.",
+    "Existing npm unknown user config python warning."
+  ],
+  "explicit_skips": [
+    "Canonical Workcell live portable OCI test requires WORKCELL_LIVE_PORTABLE_OCI=1; flag was not enabled.",
+    "No live remote provider, malicious participant, multi-host or machine-loss certification attempted.",
+    "Mixed-profile run not implemented: existing immutable negotiation selects one profile per run; both homogeneous families passed.",
+    "Agents SDK and Ability not modified; their relevant integrations run through the Dispatch gate."
+  ],
+  "next_architecture_phase": "Broader retained-host durable recovery and operator reconciliation without restoring consumed admission; remote authenticated trust requires its own later threat-model decision.",
+  "artifacts": [
+    {
+      "path": "README.md",
+      "bytes": 2948,
+      "sha256": "0510cef5c6328079154f3bf567a9c36bcb26f1a8d4028d8664f7f1dbfc1522f9"
+    },
+    {
+      "path": "logs/baseline-continuation.txt",
+      "bytes": 979,
+      "sha256": "65ca9993c793313981a0bac6c05fa6583d87b7a6df92da6f5195728f56e35ff9"
+    },
+    {
+      "path": "logs/baseline-effect-set.txt",
+      "bytes": 3816,
+      "sha256": "ea073fac765cbba327e29c5a0e669acbc504dd95c9ba92c2c558b902705d404a"
+    },
+    {
+      "path": "logs/baseline-git.txt",
+      "bytes": 103,
+      "sha256": "7423ee12d851f9d88fddee5cd5f78c80bf63969352f5cc8d0da9813d3581b31c"
+    },
+    {
+      "path": "logs/baseline-go.txt",
+      "bytes": 205,
+      "sha256": "4ebded6ee13a0c539d33b5f1420968980fe4b8e6fcf097385b73ce6ccee72acf"
+    },
+    {
+      "path": "logs/canonical/ability_assurance.txt",
+      "bytes": 1774,
+      "sha256": "583368f1aecd085f30b1e187d89bd309c603a3200d67562e287aee2d90a57b0c"
+    },
+    {
+      "path": "logs/canonical/assurance_capabilities.txt",
+      "bytes": 90,
+      "sha256": "59e2d9253c4c80fec2597c57607cc743a2484ad79f959893db24d0c409450f93"
+    },
+    {
+      "path": "logs/canonical/assurance_compatibility.txt",
+      "bytes": 75,
+      "sha256": "24ea6fa02433c4e78ab02b0a54b1983390fdc037dee2167a1b138794acf52715"
+    },
+    {
+      "path": "logs/canonical/beta_contracts.txt",
+      "bytes": 75,
+      "sha256": "8cf1f333a0a356f50b46b22b8ca56c5be9e9ce423eb16ff385f90f3914bc141a"
+    },
+    {
+      "path": "logs/canonical/beta_migration.txt",
+      "bytes": 2477,
+      "sha256": "d0d7bc0cbdd06c425730e5c1f73e9a34e21604a2ec0a7176613d5694ba9f97aa"
+    },
+    {
+      "path": "logs/canonical/control_boundary.txt",
+      "bytes": 1266,
+      "sha256": "4c2c71ddf9497e027f1edabd1488dc11da82d4654f0d13fab3f270c5050d3ae9"
+    },
+    {
+      "path": "logs/canonical/decision_claim.txt",
+      "bytes": 82,
+      "sha256": "f0700708134088c7d6c802f6f8405e8504abfdef68beacab7a8424e872ecaade"
+    },
+    {
+      "path": "logs/canonical/dispatch-1.txt",
+      "bytes": 585,
+      "sha256": "cb08ef7dc7c9aeb2eaeda9410dabce38a084461dc96c9506b04c94888389f68d"
+    },
+    {
+      "path": "logs/canonical/dispatch-10.txt",
+      "bytes": 542,
+      "sha256": "26e810a2fbb92582c25344d0268fa6f3db29043979ae0fa7771ed30aa4f79b77"
+    },
+    {
+      "path": "logs/canonical/dispatch-11.txt",
+      "bytes": 544,
+      "sha256": "8ab6849ecf0e279b3860c0c406568d67e1d7584a07fb8ab69231674b2517682c"
+    },
+    {
+      "path": "logs/canonical/dispatch-12.txt",
+      "bytes": 542,
+      "sha256": "7b06eab41a1c06d6bbdb456a45d5bda4633f1165b19a857c6b2473dd194d4351"
+    },
+    {
+      "path": "logs/canonical/dispatch-13.txt",
+      "bytes": 592,
+      "sha256": "526bf8acad21d4d69cc80d6ac3965009016946474de246ff8ac7276eebd69e8a"
+    },
+    {
+      "path": "logs/canonical/dispatch-14.txt",
+      "bytes": 567,
+      "sha256": "bd35020de1ffef591759f52cdb07cc63e6760326852038e57ecf999ccde19857"
+    },
+    {
+      "path": "logs/canonical/dispatch-15.txt",
+      "bytes": 582,
+      "sha256": "88c5f799f65c8f0027f59d25b40538c584b8321c58ac44ec81c2b8ffca84d465"
+    },
+    {
+      "path": "logs/canonical/dispatch-16.txt",
+      "bytes": 577,
+      "sha256": "52072ba207e2b7485d75c734377d8e08e5469fdfce02bc396325bf56b91b2a5f"
+    },
+    {
+      "path": "logs/canonical/dispatch-17.txt",
+      "bytes": 537,
+      "sha256": "91ca2cb722659dfed79e01482cd09a8bef88bb6ba0ae098f4276691e7412111e"
+    },
+    {
+      "path": "logs/canonical/dispatch-18.txt",
+      "bytes": 542,
+      "sha256": "9a302babf7029b8c061b7bd0dc9ce007b50a01bd3539240b6f02bf58e11f7c42"
+    },
+    {
+      "path": "logs/canonical/dispatch-19.txt",
+      "bytes": 564,
+      "sha256": "6e9fdb69dc54b5d6bf80b278af9f09dede9e1a320546ecba7a0a73741baf757c"
+    },
+    {
+      "path": "logs/canonical/dispatch-2.txt",
+      "bytes": 604,
+      "sha256": "dc2126f5f6ad8496c8f36563992b9ef62b1f398ddb5bab4870f398deaee9fed4"
+    },
+    {
+      "path": "logs/canonical/dispatch-20.txt",
+      "bytes": 548,
+      "sha256": "cac62df5d4a2bd4d39c15c91a846d5e50e67923e34babcb3fe45ae116b380a2c"
+    },
+    {
+      "path": "logs/canonical/dispatch-21.txt",
+      "bytes": 522,
+      "sha256": "cbb23b667bb90c162cc31c6d8ff8da686eee1698e2e0d0b82e315c67ebd167a7"
+    },
+    {
+      "path": "logs/canonical/dispatch-22.txt",
+      "bytes": 539,
+      "sha256": "d1f1ddc07a27c68a55cfa2225c363b2f0b779edee13fa47fa690ff49bd927722"
+    },
+    {
+      "path": "logs/canonical/dispatch-23.txt",
+      "bytes": 565,
+      "sha256": "02ab4538748e00640db3a6bbfa2e13ceb37c060af0ee88a521ae7e65522861e5"
+    },
+    {
+      "path": "logs/canonical/dispatch-24.txt",
+      "bytes": 526,
+      "sha256": "23eb08e85ba2af4e83a4194108f0291959bbaff0321c8e46217080f0455bbf25"
+    },
+    {
+      "path": "logs/canonical/dispatch-3.txt",
+      "bytes": 633,
+      "sha256": "12a42c5c3771e57517018a8232d7362d3ecd61fca283eb7267d50dc641ef8583"
+    },
+    {
+      "path": "logs/canonical/dispatch-4.txt",
+      "bytes": 639,
+      "sha256": "486bfb72ed17e72ec9e5993c50f08c58800c764acabca8194799ff89d2cdafa2"
+    },
+    {
+      "path": "logs/canonical/dispatch-5.txt",
+      "bytes": 648,
+      "sha256": "2ea98ab18ce5a4eace6cd24ff3738186283b9d08cc71f87fcd30a77099578ac5"
+    },
+    {
+      "path": "logs/canonical/dispatch-6.txt",
+      "bytes": 527,
+      "sha256": "2c286d3a5176a40ee73b14c6dd6745b6c1c144ab2e4ae5eac436af9dae8e52dd"
+    },
+    {
+      "path": "logs/canonical/dispatch-7.txt",
+      "bytes": 543,
+      "sha256": "b04c02c30bf61f9eacd3490019ec935c87adee83a3f1469f48f8ec484b3c915c"
+    },
+    {
+      "path": "logs/canonical/dispatch-8.txt",
+      "bytes": 539,
+      "sha256": "2010c0508e8fdada9d0d161cf12d23c3f58b940a8f2d11486f9a9fbaa62d9382"
+    },
+    {
+      "path": "logs/canonical/dispatch-9.txt",
+      "bytes": 570,
+      "sha256": "656b6059bf9100ed93fdfc6c7265144a9cc8a984d6fd86f6d3d09fee47451645"
+    },
+    {
+      "path": "logs/canonical/effect_assurance.txt",
+      "bytes": 780,
+      "sha256": "6b9a32ceaf1857ff745f559cd46e6741c4a6ca8ea526e31e9ee3a6d8904af8ce"
+    },
+    {
+      "path": "logs/canonical/effect_assurance_schema.txt",
+      "bytes": 82,
+      "sha256": "d95aba4532c54939c2a30a721827e022b0a2f332b589242c310d95e8b89b5934"
+    },
+    {
+      "path": "logs/canonical/effect_continuation.txt",
+      "bytes": 979,
+      "sha256": "292505543e8b8fe866c36b97a6b7654da301b4ebb20f3eb32e0a055d3cf000cb"
+    },
+    {
+      "path": "logs/canonical/effect_lifecycle_vectors.txt",
+      "bytes": 41,
+      "sha256": "855489c71c8caa184ff3cebb2a6de80b9fb34c56fae0742229d3de4d099ee011"
+    },
+    {
+      "path": "logs/canonical/effect_selection_vectors.txt",
+      "bytes": 41,
+      "sha256": "c609139c4a563176624c0ca76051dcd9b01ddf6c3c02c7b8f22c1be3e0e0ac75"
+    },
+    {
+      "path": "logs/canonical/effect_set.txt",
+      "bytes": 3816,
+      "sha256": "4735d5675c486ecb13f978928f53639b871a3d9f08e7cc1d0f0ea0648d378364"
+    },
+    {
+      "path": "logs/canonical/effect_set_vectors.txt",
+      "bytes": 41,
+      "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203"
+    },
+    {
+      "path": "logs/canonical/failure_gate_execution.txt",
+      "bytes": 780,
+      "sha256": "257e93a1381e76b9a0fa34da54fd69f89ef3929bba718ee94c35327875725dc1"
+    },
+    {
+      "path": "logs/canonical/failure_gate_safety.txt",
+      "bytes": 1679,
+      "sha256": "c7e548ef7b6550d4946e7f84b5909212f114538fb7a360b70df84571521bbefd"
+    },
+    {
+      "path": "logs/canonical/git_participant_after.txt",
+      "bytes": 809,
+      "sha256": "b0dc9027e1713bd4eec6b26e80a26e814966fe40f3cfeb2b87efd2a3d7acb721"
+    },
+    {
+      "path": "logs/canonical/git_participant_before.txt",
+      "bytes": 812,
+      "sha256": "855b76305aa3ebf9d0d2aebb0c9add0088f01742cf2d7d586a33942f8641454b"
+    },
+    {
+      "path": "logs/canonical/go_participant.txt",
+      "bytes": 205,
+      "sha256": "b045e85f6fbf6fe55d9d6f65aca75cc8d213227a6301d1f01ed6d9dc3e92a883"
+    },
+    {
+      "path": "logs/canonical/hardening.txt",
+      "bytes": 892,
+      "sha256": "20c6db30019d4c9eb8d33a72f53428c3182b74df9f8098781b7adf481f7b4103"
+    },
+    {
+      "path": "logs/canonical/http_application_error.txt",
+      "bytes": 854,
+      "sha256": "21bb3b9e4c00cbf2cb626c2993a0d6c51cd17d69a4c9a2f384a99dc0e8b4baeb"
+    },
+    {
+      "path": "logs/canonical/http_response_loss.txt",
+      "bytes": 846,
+      "sha256": "cf000b41c21a514bf5e30e76fc06162470fd00ca71a6f2139b72bb07147194ef"
+    },
+    {
+      "path": "logs/canonical/http_timeout_before.txt",
+      "bytes": 841,
+      "sha256": "691629ce17037cec20e69a4fc6bfafc739c337e8c11b62af63e989fcfc79ab29"
+    },
+    {
+      "path": "logs/canonical/interop_history.txt",
+      "bytes": 127,
+      "sha256": "e4d0b65a5d3fcbbbab2bcd5f3dc04dc966ce041f01ae17c829852db283741279"
+    },
+    {
+      "path": "logs/canonical/interop_oracles.txt",
+      "bytes": 40,
+      "sha256": "ccb5b6b0475728fb2435f59803211d47cff242001d02f2730272aa247a39edb6"
+    },
+    {
+      "path": "logs/canonical/mcp_ability.txt",
+      "bytes": 1049,
+      "sha256": "9b71bad4d722874a1c759e8d72a4474c9c867cc6f47e3b3410011da885c9fc42"
+    },
+    {
+      "path": "logs/canonical/mcp_stdio_loss.txt",
+      "bytes": 1044,
+      "sha256": "229b59feea340fe5445641f1b16899952f1dee483079a91f2ece2d6a0d5c8e51"
+    },
+    {
+      "path": "logs/canonical/operational_controls.txt",
+      "bytes": 958,
+      "sha256": "872efa9ec3a7b4915576aada21d03bde22134c4e8ea2ab07738a2a8ed406de6f"
+    },
+    {
+      "path": "logs/canonical/participant_sdk_parity.txt",
+      "bytes": 172,
+      "sha256": "2d94d6b4bf5a14c819c19f3f500fb9391295ff2bd08d00e68448181df4e9fb0e"
+    },
+    {
+      "path": "logs/canonical/persisted_negotiation.txt",
+      "bytes": 1983,
+      "sha256": "ead199c37c8e98716898af2d71c19d8beb87ba3e0844af949f603e3f17699f22"
+    },
+    {
+      "path": "logs/canonical/persisted_negotiation_adapters.txt",
+      "bytes": 735,
+      "sha256": "55fd9de8f88b9c1151a02a8d763171f2cbd5c2caa3afd85f42af7933d537ab41"
+    },
+    {
+      "path": "logs/canonical/persisted_negotiation_contracts.txt",
+      "bytes": 90,
+      "sha256": "bb138e49d767e9482d8e99a70bb3408f9abcf11fc3a6c7e5fd29248cda42a8a3"
+    },
+    {
+      "path": "logs/canonical/persisted_negotiation_legacy.txt",
+      "bytes": 81,
+      "sha256": "badc442072a3c9bfd5230e985d5058444eaaea7c5a5a57311e43993053364f52"
+    },
+    {
+      "path": "logs/canonical/persisted_negotiation_schemas.txt",
+      "bytes": 83,
+      "sha256": "f4b329501ccd6595f478681867b4b03a9e3aa2f865bba8eb3ca5fd784e2495dd"
+    },
+    {
+      "path": "logs/canonical/policy_precedence.txt",
+      "bytes": 507,
+      "sha256": "ba94d31c9008473c8e4757afc4f5b0a0db0e65c864d64898cf7245575e9ddc4a"
+    },
+    {
+      "path": "logs/canonical/portable_clean_room.txt",
+      "bytes": 356,
+      "sha256": "4b87a98bc9e1e99b4bd7c2364e6ec757b894acce6bdace991871166b51890ae0"
+    },
+    {
+      "path": "logs/canonical/portable_commitments.txt",
+      "bytes": 42,
+      "sha256": "6374b98979775b0e93e24a795520804c41ea55b74e6a16d1b0dab7298aa4b44f"
+    },
+    {
+      "path": "logs/canonical/python_integration.txt",
+      "bytes": 771,
+      "sha256": "b7355cac3c65d562103e9b5c31c5fe8f78695a34e9902728e94d74862347e0f2"
+    },
+    {
+      "path": "logs/canonical/python_isolation.txt",
+      "bytes": 1792,
+      "sha256": "1e52aca72c45c4e2a6e37616733a03d14072e2608452652d0b20c49229d0c30b"
+    },
+    {
+      "path": "logs/canonical/python_package.txt",
+      "bytes": 783,
+      "sha256": "1df06dfe857a3c082703fb16b896a222db3bc8a6ea41bf5e16ea8c331a409c10"
+    },
+    {
+      "path": "logs/canonical/python_parity.txt",
+      "bytes": 122,
+      "sha256": "4b4988f27db2bb0ab909456f968785d3b2971d3c679a5a6b62a3a2244cd0b581"
+    },
+    {
+      "path": "logs/canonical/reexecution_lifecycle.txt",
+      "bytes": 235,
+      "sha256": "bf1cfc0f9c4f2f62fdabdcbb523ee156f8d7795cf673fcb0423d976c9c273916"
+    },
+    {
+      "path": "logs/canonical/resume_policy.txt",
+      "bytes": 681,
+      "sha256": "976c80ce0168f6c954dfbffe59b262fcd2339e420fb8bef282095691daeba7a3"
+    },
+    {
+      "path": "logs/canonical/retrieval_preferences.txt",
+      "bytes": 547,
+      "sha256": "51185e0760c296780931e9e57cc156cbe0ebb3c0565d16c51be67c81c7823804"
+    },
+    {
+      "path": "logs/canonical/review_checkpoint.txt",
+      "bytes": 583,
+      "sha256": "1bf657a9a97c9969c572b5c330c276a561f7fcf0c9c3e09a49dfcb9ed5947379"
+    },
+    {
+      "path": "logs/canonical/routing.txt",
+      "bytes": 2814,
+      "sha256": "224844cea2a9bd9fb0aff07efeb32d15ef52c44b2e4972770e52bbae6fd3cd15"
+    },
+    {
+      "path": "logs/canonical/sdk_ability.txt",
+      "bytes": 933,
+      "sha256": "f42d56f0d47cd8524890c5b1d0926cf86d560ae5602cb0c57f090a1746890a3b"
+    },
+    {
+      "path": "logs/canonical/sdk_adapter.txt",
+      "bytes": 973,
+      "sha256": "c8038c2cb1b559a704a2799d6375ce1e5396d0e0d39c34780fb92bb3efb10307"
+    },
+    {
+      "path": "logs/canonical/sequential_effects.txt",
+      "bytes": 2618,
+      "sha256": "aeb4f8065b3277898268028d60e8f69662485948307baa4c512834fc2d872162"
+    },
+    {
+      "path": "logs/canonical/state_store_sqlite.txt",
+      "bytes": 347,
+      "sha256": "5f227369691fa0824198be0ec99cf5e6ec04fffef8652e1b3b113fbc1d8aba8e"
+    },
+    {
+      "path": "logs/canonical/typescript_after.txt",
+      "bytes": 529,
+      "sha256": "c7fb45d92ecce3b45f4ddedcc548b3a492a962e59e4350989a63f176da5618e3"
+    },
+    {
+      "path": "logs/canonical/typescript_before.txt",
+      "bytes": 530,
+      "sha256": "065cde1a5bfc23fb38e583e2656dd01a45196a0cbf8c547be59adb78fc21573c"
+    },
+    {
+      "path": "logs/canonical/typescript_build.txt",
+      "bytes": 221,
+      "sha256": "24158393e216186de823227cee0b3fad00cb08ca917a14338081aabd72a69373"
+    },
+    {
+      "path": "logs/canonical/typescript_package.txt",
+      "bytes": 20155,
+      "sha256": "38d05e7f0fa978a4b9df23bc700212f7e50628e4b2b04d1aada582a1138aad86"
+    },
+    {
+      "path": "logs/dispatch-canonical-premerge-interrupted.txt",
+      "bytes": 781,
+      "sha256": "0790fb6a3ac97dfd164d88b0050a677231089c349f7c97cd5676f6140b020c94"
+    },
+    {
+      "path": "logs/dispatch-canonical.txt",
+      "bytes": 11243,
+      "sha256": "970648ce9a1da5dde275b36ae8d29a6a2197ad3444ec93a6078dd61ad4cef01e"
+    },
+    {
+      "path": "logs/focused-race-final.txt",
+      "bytes": 205,
+      "sha256": "b441bb3eb03e4962f71cce4a25bf835ade13ba02875b7d001d0e6f8062f6ab8c"
+    },
+    {
+      "path": "logs/focused-sequential-admission-race.txt",
+      "bytes": 205,
+      "sha256": "966bd558316450d78aac8f5d0ca65b8f350a7ccbdced01d6223c32a1bd580de7"
+    },
+    {
+      "path": "logs/focused-sequential-final.txt",
+      "bytes": 2451,
+      "sha256": "e10f176d28f7f8d2612ab6c92702c8e17cab377f291c79d0847a21b9962683a7"
+    },
+    {
+      "path": "logs/focused-sequential.txt",
+      "bytes": 550,
+      "sha256": "ad3f3d968eb1c70434a0fd62922537f15b0e6881c5c0778eeb9a69a042a22281"
+    },
+    {
+      "path": "logs/kujo-contracts.txt",
+      "bytes": 1020,
+      "sha256": "c6a221d1550c29451c5298c166a30f7b26ffdc0fbe27ef7326a4b069756e9bd6"
+    },
+    {
+      "path": "logs/kujo-doc-contracts-merged.txt",
+      "bytes": 1880,
+      "sha256": "447feb32b40016ef8a39db525a4d245290b313e3274d6b74f7f4eecdede28f01"
+    },
+    {
+      "path": "logs/kujo-doc-contracts-rerun.txt",
+      "bytes": 1601,
+      "sha256": "3f70a952e8bfd2b3ee144a3056d402857fda6562dce552205fec1e39fba6eeeb"
+    },
+    {
+      "path": "logs/kujo-doc-contracts.txt",
+      "bytes": 2318,
+      "sha256": "f17bfcb05004b84bd98ff1a15a433dc1f967b82dc4d9399979bc7fea6eda1351"
+    },
+    {
+      "path": "logs/kujo-fmt-merged.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/kujo-fmt.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/kujo-release-build-merged.txt",
+      "bytes": 730,
+      "sha256": "aa9aa5c2b6a34a0ba51d938c847f8133cb4f8a1a042150e74c1127605eefad80"
+    },
+    {
+      "path": "logs/kujo-release-build.txt",
+      "bytes": 730,
+      "sha256": "72a700a3531f3b00929b3edd12b25c5a0f8ef5d065569505507e30bb8631674a"
+    },
+    {
+      "path": "logs/lifecycle-cross-language.txt",
+      "bytes": 205,
+      "sha256": "b045e85f6fbf6fe55d9d6f65aca75cc8d213227a6301d1f01ed6d9dc3e92a883"
+    },
+    {
+      "path": "logs/regression-continuation.txt",
+      "bytes": 979,
+      "sha256": "019a6fd19d659a4abee25f63f02930024f3804206cd6c0ac25f5e94d7aebb74f"
+    },
+    {
+      "path": "logs/sequential-full-premerge.txt",
+      "bytes": 2618,
+      "sha256": "f07bf9beec7802328c99b37c963bf06c75defc83253cba71b439b980f0fec700"
+    },
+    {
+      "path": "logs/toolchain.json",
+      "bytes": 1008,
+      "sha256": "e098633fc544544e6a019b2c322de0f1d6944c6492a7248975c1f5308ace4aae"
+    },
+    {
+      "path": "logs/workcell-canonical.txt",
+      "bytes": 31803,
+      "sha256": "f83034c20f5f16de35348ca7c43aaae306daf28a326681ecea005179a0b2e082"
+    },
+    {
+      "path": "logs/workcell-checked-final.txt",
+      "bytes": 173,
+      "sha256": "2baae168291f1e954d816d0ab671297f917fd109d2059844cfcc80c85afb57f0"
+    },
+    {
+      "path": "logs/workcell-checked.txt",
+      "bytes": 173,
+      "sha256": "2baae168291f1e954d816d0ab671297f917fd109d2059844cfcc80c85afb57f0"
+    },
+    {
+      "path": "logs/workcell-help.txt",
+      "bytes": 2111,
+      "sha256": "767a9a2926bdb59438caab3201ca5ec59fec12f7e7ad6bff6f0619d9aed95a45"
+    },
+    {
+      "path": "logs/workcell-integrity-rerun.txt",
+      "bytes": 254,
+      "sha256": "6d749172e63ea9d9e8f8ccec5a19acd74d86f489ff9528583fec71bbbeaad64a"
+    },
+    {
+      "path": "logs/workcell-integrity.txt",
+      "bytes": 721,
+      "sha256": "2fcd9cf8706e13d430b9b58fbbb151a0be7734aece22041cfe921e0f701dae1e"
+    },
+    {
+      "path": "logs/workcell-links.txt",
+      "bytes": 45,
+      "sha256": "fb1a78feb65ccb1592defebc0f1ea439c44936752fcde0785bb53e99120dd50c"
+    },
+    {
+      "path": "logs/workcell-npm-ci.txt",
+      "bytes": 290,
+      "sha256": "90004ac704f22a804678ab2703d3e1998000fbe06cb58824a68f74a503ef7a89"
+    },
+    {
+      "path": "logs/workcell-npm-tests-rerun.txt",
+      "bytes": 2114,
+      "sha256": "f95281b7b2a95276e81a383aace2933a1cb4713150019629e2479284234eca7f"
+    },
+    {
+      "path": "logs/workcell-npm-tests.txt",
+      "bytes": 15646,
+      "sha256": "60bb6893282cfcc9834e5fe487232eb676cc99ef8ef62b427ea1af5bd8714329"
+    },
+    {
+      "path": "logs/workcell-quality-final.txt",
+      "bytes": 21,
+      "sha256": "4a2c33314c0fad90721b20e605f253b5c5e5c58eb20969806cc610a6e8a668f4"
+    },
+    {
+      "path": "logs/workcell-release-report.txt",
+      "bytes": 929,
+      "sha256": "edd616a935d8475516cbf6ef9ad3d67f786010e7fd94559d0945dd278b817bb4"
+    },
+    {
+      "path": "logs/workcell-validate.txt",
+      "bytes": 102,
+      "sha256": "a165460309ab4caba5c914df491b5d0dada94fb2675aeaf8465e68804faaf678"
+    },
+    {
+      "path": "logs/workcell-version.txt",
+      "bytes": 15,
+      "sha256": "fefffb6ef7c11e802a6c977689a2890347d1dbfa8920c2c77aeba88f366018e3"
+    },
+    {
+      "path": "retained-lifecycle-samples.json",
+      "bytes": 261898,
+      "sha256": "52454c3797979d0bbbd8c0feb48f7eebd6cc91c7f695ec4c2e652f3523723f1e"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+false !== true
+
+    at prepared (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/sequential_effect_integration.mjs:25:114)
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/sequential_effect_integration.mjs:28:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0

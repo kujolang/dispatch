@@ -1,0 +1,15 @@
+Resume policy case: v2/direct/env
+Resume policy case: v2/direct/config
+Resume policy case: v2/direct/allow
+Resume policy case: v2/model/env
+Resume policy case: v2/model/config
+Resume policy case: v2/model/allow
+Resume policy case: v1/direct/env
+Resume policy case: v1/direct/config
+Resume policy case: v1/direct/allow
+Resume policy case: v1/model/env
+Resume policy case: v1/model/config
+Resume policy case: v1/model/allow
+Resume policy: v1/v2 direct/model env/config denial and allowed controls pass; invalid policy preserves state.
+Legacy decision boundary: next approval pauses; concurrent delivery has one winner.
+Unsigned callback preflight preserves both v1/v2 review states.

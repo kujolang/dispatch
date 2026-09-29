@@ -1,0 +1,16 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ terminal runs cannot execute pending descendants through the direct runner (2273ms)
+  ✓ execution failure enters review without running descendants or retrying effects (1396ms)
+  ✓ execution failure with no matching policy stops by default (1176ms)
+  ✓ evaluator crash maps to error review without declaring a quality failure (1370ms)
+  ✓ a passed evaluation continues through the same neutral policy path (1650ms)
+  ✓ accepting a failed action continues without replaying its effect (2446ms)
+
+Tests: 6 total, 6 passed, 0 failed
+Time:  10464ms
+============================================================
+
+All tests passed! ✨

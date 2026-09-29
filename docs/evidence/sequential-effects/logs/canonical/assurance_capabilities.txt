@@ -1,0 +1,1 @@
+PASS advisory capability schema: bounded, closed, three profiles, no executable authority

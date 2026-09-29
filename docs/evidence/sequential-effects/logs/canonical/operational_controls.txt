@@ -1,0 +1,19 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ Watchdog trace projection is metadata only and preserves workflow correlation (170ms)
+  ✓ retry backoff fails closed when it would cross the execution deadline (159ms)
+  ✓ unbounded custom tools are rejected before hard-deadline execution (757ms)
+  ✓ webhook delivery accepts only 2xx responses (158ms)
+  ✓ network callbacks require exact HTTPS allowlists and signing (161ms)
+  ✓ workflow loader validates budgets and bounded parallel controls (263ms)
+  ✓ workflow max steps budget fails closed before the next step (953ms)
+  ✓ webhook outbox summarizes latest durable delivery state (159ms)
+  ✓ OpenTelemetry artifact is valid OTLP JSON with correlated ids (167ms)
+
+Tests: 9 total, 9 passed, 0 failed
+Time:  3161ms
+============================================================
+
+All tests passed! ✨

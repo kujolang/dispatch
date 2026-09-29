@@ -1,0 +1,13 @@
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/workcell-official-adapters@0.1.0 integrity:check
+> node scripts/update-integrity.mjs --check
+
+file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/scripts/update-integrity.mjs:46
+if (check && currentDependencyHash !== dependencyHash) throw new Error('stale dependency integrity metadata');
+                                                             ^
+
+Error: stale dependency integrity metadata
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/workcell/adapters/official/scripts/update-integrity.mjs:46:62
+
+Node.js v26.7.0

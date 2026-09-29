@@ -1,0 +1,1 @@
+PASS Git effect: real atomic ref transaction, final callback denial/exception, one-use checked boundary, historical duplicate, input conflict, expiry, moved target, privacy

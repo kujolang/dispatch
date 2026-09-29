@@ -739,3 +739,8 @@ Experimental Wave C/D: [one selected local effect](docs/contracts/effect-set/one
 adds locked selection and one-use admission for a verified not-started SQLite
 effect. The assessor remains read-only; parent replay and automatic remainder
 execution remain prohibited.
+
+Experimental follow-up: [bounded sequential continuation](docs/contracts/effect-set/sequential-continuation.md)
+adds explicit unconsumed renewal/abandonment and separately admitted next effects
+using the same Dispatch control model over SQLite and Workcell Git. Validation
+status and the one-profile-per-run boundary are recorded in that contract.

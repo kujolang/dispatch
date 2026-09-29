@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ local source lookup blocks unsafe source ids (201ms)
+  ✓ agent registry dispatch reports unknown handler mapping (280ms)
+  ✓ run index is created and scanner fallback works when index is malformed (4358ms)
+  ✓ signed bundle uses a cryptographic sha256 mac and rejects wrong keys (1514ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  6458ms
+============================================================
+
+All tests passed! ✨

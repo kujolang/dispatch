@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ doctor write persists repaired state changes (5054ms)
+  ✓ report artifacts redact sensitive fields (621ms)
+  ✓ signed bundle verification supports deterministic pass and fail paths (1226ms)
+  ✓ partial run indexes fall back to a complete state scan (733ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  7727ms
+============================================================
+
+All tests passed! ✨

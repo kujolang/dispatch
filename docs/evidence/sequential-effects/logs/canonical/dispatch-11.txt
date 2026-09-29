@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ retry behavior succeeds after transient failures (159ms)
+  ✓ runner executes workflow and writes final report (14012ms)
+  ✓ trace truncation preserves limits and summary metadata (192ms)
+  ✓ signed bundle supports key id rotation via a trusted key set (1165ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  15616ms
+============================================================
+
+All tests passed! ✨

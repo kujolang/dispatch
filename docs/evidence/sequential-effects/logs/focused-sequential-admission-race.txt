@@ -1,0 +1,1 @@
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/sequential-effects-h6kisO","checks":2,"proofs":["sqlite-two-fresh-controllers-one-admission","git-two-fresh-controllers-one-admission"]}

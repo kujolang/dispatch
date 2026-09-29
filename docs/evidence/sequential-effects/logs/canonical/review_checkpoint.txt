@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ checkpoint publication is immutable repeatable and leaves authority unchanged (1803ms)
+  ✓ missing or altered checkpoint bytes never authorize continuation (1755ms)
+  ✓ checkpoint refuses changed revision or in-flight work (1943ms)
+  ✓ orphan and torn journal prohibit checkpoint publication (2859ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  8466ms
+============================================================
+
+All tests passed! ✨

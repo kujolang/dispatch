@@ -1,0 +1,3 @@
+PASS actual same reexecution, attempt identity, review barrier, and journal
+PASS actual clean reexecution, attempt identity, review barrier, and journal
+PASS actual idempotent reexecution, attempt identity, review barrier, and journal

@@ -1,0 +1,36 @@
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/workcell-official-adapters@0.1.0 test
+> node --test test/*.test.mjs
+
+✔ e2b describes and resolves offline (3004.343887ms)
+✔ e2b fixture lifecycle preserves ownership (4076.749353ms)
+✔ vercel-sandbox describes and resolves offline (2748.774123ms)
+✔ vercel-sandbox fixture lifecycle preserves ownership (3599.556397ms)
+✔ daytona describes and resolves offline (2412.41016ms)
+✔ daytona fixture lifecycle preserves ownership (4142.790295ms)
+✔ live mode never accepts missing provider credentials (1547.024471ms)
+✔ profile validation rejects unknown provider fields before provisioning (1443.531776ms)
+✔ profile validation rejects routing fields an adapter does not implement (1803.485108ms)
+✔ live resolution keeps operator guarantees claimed and unobserved (1787.276268ms)
+✔ vercel memory requires an exact operator guarantee (2990.87979ms)
+✔ adapter errors redact workload and provider secrets (1785.791379ms)
+✔ adapter log events redact raw and encoded workload secrets (1517.140222ms)
+✔ artifact transport streams within an explicit bound (78.152378ms)
+✔ artifact transport aborts and removes an oversized partial file (39.829106ms)
+✔ provider log normalization enforces one combined byte bound (0.345153ms)
+✔ workspace delta parser preserves modified, untracked, and rename paths (0.359031ms)
+✔ recovery inventory requires both run and nonce ownership markers (0.155064ms)
+✔ official destroy rejects a mismatched ownership tuple before deletion (4935.380228ms)
+✔ official manifests pin their executable wrapper digests (6.549244ms)
+✔ official runtime integrity verification fails closed on tampering (1419.001886ms)
+✔ protocol parser fails closed for a deterministic malformed corpus (1972.798021ms)
+✔ concurrent fixture lifecycles remain ownership-isolated and leak-free (1098.338693ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 42598.678271

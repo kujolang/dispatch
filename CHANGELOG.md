@@ -4,6 +4,18 @@ Version source: `kennel.toml`; CLI and `kujo.toml` must agree. Historical releas
 entries are retained below. Experimental contract versions are independent of
 Dispatch's version.
 
+## Unreleased — bounded sequential continuation
+
+- Add a separately feature-gated append-only lifecycle: explicit evidence rebind
+  or cancellation for unconsumed selections, permanent admission consumption,
+  independent verification, and fresh separately selected next-effect attempts.
+- Share current authority checks and installed family adapters across real SQLite
+  transactions and Workcell Git CAS. One persisted profile per run remains the
+  boundary; no mixed-profile authority, scheduler, or participant permission.
+- Add lifecycle commitment vectors and real-process crash/contention/expiry tests.
+  Historical result and participant bytes remain unchanged. See
+  `docs/contracts/effect-set/sequential-continuation.md` for validation status.
+
 ## [1.3.0] - 2026-09-29
 
 - Launch the AI SDK bridge with Kujo 1.6 native working-directory support, avoiding platform-specific `env -C` behavior.

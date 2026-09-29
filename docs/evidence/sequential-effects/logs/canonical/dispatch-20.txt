@@ -1,0 +1,14 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ step timeout and cancellation handling update run lifecycle (1560ms)
+  ✓ persisted artifacts redact sensitive values (699ms)
+  ✓ tool authorization policy supports deny and allow outcomes (1441ms)
+  ✓ run identifiers cannot escape the configured output root (147ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  3939ms
+============================================================
+
+All tests passed! ✨

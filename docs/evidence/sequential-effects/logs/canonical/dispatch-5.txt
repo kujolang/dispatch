@@ -1,0 +1,15 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ crud reliability workflow template runs with fixture tools (17529ms)
+  ✓ trace generation creates events and final status (200ms)
+  ✓ strict mutation mode blocks destructive commands unless confirmed (2258ms)
+  ✓ approval handoff template completes offline and avoids the flaky tool (9636ms)
+  ✓ resume decision rejects a mismatched approval decision id (7352ms)
+
+Tests: 5 total, 5 passed, 0 failed
+Time:  37114ms
+============================================================
+
+All tests passed! ✨
