@@ -19,7 +19,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-14]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 120
     env:
       DISPATCH_OFFLINE_FIXTURE: "true"
       RUSTUP_TOOLCHAIN: "1.96.0"
@@ -42,49 +42,51 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/kujo
-          ref: 5d72aab4b99e7f8c01e4c208d6c97061934c7447
+          ref: 44af277848173664f72ca85f2a1b3b98d634ecdd
           path: .release/kujo
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/ai-sdk
-          ref: 849dbbbba7a734938320dd9569d1ed7aa6240298
+          ref: 5184a122590dd5698770b50d99b69ed11c7ec84a
           path: .release/ai-sdk
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/workcell
-          ref: 1940da0639b70b702c1b1077dda51ca39b065216
+          ref: 4ec4227f8190e05a329c2ee2975d77fce7872313
           path: .release/workcell
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/ability
-          ref: d6c970785f8d8bea04de0dce37920c2d0ca1c067
+          ref: 2dc7d4e9eb25e987544ac48793cd11d1999c45e0
           path: .release/ability
       - name: Check offline adapter tools
         run: |
           command -v node
           command -v sqlite3
-      - run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal
-      - run: cargo build --release --locked --manifest-path .release/kujo/Cargo.toml
+      - name: Install reviewed Kujo release
+        uses: kujolang/setup-kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c
+        with:
+          version: v1.6.0
+      - run: echo "KUJO_BIN=$(command -v kujo)" >> "$GITHUB_ENV"
       - name: Checkout controlled Agents SDK participant
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: kujolang/agents-sdk
-          ref: af0aa28f5960232cbafa7cf528a32db8cb36c7a9
+          ref: 5a9d5525e511a293b743b1c44d9ef270fd491f9f
           path: .release/agents-sdk-wave-d
       - name: Checkout controlled MCP participant
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: kujolang/mcp
-          ref: a7ec0dd8e6bcae303ab1431b4586dfe3e91f3a5a
+          ref: 427a8b9ecfaee97cd66c6b35137bd1dc5fb16b54
           path: .release/mcp-wave-d
       - name: Install controlled participant dependencies
         run: |
           git clone --filter=blob:none https://github.com/kujolang/kennel.git .release/kennel-wave-d
-          git -C .release/kennel-wave-d checkout --detach b5e0cf290aa2af7a90b637a7c3bdb4324ea4f66d
-          "$GITHUB_WORKSPACE/.release/kujo/target/release/kujo" run .release/kennel-wave-d/kennel.kujo --interpreter -- install --project-dir "$GITHUB_WORKSPACE/.release/agents-sdk-wave-d"
+          git -C .release/kennel-wave-d checkout --detach 093d44dddcebebd99bd8987e3efcb7e044dc45a7
+          "$KUJO_BIN" run .release/kennel-wave-d/kennel.kujo --interpreter -- install --project-dir "$GITHUB_WORKSPACE/.release/agents-sdk-wave-d"
       - name: Verify exact tagged source
         env:
-          KUJO_BIN: ${{ github.workspace }}/.release/kujo/target/release/kujo
           AI_SDK_PATH: ${{ github.workspace }}/.release/ai-sdk
           WORKCELL_ROOT: ${{ github.workspace }}/.release/workcell
           ABILITY_ROOT: ${{ github.workspace }}/.release/ability
@@ -125,7 +127,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --title "Dispatch $GITHUB_REF_NAME" --generate-notes
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --title "Dispatch $GITHUB_REF_NAME" --notes-file docs/RELEASE_1_3_0.md
           gh release upload "$GITHUB_REF_NAME" "dispatch-${GITHUB_REF_NAME}.tar.gz" "dispatch-${GITHUB_REF_NAME}.tar.gz.sha256" "dispatch-${GITHUB_REF_NAME}-provenance.json" --clobber
 
   clean-install:
@@ -139,7 +141,7 @@ jobs:
     steps:
       - name: Install pinned Dispatch closure
         run: |
-          curl -fsSL "https://raw.githubusercontent.com/kujolang/kujo/266a8902068a14c3d17f803bef467dc28f1fe162/install.sh" \
+          curl -fsSL "https://raw.githubusercontent.com/kujolang/kujo/44af277848173664f72ca85f2a1b3b98d634ecdd/install.sh" \
             | bash -s -- --package dispatch \
                 --release-manifest "https://raw.githubusercontent.com/kujolang/dispatch/${GITHUB_REF_NAME}/release/dispatch-v1.3.0.refs"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
