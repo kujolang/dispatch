@@ -1,7 +1,7 @@
 # Bounded operator API. Lifecycle facts derive from immutable append-only records;
 # no participant status, callback result or evidence label grants admission.
 from src.core.state import load_run_state, acquire_run_lock, release_run_lock, persist_run_state
-from src.core.assurance_state import assurance_feature
+from src.core.assurance_state import node_controller_features, assurance_feature
 from src.core.control_journal import reconcile_control_journal, append_control_event
 from src.core.effect_context import resolve_effect_context
 from src.core.portable_commitments import portable_json
@@ -78,6 +78,7 @@ func append(state, kind, data) {
     state["effect_lifecycle"] := history
     state["required_features"] := [assurance_feature(state["assurance_negotiation"]), "sequential-effects/v1alpha1"]
         if dict_get_or(state, "parent_finalization_required", false) {state["required_features"] := push(state["required_features"], "parent-finalization/v1alpha1")}
+        state["required_features"] := node_controller_features(state, state["required_features"])
     logged := append_control_event(state, "effect_lifecycle_recorded", state["current_control_boundary"]["step_id"], [record_ref], {"effect_lifecycle":history})
     state = logged["run_state"];request := state["human_intervention"];request["state_revision"] := state["revision"] + 1;state["human_intervention"] := request
     state = persist_run_state(state);require(sync_directory_beneath(state["run_dir"], "."));return state

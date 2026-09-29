@@ -1,0 +1,23 @@
+import fs from 'node:fs';
+import {join,resolve} from 'node:path';
+import {tmpdir} from 'node:os';
+import {spawnSync,spawn} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+const kujo=process.env.KUJO_BIN||resolve('../kujo/target/release/kujo');
+const root=fs.mkdtempSync(join(tmpdir(),'node-composition-'));
+const env={...process.env,KUJO_BIN:kujo,KUJO_MODULE_PATH:[resolve('.'),resolve('..'),resolve('../workcell'),resolve('../eval')].join(':'),DISPATCH_OFFLINE_FIXTURE:'true',DISPATCH_ALLOW_ANY_OUTPUT_ROOT:'true',DISPATCH_DEBUG_ERRORS:'true'};
+const hash=x=>createHash('sha256').update(x).digest('hex');
+const read=p=>JSON.parse(fs.readFileSync(p,'utf8')),write=(p,v)=>fs.writeFileSync(p,JSON.stringify(v));
+function command(bin,args,extra={}){const p=spawnSync(bin,args,{env:{...env,...extra},encoding:'utf8',timeout:180000,maxBuffer:8*1024*1024});assert.equal(p.status,0,p.stdout+p.stderr);assert.equal(p.stderr,'',p.stderr);return p.stdout.trim()}
+const fixture='tests/node_composition_fixture.kujo';let serial=0;
+function run(d,mode,id='graph',request=null,extra={}){const args=['run',fixture,d,mode,id];if(request){const path=join(d,'request-'+serial+++'.json');write(path,request);args.push(path)}return JSON.parse(command(kujo,args,extra))}
+const state=(d,id='graph')=>{const dir=id==='graph'?d:join(d,id),p=read(join(dir,'pointer.json'));return JSON.parse(fs.readFileSync(join(p.run_dir,'state.json'),'utf8').split('\n').slice(1).join('\n'))};
+function setup(name,nodes){const d=join(root,name);fs.mkdirSync(d);write(join(d,'graph.json'),{nodes});for(const {id} of nodes){const path=join(d,id);fs.mkdirSync(path);fs.mkdirSync(join(path,'source'));command('git',['-C',join(path,'source'),'init','-q']);command('git',['-C',join(path,'source'),'config','user.name','Fixture']);command('git',['-C',join(path,'source'),'config','user.email','fixture@example.invalid']);fs.writeFileSync(join(path,'source','source'),'retained\n');command('git',['-C',join(path,'source'),'add','source']);command('git',['-C',join(path,'source'),'commit','-qm','initial']);const now=Math.floor(Date.now()/1000);write(join(path,'host.json'),{intent:{operation:'create',target_sha256:hash(path+'/sink.db'),scope_sha256:hash(d),key_sha256:hash(id),request_sha256:hash('result-'+id),precondition_sha256:hash('empty'),valid_from:now-10,valid_until:now+3500}});write(join(path,'eval-config.json'),{suite:'node-'+id});assert.equal(run(d,'init-node',id).ok,true);command('sqlite3',[join(path,'sink.db'),'CREATE TABLE mutation_audit(n INTEGER); CREATE TRIGGER observed_mutation BEFORE INSERT ON logical_effects BEGIN INSERT INTO mutation_audit VALUES(1); END;'])}assert.equal(run(d,'init-graph').ok,true);return d}
+function op(d,id,operation,fields={}){const before=run(d,'op',id,{operation:'inspect'});assert.equal(before.ok,true,JSON.stringify(before));return run(d,'op',id,{operation,expected:before.cursor,...fields})}
+function complete(d,id){assert.equal(Number(command('sqlite3',[join(d,id,'sink.db'),'SELECT count(*) FROM mutation_audit;'])),0);assert.equal(op(d,id,'refresh',{effect_id:'C'}).ok,true);assert.equal(op(d,id,'select',{effect_id:'C'}).ok,true);const selected=run(d,'op',id,{operation:'inspect'});assert.equal(op(d,id,'admit',{attempt_id:selected.lifecycle.active}).ok,true);assert.equal(op(d,id,'refresh',{effect_id:'C'}).ok,true);assert.equal(Number(command('sqlite3',[join(d,id,'sink.db'),'SELECT count(*) FROM mutation_audit;'])),1)}
+function decision(d,id){const s=state(d,id);return {schema:'kujo.intervention-decision/v2',decision_id:'final-'+s.revision,request_id:s.human_intervention.request_id,boundary_id:s.current_control_boundary.boundary_id,expected_state_revision:s.revision,action:'approve_override',reason:'Accept verified node',decided_at:new Date().toISOString(),actor:{id:'local-operator',type:'human',authenticated_by:'installed-local-host',authorization:'parent-finalization'}}}
+function finalize(d,id){const review=decision(d,id),a=run(d,'op',id,{operation:'parent-inspect',decision:review});assert.equal(a.ok,true,JSON.stringify(a));const result=run(d,'op',id,{operation:'finalize',candidate:a.candidate,decision:review});assert.equal(result.ok,true,JSON.stringify(result));return result}
+const edge=(source,name='input')=>({name,source_node:source,source_output:'report',type_id:'kujo.example/node-summary/v1'});
+
+export {fs,join,resolve,spawnSync,spawn,assert,kujo,root,env,hash,read,write,command,fixture,run,state,setup,op,complete,decision,finalize,edge};

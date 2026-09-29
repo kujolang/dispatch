@@ -1,5 +1,7 @@
+from src.core.node_composition import validate_composed_definition, advance_composed_step
+from src.core.node_transition import composition_graph
 from src.core.control import parent_completion_review
-from src.core.assurance_state import assurance_protected, validate_assurance_anchor
+from src.core.assurance_state import node_controller_features, assurance_protected, validate_assurance_anchor
 from src.core.assurance_configuration import check_negotiated_execution, resolve_run_configuration
 from src.agents.agent import run_agent, run_agent_with_agent
 from src.core.approval import create_approval_request, resolve_approval
@@ -153,6 +155,7 @@ func pause_from_control_decision(run_state, step, step_index, decision, control_
         if assurance_protected(run_state) == false {throw("parent_finalization_requires_protected_run")}
         run_state["parent_finalization_required"] := true
         if contains(run_state["required_features"], "parent-finalization/v1alpha1") == false {run_state["required_features"] := push(run_state["required_features"], "parent-finalization/v1alpha1")}
+        run_state["required_features"] := node_controller_features(run_state, run_state["required_features"])
         steps := run_state["steps"];parent := steps[step_index];parent["status"] := "paused";parent["finished_at"] := "";steps[step_index] := parent;run_state["steps"] := steps
     }
     # Persist the admission barrier before journaling or requesting review.
@@ -1298,6 +1301,7 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
     for configured_step in workflow["steps"] {
         if has_key(dict_get_or(configured_step, "config", {}), "parent_finalization")&&(assurance_protected(run_state) == false||len(keys(dict_get_or(workflow, "control", {}))) == 0) {return {"ok":false, "code":"parent_finalization_requires_protected_control"}}
     }
+    if composition_graph(run_state) {validate_composed_definition(run_state)}
     routing_validation := validate_workflow_routing(workflow)
     if dict_get_or(routing_validation, "ok", false) == false {
         return {"ok": false, "paused": false, "run_state": run_state, "error": {"code": "invalid_routing_config", "message": "Workflow routing configuration is invalid.", "retryable": false, "details": dict_get_or(routing_validation, "errors", [])}}
@@ -1380,6 +1384,15 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
         existing_status := dict_get_or(step, "status", "pending")
         if existing_status == "completed"||existing_status == "skipped" {
             index := index + 1
+            run_state["current_step_index"] := index
+            continue
+        }
+
+        if composition_graph(run_state) {
+            composed := advance_composed_step(run_state, index, options)
+            if composed["ok"] == false||composed["paused"] {return composed}
+            run_state = composed["run_state"]
+            index = index + 1;cycle_progress = true
             run_state["current_step_index"] := index
             continue
         }

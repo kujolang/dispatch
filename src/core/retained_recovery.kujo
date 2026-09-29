@@ -1,8 +1,9 @@
+from src.core.node_transition import apply_node_transition, node_history_projection, node_recovery_safe, node_claim_path, node_reference, node_raw, validate_node_binding_bytes
 # Operator-only retained-host reconciliation. No adapter execution is imported.
 from src.core.parent_transition import apply_parent_decision, validate_parent_artifacts
 from src.core.state import load_run_state, acquire_run_lock, release_run_lock, persist_run_state, normalize_output_root, validate_run_id
 from src.core.control_journal import append_control_event, reconcile_control_journal
-from src.core.assurance_state import assurance_feature
+from src.core.assurance_state import node_controller_features, assurance_feature
 from src.core.sequential_effects import recovery_lifecycle_view
 from src.core.portable_commitments import portable_json
 from src.core.utils import dict_get_or, ensure_dir
@@ -36,9 +37,10 @@ func event_check(state, event, sequence, previous) {
     }
 }
 func advance(state, event) {
-    demand((state["status"] == "paused"&&state["current_control_boundary"]["status"] == "open")||has_key(state, "parent_finalization"), "unsupported_active_state")
+    demand((state["status"] == "paused"&&dict_get_or(dict_get_or(state, "current_control_boundary", {}), "status", "") == "open")||has_key(state, "parent_finalization")||node_recovery_safe(state), "unsupported_active_state")
     demand(event["state_revision"] == state["revision"], "state_revision_divergence")
-    if event["kind"] == "parent_finalized" {state = apply_parent_decision(state, event["details"])}
+    if contains(["node_inputs_bound", "node_execution_admitted", "node_start_requested", "node_terminal_observed"], event["kind"]) {state = apply_node_transition(state, event["kind"], event["details"])}
+    else if event["kind"] == "parent_finalized" {state = apply_parent_decision(state, event["details"])}
     else if event["kind"] == "effect_lifecycle_recorded" {
         before := dict_get_or(state, "effect_lifecycle", []);after := event["details"]["effect_lifecycle"]
         demand(len(after) == len(before) + 1&&len(after) <= 64, "conflicting_lifecycle")
@@ -49,18 +51,19 @@ func advance(state, event) {
         state["effect_lifecycle"] := after
         state["required_features"] := [assurance_feature(state["assurance_negotiation"]), "sequential-effects/v1alpha1"]
         if dict_get_or(state, "parent_finalization_required", false) {state["required_features"] := push(state["required_features"], "parent-finalization/v1alpha1")}
+        state["required_features"] := node_controller_features(state, state["required_features"])
     } else if event["kind"] == "retained_host_reconciled" {
         demand(event["details"]["schema"] == "dispatch.reconciliation-receipt/v1alpha1", "unsupported_recovery_receipt")
         demand(event["details"]["reconstructed_sha256"] == sha256(state_body(state)), "recovery_source_mismatch")
     } else {throw("unsupported_history_reconstruction")}
     state["control_journal"] := {"schema":"kujo.control-journal/v1", "path":state["run_dir"] + "/control-events.jsonl", "sequence":event["sequence"], "last_sha256":event["event_sha256"]}
     state["revision"] := state["revision"] + 1
-    if state["human_intervention"] != null {request := state["human_intervention"];request["state_revision"] := state["revision"];state["human_intervention"] := request}
+    if dict_get_or(state, "human_intervention", null) != null {request := state["human_intervention"];request["state_revision"] := state["revision"];state["human_intervention"] := request}
     return state
 }
 func inventory(state) {
     root := state["run_dir"];files := [];total := 0
-    for directory in ["control-records", "effect-lifecycle", "checkpoints", "reconciliation", "parent-finalization"] {
+    for directory in ["control-records", "effect-lifecycle", "checkpoints", "reconciliation", "parent-finalization", "node-input"] {
         for name in names(root, directory) {
             demand(contains(name, "/") == 0&&contains(name, "\\") == 0, "unsupported_directory")
             path := directory + "/" + name;raw := read_file_beneath(root, path, 8388608)
@@ -126,8 +129,10 @@ func analyze(state) {
     }
     demand(same(lifecycle, dict_get_or(state, "effect_lifecycle", null))&&same(selected, dict_get_or(state, "assurance_selection", null))&&same(replay, dict_get_or(state, "assurance_replay", null))&&same(legacy, dict_get_or(state, "effect_continuation", null)), "checkpoint_prefix_mismatch")
     demand(same(finalized, dict_get_or(state, "parent_finalization", null)), "parent_checkpoint_mismatch")
+    prefix_events := [];for i in range(0, at) {prefix_events = push(prefix_events, events[i])};node_history_projection(state, prefix_events)
     reconstructed := state
     for i in range(at, sequence) {reconstructed = advance(reconstructed, events[i])}
+    node_history_projection(reconstructed, events)
     view := recovery_lifecycle_view(reconstructed)
     if view["anchor"] != null {
         anchor := view["anchor"];matched := false
@@ -159,6 +164,7 @@ func analyze(state) {
             demand(path == "checkpoints/" + manifest["checkpoint_id"] + ".json"&&manifest["checkpoint_id"] == "cp_" + manifest["state_sha256"]&&manifest["state_ref"] == "checkpoints/state-" + manifest["state_sha256"] + ".json", "corrupt_checkpoint_reference")
             demand(sha256(read_file_beneath(root, manifest["state_ref"], 8388608)) == manifest["state_sha256"], "corrupt_checkpoint_snapshot")
         }
+        if starts_with(path, "node-input/")&&ends_with(path, ".raw") {demand(file["sha256"] == substring(basename(path), 0, 64), "corrupt_node_artifact")}
         if (starts_with(path, "parent-finalization/")&&ends_with(path, ".raw"))||(starts_with(path, "effect-lifecycle/")&&ends_with(path, ".preservation")) {demand(file["sha256"] == substring(basename(path), 0, 64), "corrupt_retained_bytes")}
         if starts_with(path, "effect-lifecycle/")&&ends_with(path, ".parent") {demand(file["sha256"] == substring(basename(path), 0, 64), "corrupt_parent_bytes")}
         if starts_with(path, "effect-lifecycle/")&&ends_with(path, ".claim") {
@@ -171,6 +177,20 @@ func analyze(state) {
             if item["consumed"] == false {unresolved = push(unresolved, {"attempt_id":attempt, "finding":"consumed_claim_without_admission_record"})}
         }
     }
+    node_binding := dict_get_or(reconstructed, "node_input_binding", null)
+    node_refs := [];if node_binding != null {node_refs = node_binding["artifacts"]}
+    for id in keys(dict_get_or(reconstructed, "node_completions", {})) {for ref in reconstructed["node_completions"][id]["artifacts"] {node_refs = push(node_refs, ref)}}
+    for file in files {
+        path := file["path"]
+        if starts_with(path, "node-input/")&&ends_with(path, ".claim") {
+            demand(node_binding != null&&path == node_claim_path(node_binding), "unbound_node_claim")
+            demand(read_file_beneath(root, path, 65536) == portable_json(node_binding), "corrupt_node_claim")
+            claims = push(claims, node_reference(node_binding))
+            if has_key(reconstructed, "node_execution_admission") == 0 {unresolved = push(unresolved, {"finding":"node_consumed_without_admission_record", "binding_ref":node_reference(node_binding)})}
+        }
+        if starts_with(path, "node-input/")&&ends_with(path, ".raw")&&contains(node_refs, "sha256:" + file["sha256"]) == false {orphans = push(orphans, "sha256:" + file["sha256"])}
+    }
+    if has_key(reconstructed, "node_execution_admission")&&has_key(reconstructed, "parent_finalization") == 0 {unresolved = push(unresolved, {"finding":"node_consumed_not_finalized", "binding_ref":node_reference(node_binding)})}
     for attempt in keys(view["attempts"]) {
         item := view["attempts"][attempt]
         demand(item["consumed"] == false||contains(claims, attempt), "missing_consumption_claim")
@@ -186,7 +206,7 @@ func analyze(state) {
     if len(repairs) > 0 {classification = "reconcilable"}
     if len(orphans) > 0 {classification = "needs_operator_review";repairs = []}
     if len(repairs) > 0 {
-        if has_key(state, "parent_finalization") == 0&&(state["status"] != "paused"||dict_get_or(dict_get_or(state, "current_control_boundary", {}), "status", "") != "open") {classification = "needs_operator_review";repairs = []}
+        if node_recovery_safe(state) == false&&has_key(state, "parent_finalization") == 0&&(state["status"] != "paused"||dict_get_or(dict_get_or(state, "current_control_boundary", {}), "status", "") != "open") {classification = "needs_operator_review";repairs = []}
         for step in state["steps"] {if step["status"] == "running" {classification = "needs_operator_review";repairs = []}}
     }
     if has_key(state, "effect_continuation") {classification = "unsupported_legacy_selection";repairs = []}
@@ -224,7 +244,7 @@ export func apply_retained_reconciliation(root, id, plan, operator) {
         expected := plan_retained_reconciliation(root, id);demand(expected["ok"]&&same(expected["plan"], plan), "stale_or_modified_plan")
         demand(report["assessment_id"] == plan["assessment_id"]&&len(report["safe_repairs"]) > 0, "no_safe_repair")
         state := analyzed["state"];directory := state["run_dir"]
-        demand((state["status"] == "paused"&&state["current_control_boundary"]["status"] == "open")||has_key(state, "parent_finalization"), "unsupported_active_state")
+        demand((state["status"] == "paused"&&dict_get_or(dict_get_or(state, "current_control_boundary", {}), "status", "") == "open")||has_key(state, "parent_finalization")||node_recovery_safe(state), "unsupported_active_state")
         for step in state["steps"] {demand(step["status"] != "running", "inflight_work")}
         ensure_dir(directory + "/reconciliation")
         source_ref := "reconciliation/" + report["assessment_id"] + ".journal"
@@ -237,8 +257,8 @@ export func apply_retained_reconciliation(root, id, plan, operator) {
         sync_directory_beneath(directory, "reconciliation");sync_directory_beneath(directory, ".")
         lines := [];for event in analyzed["events"] {lines = push(lines, to_json(event))}
         write_file_atomic_beneath(directory, "control-events.jsonl", join(lines, "\n"), true);sync_directory_beneath(directory, ".")
-        logged := append_control_event(state, "retained_host_reconciled", state["current_control_boundary"]["step_id"], [receipt_ref], receipt)
-        state = logged["run_state"];if state["human_intervention"] != null {request := state["human_intervention"];request["state_revision"] := state["revision"] + 1;state["human_intervention"] := request}
+        logged := append_control_event(state, "retained_host_reconciled", dict_get_or(dict_get_or(state, "current_control_boundary", {}), "step_id", ""), [receipt_ref], receipt)
+        state = logged["run_state"];if dict_get_or(state, "human_intervention", null) != null {request := state["human_intervention"];request["state_revision"] := state["revision"] + 1;state["human_intervention"] := request}
         state = persist_run_state(state);sync_directory_beneath(directory, ".")
         demand(reconcile_control_journal(state)["ok"], "repaired_journal_invalid")
         result = {"ok":true, "schema":"dispatch.reconciliation-result/v1alpha1", "run_id":id, "revision":state["revision"], "receipt_ref":receipt_ref, "continuation":"not_authorized"}

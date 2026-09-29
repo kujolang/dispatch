@@ -1,0 +1,20 @@
+from src.core.assurance_state import decode_authoritative_state, node_controller_features
+checks := 0
+contract := parse_json(read_file("schemas/node-input-binding-v1alpha1.schema.json"))
+vectors := parse_json(read_file("tests/vectors/node-composition.json"))
+for vector in vectors["vectors"] {
+    assert(json_schema_validate(vector["input"], contract)["valid"], vector["name"])
+    checks = checks + 1
+}
+for metadata in [{"node_composition":"dispatch.node-composition/v1alpha1"}, {"node_input_required":"dispatch.node-input/v1alpha1"}] {
+    state := {"workflow_definition":{"metadata":metadata}}
+    denied := false
+    try {decode_authoritative_state(to_json(state))} except err {denied = true}
+    assert(denied, "Unprotected composition must reject")
+    assert(len(node_controller_features(state, [])) == 1, "Feature must derive from definition")
+    checks = checks + 2
+}
+legacy := {"workflow_definition":{"metadata":{}}}
+assert(to_json(decode_authoritative_state(to_json(legacy))) == to_json(legacy), "Legacy bytes retain interpretation")
+checks = checks + 1
+print(to_json({"ok":true, "checks":checks}))

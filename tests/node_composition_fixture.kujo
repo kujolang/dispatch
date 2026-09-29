@@ -1,0 +1,131 @@
+from src.core.node_composition import assess_node_inputs, bind_node_inputs, validate_bound_node_inputs, read_bound_node_input
+from src.core.node_execution import run_bound_node
+from src.core.runner import run_workflow
+from src.core.state import load_run_state
+from src.core.assurance_admission import create_negotiated_run
+from src.core.assurance_configuration import implementation_digest, configuration_revision
+from src.core.sequential_effects import sequential_effect_operation
+from src.core.parent_finalization import assess_parent_finalization, finalize_parent
+from src.core.retained_recovery import plan_retained_reconciliation, apply_retained_reconciliation
+from src.core.step import create_step
+from src.workflows.workflow import create_workflow
+from src.tools.tool import create_tool_registry, create_tool, register_tool
+from src.core.portable_commitments import portable_json
+from src.core.utils import ensure_dir, dict_get_or
+from src.adapters.sqlite_effect import sqlite_effect_init, sqlite_effect_observe
+from src.adapters.sqlite_continuation import sqlite_continuation_adapter
+from workcell.src.workspace.workspace import create_workspace
+from workcell.src.evidence.preservation import write_preservation_outcome
+from workcell.src.evidence.retained_workspace import observe_retained_workspace
+from eval.src.control_contracts import build_evaluation_result
+arguments := args();base := arguments[0];mode := arguments[1];node_id := arguments[2];root := base + "/" + node_id
+func need(ok) {if ok != true {throw("node_fixture_failed")}}
+func cfg(path) {return parse_json(read_file_beneath(path, "host.json", 1048576))}
+func pointer(path) {return parse_json(read_file(path + "/pointer.json"))}
+func state(path) {p := pointer(path);loaded := load_run_state(path + "/runs", p["run_id"]);need(loaded["ok"]);return loaded["run_state"]}
+func inventory() {
+    files := []
+    for path in ["src/core/node_transition.kujo", "src/core/node_composition.kujo", "src/core/node_execution.kujo", "src/core/runner.kujo", "src/core/assurance_state.kujo", "src/core/assurance_configuration.kujo", "src/core/control_journal.kujo", "src/core/sequential_effects.kujo", "src/core/effect_context.kujo", "src/core/parent_finalization.kujo", "src/core/parent_transition.kujo", "src/core/preservation_binding.kujo", "src/core/state.kujo", "src/adapters/sqlite_continuation.kujo", "tests/node_composition_fixture.kujo"] {files = push(files, {"root":os_getcwd(), "path":path})}
+    files = push(files, {"root":os_getcwd() + "/../workcell", "path":"src/evidence/retained_workspace.kujo"});return files
+}
+func descriptor(path) {return {"schema":"dispatch.assurance-configuration/v1beta1", "mode":"required", "fallback":"deny", "profile":"dispatch.sqlite-unique", "profile_version":"1beta1", "issuer":"sqlite-local", "mechanism":"sqlite_unique_transaction", "verifier_id":"node-host", "verifier_version":"1", "verifier_sha256":implementation_digest(inventory()), "authority_sha256":sha256(path)}}
+func graph_options() {return {"assurance_host":graph_host, "node_boundary":func(point, id) {if env("NODE_TARGET") == id {boundary(point)}}}}
+func graph_host(revision, current) {
+    config := cfg(base)
+    host := {"resolve":func(id) {path := base + "/" + id;return {"root":path + "/runs", "run_id":pointer(path)["run_id"], "options":node_options(path)}}, "start":func(id, binding) {
+        command := spawn_process([env("KUJO_BIN"), "run", "tests/node_composition_fixture.kujo", base, "start", id], {"cwd":os_getcwd(), "inherit_env":true, "timeout_ms":120000, "max_output_bytes":1048576})
+        need(command.success&&command.stderr == "");write_file(base + "/" + id + "/start-response.json", command.stdout, true);return parse_json(command.stdout)
+    }}
+    return {"status":dict_get_or(config, "status", "active"), "descriptor":config["descriptor"], "authority_sha256":config["descriptor"]["authority_sha256"], "implementation":inventory(), "verify":func(subject) {return null}, "node_host":host}
+}
+func preserved(path, selector) {
+    config := cfg(path)
+    for entry in config["preservation_sources"] {
+        if entry["selector"] == selector {
+            content := ""
+            if entry["kind"] == "workspace" {observed := observe_retained_workspace(config["workspace"]);need(observed["ok"]);content = to_json(observed["observation"])}
+            else {content = read_file_beneath(path, "workcell/" + selector, 1048576)}
+            return {"metadata_raw":entry["metadata_raw"], "content_raw":content, "environment_ref":"sha256:" + sha256(path)}
+        }
+    }
+    throw("unknown_preservation_reference")
+}
+func node_host(path, revision, current) {
+    config := cfg(path);effect := dict_get_or(config, "effect_set", {})
+    effect["read_artifact"] := func(reference) {return read_file_beneath(path, "artifacts/" + substring(reference, 7, 71) + ".json", 65536)}
+    if has_key(config, "preservation_sources") {effect["preservation_binding"] := {"document_raw":read_file_beneath(path, "workcell/preservation.json", 65536), "environment_ref":"sha256:" + sha256(path), "resolve":func(selector) {return preserved(path, selector)}}}
+    parent := {"evaluation_raw":dict_get_or(config, "evaluation_raw", ""), "authorize_decision":func(decision, current) {return decision["actor"]["id"] == "local-operator"&&dict_get_or(cfg(path), "operator_enabled", true)}, "read_output":func(reference) {need(reference == cfg(path)["output_ref"]);return {"metadata_raw":read_file_beneath(path, "output-evidence.json", 16384), "content_raw":read_file_beneath(path, "output.json", 1048576)}}}
+    return {"status":dict_get_or(config, "status", "active"), "descriptor":config["descriptor"], "authority_sha256":config["descriptor"]["authority_sha256"], "implementation":inventory(), "verify":func(subject) {return null}, "effect_set":effect, "continuation_adapter":sqlite_continuation_adapter, "parent_finalization":parent, "validate_node_inputs":func(current) {return validate_bound_node_inputs(current, state(base), graph_options())}}
+}
+func boundary(point) {if env("NODE_CRASH") == point {print("CRASH:" + point);sleep(30000)}}
+func node_options(path) {return {"assurance_host":func(revision, current) {return node_host(path, revision, current)}, "node_boundary":boundary, "effect_boundary":boundary, "finalization_boundary":boundary, "cancel_requested":dict_get_or(cfg(path), "cancel_requested", false), "tool_authorization_policy":func(input) {return {"allow":dict_get_or(cfg(path), "tool_allowed", true), "message":"Node-owned tool policy"}}}}
+func schema() {return {"$id":"kujo.example/node-summary/v1", "type":"object", "required":["schema", "node", "value", "sources"], "additionalProperties":false, "properties":{"schema":{"const":"kujo.example/node-summary/v1"}, "node":{"type":"string"}, "value":{"type":"integer"}, "sources":{"type":"array", "items":{"type":"string"}}}}}
+func outputs() {return [{"name":"report", "type_id":"kujo.example/node-summary/v1", "json_schema":schema()}]}
+func workflow(path) {
+    return create_workflow({"id":"composed-execution", "metadata":{"node_input_required":"dispatch.node-input/v1alpha1"}, "name":"Independent node", "description":"One protected execution", "input_schema":{"type":"dict"}, "output_schema":{"type":"dict"}, "agents":{}, "tools":["action"], "steps":[create_step("action", "Node action", "tool", {"tool_name":"action", "input_from":["input"], "effect_class":"external_non_idempotent", "node_outputs":outputs(), "parent_finalization":{"schema":"dispatch.parent-finalization-policy/v1alpha1", "required_outputs":["report"], "evaluation":{"name":"eval", "version":"2.0.0", "configuration_sha256":sha256(read_file(path + "/eval-config.json"))}}})], "routing":{"enabled":false}, "control":{"policy_id":"node", "policy_version":"1", "policies":[{"when":{"result":"execution", "status":"indeterminate"}, "decide":{"disposition":"require_intervention", "reason":"Resolve node effect", "allowed_actions":["retry_step", "approve_override", "abort"]}}]}, "default_retry_policy":{"max_attempts":1}, "approval_config":{"auto_approve":false}, "memory_config":{}, "budgets":{}, "max_parallel_steps":1})
+}
+func graph_workflow() {
+    definition := parse_json(read_file(base + "/graph.json"));steps := []
+    for node in definition["nodes"] {steps = push(steps, create_step(node["id"], node["id"], "tool", {"tool_name":"installed_node", "depends_on":node["depends_on"], "node_execution":{"schema":"dispatch.run-backed-node/v1alpha1", "run_id":pointer(base + "/" + node["id"])["run_id"], "step_id":"action", "inputs":node["inputs"], "outputs":outputs()}}))}
+    return create_workflow({"id":"static-composition", "metadata":{"node_composition":"dispatch.node-composition/v1alpha1"}, "name":"Static node DAG", "description":"Separate data and scheduling", "input_schema":{"type":"dict"}, "output_schema":{"type":"dict"}, "agents":{}, "tools":[], "steps":steps, "routing":{"enabled":false}, "control":{"policy_id":"graph", "policy_version":"1", "policies":[]}, "default_retry_policy":{"max_attempts":1}, "approval_config":{"auto_approve":false}, "memory_config":{}, "budgets":{}, "max_parallel_steps":1})
+}
+func action(input, context) {
+    config := cfg(root);current := state(root);sources := [];value := dict_get_or(config, "seed", 1)
+    for item in current["node_input_binding"]["inputs"] {consumed := read_bound_node_input(current, item["name"]);value = value + consumed["value"];sources = push(sources, item["content_ref"])}
+    append_file(root + "/executions.log", "executed\n")
+    if dict_get_or(config, "fail_execution", false) {return {"ok":false, "error":{"code":"node_failed", "message":"Fixture failure", "retryable":false}}}
+    ensure_dir(root + "/workcell")
+    workspace := create_workspace(root + "/source", "git-worktree", "wc-" + replace(uuid_v4(), "-", ""));need(workspace["ok"]);config["workspace"] := workspace
+    write_file(root + "/workcell/receipt.json", to_json({"workspace":workspace}), true)
+    subject := {"run_id":context["run_id"], "step_id":"action", "attempt_id":"1"};stamp := format_date(now(), "YYYY-MM-DDTHH:mm:ssZ")
+    preserved_result := write_preservation_outcome({"run_id":subject["run_id"], "step_id":"action", "attempt_id":"1", "requested_mode":"filesystem", "cleanup_status":"preserved", "output_dir":root + "/workcell", "workspace_path":workspace["workspace_path"], "provider":"local", "retain_until":"2099-01-01T00:00:00Z", "source_root":workspace["source_root"], "workspace_strategy":workspace["strategy"]});need(preserved_result["ok"])
+    content := to_json({"schema":"kujo.example/node-summary/v1", "node":node_id, "value":value, "sources":sources});write_file(root + "/output.json", content, true)
+    metadata := {"schema":"kujo.evidence-ref/v1", "id":"report", "producer":{"name":"local-node", "version":"1"}, "subject":subject, "kind":"artifact", "uri":"file:output.json", "media_type":"application/json", "artifact_schema":schema(), "created_at":stamp, "integrity":{"status":"sha256", "sha256":sha256(content)}}
+    metadata_raw := to_json(metadata);write_file(root + "/output-evidence.json", metadata_raw, true);config["output_ref"] := "sha256:" + sha256(metadata_raw)
+    preservation_sources := []
+    for entry in preserved_result["outcome"]["evidence"] {
+        selector := entry["$ref"];kind := "file";bytes := ""
+        if selector == workspace["workspace_path"] {kind = "workspace";bytes = to_json(observe_retained_workspace(workspace)["observation"])} else {bytes = read_file_beneath(root, "workcell/" + selector, 1048576)}
+        evidence := {"schema":"kujo.evidence-ref/v1", "subject":subject, "integrity":{"status":"sha256", "sha256":sha256(bytes)}}
+        preservation_sources = push(preservation_sources, {"selector":selector, "kind":kind, "metadata_raw":to_json(evidence)})
+    }
+    config["preservation_sources"] := preservation_sources;write_file(root + "/host.json", to_json(config), true)
+    return {"ok":true, "data":{"schema":"kujo.execution-result/v1", "result_id":context["run_id"] + ":result", "subject":subject, "producer":{"name":"local-node", "version":"1"}, "status":"indeterminate", "classification":"unknown", "started_at":stamp, "finished_at":stamp, "attempt":1, "effects":[{"effect_id":"C", "class":"external_idempotent", "state":"not_started"}], "evidence":[], "output":{"report":config["output_ref"]}, "preservation_outcome":preserved_result["outcome"]}}
+}
+func put(value) {raw := portable_json(value);path := "artifacts/" + sha256(raw) + ".json";if file_exists(root + "/" + path) == false {write_file_atomic_beneath(root, path, raw, false)};return "sha256:" + sha256(raw)}
+func publish_facts() {
+    config := cfg(root);current := state(root);result := current["steps"][0]["execution_result"];raw := to_json(result);intent := config["intent"];stamp := parse_int(to_string(floor(now_utc_seconds())))
+    registration := {"adapter":"local-sqlite", "revision":"1", "participant":"node-host"}
+    plan := {"schema":"dispatch.effect-plan/v1alpha1", "subject":result["subject"], "config_ref":"sha256:" + configuration_revision(config["descriptor"]), "registration_ref":"sha256:" + sha256(portable_json(registration)), "preserve_until":stamp + 3000, "effects":[{"effect_id":"C", "operation":"create", "target_ref":"sha256:" + intent["target_sha256"], "scope_ref":"sha256:" + intent["scope_sha256"], "key_ref":"sha256:" + intent["key_sha256"], "request_ref":"sha256:" + intent["request_sha256"], "profile":"dispatch.sqlite-unique", "profile_revision":"1beta1", "authority":"sqlite-local"}]}
+    live := sqlite_effect_observe(root + "/sink.db", intent);need(live["ok"])
+    observation := put({"schema":"dispatch.effect-observation/v1alpha1", "plan_ref":"sha256:" + sha256(portable_json(plan)), "result_ref":"sha256:" + sha256(raw), "effect_id":"C", "state":live["observation"]["observed_state"], "observed_at":stamp - 1, "valid_until":stamp + 1800, "evidence_ref":live["observation"]["evidence_ref"]})
+    sidecar := {"schema":"dispatch.effect-set/v1alpha1", "result_ref":"sha256:" + sha256(raw), "plan_ref":"sha256:" + sha256(portable_json(plan)), "observations":[observation]}
+    config["effect_set"] := {"plan":plan, "result_raw":raw, "set_raw":portable_json(sidecar), "registration":registration, "intents":[intent], "sink_path":root + "/sink.db", "environment_ref":"sha256:" + sha256(root), "environment_valid":true}
+    config["evaluation_raw"] := to_json(build_evaluation_result({"passed":1, "failed":0}, root + "/eval-config.json", {"subject":result["subject"], "input_evidence_ids":["sha256:" + sha256(raw), "sha256:" + sha256(read_file(root + "/output.json"))]}, stamp * 1000, stamp * 1000, []))
+    write_file(root + "/host.json", to_json(config), true)
+}
+if mode == "init-node" {
+    ensure_dir(root + "/artifacts");sqlite_effect_init(root + "/sink.db")
+    config := cfg(root);config["descriptor"] := descriptor(root);write_file(root + "/host.json", to_json(config), true)
+    created := create_negotiated_run(workflow(root), {}, root + "/runs", {}, config["descriptor"], node_options(root)["assurance_host"]);need(created["ok"])
+    write_file(root + "/pointer.json", to_json({"run_id":created["run_state"]["run_id"], "run_dir":created["run_state"]["run_dir"]}), true);print(to_json({"ok":true}))
+} else if mode == "init-graph" {
+    config := {"descriptor":descriptor(base)};write_file(base + "/host.json", to_json(config), true)
+    created := create_negotiated_run(graph_workflow(), {}, base + "/runs", {}, config["descriptor"], graph_host);need(created["ok"])
+    write_file(base + "/pointer.json", to_json({"run_id":created["run_state"]["run_id"], "run_dir":created["run_state"]["run_dir"]}), true);print(to_json({"ok":true}))
+} else if mode == "drive" {print(to_json(run_workflow(graph_workflow(), state(base), create_tool_registry(), graph_options())))}
+else if mode == "start" {
+    current := state(root);registry := register_tool(create_tool_registry(), create_tool("action", "Node", {"type":"dict"}, {"type":"dict"}, action, null))
+    executed := run_bound_node(workflow(root), current, registry, node_options(root), current["node_input_binding"])
+    if executed["ok"]&&dict_get_or(executed, "paused", false) {publish_facts()}
+    print(to_json(executed))
+} else {
+    request := parse_json(read_file(arguments[3]));operation := request["operation"]
+    if operation == "inputs-assess" {print(to_json(assess_node_inputs(state(base), node_id, graph_options())))}
+    else if operation == "inputs-bind" {print(to_json(bind_node_inputs(base + "/runs", pointer(base)["run_id"], node_id, request["binding"], graph_options())))}
+    else if operation == "parent-inspect" {print(to_json(assess_parent_finalization(root + "/runs", pointer(root)["run_id"], dict_get_or(request, "decision", null), node_options(root))))}
+    else if operation == "finalize" {print(to_json(finalize_parent(root + "/runs", pointer(root)["run_id"], request["candidate"], request["decision"], node_options(root))))}
+    else if operation == "recovery-plan" {target := root;if node_id == "graph" {target = base};print(to_json(plan_retained_reconciliation(target + "/runs", pointer(target)["run_id"])))}
+    else if operation == "recovery-apply" {target := root;if node_id == "graph" {target = base};print(to_json(apply_retained_reconciliation(target + "/runs", pointer(target)["run_id"], request["plan"], "local-operator")))}
+    else {print(to_json(sequential_effect_operation(root + "/runs", pointer(root)["run_id"], request, node_options(root))))}
+}

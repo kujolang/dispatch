@@ -32,6 +32,14 @@ export func validate_assurance_policy(policy) {
     }
     return to_json(policy) == to_json(assurance_policy(policy["mode"], policy["fallback"], policy["profile"], policy["profile_version"], policy["config_revision"]))
 }
+# Additive controller requirements derive from the anchored workflow, not claims.
+export func node_controller_features(state, features) {
+    retained := [];for feature in features {if contains(["node-composition/v1alpha1", "node-input/v1alpha1"], feature) == false {retained = push(retained, feature)}};features = retained
+    metadata := dict_get_or(dict_get_or(state, "workflow_definition", {}), "metadata", {})
+    if dict_get_or(metadata, "node_composition", "") == "dispatch.node-composition/v1alpha1" {features = push(features, "node-composition/v1alpha1")}
+    if dict_get_or(metadata, "node_input_required", "") == "dispatch.node-input/v1alpha1" {features = push(features, "node-input/v1alpha1")}
+    return features
+}
 export func encode_authoritative_state(state) {
     body := to_json(state)
     if assurance_protected(state) {
@@ -56,6 +64,8 @@ export func decode_authoritative_state(body) {
     if has_key(state,"effect_continuation") {features = push(features,"effect-continuation/v1alpha1")}
     if has_key(state,"effect_lifecycle") {features = push(features,"sequential-effects/v1alpha1")}
     if has_key(state, "parent_finalization")||dict_get_or(state, "parent_finalization_required", false) {features = push(features, "parent-finalization/v1alpha1")}
+    if len(node_controller_features(state, [])) > 0&&guarded == false {throw("node_authority_required")}
+    features = node_controller_features(state, features)
     if (guarded||has_key(state, "required_features"))&&to_json(dict_get_or(state, "required_features", [])) != to_json(features) {throw("assurance_controller_incompatible")}
     if guarded&&beta != (state["assurance_negotiation"]["schema"] == "dispatch.assurance-negotiation/v1beta1") {throw("assurance_controller_incompatible")}
     if guarded&&contains(["filesystem", "sqlite"], dict_get_or(state, "assurance_store", "")) == false {throw("assurance_store_invalid")}
