@@ -195,7 +195,7 @@ jobs:
 
       - name: Run pinned Agents SDK offline gate
         timeout-minutes: 15
-        working-directory: .ci/agents-sdk
+        working-directory: .ci/agents-sdk-wave-d
         run: bash scripts/ci_no_network_enforcement.sh
 
       - name: Setup historical Rust toolchain
