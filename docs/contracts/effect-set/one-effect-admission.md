@@ -48,6 +48,11 @@ run paused, with no running step. Its revision and expiry, same-filesystem
 preservation and deadline, parent subject/result and attempt must match. This API
 does **not** invoke the parent retry operation or reset its step.
 
+After selection, use only `admit_effect` or `inspect_effect` for this attempt.
+A rejected generic/parent-resume call is audited and advances the run revision;
+that makes the immutable selection stale and admission fails closed. The API
+does not rebind or replace stale selections automatically.
+
 An optional installed `effect_boundary` lifecycle callback supports instrumentation
 at the five crash boundaries. It cannot supply an admission result. All callbacks
 before mutation are followed by fresh checks. Participants do not receive it.

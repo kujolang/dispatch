@@ -26,8 +26,11 @@ persisted configuration identity remain required.
 
 Wave D alpha provides evidence correlation through agent/tool/protocol/process
 participants. A correlation match is not permission. TypeScript/Python participant
-SDKs remain alpha and unpublished. Read-only bounded effect-set/Go experiments
-are not production multi-effect admission. The source-blind agent adopter
+SDKs remain alpha and unpublished. The bounded effect-set assessor and Go
+recording participant remain read-only. A separate experimental local operator
+API admits one explicitly selected, verified not-started SQLite effect; parent
+replay and automatic remainder execution remain prohibited. This is not general
+multi-effect scheduling. The source-blind agent adopter
 rehearsal is technical evidence; human usability remains unvalidated.
 
 No exactly-once guarantee, universal rollback, general machine-loss recovery,
