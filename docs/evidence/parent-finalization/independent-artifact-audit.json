@@ -1,0 +1,20 @@
+[
+  {
+    "case": "success",
+    "original_result_sha256": "b8121503feaf000f1d5334bafa570411bd30114b2f12e22506049c2665b837f9",
+    "historical_result_status": "indeterminate",
+    "terminal_parent_status": "completed",
+    "sink_mutation_attempts": 4,
+    "permanent_consumption_claims": 2,
+    "terminal_events": 1
+  },
+  {
+    "case": "orphan",
+    "original_result_sha256": "f86867adbc1d6d9f74d79f3cd451eaa6cad705ded2def01e67e7fe4daef24804",
+    "historical_result_status": "indeterminate",
+    "terminal_parent_status": "completed",
+    "sink_mutation_attempts": 4,
+    "permanent_consumption_claims": 2,
+    "terminal_events": 1
+  }
+]

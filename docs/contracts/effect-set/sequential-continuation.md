@@ -154,7 +154,7 @@ journal/checkpoint divergence can be reconciled safely by an operator without
 manufacturing execution permission. More local happy-path variants alone would
 not establish either durable recovery or remote trust.
 
-### Recommended architecture phase after validation
+### Original recommendation after sequential validation
 
 Broader durable recovery and operator reconciliation is the strongest next phase.
 The local authority separation now has two genuinely different sink mechanisms;
@@ -175,4 +175,7 @@ The bounded [reconciliation contract](../recovery/retained-host.md) now supports
 explicit mechanical recovery of complete immutable control records and stale
 lifecycle checkpoints. Lifecycle-only orphans remain review conditions. A recovery
 receipt advances the checkpoint without changing effect facts; existing admission
-checks still apply. Parent finalization remains the next separate architecture slice.
+checks still apply. The subsequent [parent-finalization contract](../parent-finalization/protocol.md)
+adds an explicit terminal decision for the last unresolved protected parent. Its
+[Wave F crosswalk](../parent-finalization/wave-f-crosswalk.md) now identifies bounded
+producer/consumer node composition as the next architecture slice.

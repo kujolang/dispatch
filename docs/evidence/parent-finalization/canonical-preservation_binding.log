@@ -1,0 +1,18 @@
+PASS historical inline recipe unchanged
+PASS implementation matches portable vector
+PASS reference binds original bytes
+PASS document and evidence have distinct identities
+PASS wrong content digest rejected
+PASS wrong environment rejected
+PASS wrong run rejected
+PASS wrong evidence subject rejected
+PASS malformed or unauthorized reference rejected {"$ref":null}
+PASS malformed or unauthorized reference rejected {"$ref":""}
+PASS malformed or unauthorized reference rejected {"$ref":"receipt.json","extra":true}
+PASS malformed or unauthorized reference rejected {"$ref":"https://untrusted.invalid/evidence"}
+PASS malformed or unauthorized reference rejected {"$ref":"../outside"}
+PASS malformed or unauthorized reference rejected {"$ref":"missing.json"}
+PASS wrong original document rejected
+PASS old codec still rejects refs
+Passed: 16
+Failed: 0

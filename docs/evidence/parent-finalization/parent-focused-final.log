@@ -1,0 +1,31 @@
+PASS pending effects block parent
+PASS cancelled required selection is not completion
+PASS unresolved operator review blocks
+PASS real Workcell refs and original bytes preserved
+PASS stale authority
+PASS changed registration
+PASS wrong environment
+PASS operator authorization revoked
+PASS stale evaluation
+PASS wrong evaluation subject
+PASS missing/replaced output.txt
+PASS missing/replaced output-evidence.json
+PASS missing/replaced workcell/receipt.json
+PASS retained workspace missing
+PASS changed retained Git HEAD
+PASS stale run revision
+PASS new unresolved child
+PASS expired preservation
+PASS independent sink uncertainty blocks
+PASS legitimate new assessment invalidates candidate
+PASS generic approved review cannot bypass finalization
+PASS separate finalization without effect replay
+PASS Eval fail maps through existing policy
+PASS SIGKILL before decision remains nonterminal
+PASS SIGKILL after terminal reply loss is final
+PASS two fresh controllers one finalization
+PASS producer success still requires parent finalization
+PASS anchored required descendant blocks terminal transition
+PASS live authority revoked inside finalization boundary
+PASS orphan durable finalization recovered by fresh controllers
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/parent-finalization-ZBdGoC","checks":30,"proofs":["pending effects block parent","cancelled required selection is not completion","unresolved operator review blocks","real Workcell refs and original bytes preserved","stale authority","changed registration","wrong environment","operator authorization revoked","stale evaluation","wrong evaluation subject","missing/replaced output.txt","missing/replaced output-evidence.json","missing/replaced workcell/receipt.json","retained workspace missing","changed retained Git HEAD","stale run revision","new unresolved child","expired preservation","independent sink uncertainty blocks","legitimate new assessment invalidates candidate","generic approved review cannot bypass finalization","separate finalization without effect replay","Eval fail maps through existing policy","SIGKILL before decision remains nonterminal","SIGKILL after terminal reply loss is final","two fresh controllers one finalization","producer success still requires parent finalization","anchored required descendant blocks terminal transition","live authority revoked inside finalization boundary","orphan durable finalization recovered by fresh controllers"]}

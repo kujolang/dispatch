@@ -1,0 +1,26 @@
+PASS pending effects block parent
+PASS cancelled required selection is not completion
+PASS unresolved operator review blocks
+PASS real Workcell refs and original bytes preserved
+PASS stale authority
+PASS changed registration
+PASS wrong environment
+PASS operator authorization revoked
+PASS stale evaluation
+PASS wrong evaluation subject
+PASS missing/replaced output.txt
+PASS missing/replaced output-evidence.json
+PASS missing/replaced workcell/receipt.json
+PASS retained workspace missing
+PASS changed retained Git HEAD
+PASS stale run revision
+PASS new unresolved child
+PASS expired preservation
+PASS independent sink uncertainty blocks
+PASS separate finalization without effect replay
+PASS Eval fail maps through existing policy
+PASS SIGKILL before decision remains nonterminal
+PASS SIGKILL after terminal reply loss is final
+PASS two fresh controllers one finalization
+PASS orphan durable finalization recovered by fresh controllers
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/parent-finalization-M53sIU","checks":25,"proofs":["pending effects block parent","cancelled required selection is not completion","unresolved operator review blocks","real Workcell refs and original bytes preserved","stale authority","changed registration","wrong environment","operator authorization revoked","stale evaluation","wrong evaluation subject","missing/replaced output.txt","missing/replaced output-evidence.json","missing/replaced workcell/receipt.json","retained workspace missing","changed retained Git HEAD","stale run revision","new unresolved child","expired preservation","independent sink uncertainty blocks","separate finalization without effect replay","Eval fail maps through existing policy","SIGKILL before decision remains nonterminal","SIGKILL after terminal reply loss is final","two fresh controllers one finalization","orphan durable finalization recovered by fresh controllers"]}

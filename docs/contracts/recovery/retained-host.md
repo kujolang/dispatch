@@ -73,7 +73,7 @@ URL or command is followed. Workcell references do not cause materialization.
   ahead/divergent state, unsupported history reconstruction, or limit failure.
   The error identifies the rejected predicate; original material is retained.
 
-Two repairs are implemented:
+Three repairs are implemented:
 
 1. Rebuild the JSONL journal index from the contiguous exact immutable control
    records. Exact duplicate entries are deduplicated only after byte-equivalent
@@ -85,9 +85,13 @@ Two repairs are implemented:
    folding. Cancellation, rebinding, consumed admission and retained observation
    are restored as historical facts. A prior reconciliation receipt can also be
    completed after interruption if its full reconstructed-state hash matches.
+3. Reconstruct an explicit `parent_finalized` decision with an exact predecessor
+   state/revision/journal, retained prerequisite artifacts and anchored child
+   topology. The terminal transition is historical authority; independent complete
+   effects or evaluation artifacts without that event cannot create it.
 
 No general event sourcing is claimed: arbitrary workflow decisions, missing
-execution outputs, evaluation results or parent transitions cannot be recreated
+execution outputs, evaluation results or unrecorded parent decisions cannot be recreated
 from abbreviated journal events. State ahead of surviving history is rejected.
 A lifecycle artifact without its control record remains operator review, even if
 its filename is a valid digest. Multiple or conflicting candidates are never
@@ -147,13 +151,15 @@ CaseFile can package unchanged corrupt sources. Watchdog can observe an outcome.
 No new integration daemon or duplicate audit store is justified for this slice:
 Dispatch's existing immutable control event mechanism already records the repair.
 
-Parent finalization remains a separate architecture slice. All child effects
+Parent finalization is a separate authority boundary. All child effects
 complete does not establish the parent's required output, evaluation result,
 publication, descendant barriers or policy review. Recovery preserves the original
-parent result and paused boundary. A future bounded parent-finalization contract
-must bind these predicates and record a new terminal decision without rewriting
-the historical result. This is the recommended next architecture phase toward
-Wave F, ahead of remote trust or machine migration.
+parent result and paused boundary. The subsequent [bounded parent-finalization
+contract](../parent-finalization/protocol.md) now binds these predicates and records
+an explicit terminal decision without rewriting the historical result. Recovery
+can reconstruct that event only from its exact predecessor and retained evidence;
+prerequisites without the event remain nonterminal. General descendant composition
+remains the next Wave F slice.
 
 Legacy one-effect selected state remains readable through its existing API and
 unsupported for migration by this recovery path. Its lifecycle does not prove a
@@ -181,7 +187,7 @@ unknown-effect retry denial and a damaged retained checkpoint. It does not certi
 OCI isolation or materialization from arbitrary exports.
 
 An attempted combination with the existing sequential selection fixture exposed
-an unresolved compatibility limit: Workcell preservation evidence uses valid v1
+a compatibility limit at that tranche: Workcell preservation evidence uses valid v1
 `$ref` keys, while `portable-json/v1` permits only its published ASCII key grammar.
 The selection context commits preservation with that portable codec, so this
 combination rejects with `commitment_key_invalid`. Parent result bytes can remain
@@ -195,3 +201,13 @@ this document. Resolving the selection binding needs an explicit compatibility
 recipe and cross-language vectors; silently broadening historical codecs or
 stripping owner evidence would be wrong. This is a prerequisite to a fully combined
 Workcell environment/child-effect/parent-lifecycle proof, and is retained for review.
+
+### Subsequent compatibility resolution
+
+The [parent-finalization slice](../parent-finalization/protocol.md) resolves the
+`$ref` limitation through an additive exact-document/reference binding. It retains
+historical codec and preservation bytes and adds four-language portable vectors.
+The historical discovery above remains provenance, not a current unresolved blocker.
+The new owner/materialization checks and explicit terminal control event extend
+only this supported retained-host reconstruction path; no arbitrary parent state
+or missing decision can be synthesized.

@@ -1,0 +1,466 @@
+{
+  "schema": "dispatch.parent-finalization-validation/v1alpha1",
+  "recorded_at": "2026-09-29T20:29:46.045124+00:00",
+  "scope": "Experimental retained trusted host; SQLite effects and real retained Workcell Git environment; last unresolved protected parent only",
+  "starting_commits": {
+    "dispatch": "27bbcb5a231cbc75a67a96a5bb13a76a9bf9b0a3",
+    "workcell": "1413e44e287662575322c7052d744b29d4e983bb",
+    "kujo": "6f8b00ff7551160fd6d8c9550e3f39639d76a027"
+  },
+  "tested_source_commits": {
+    "dispatch": "f63b14d082413654833315eac1ee9c807854433d",
+    "workcell": "e645d80e697cb722d49c35982905b2294da0a627",
+    "kujo": "515cdda7133cb7e898397434ac374d87e9fb1b18"
+  },
+  "integrated_remote_kujo_commit": "ae9338c",
+  "source_manifest": [
+    {
+      "repository": "dispatch",
+      "path": "src/core/preservation_binding.kujo",
+      "sha256": "5c6f0dfab8569d07b7abc8ac7cd17b10f4c149160d0942bcb41848fae3e82fa1"
+    },
+    {
+      "repository": "dispatch",
+      "path": "src/core/parent_finalization.kujo",
+      "sha256": "8e377cbf156d25f08424b90a7c64aad7a7d609e385b2e96e0f4ef0cd41ae9f98"
+    },
+    {
+      "repository": "dispatch",
+      "path": "src/core/parent_transition.kujo",
+      "sha256": "22639a1ae076b97d27c52b35506d55416e246a73686df2c3be3e45723ff89199"
+    },
+    {
+      "repository": "dispatch",
+      "path": "src/core/effect_context.kujo",
+      "sha256": "91038ffbac956c5cc690ad822665e74576193cdb69e19d3128ecde3430f4a7bb"
+    },
+    {
+      "repository": "dispatch",
+      "path": "src/core/sequential_effects.kujo",
+      "sha256": "0dcf4cd4c799dd22757855ba5f3ddd9bc11fb5118ac704bfa51ad607c4385fd1"
+    },
+    {
+      "repository": "dispatch",
+      "path": "src/core/control_journal.kujo",
+      "sha256": "d7f4df05be48ed737a71c0844b3bc3190fb20de9c8cfb34a4fdccec78a09c1ef"
+    },
+    {
+      "repository": "dispatch",
+      "path": "src/core/retained_recovery.kujo",
+      "sha256": "850a14cb9e1a3b21d4498be5fb74049a90e78157c1483f85027b760861ee8b94"
+    },
+    {
+      "repository": "dispatch",
+      "path": "src/core/assurance_state.kujo",
+      "sha256": "ddbfbb09d41608a8c798dfeb7f281083e54f877b85f99473646ad86cda534ccc"
+    },
+    {
+      "repository": "dispatch",
+      "path": "src/core/control.kujo",
+      "sha256": "b379d237ee9a5552df8b28194c0ee7ee56fa7d54be615957dfb9acd8c074fa4e"
+    },
+    {
+      "repository": "dispatch",
+      "path": "src/core/intervention.kujo",
+      "sha256": "77eb960e30bfba55ea6cc2db750a0fc4aea0d4c29300e32c3719b613a6e4cb93"
+    },
+    {
+      "repository": "dispatch",
+      "path": "src/core/runner.kujo",
+      "sha256": "e8a27f9184f785b20fbfe2ca06c7ac63e10ac42bd8a6a6d82d0f19231b988922"
+    },
+    {
+      "repository": "dispatch",
+      "path": "tests/parent_finalization_fixture.kujo",
+      "sha256": "c0779868076b20be4facc50ec399fd87456fb76b88e551feeb2bb739855f0a5a"
+    },
+    {
+      "repository": "dispatch",
+      "path": "tests/parent_finalization_integration.mjs",
+      "sha256": "db5a58e61781fca0f62a0bfc3acb9f4019821d8be65f964c7a8db6c906dc286d"
+    },
+    {
+      "repository": "dispatch",
+      "path": "tests/preservation_binding_tests.kujo",
+      "sha256": "4ac3366bf4276cffc4dc06b4479cd010d69be0339f7d8444a23441432c43fa3e"
+    },
+    {
+      "repository": "dispatch",
+      "path": "tests/vectors/parent-finalization.json",
+      "sha256": "52d86f34124d5e99845d8ec51899d4c9431833914e2b9f9e8d66a28665562052"
+    },
+    {
+      "repository": "workcell",
+      "path": "src/evidence/retained_workspace.kujo",
+      "sha256": "749b34e242d5ae66afb1dfbb9c3ebcec740ed014558d674791d7da4e233ccf72"
+    },
+    {
+      "repository": "workcell",
+      "path": "src/evidence/preservation.kujo",
+      "sha256": "3f0b4c1afb8ea0014173790981ccb7805f74609c770f5e86030c9b396f009053"
+    },
+    {
+      "repository": "eval",
+      "path": "src/control_contracts.kujo",
+      "sha256": "ae3161091345e5d567f242e499c574a5bcc3aaaa0a838bc0c500f9bfe50c31d0"
+    }
+  ],
+  "runtime": {
+    "version": "Kujo 1.6.0",
+    "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/kujo",
+    "sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+    "rust": "1.96.0",
+    "cargo": "1.96.0",
+    "node": "26.7.0",
+    "go": "1.25.3"
+  },
+  "results": {
+    "baseline_dispatch": {
+      "suite_groups": 79,
+      "named_tests": 210,
+      "workloads": 3,
+      "exit": 0
+    },
+    "final_dispatch": {
+      "suite_groups": 82,
+      "named_tests": 210,
+      "workloads": 3,
+      "exit": 0
+    },
+    "parent_scenarios": {
+      "ok": true,
+      "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/parent-finalization-aL5CYc",
+      "checks": 31,
+      "proofs": [
+        "pending effects block parent",
+        "cancelled required selection is not completion",
+        "unresolved operator review blocks",
+        "real Workcell refs and original bytes preserved",
+        "stale authority",
+        "changed registration",
+        "wrong environment",
+        "operator authorization revoked",
+        "stale evaluation",
+        "wrong evaluation subject",
+        "missing/replaced output.txt",
+        "missing/replaced output-evidence.json",
+        "missing/replaced workcell/receipt.json",
+        "retained workspace missing",
+        "changed retained Git HEAD",
+        "stale run revision",
+        "new unresolved child",
+        "expired preservation",
+        "independent sink uncertainty blocks",
+        "legitimate new assessment invalidates candidate",
+        "generic approved review cannot bypass finalization",
+        "separate finalization without effect replay",
+        "Eval fail maps through existing policy",
+        "SIGKILL before decision remains nonterminal",
+        "SIGKILL after terminal reply loss is final",
+        "two independently assessed fresh controllers one durable finalization",
+        "producer success still requires parent finalization",
+        "anchored required descendant blocks terminal transition",
+        "mutable optional flag cannot waive anchored required child",
+        "live authority revoked inside finalization boundary",
+        "orphan durable finalization recovered by fresh controllers"
+      ]
+    },
+    "preservation_checks": 16,
+    "new_portable_vectors": 2,
+    "independent_go_conformance": {
+      "checks": 127,
+      "mcp": 5,
+      "malformed": 9,
+      "includes_independent_typescript_python_new_vectors": true
+    },
+    "workcell": {
+      "count_reporting_assertions": 445,
+      "new_owner_observation_checks": 7,
+      "full_gate_exit": 0,
+      "git_effect_gate_exit": 0,
+      "additional_shell_contracts": "passed; not included in assertion count"
+    },
+    "kujo": {
+      "contract_passes": 13,
+      "default_ignored": 2,
+      "separately_executed_real_reexecution_passes": 1,
+      "remaining_ignored": 1,
+      "format_exit": 0,
+      "locked_build_exit": 0
+    }
+  },
+  "commands": {
+    "dispatch_baseline_and_final": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+    "parent_focused": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/parent_finalization_integration.mjs",
+    "preservation": "../kujo/target/release/kujo run tests/preservation_binding_tests.kujo",
+    "kujo_vectors": "../kujo/target/release/kujo run tests/portable_commitments.kujo tests/vectors/parent-finalization.json",
+    "four_language_vectors": "node tests/go_participant_conformance.mjs",
+    "workcell_full": "KUJO=\"$PWD/../kujo/target/release/kujo\" KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" bash tests/run.sh",
+    "workcell_git": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/git_effect_contract.mjs",
+    "kujo": [
+      "cargo fmt --check",
+      "cargo test --locked --test architecture_docs_contract --test workflow_control_contracts --test readme_contracts",
+      "cargo build --release --locked",
+      "KUJO_FAILURE_GATE_DISPATCH_ROOT=\"$PWD/../dispatch\" cargo test --locked --test workflow_control_contracts actual_workspace_reexecution_artifacts_match_shared_schemas -- --ignored"
+    ]
+  },
+  "skips": [
+    "Workcell live portable OCI opt-in unset; offline contract gate retained its documented skip.",
+    "Kujo actual_cross_component_failure_evidence_conforms requires a golden-path handoff not available in this run; default ignored test recorded explicitly.",
+    "Eval unchanged: real producer contract helper used, no Eval repository gate required.",
+    "Agents SDK, RunLedger, Watchdog and CaseFile unchanged; no extra repository gates."
+  ],
+  "warnings": [
+    "Existing npm user configuration python warning.",
+    "Existing vendored tiny_http unused SequentialWriter import and MustBeShareDummy trait warnings."
+  ],
+  "environmental_failures": [],
+  "development_corrections": "See development-corrections.md and retained interrupted gate log (exit 143); no failing assertion suppressed.",
+  "compatibility": "Historical alpha/beta/effect-set/lifecycle/participant vector files and execution-result/v1 schemas unchanged. New vectors are additive. Legacy selected-state migration unsupported; one profile per run.",
+  "authority": "Observation and eligibility are informational. Finalization is explicit, locked and separate from effect admission. Recovery requires a durable terminal event. Consumed work remains consumed.",
+  "remaining": [
+    "general graph execution and scheduler",
+    "unresolved descendant composition",
+    "remote authenticated trust and malicious-host verification",
+    "machine-loss or distributed restore",
+    "hostile storage and multi-host authority",
+    "mixed-profile runs",
+    "legacy selected-state migration",
+    "compensation",
+    "exactly-once",
+    "universal rollback",
+    "public stable participant SDK"
+  ],
+  "next_phase": "Bounded Wave F producer/consumer node composition using existing DAGs with typed output/input provenance and distinct scheduling/completion edges.",
+  "artifacts": [
+    {
+      "path": "README.md",
+      "sha256": "9a002c35ee2f3c0aa15d8ca8972cc8784f97c18684e84c664477a700860556c4",
+      "bytes": 3520
+    },
+    {
+      "path": "baseline-canonical.log",
+      "sha256": "a3c38d5d8c87a10e057f0f133ce24d6bf55b4819318f8497edc3583bc83d91b2",
+      "bytes": 11338
+    },
+    {
+      "path": "baseline-preservation-incompatibility.log",
+      "sha256": "20ad17973570f62e2094bb113140dd8f0a7a68e6c72c71ea32f7728b54e8cee9",
+      "bytes": 167
+    },
+    {
+      "path": "baseline-workcell-full.log",
+      "sha256": "06c076ae8a52c8b7e6f896e761c4034e29dfad958d20bbbc2f393549e4035be3",
+      "bytes": 31804
+    },
+    {
+      "path": "baseline-workcell-quality.log",
+      "sha256": "4a2c33314c0fad90721b20e605f253b5c5e5c58eb20969806cc610a6e8a668f4",
+      "bytes": 21
+    },
+    {
+      "path": "baseline-workloads.json",
+      "sha256": "bf4269dee22122a2c4cfe38bbb6f4ffaa85e9ed1564bab2994d43af83062876f",
+      "bytes": 193
+    },
+    {
+      "path": "canonical-assurance_compatibility.log",
+      "sha256": "24ea6fa02433c4e78ab02b0a54b1983390fdc037dee2167a1b138794acf52715",
+      "bytes": 75
+    },
+    {
+      "path": "canonical-beta_migration.log",
+      "sha256": "4e9ab087e66160741ffeb18ce603a7b31e23fa027268b194e47aae31ce608020",
+      "bytes": 2477
+    },
+    {
+      "path": "canonical-effect_set.log",
+      "sha256": "d2c21fd9085b0768139188ff71121bdecc65dee3d7bdcbf50e058965bade5b58",
+      "bytes": 3816
+    },
+    {
+      "path": "canonical-go_participant.log",
+      "sha256": "086bfe98dad4a8e4c9d10d40d829f2bc7e72b09d85812399b3bfe089adf56d40",
+      "bytes": 205
+    },
+    {
+      "path": "canonical-parent_finalization.log",
+      "sha256": "b461da16f38de0fd8b7433de9d4c9c798ec6d87a7a685a6b3fbc5bb3ab74a965",
+      "bytes": 2653
+    },
+    {
+      "path": "canonical-parent_vectors.log",
+      "sha256": "11b138dd7d06156f9334506449e2c91bc25cfe8c851277956c1a1b7b2c2bd9ec",
+      "bytes": 41
+    },
+    {
+      "path": "canonical-preservation_binding.log",
+      "sha256": "7becddb4da3135dfc2a9346432de17ef2e44b0e34e2e263e92e30c430dabe609",
+      "bytes": 848
+    },
+    {
+      "path": "canonical-retained_recovery.log",
+      "sha256": "d041d6ec705f0f5503b9e1356a3402f9f62328c9c8cffba59c69474dff86fdbe",
+      "bytes": 849
+    },
+    {
+      "path": "canonical-review_checkpoint.log",
+      "sha256": "9b9fe812a133b6e1a9c9edd64e21289ef13d8d7b42d260384d48074f64cb8e35",
+      "bytes": 583
+    },
+    {
+      "path": "canonical-sequential_effects.log",
+      "sha256": "e87786decf19664cc2c5eaabe73be04f5bde719f41889d8f2000bae4af1b8286",
+      "bytes": 2618
+    },
+    {
+      "path": "canonical-state_store_sqlite.log",
+      "sha256": "e0ef9101a6e9fcb8bcb3600c95ed336dbf92bd2e137f330fff135c51d46bed48",
+      "bytes": 347
+    },
+    {
+      "path": "development-canonical-interrupted.exit",
+      "sha256": "9d9b18720961e9b4689fd763b85e7b6f36160ccd3a8a1c9ddc5103bb0f66c396",
+      "bytes": 4
+    },
+    {
+      "path": "development-canonical-interrupted.log",
+      "sha256": "beaf36eb13231bb01149d57d5cbd081a7c7692394913c82db139c6c6d369acd4",
+      "bytes": 1222
+    },
+    {
+      "path": "development-canonical-parent-passed.log",
+      "sha256": "c3bb20134ae2c948a71d7c9995b353801e0a7e186b3d2ab7ff062a9ef70b9a84",
+      "bytes": 2466
+    },
+    {
+      "path": "development-corrections.md",
+      "sha256": "9d16c0829581807c68c9bff9858d6ec5619013ab93eafe8bf621c162d9f8bbc1",
+      "bytes": 1634
+    },
+    {
+      "path": "development-topology-gate-interrupted.exit",
+      "sha256": "9d9b18720961e9b4689fd763b85e7b6f36160ccd3a8a1c9ddc5103bb0f66c396",
+      "bytes": 4
+    },
+    {
+      "path": "development-topology-gate-interrupted.log",
+      "sha256": "7481f986d88989f33e4f0ecbacac2e4ff2ac65fca445fc613114423185ec3708",
+      "bytes": 1034
+    },
+    {
+      "path": "final-canonical.log",
+      "sha256": "be80e19816dde7c818e7838fbea7b65f925ab3663ecf0940b2f43e4ea8a9a3d0",
+      "bytes": 11627
+    },
+    {
+      "path": "final-workloads.json",
+      "sha256": "aba0a4fb390d42ef531ad825cff11d12c791500c7d8b926e5b0c17f3316cd5e9",
+      "bytes": 193
+    },
+    {
+      "path": "independent-artifact-audit.json",
+      "sha256": "6e46fdb7338f47504393c0f2cc02a570c7c0ce387eb63d9364a785ced0f4c719",
+      "bytes": 640
+    },
+    {
+      "path": "kujo-baseline-build.log",
+      "sha256": "f7288103ef05ecea8d1983349fb6156615ffdf19bafcd776679d73d72dacc5aa",
+      "bytes": 730
+    },
+    {
+      "path": "kujo-baseline-contracts.log",
+      "sha256": "2e9105da59884763205d2120cc09e4183e08566b25603ddae550a7e023bb3947",
+      "bytes": 2625
+    },
+    {
+      "path": "kujo-integrated-build.log",
+      "sha256": "7567d9ba69ba09ab1f39733bd0b88ef62838295c1b773f8e23c39b1696a26cef",
+      "bytes": 730
+    },
+    {
+      "path": "kujo-integrated-contracts.log",
+      "sha256": "29e651b370c6dda110c36a540b9562891df4eaa27c1d1f27d1103cb17702e627",
+      "bytes": 2544
+    },
+    {
+      "path": "kujo-real-reexecution.log",
+      "sha256": "80b721a9a5ad16c6ef716af7a03ddc15d79fb311b264b282ad3cca8ecbcd59ae",
+      "bytes": 1039
+    },
+    {
+      "path": "new-four-language-vectors.log",
+      "sha256": "086bfe98dad4a8e4c9d10d40d829f2bc7e72b09d85812399b3bfe089adf56d40",
+      "bytes": 205
+    },
+    {
+      "path": "new-kujo-vectors.log",
+      "sha256": "11b138dd7d06156f9334506449e2c91bc25cfe8c851277956c1a1b7b2c2bd9ec",
+      "bytes": 41
+    },
+    {
+      "path": "parent-development-1.log",
+      "sha256": "f7e692d1fe1f603f318d67e6283352e50c74d2c6acc973dc15d39411ac40640c",
+      "bytes": 1913
+    },
+    {
+      "path": "parent-focused-complete.log",
+      "sha256": "a44547643825e1ed7865f661080f9704ff27cc8abbb23c70e3ac6a8b75fb4957",
+      "bytes": 2653
+    },
+    {
+      "path": "parent-focused-final.log",
+      "sha256": "d42b37dff0eecfc66fa517773bd8310505d84065bec2798e95db3df60cf0eab5",
+      "bytes": 2466
+    },
+    {
+      "path": "parent-focused-race-complete.log",
+      "sha256": "acdefdae78057a7c35c4e8414e703ea4680fd7bf5e744b36b8d5ec68403f29af",
+      "bytes": 2528
+    },
+    {
+      "path": "preservation-focused-final.log",
+      "sha256": "7becddb4da3135dfc2a9346432de17ef2e44b0e34e2e263e92e30c430dabe609",
+      "bytes": 848
+    },
+    {
+      "path": "samples/original-workcell-preservation.json",
+      "sha256": "f74e76cbddc994a9b2b969ede74acb75f89c6e38223d61678fc694706f95ead7",
+      "bytes": 1082
+    },
+    {
+      "path": "samples/orphan-parent_finalized.json",
+      "sha256": "e4049928ce405687672b3335b707a420caf40a122c2fcbbd23aeae40263de235",
+      "bytes": 4058
+    },
+    {
+      "path": "samples/orphan-retained_host_reconciled.json",
+      "sha256": "f504d46833518e87031ea5645162fea7372f5c311d0ccafb8e88d71998f4d757",
+      "bytes": 11646
+    },
+    {
+      "path": "samples/output-evidence.json",
+      "sha256": "38cc6aa164c7a2776fb8c23ef74eb63545cdfbf547853d6631b52ad08afa358a",
+      "bytes": 390
+    },
+    {
+      "path": "samples/success-parent_finalized.json",
+      "sha256": "d304628aedfd70f0024d198e18494518caca546994de1a9bf2606db5eb74972e",
+      "bytes": 4058
+    },
+    {
+      "path": "workcell-final-full.log",
+      "sha256": "2e81a22393af23be6fbc545c154d53d8cbe2353400e89edd2a7a8403fc920573",
+      "bytes": 32279
+    },
+    {
+      "path": "workcell-final-git.log",
+      "sha256": "2baae168291f1e954d816d0ab671297f917fd109d2059844cfcc80c85afb57f0",
+      "bytes": 173
+    }
+  ],
+  "audit_sample_warning": "Samples are historical audit exports, not restorable authority. Use surviving authoritative stores and explicit reconciliation only.",
+  "inspected_dependency_commits": {
+    "eval": "6a5ab09e5c24cc1a842b374afccb64da40db2874"
+  }
+}
