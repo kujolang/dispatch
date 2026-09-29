@@ -64,7 +64,7 @@ jobs:
           command -v node
           command -v sqlite3
       - name: Install reviewed Kujo release
-        uses: kujolang/setup-kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c
+        uses: kujolang/kujo/.github/actions/setup-kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c
         with:
           version: v1.6.0
       - run: echo "KUJO_BIN=$(command -v kujo)" >> "$GITHUB_ENV"
