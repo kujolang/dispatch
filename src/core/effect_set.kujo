@@ -56,9 +56,11 @@ export func assess_effect_set(result_raw, set_raw, trusted_plan, read_artifact, 
                 freshness = "stale"
                 if start <= at_seconds&&at_seconds < end&&fresh_environment {
                     # Exact live reconstruction is required, not a serialized verified flag.
-                    live := live_verify(entry, item)
-                    if portable_json(live) == raw {observed = item["state"]; freshness = "current"}
-                    else {freshness = "unconfirmed"}
+                    freshness = "unconfirmed"
+                    try {
+                        live := live_verify(entry, item)
+                        if portable_json(live) == raw {observed = item["state"]; freshness = "current"}
+                    } except unavailable {freshness = "unconfirmed"}
                 }
             }
             next_action := "inspect_or_revalidate"

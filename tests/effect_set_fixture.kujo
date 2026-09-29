@@ -72,7 +72,10 @@ if mode == "init" {
     host := config(root);cases := parse_json(read_file_beneath(root,"cases.json",1048576));answers := []
     for item in cases {
         read_artifact := func(reference) {return item["artifacts"][reference]}
-        verify := func(entry,previous) {return item["live"][entry["effect_id"]]}
+        verify := func(entry,previous) {
+            if item["name"] == "verifier-throws"&&entry["effect_id"] == "A" {throw("fixture_verifier_unavailable")}
+            return item["live"][entry["effect_id"]]
+        }
         answer := assess_effect_set(item["result_raw"],item["set_raw"],item["plan"],read_artifact,verify,item["at"])
         answers = push(answers,{"name":item["name"],"answer":answer})
     }

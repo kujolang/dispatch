@@ -179,8 +179,8 @@ Observation validity is half-open `[observed_at, valid_until)`, integers in
 0..253402300799, maximum interval 3600 seconds. Future, expired, revoked,
 unavailable or mismatching live facts do not authorize continuation. At expiry
 `historical_observation=committed` remains in the result, while current
-`observed_state=unknown` and `freshness=stale` prevent reuse. Live disagreement is
-`unconfirmed`, never a rewritten historical failure. Preservation expiry is its
+`observed_state=unknown` and `freshness=stale` prevent reuse. Live disagreement or an unavailable/throwing verifier is
+`unconfirmed` for that effect without discarding other valid observations,, never a rewritten historical failure. Preservation expiry is its
 own `preservation_expired` condition. Changed config, registration, target,
 authority or attempt fails exact plan/result binding.
 
