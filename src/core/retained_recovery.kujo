@@ -196,7 +196,10 @@ export func inspect_retained_run(root, id) {
         try {normalized := normalize_output_root(root);valid := validate_run_id(id);if normalized["ok"]&&valid["ok"] {surviving = inventory({"run_dir":normalized["output_root"] + "/" + valid["run_id"]})}} except err {surviving = []}
         return {"ok":false, "schema":"dispatch.recovery-assessment/v1alpha1", "classification":"missing_required_authority", "error":loaded["error"], "surviving_files":surviving, "continuation":"not_authorized"}
     }
-    try {return {"ok":true, "assessment":analyze(loaded["run_state"])["report"]}} except err {return {"ok":false, "schema":"dispatch.recovery-assessment/v1alpha1", "classification":"corrupt_or_unsupported", "error":to_string(err), "continuation":"not_authorized"}}
+    try {return {"ok":true, "assessment":analyze(loaded["run_state"])["report"]}} except err {
+        surviving := [];try {surviving = inventory(loaded["run_state"])} except unavailable {surviving = []}
+        return {"ok":false, "schema":"dispatch.recovery-assessment/v1alpha1", "classification":"corrupt_or_unsupported", "error":to_string(err), "surviving_files":surviving, "continuation":"not_authorized"}
+    }
 }
 export func plan_retained_reconciliation(root, id) {
     checked := inspect_retained_run(root, id);if checked["ok"] == false {return checked}
