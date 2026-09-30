@@ -34,7 +34,7 @@ export func negotiation_selection(descriptor) {
 }
 # Called under the run lock, again at execution. The host resolves the persisted
 # revision, not process defaults. Status is live and deliberately outside the hash.
-export func resolve_run_configuration(state, options) {
+export func resolve_run_authority(state, options) {
     if assurance_protected(state) == false {return {"ok": true, "legacy": true}}
     try {
         host := dict_get_or(options, "assurance_host", null)
@@ -48,12 +48,22 @@ export func resolve_run_configuration(state, options) {
         if configuration_revision(descriptor) != policy["config_revision"]||to_json(negotiation_selection(descriptor)) != to_json(policy) {return denial("assurance_configuration_mismatch")}
         if dict_get_or(installed, "authority_sha256", "") != descriptor["authority_sha256"] {return denial("assurance_authority_mismatch")}
         if implementation_digest(installed["implementation"]) != descriptor["verifier_sha256"]||type(installed["verify"]) != "function" {return denial("assurance_verifier_revision_mismatch")}
+        return {"ok": true, "installed": installed}
+    } except err {return denial("assurance_configuration_invalid")}
+}
+# Authority inspection alone is not admission. Execution always uses the full
+# configuration resolver, including the installed exact-input validator.
+export func resolve_run_configuration(state, options) {
+    resolved := resolve_run_authority(state, options)
+    if resolved["ok"] == false||dict_get_or(resolved, "legacy", false) {return resolved}
+    try {
+        installed := resolved["installed"]
         metadata := dict_get_or(dict_get_or(state, "workflow_definition", {}), "metadata", {})
         if dict_get_or(metadata, "node_input_required", "") == "dispatch.node-input/v1alpha1"&&has_key(state, "node_input_binding") {
             validate := dict_get_or(installed, "validate_node_inputs", null)
             if type(validate) != "function"||validate(state) != true {return denial("node_input_invalid")}
         }
-        return {"ok": true, "installed": installed}
+        return resolved
     } except err {return denial("assurance_configuration_invalid")}
 }
 export func evaluate_run_assurance(state, options) {
