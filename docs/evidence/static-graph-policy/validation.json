@@ -1,0 +1,2480 @@
+{
+  "schema": "dispatch.static-graph-policy-validation/v1alpha1",
+  "verified": true,
+  "starting_commits": {
+    "dispatch": "d3733237118a8a0cafafae240c24fd6f6cf7281d",
+    "kujo": "59775d10f459d6421158941abf0a166c248fbac4"
+  },
+  "tested_source_commit": "e8953f17c7f9e543e0f3fd3f43ca53a45ede3e2d",
+  "kujo_documentation_commit": "da35f5b3d673e1ddc5d7bcaabacf5fdfe5bd2b30",
+  "pins": {
+    "dispatch": {
+      "commit": "d3733237118a8a0cafafae240c24fd6f6cf7281d",
+      "status": ""
+    },
+    "dispatch-graph-policy": {
+      "commit": "e8953f17c7f9e543e0f3fd3f43ca53a45ede3e2d",
+      "status": ""
+    },
+    "kujo": {
+      "commit": "da35f5b3d673e1ddc5d7bcaabacf5fdfe5bd2b30",
+      "status": ""
+    },
+    "workcell": {
+      "commit": "e645d80e697cb722d49c35982905b2294da0a627",
+      "status": ""
+    },
+    "eval": {
+      "commit": "6a5ab09e5c24cc1a842b374afccb64da40db2874",
+      "status": ""
+    },
+    "agents-sdk": {
+      "commit": "af0aa28f5960232cbafa7cf528a32db8cb36c7a9",
+      "status": "?? docs/MAINTENANCE_AGENT.md\n?? maintenance_agent.kujo\n?? src/maintenance/\n?? tests/maintenance_agent_tests.kujo"
+    },
+    "leash": {
+      "commit": "56c59c90b81433482683e72a411748ca82a61b24",
+      "status": ""
+    },
+    "runledger": {
+      "commit": "97cb607a062efeecc7fcdc4e4a4e0308f90d45fe",
+      "status": ""
+    },
+    "scent": {
+      "commit": "969f0fdc853c88cd051248a6ebcd9ce0434d9f43",
+      "status": ""
+    },
+    "rag": {
+      "commit": "85743f88c152d7c65f59d4697111faf85e36d8eb",
+      "status": ""
+    },
+    "toolchain": {
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+      "node": "v26.7.0",
+      "npm": "11.19.0",
+      "go": "go version go1.25.3 darwin/amd64",
+      "python": "Python 3.10.5",
+      "host": "Darwin 25.6.0 x86_64",
+      "kujo_binary_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47"
+    }
+  },
+  "commands": [
+    {
+      "command": "../kujo/target/release/kujo run tests/heterogeneous_contract_tests.kujo",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/baseline-contracts.log",
+        "bytes": 24,
+        "sha256": "a1257fcfbb8a2b701410f9acbf8f60b8c4856e014426f4d02ee89b6d95459a4e"
+      }
+    },
+    {
+      "command": "../kujo/target/release/kujo run tests/node_contract_tests.kujo",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/baseline-node.log",
+        "bytes": 24,
+        "sha256": "42781b40a80c1d24c70e66b79108240013f9b319ad52b37e0b5fa42859b9333b"
+      }
+    },
+    {
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/heterogeneous_policy.mjs",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/baseline-policy.log",
+        "bytes": 536,
+        "sha256": "7a0e13d2c7201b21e1c55e0f95a5e8c4c2f851c16add8c2a74d0981661b8c980"
+      }
+    },
+    {
+      "command": "../kujo/target/release/kujo test-run tests/failure_gate_safety_tests.kujo -v",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/baseline-failure.log",
+        "bytes": 1679,
+        "sha256": "a899bb42e6125dfcea56ad4aec091aeb2e3799b00c05d570a81b775e042bbb02"
+      }
+    },
+    {
+      "command": "../kujo/target/release/kujo test-run tests/review_checkpoint_tests.kujo -v",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/baseline-review.log",
+        "bytes": 583,
+        "sha256": "4f528fe200ceec3af753a200eb947103493c9dc32b05bd7e65e3612485303928"
+      }
+    },
+    {
+      "command": "../kujo/target/release/kujo test-run tests/routing_tests.kujo -v",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/baseline-routing.log",
+        "bytes": 2814,
+        "sha256": "4d8045d59ef4f08bee0472dac03bf9c111ac7fee4d70e2273956e895c098c0e6"
+      }
+    },
+    {
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/static_policy_integration.mjs",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/focused-branches.log",
+        "bytes": 1669,
+        "sha256": "e0189a21d2e322c41ad3b6369e0acba14c4a47e72a5288b0853dce3dc829e754"
+      }
+    },
+    {
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/static_subgraph_integration.mjs",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/focused-subgraphs.log",
+        "bytes": 1738,
+        "sha256": "e7f6981ba29f752db04d7411bdfe1cd47d76321bc247ff2b33687d84c5790e86"
+      }
+    },
+    {
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/static_policy_recovery.mjs",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/focused-recovery.log",
+        "bytes": 1484,
+        "sha256": "b65cddc7dd583e78f08e92a9ec3080de88af68bc55277985e0c75662952544fa"
+      }
+    },
+    {
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/static_policy_edges.mjs",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/focused-edges.log",
+        "bytes": 198,
+        "sha256": "ae6c237945100ca581b9f07bf448b8e0398aa7bdbf06196edc47038a91562aa1"
+      }
+    },
+    {
+      "command": "../kujo/target/release/kujo run tests/static_policy_contract_tests.kujo",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/focused-contracts.log",
+        "bytes": 24,
+        "sha256": "aff3a294b3f850a0828afeec57eee807cbe2b7c54437a9a8f83298dbc0baa2b5"
+      }
+    },
+    {
+      "command": "node tests/go_participant_conformance.mjs",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/focused-portable.log",
+        "bytes": 205,
+        "sha256": "1cf19dfa8a26cb5dc0e6cc75b21d55b08fc451a3906eb58b2d0b4c7026cf5bfc"
+      }
+    },
+    {
+      "command": "../kujo/target/release/kujo run tests/portable_commitments.kujo tests/vectors/static-graph-policy.json",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/focused-portable-kujo.log",
+        "bytes": 41,
+        "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203"
+      }
+    },
+    {
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/canonical.log",
+        "bytes": 13244,
+        "sha256": "872671b31ac6d2f177223f9858f0acfd41c90fa95657af7f6df76a585eb0ac94"
+      }
+    },
+    {
+      "command": "cargo fmt --check",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/kujo-fmt.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "command": "cargo test --locked --test architecture_docs_contract --test workflow_control_contracts --test readme_contracts",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/kujo-contracts.log",
+        "bytes": 2544,
+        "sha256": "73b4a55ee05644d75505df3ddaf466db198fdcbc2196a51e2906080edf3ee05c"
+      }
+    },
+    {
+      "command": "cargo build --release --locked",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo",
+      "log": {
+        "path": "/tmp/dispatch-branches-evidence/kujo-build.log",
+        "bytes": 730,
+        "sha256": "600d513c3b41a91160ddfffd924856f0dbdf66a0f90f03518cb5c3a4e3d87c8a"
+      }
+    }
+  ],
+  "canonical_suites": [
+    {
+      "name": "ability_assurance",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/ability_assurance.log",
+        "bytes": 1774,
+        "sha256": "1cd785d6fcbbc6b6520966de84f106abc4c2db824646ac1618e004906669908a"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "assurance_capabilities",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/assurance_capabilities.log",
+        "bytes": 90,
+        "sha256": "59e2d9253c4c80fec2597c57607cc743a2484ad79f959893db24d0c409450f93"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "assurance_compatibility",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/assurance_compatibility.log",
+        "bytes": 75,
+        "sha256": "24ea6fa02433c4e78ab02b0a54b1983390fdc037dee2167a1b138794acf52715"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "beta_contracts",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/beta_contracts.log",
+        "bytes": 75,
+        "sha256": "8cf1f333a0a356f50b46b22b8ca56c5be9e9ce423eb16ff385f90f3914bc141a"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "beta_migration",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/beta_migration.log",
+        "bytes": 2490,
+        "sha256": "1b200c7bf4183a7f4adf49bdde4516d360f551005274acdaf49fc62152ec845e"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "control_boundary",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/control_boundary.log",
+        "bytes": 1264,
+        "sha256": "171eb0ca1a135b14c9d82649b6a22a05de2636beb360f1af61680de362b114e9"
+      },
+      "tests": [
+        "Tests: 14 total, 14 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "decision_claim",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/decision_claim.log",
+        "bytes": 82,
+        "sha256": "f0700708134088c7d6c802f6f8405e8504abfdef68beacab7a8424e872ecaade"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "dispatch-1",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-1.log",
+        "bytes": 585,
+        "sha256": "c7d302823e6090720355e1c02afa710f7b7fa21287be62875b22266ef5fb089c"
+      },
+      "tests": [
+        "Tests: 5 total, 5 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-10",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-10.log",
+        "bytes": 542,
+        "sha256": "55453415cda2392950328581ceb8b6ae0566e643c634981eb2ea4efe78855ebc"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-11",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-11.log",
+        "bytes": 544,
+        "sha256": "4cadb216e3ce3e03eae32a1d40caf24b87370f50f7ca75a6380a0343bf3fb48b"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-12",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-12.log",
+        "bytes": 542,
+        "sha256": "a82f3a8dd4ee520a34400a289a563c296772178a78c07663a5ed2c6d06ef08df"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-13",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-13.log",
+        "bytes": 592,
+        "sha256": "4daf2ab5570a081dae67a7c2e5067443ad9bbe5122a05ac6d46f9594980d6d2c"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-14",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-14.log",
+        "bytes": 567,
+        "sha256": "4bc1e239289144b6f94e0333d6581b2d1c5f67a7d42533ae79a7cfeb069a0882"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-15",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-15.log",
+        "bytes": 582,
+        "sha256": "c7242a35a9a7558b8876f7d540b1fc1f07a8d3e2cef0cc2f0152589b165c5260"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-16",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-16.log",
+        "bytes": 577,
+        "sha256": "2833d05f344a1ffa7d3d83309928c8320883e7c3194f4e37f0e8564a37495b1b"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-17",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-17.log",
+        "bytes": 537,
+        "sha256": "698620e61594891831b6f0adec288b7d30d519436a3a8ab15fd5bfd5ac3363cb"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-18",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-18.log",
+        "bytes": 542,
+        "sha256": "4d8d20799161185f7caa1aa9c15391f77091df71ea42963a08c43a5dadb737af"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-19",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-19.log",
+        "bytes": 564,
+        "sha256": "e72cc67831e0089737d70b01e2c3663fc590aab60c301842c2f5a46d56401532"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-2",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-2.log",
+        "bytes": 604,
+        "sha256": "41c90953fb3ccbf0a5511d9af073a2d1e5ad93518871ffad71a17770965808b9"
+      },
+      "tests": [
+        "Tests: 5 total, 5 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-20",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-20.log",
+        "bytes": 548,
+        "sha256": "faa03181d5955b997c300e1c2cf56519b4a975c409020bf6c5ba7a5d9927db02"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-21",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-21.log",
+        "bytes": 521,
+        "sha256": "c5c5f207977abe37972f424e9a243eca87ba706c0919967fc7026fdaadf37640"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-22",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-22.log",
+        "bytes": 538,
+        "sha256": "d41cf676734ec2b52647e8d921fa4117729dd43187e91d91898db096d5265bb7"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-23",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-23.log",
+        "bytes": 566,
+        "sha256": "4dbda3bdb96c237e5506ae33be482b638484bf5b6f25890d1fdb530a8b6f928a"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-24",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-24.log",
+        "bytes": 527,
+        "sha256": "215dc1ad77eb179c68a34ba67fe60d1f30a1e0c7161572528ff5f2de14dcc187"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-3",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-3.log",
+        "bytes": 630,
+        "sha256": "8d3e38ac732d12e8c12afc4669af7e8e9f0d1675949b441618a8b4d88ed8e906"
+      },
+      "tests": [
+        "Tests: 5 total, 5 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-4",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-4.log",
+        "bytes": 638,
+        "sha256": "fc18d707139007a1ab7c77cbbadc22c7c140ad0b0af736e8f98f72de871d6af3"
+      },
+      "tests": [
+        "Tests: 5 total, 5 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-5",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-5.log",
+        "bytes": 648,
+        "sha256": "0168bf64f75287c071913309ba5a3a922e35ec6708e92f8695346bd121155a7c"
+      },
+      "tests": [
+        "Tests: 5 total, 5 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-6",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-6.log",
+        "bytes": 527,
+        "sha256": "a360fff96ecff17d962bc45163816ed310fb41436bdc1d8c6a760950ad9a7d7f"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-7",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-7.log",
+        "bytes": 543,
+        "sha256": "e9abfc2902c5c4ea3f0d46c0873ca98a04271553945621c7a6195da372b746aa"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-8",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-8.log",
+        "bytes": 539,
+        "sha256": "2f439276cfa4ed56de73fed7393fd17aada96be0772dbc1cb3f54123567d1985"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "dispatch-9",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/dispatch-9.log",
+        "bytes": 569,
+        "sha256": "dd87c8fe684f3ed537a27eb1fd42ca6407764730684bef3b6e86120fb8cfcf7b"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "effect_assurance",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/effect_assurance.log",
+        "bytes": 793,
+        "sha256": "d22211bff3b4f67e48e89441fa3a38898ccd226b7d741d298b33c9849de8b163"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "effect_assurance_schema",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/effect_assurance_schema.log",
+        "bytes": 82,
+        "sha256": "d95aba4532c54939c2a30a721827e022b0a2f332b589242c310d95e8b89b5934"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "effect_continuation",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/effect_continuation.log",
+        "bytes": 979,
+        "sha256": "58bbd36f4c5fe7a40ed7c24235f4cbad458295fd2e13f6ae49a76df533ca0578"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/effect-continuation-qmNr51",
+          "checks": 39,
+          "proofs": [
+            "valid-prefix-only-C",
+            "repeat-denied",
+            "D-denied",
+            "parent-replay-denied",
+            "cannot-select-A",
+            "cannot-select-B",
+            "cannot-select-D",
+            "unknown-prefix-blocks",
+            "A-no-phantom",
+            "B-same-attempt",
+            "after_admission-no-replay",
+            "after_mutation-no-replay",
+            "after_observation-no-replay",
+            "two-fresh-controllers-one-admission",
+            "stale-registration",
+            "stale-plan",
+            "stale-target",
+            "stale-authority",
+            "stale-config",
+            "stale-revocation",
+            "stale-environment",
+            "stale-environment-ref",
+            "stale-set",
+            "stale-preservation",
+            "state-revision",
+            "state-journal",
+            "state-selected-state",
+            "state-attempt",
+            "state-control",
+            "state-preservation",
+            "state-selection-removal",
+            "final-revalidation-status",
+            "final-revalidation-environment",
+            "actual-evidence-expiry",
+            "expiry-after-admission",
+            "orphan-claim-denies",
+            "retained-evidence-required",
+            "sqlite-authority-over-json-mirror",
+            "actual-baseline-reader-refuses-new-state"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "effect_lifecycle_vectors",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/effect_lifecycle_vectors.log",
+        "bytes": 41,
+        "sha256": "855489c71c8caa184ff3cebb2a6de80b9fb34c56fae0742229d3de4d099ee011"
+      },
+      "tests": [],
+      "results": [
+        {
+          "checker": "kujo",
+          "ok": true,
+          "vectors": 6
+        }
+      ]
+    },
+    {
+      "name": "effect_selection_vectors",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/effect_selection_vectors.log",
+        "bytes": 41,
+        "sha256": "c609139c4a563176624c0ca76051dcd9b01ddf6c3c02c7b8f22c1be3e0e0ac75"
+      },
+      "tests": [],
+      "results": [
+        {
+          "checker": "kujo",
+          "ok": true,
+          "vectors": 4
+        }
+      ]
+    },
+    {
+      "name": "effect_set",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/effect_set.log",
+        "bytes": 3816,
+        "sha256": "23894b715c8a3c8319bc7deb227d3d20aa1137d3e7bf0c0969f78a3d5e950305"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/effect-set-u331oS",
+          "scenarios": [
+            "A: two SIGKILLs; retained A/unknown B/unstarted C,D",
+            "B: claim without verifier",
+            "C: expiry/append-only renewal",
+            "D: two sink-key contenders",
+            "journal tamper refused"
+          ],
+          "assessmentCases": 29,
+          "first": {
+            "condition": "partial_or_uncertain",
+            "continuation": "review_required",
+            "effects": [
+              {
+                "blocked_by": null,
+                "effect_id": "A",
+                "evidence_ref": "sha256:f70e6541078fe8737bc6bc39436ef5405de2ed71e48ab55837e096392f6003d1",
+                "freshness": "current",
+                "historical_observation": "committed",
+                "next_action": "retain_completion",
+                "observed_state": "committed",
+                "reported_state": "unknown"
+              },
+              {
+                "blocked_by": null,
+                "effect_id": "B",
+                "evidence_ref": null,
+                "freshness": "missing",
+                "historical_observation": "unknown",
+                "next_action": "inspect_or_revalidate",
+                "observed_state": "unknown",
+                "reported_state": "unknown"
+              },
+              {
+                "blocked_by": "B",
+                "effect_id": "C",
+                "evidence_ref": "sha256:c1dd48ce225a340bbe6bd408bb328fdb80d09a91a1674712db50fcc183e606e4",
+                "freshness": "current",
+                "historical_observation": "not_started",
+                "next_action": "inspect_or_revalidate",
+                "observed_state": "not_started",
+                "reported_state": "not_started"
+              },
+              {
+                "blocked_by": "B",
+                "effect_id": "D",
+                "evidence_ref": "sha256:27c8c0a352f84664c607f53cd99a52ba8818889bae2fbc64b0ce2c46cea5580c",
+                "freshness": "current",
+                "historical_observation": "not_started",
+                "next_action": "inspect_or_revalidate",
+                "observed_state": "not_started",
+                "reported_state": "not_started"
+              }
+            ],
+            "ok": true,
+            "parent_replay": "prohibited"
+          },
+          "expired": {
+            "condition": "partial_or_uncertain",
+            "continuation": "review_required",
+            "effects": [
+              {
+                "blocked_by": null,
+                "effect_id": "A",
+                "evidence_ref": "sha256:f70e6541078fe8737bc6bc39436ef5405de2ed71e48ab55837e096392f6003d1",
+                "freshness": "stale",
+                "historical_observation": "committed",
+                "next_action": "inspect_or_revalidate",
+                "observed_state": "unknown",
+                "reported_state": "unknown"
+              },
+              {
+                "blocked_by": "A",
+                "effect_id": "B",
+                "evidence_ref": null,
+                "freshness": "missing",
+                "historical_observation": "unknown",
+                "next_action": "inspect_or_revalidate",
+                "observed_state": "unknown",
+                "reported_state": "unknown"
+              },
+              {
+                "blocked_by": "A",
+                "effect_id": "C",
+                "evidence_ref": "sha256:c1dd48ce225a340bbe6bd408bb328fdb80d09a91a1674712db50fcc183e606e4",
+                "freshness": "stale",
+                "historical_observation": "not_started",
+                "next_action": "inspect_or_revalidate",
+                "observed_state": "unknown",
+                "reported_state": "not_started"
+              },
+              {
+                "blocked_by": "A",
+                "effect_id": "D",
+                "evidence_ref": "sha256:27c8c0a352f84664c607f53cd99a52ba8818889bae2fbc64b0ce2c46cea5580c",
+                "freshness": "stale",
+                "historical_observation": "not_started",
+                "next_action": "inspect_or_revalidate",
+                "observed_state": "unknown",
+                "reported_state": "not_started"
+              }
+            ],
+            "ok": true,
+            "parent_replay": "prohibited"
+          },
+          "renewed": {
+            "condition": "partial_or_uncertain",
+            "continuation": "review_required",
+            "effects": [
+              {
+                "blocked_by": null,
+                "effect_id": "A",
+                "evidence_ref": "sha256:f70e6541078fe8737bc6bc39436ef5405de2ed71e48ab55837e096392f6003d1",
+                "freshness": "current",
+                "historical_observation": "committed",
+                "next_action": "retain_completion",
+                "observed_state": "committed",
+                "reported_state": "unknown"
+              },
+              {
+                "blocked_by": null,
+                "effect_id": "B",
+                "evidence_ref": null,
+                "freshness": "missing",
+                "historical_observation": "unknown",
+                "next_action": "inspect_or_revalidate",
+                "observed_state": "unknown",
+                "reported_state": "unknown"
+              },
+              {
+                "blocked_by": "B",
+                "effect_id": "C",
+                "evidence_ref": "sha256:c1dd48ce225a340bbe6bd408bb328fdb80d09a91a1674712db50fcc183e606e4",
+                "freshness": "current",
+                "historical_observation": "not_started",
+                "next_action": "inspect_or_revalidate",
+                "observed_state": "not_started",
+                "reported_state": "not_started"
+              },
+              {
+                "blocked_by": "B",
+                "effect_id": "D",
+                "evidence_ref": "sha256:27c8c0a352f84664c607f53cd99a52ba8818889bae2fbc64b0ce2c46cea5580c",
+                "freshness": "current",
+                "historical_observation": "not_started",
+                "next_action": "inspect_or_revalidate",
+                "observed_state": "not_started",
+                "reported_state": "not_started"
+              }
+            ],
+            "ok": true,
+            "parent_replay": "prohibited"
+          }
+        }
+      ]
+    },
+    {
+      "name": "effect_set_vectors",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/effect_set_vectors.log",
+        "bytes": 41,
+        "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203"
+      },
+      "tests": [],
+      "results": [
+        {
+          "checker": "kujo",
+          "ok": true,
+          "vectors": 7
+        }
+      ]
+    },
+    {
+      "name": "failure_gate_execution",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/failure_gate_execution.log",
+        "bytes": 778,
+        "sha256": "988c332bdd9eef27d4a022ca2c111aa1e260377d7138c702d3cf65897d400c0b"
+      },
+      "tests": [
+        "Tests: 6 total, 6 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "failure_gate_safety",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/failure_gate_safety.log",
+        "bytes": 1676,
+        "sha256": "76b67e2a180da50f241cf5e4e5f7dfd13448503b63cbdab03e8c0ce712074ff1"
+      },
+      "tests": [
+        "Tests: 20 total, 20 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "git_participant_after",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/git_participant_after.log",
+        "bytes": 822,
+        "sha256": "785376d14b8ac750f26b71b74c014cbf6d50a738d063725f4a2ec3c18524fa3c"
+      },
+      "tests": [],
+      "results": [
+        {
+          "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/tmp/git-participant-1790738049676",
+          "schema": "dispatch.git-participant-rehearsal/v1",
+          "boundary": "after_commit",
+          "ok": true,
+          "actual_sigkill": true,
+          "initial_observed_state": "committed",
+          "logical_effects": 1,
+          "admitted_processes": 2,
+          "duplicate_denials": 2,
+          "caller_denials": 15,
+          "negative_correlations": 22,
+          "fresh_controller": true,
+          "checkpoint": true,
+          "stale_checkpoint_denied": true,
+          "descendant": true,
+          "privacy": true,
+          "ability_used": false,
+          "policy": {
+            "config_revision": "3eecdd93b2dc1958620562b1e286a3d62426011eda6a6df312943d2a940b1cd2",
+            "fallback": "deny",
+            "mode": "required",
+            "policy_sha256": "351be11444399ce2f179c1f995480c0c241f3247d13be9b4f0848b64c123cebe",
+            "profile": "workcell.git-cas",
+            "profile_version": "1beta1",
+            "schema": "dispatch.assurance-negotiation/v1beta1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "git_participant_before",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/git_participant_before.log",
+        "bytes": 825,
+        "sha256": "7bdaa4e33a537dbc4ce446bb74d5f70b22f988cbc14a5ac77a2876f7f7a46d0d"
+      },
+      "tests": [],
+      "results": [
+        {
+          "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/tmp/git-participant-1790738071397",
+          "schema": "dispatch.git-participant-rehearsal/v1",
+          "boundary": "before_commit",
+          "ok": true,
+          "actual_sigkill": true,
+          "initial_observed_state": "not_started",
+          "logical_effects": 1,
+          "admitted_processes": 2,
+          "duplicate_denials": 2,
+          "caller_denials": 15,
+          "negative_correlations": 22,
+          "fresh_controller": true,
+          "checkpoint": true,
+          "stale_checkpoint_denied": true,
+          "descendant": true,
+          "privacy": true,
+          "ability_used": false,
+          "policy": {
+            "config_revision": "b504559515343b10d3a31d19807db95752b1281d5f82a1ae7a3f2c0cae4ab404",
+            "fallback": "deny",
+            "mode": "required",
+            "policy_sha256": "214fee2047e73914304f497064f84cd7b909574973ff632a854c75ab536f59cb",
+            "profile": "workcell.git-cas",
+            "profile_version": "1beta1",
+            "schema": "dispatch.assurance-negotiation/v1beta1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "go_participant",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/go_participant.log",
+        "bytes": 205,
+        "sha256": "1cf19dfa8a26cb5dc0e6cc75b21d55b08fc451a3906eb58b2d0b4c7026cf5bfc"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "checks": 148,
+          "mcpChecks": 5,
+          "malformedChecks": 9,
+          "wireSHA256": "f87fd01de248eca96c685282b3ead0a95578f77f6c597f598fc9d587f0bec262",
+          "independence": "Go standard library; CLI and MCP share one codec"
+        }
+      ]
+    },
+    {
+      "name": "hardening",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/hardening.log",
+        "bytes": 886,
+        "sha256": "8081ebf71d3bf9b2e548663e49bfedaae7432da13d2eb2a026b7bea9808fdc2c"
+      },
+      "tests": [
+        "Tests: 8 total, 8 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "heterogeneous_contracts",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/heterogeneous_contracts.log",
+        "bytes": 24,
+        "sha256": "a1257fcfbb8a2b701410f9acbf8f60b8c4856e014426f4d02ee89b6d95459a4e"
+      },
+      "tests": [],
+      "results": [
+        {
+          "checks": 10,
+          "ok": true
+        }
+      ]
+    },
+    {
+      "name": "heterogeneous_integration",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/heterogeneous_integration.log",
+        "bytes": 1636,
+        "sha256": "3dcfbf2dd3478ea956c287b3cd535ba3fba7b64e26b3a66636fc43fd81526e86"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "checks": 25,
+          "evidence": [
+            "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-Lo7NIY/heterogeneous-success",
+            "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-Lo7NIY/evaluation-failure",
+            "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-Lo7NIY/optional-and-completion-only"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "heterogeneous_policy",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/heterogeneous_policy.log",
+        "bytes": 536,
+        "sha256": "7a0e13d2c7201b21e1c55e0f95a5e8c4c2f851c16add8c2a74d0981661b8c980"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "checks": 7
+        }
+      ]
+    },
+    {
+      "name": "heterogeneous_recovery",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/heterogeneous_recovery.log",
+        "bytes": 1289,
+        "sha256": "ac747bd4d7688429cef6c51a59a54789d8b2e51a58770b388a5d79d234be4fa6"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "checks": 8,
+          "scenarios": [
+            "Eval terminal reply loss survives a fresh controller without a fake execution",
+            "actual human terminal orphan repairs exact decision but not graph completion",
+            "all durable terminal facts and recovery still require separate graph decision",
+            "two fresh finalizers: one exact durable graph terminal transition",
+            "graph crash before_terminal preserves exact terminal boundary",
+            "graph crash after_terminal preserves exact terminal boundary",
+            "graph crash immutable preserves exact terminal boundary",
+            "optional outstanding dispatch blocks graph finalization before child admission"
+          ],
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-zCMxSQ"
+        }
+      ]
+    },
+    {
+      "name": "heterogeneous_vectors",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/heterogeneous_vectors.log",
+        "bytes": 41,
+        "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203"
+      },
+      "tests": [],
+      "results": [
+        {
+          "checker": "kujo",
+          "ok": true,
+          "vectors": 7
+        }
+      ]
+    },
+    {
+      "name": "http_application_error",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/http_application_error.log",
+        "bytes": 867,
+        "sha256": "d9f662e2394f1d11fda5f68bf2c9f20e079bdc320198bd6b174dac7319bc74e5"
+      },
+      "tests": [],
+      "results": [
+        {
+          "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/tmp/http-ability-1790738137936",
+          "schema": "dispatch.http-ability-rehearsal/v1",
+          "scenario": "application-error",
+          "ok": true,
+          "initial_business_effects": 0,
+          "business_effects": 1,
+          "receipt_rows": 1,
+          "negative_correlations": 24,
+          "invalid_http_requests_per_attempt": 21,
+          "concurrent_denied_per_attempt": 1,
+          "controller_restart": true,
+          "server_restart": true,
+          "standalone": true,
+          "expired_stale_reuse_denied": true,
+          "locked_replay_denial": true,
+          "policy": {
+            "config_revision": "6ae2547403369f9bece71eeaa91f337e21af1b5a938a2a6770a4bf106fea922e",
+            "fallback": "deny",
+            "mode": "required",
+            "policy_sha256": "1ec79a3b019b3a73bd70937296fd235a72137a3625754d88f7c4b65e30ddd238",
+            "profile": "ability.application-gateway",
+            "profile_version": "1beta1",
+            "schema": "dispatch.assurance-negotiation/v1beta1"
+          },
+          "initial_outcome": "application_error"
+        }
+      ]
+    },
+    {
+      "name": "http_response_loss",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/http_response_loss.log",
+        "bytes": 859,
+        "sha256": "d5fdebf4dfdede454f2c54cb14d55259573d7c5bddc20b5c50c9e54e7a83261e"
+      },
+      "tests": [],
+      "results": [
+        {
+          "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/tmp/http-ability-1790738091915",
+          "schema": "dispatch.http-ability-rehearsal/v1",
+          "scenario": "response-loss",
+          "ok": true,
+          "initial_business_effects": 1,
+          "business_effects": 1,
+          "receipt_rows": 1,
+          "negative_correlations": 24,
+          "invalid_http_requests_per_attempt": 21,
+          "concurrent_denied_per_attempt": 1,
+          "controller_restart": true,
+          "server_restart": true,
+          "standalone": true,
+          "expired_stale_reuse_denied": true,
+          "locked_replay_denial": true,
+          "policy": {
+            "config_revision": "9822d0ad4a5cc1558ec4ee706866b0c0f8a31867cc4a52d52a3eda9bd0cc250c",
+            "fallback": "deny",
+            "mode": "required",
+            "policy_sha256": "01b3551eebdb5f0f51a15270f5f36444a8a7ca407d7acdfd1dd09c06f0724648",
+            "profile": "ability.application-gateway",
+            "profile_version": "1beta1",
+            "schema": "dispatch.assurance-negotiation/v1beta1"
+          },
+          "initial_outcome": "response_lost"
+        }
+      ]
+    },
+    {
+      "name": "http_timeout_before",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/http_timeout_before.log",
+        "bytes": 854,
+        "sha256": "e25311edd212b3f86fca252a2396a9bd66c14aa4511c5b759848fcd86f8aaab7"
+      },
+      "tests": [],
+      "results": [
+        {
+          "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/tmp/http-ability-1790738115166",
+          "schema": "dispatch.http-ability-rehearsal/v1",
+          "scenario": "timeout-before",
+          "ok": true,
+          "initial_business_effects": 0,
+          "business_effects": 1,
+          "receipt_rows": 1,
+          "negative_correlations": 24,
+          "invalid_http_requests_per_attempt": 21,
+          "concurrent_denied_per_attempt": 1,
+          "controller_restart": true,
+          "server_restart": true,
+          "standalone": true,
+          "expired_stale_reuse_denied": true,
+          "locked_replay_denial": true,
+          "policy": {
+            "config_revision": "0efb419c7c5e0c24aa011ac756b7e2a9b93269fdf211edf6245d00106b195f77",
+            "fallback": "deny",
+            "mode": "required",
+            "policy_sha256": "5fdce3813910b45ba03e7ab7880c233dd188cdf3140de17277774967b06c9c0a",
+            "profile": "ability.application-gateway",
+            "profile_version": "1beta1",
+            "schema": "dispatch.assurance-negotiation/v1beta1"
+          },
+          "initial_outcome": "timeout"
+        }
+      ]
+    },
+    {
+      "name": "interop_history",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/interop_history.log",
+        "bytes": 127,
+        "sha256": "e4d0b65a5d3fcbbbab2bcd5f3dc04dc966ce041f01ae17c829852db283741279"
+      },
+      "tests": [],
+      "results": [
+        {
+          "bytes_preserved": true,
+          "differential": true,
+          "fifth_namespace": true,
+          "generic_mutations": true,
+          "historical_families": 4,
+          "ok": true
+        }
+      ]
+    },
+    {
+      "name": "interop_oracles",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/interop_oracles.log",
+        "bytes": 40,
+        "sha256": "ccb5b6b0475728fb2435f59803211d47cff242001d02f2730272aa247a39edb6"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "mcp_ability",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/mcp_ability.log",
+        "bytes": 1062,
+        "sha256": "07c698c0b797f87a175ff840adef57b27024edef57eab4dce79e51e6365d0c24"
+      },
+      "tests": [],
+      "results": [
+        {
+          "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/tmp/mcp-ability-1790738160451",
+          "scenario": "receipt-failure",
+          "schema": "dispatch.mcp-ability-rehearsal/v1",
+          "ok": true,
+          "negative_correlations": 21,
+          "business_effects": 1,
+          "receipt_rows": 1,
+          "mcp_processes": 7,
+          "expired_admission_denied": true,
+          "stale_admission_denied": true,
+          "duplicate_admission_denied": true,
+          "locked_replay_denial": true,
+          "controller_restart": true,
+          "beta_required": true,
+          "checkpoint": true,
+          "standalone": true,
+          "receipt_commit_failed": true,
+          "stdio_reply_lost": false,
+          "dispatch_policy": {
+            "config_revision": "fbaa6ee590ec12dce13b342ef51b93791787b5580663d893d635b69635d3d879",
+            "fallback": "deny",
+            "mode": "required",
+            "policy_sha256": "fbfc35ee657d72131c87cbbe549f13c8114c7c0768340000b107089c58a42231",
+            "profile": "ability.application-gateway",
+            "profile_version": "1beta1",
+            "schema": "dispatch.assurance-negotiation/v1beta1"
+          },
+          "first_result_sha256": "d5ae362292a42f727ff2c30f7be953b3f39dc912b95abb171f9d5e919f9632df",
+          "second_result_sha256": "ad4f0323c71a3f6f9da1fb07b59e8bab67ae4435a04975cab48e28ce9ec45cb2"
+        }
+      ]
+    },
+    {
+      "name": "mcp_stdio_loss",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/mcp_stdio_loss.log",
+        "bytes": 1057,
+        "sha256": "36572f18f0fad2ccff4207317fa0fce4684743ebe7d94409995abba2c9d64140"
+      },
+      "tests": [],
+      "results": [
+        {
+          "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/tmp/mcp-ability-1790738181635",
+          "scenario": "stdio-loss",
+          "schema": "dispatch.mcp-ability-rehearsal/v1",
+          "ok": true,
+          "negative_correlations": 21,
+          "business_effects": 1,
+          "receipt_rows": 1,
+          "mcp_processes": 7,
+          "expired_admission_denied": true,
+          "stale_admission_denied": true,
+          "duplicate_admission_denied": true,
+          "locked_replay_denial": true,
+          "controller_restart": true,
+          "beta_required": true,
+          "checkpoint": true,
+          "standalone": true,
+          "receipt_commit_failed": false,
+          "stdio_reply_lost": true,
+          "dispatch_policy": {
+            "config_revision": "6f0575375a31bd0015ed1f55f7cf0f7efe846c86bf89e2145e2b7cf15e85d50b",
+            "fallback": "deny",
+            "mode": "required",
+            "policy_sha256": "f15aabe0ea17d3b348a8d85fa415cff4eba24fb5bf1a7f2ef0187992b4c48c00",
+            "profile": "ability.application-gateway",
+            "profile_version": "1beta1",
+            "schema": "dispatch.assurance-negotiation/v1beta1"
+          },
+          "first_result_sha256": "e106a335830a7fbcd2c015d84ec5e6f16f5615a4a636f8b433e0eb9878d5218e",
+          "second_result_sha256": "0a64bdc56327f08a659b320b7c9fc654984692542660399501464b5db3bc3e7a"
+        }
+      ]
+    },
+    {
+      "name": "node_composition",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/node_composition.log",
+        "bytes": 2441,
+        "sha256": "9aca5951332d8fc52a6f5e7a81bb90130cae6aae6688683d88a683231fba3238"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-zX44Y4",
+          "checks": 19,
+          "scenarios": [
+            "producer output exists without finalization: consumer blocked",
+            "unresolved producer effect prevents finalization",
+            "output missing prevents producer finalization",
+            "evaluation failure and operator revocation block terminal authority",
+            "effect completion and passing Eval still do not finalize producer",
+            "exact source name type digest revision and producer binding",
+            "binding survives fresh load; artifact mutation and absence deny execution",
+            "stale installed authority denies consumer",
+            "consumer executes independently with pinned provenance",
+            "all required independently finalized nodes complete existing DAG",
+            "historical consumer provenance cannot become a later producer version",
+            "completion-only edge does not transfer an artifact",
+            "bounded join requires both independently finalized producers",
+            "consumer failure cannot rewrite finalized producer",
+            "producer execution failure blocks dependent",
+            "fresh controller before_node_binding",
+            "fresh controller after_node_binding",
+            "fresh controller after_node_start_requested",
+            "consumed initial admission survives crash without fabricating execution"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "node_contracts",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/node_contracts.log",
+        "bytes": 24,
+        "sha256": "42781b40a80c1d24c70e66b79108240013f9b319ad52b37e0b5fa42859b9333b"
+      },
+      "tests": [],
+      "results": [
+        {
+          "checks": 12,
+          "ok": true
+        }
+      ]
+    },
+    {
+      "name": "node_policy",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/node_policy.log",
+        "bytes": 585,
+        "sha256": "631920925086a517dbf61879f9523afcbb5762aee9034dfcc851b7c890923712"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-x0877b",
+          "checks": 4,
+          "scenarios": [
+            "needs-changes evaluation blocks producer dependency",
+            "producer tool permission is not inherited by consumer",
+            "ordinary cancellation blocks consumer",
+            "failed terminal follows existing Eval policy and cannot satisfy dependency"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "node_recovery",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/node_recovery.log",
+        "bytes": 1001,
+        "sha256": "8ab0efa08258e43a06934b5e7704b7696947000ea40e493862b0c538a4b3c1bb"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-PJqxiP",
+          "checks": 5,
+          "scenarios": [
+            "two fresh graph controllers: one consumer admission and action",
+            "real observation crash: repair retains consumption and requires separate finalization",
+            "raw output orphan cannot synthesize a binding",
+            "real immutable orphan node_inputs_bound reconciled without implicit execution",
+            "real immutable orphan node_terminal_observed reconciled without implicit execution"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "node_vectors",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/node_vectors.log",
+        "bytes": 41,
+        "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203"
+      },
+      "tests": [],
+      "results": [
+        {
+          "checker": "kujo",
+          "ok": true,
+          "vectors": 7
+        }
+      ]
+    },
+    {
+      "name": "operational_controls",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/operational_controls.log",
+        "bytes": 958,
+        "sha256": "fe63dde45a634d230db26ebaa3524db16a776c63a328e4b4dd8d46c27b7fec88"
+      },
+      "tests": [
+        "Tests: 9 total, 9 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "parent_finalization",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/parent_finalization.log",
+        "bytes": 2653,
+        "sha256": "1a6d585c1ecc5960b0fdbeea800f3a7b037043882867eec3266adc5c17817d0d"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/parent-finalization-iUgYjp",
+          "checks": 31,
+          "proofs": [
+            "pending effects block parent",
+            "cancelled required selection is not completion",
+            "unresolved operator review blocks",
+            "real Workcell refs and original bytes preserved",
+            "stale authority",
+            "changed registration",
+            "wrong environment",
+            "operator authorization revoked",
+            "stale evaluation",
+            "wrong evaluation subject",
+            "missing/replaced output.txt",
+            "missing/replaced output-evidence.json",
+            "missing/replaced workcell/receipt.json",
+            "retained workspace missing",
+            "changed retained Git HEAD",
+            "stale run revision",
+            "new unresolved child",
+            "expired preservation",
+            "independent sink uncertainty blocks",
+            "legitimate new assessment invalidates candidate",
+            "generic approved review cannot bypass finalization",
+            "separate finalization without effect replay",
+            "Eval fail maps through existing policy",
+            "SIGKILL before decision remains nonterminal",
+            "SIGKILL after terminal reply loss is final",
+            "two independently assessed fresh controllers one durable finalization",
+            "producer success still requires parent finalization",
+            "anchored required descendant blocks terminal transition",
+            "mutable optional flag cannot waive anchored required child",
+            "live authority revoked inside finalization boundary",
+            "orphan durable finalization recovered by fresh controllers"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "parent_vectors",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/parent_vectors.log",
+        "bytes": 41,
+        "sha256": "11b138dd7d06156f9334506449e2c91bc25cfe8c851277956c1a1b7b2c2bd9ec"
+      },
+      "tests": [],
+      "results": [
+        {
+          "checker": "kujo",
+          "ok": true,
+          "vectors": 2
+        }
+      ]
+    },
+    {
+      "name": "participant_sdk_parity",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/participant_sdk_parity.log",
+        "bytes": 172,
+        "sha256": "2d94d6b4bf5a14c819c19f3f500fb9391295ff2bd08d00e68448181df4e9fb0e"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "schema": "kujo.participant-sdk-conformance/v1alpha1",
+          "cases": 45,
+          "comparison": "exact bytes, content references, normalized values, error/correlation categories"
+        }
+      ]
+    },
+    {
+      "name": "persisted_negotiation",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/persisted_negotiation.log",
+        "bytes": 1996,
+        "sha256": "776cbbaff8982fdf6ad92358f8bafb287eec7a722695eda306d025163682803e"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "persisted_negotiation_adapters",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/persisted_negotiation_adapters.log",
+        "bytes": 748,
+        "sha256": "9f5df182dbea065029a7a2888e8a315997cc3fdaa43ea645acefeb116d7bbcf3"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "persisted_negotiation_contracts",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/persisted_negotiation_contracts.log",
+        "bytes": 90,
+        "sha256": "bb138e49d767e9482d8e99a70bb3408f9abcf11fc3a6c7e5fd29248cda42a8a3"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "persisted_negotiation_legacy",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/persisted_negotiation_legacy.log",
+        "bytes": 81,
+        "sha256": "badc442072a3c9bfd5230e985d5058444eaaea7c5a5a57311e43993053364f52"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "persisted_negotiation_schemas",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/persisted_negotiation_schemas.log",
+        "bytes": 83,
+        "sha256": "f4b329501ccd6595f478681867b4b03a9e3aa2f865bba8eb3ca5fd784e2495dd"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "policy_precedence",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/policy_precedence.log",
+        "bytes": 507,
+        "sha256": "244bac6e7ee577f45264c0446bc878652664ba523a4848368581547632f6cb53"
+      },
+      "tests": [
+        "Tests: 3 total, 3 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "portable_clean_room",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/portable_clean_room.log",
+        "bytes": 356,
+        "sha256": "dc4e5e580034fb6771539eab97909f29b94d57e2037ee6cc430d8995797f99a9"
+      },
+      "tests": [],
+      "results": [
+        {
+          "checker": "independent-python",
+          "vectors": 58,
+          "ok": true
+        }
+      ]
+    },
+    {
+      "name": "portable_commitments",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/portable_commitments.log",
+        "bytes": 42,
+        "sha256": "6374b98979775b0e93e24a795520804c41ea55b74e6a16d1b0dab7298aa4b44f"
+      },
+      "tests": [],
+      "results": [
+        {
+          "checker": "kujo",
+          "ok": true,
+          "vectors": 58
+        }
+      ]
+    },
+    {
+      "name": "preservation_binding",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/preservation_binding.log",
+        "bytes": 848,
+        "sha256": "7becddb4da3135dfc2a9346432de17ef2e44b0e34e2e263e92e30c430dabe609"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "python_integration",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/python_integration.log",
+        "bytes": 784,
+        "sha256": "be1613fcb4afb0cd83b88d9a813fbd70e257ab58ad34910250664555d8a0d786"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/tmp/python-1790737757520975000",
+          "proofs": [
+            {
+              "case": "before_commit",
+              "termination": {
+                "completion_knowledge": "unknown",
+                "observed_state": "not_started",
+                "phase": "before_commit",
+                "returncode": -9,
+                "signal": "SIGKILL"
+              },
+              "required_revision_preserved": true,
+              "fresh_controller": true,
+              "logical_effects": 1
+            },
+            {
+              "case": "after_commit",
+              "termination": {
+                "completion_knowledge": "unknown",
+                "observed_state": "committed",
+                "phase": "after_commit",
+                "returncode": -9,
+                "signal": "SIGKILL"
+              },
+              "required_revision_preserved": true,
+              "fresh_controller": true,
+              "logical_effects": 1
+            },
+            {
+              "case": "concurrency",
+              "admitted": 1,
+              "denied": 3,
+              "logical_effects": 1
+            }
+          ],
+          "input_denials": 12,
+          "installed_package": false
+        }
+      ]
+    },
+    {
+      "name": "python_isolation",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/python_isolation.log",
+        "bytes": 1805,
+        "sha256": "48ab001234c45739bf3a183d0e2301ad3bbc987717cfba0fa9d6ab9b1064fff9"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "external_copy": true,
+          "network": false,
+          "ecosystem_imports": false
+        }
+      ]
+    },
+    {
+      "name": "python_package",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/python_package.log",
+        "bytes": 783,
+        "sha256": "6ca4ab6cfc4b853adcc199887c75c736c5a1297970b97c13c2b2890e2b5cb244"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "python_parity",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/python_parity.log",
+        "bytes": 122,
+        "sha256": "4b4988f27db2bb0ab909456f968785d3b2971d3c679a5a6b62a3a2244cd0b581"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "cases": 28,
+          "parserChecks": 22,
+          "comparison": "acceptance, owner-projected canonical bytes, SHA256 and semantics"
+        }
+      ]
+    },
+    {
+      "name": "reexecution_lifecycle",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/reexecution_lifecycle.log",
+        "bytes": 235,
+        "sha256": "bf1cfc0f9c4f2f62fdabdcbb523ee156f8d7795cf673fcb0423d976c9c273916"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "resume_policy",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/resume_policy.log",
+        "bytes": 681,
+        "sha256": "976c80ce0168f6c954dfbffe59b262fcd2339e420fb8bef282095691daeba7a3"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "retained_recovery",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/retained_recovery.log",
+        "bytes": 849,
+        "sha256": "188d0c9558544c1f6675f139d0f88b364d7d9f1bcdb42f056162188f90a5c829"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "retrieval_preferences",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/retrieval_preferences.log",
+        "bytes": 547,
+        "sha256": "c60682e20958494b63af2addcf64a5fd3ac438264190706f67a3bb8583ccf605"
+      },
+      "tests": [
+        "Tests: 3 total, 3 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "review_checkpoint",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/review_checkpoint.log",
+        "bytes": 583,
+        "sha256": "86d996a293877229819dad4145ca8743e86f775eef71b2eaef6a46a36fab5b14"
+      },
+      "tests": [
+        "Tests: 4 total, 4 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "routing",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/routing.log",
+        "bytes": 2814,
+        "sha256": "6e0fa3487c25bd183bb8dc666ee18069c685bc347713fb2b41d59aa56bb09b3d"
+      },
+      "tests": [
+        "Tests: 31 total, 31 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "sdk_ability",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/sdk_ability.log",
+        "bytes": 946,
+        "sha256": "2cee95ef296bcede121b40a2dd8beefdccb43098cb1d6033c7fb64388caa54bf"
+      },
+      "tests": [],
+      "results": [
+        {
+          "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/tmp/sdk-ability-1790738204566",
+          "schema": "dispatch.sdk-ability-rehearsal/v1",
+          "ok": true,
+          "negative_correlations": 14,
+          "business_effects": 1,
+          "receipt_rows": 1,
+          "sdk_processes": 5,
+          "duplicate_admission_denied": true,
+          "locked_replay_denial": true,
+          "controller_restart": true,
+          "beta_required": true,
+          "checkpoint": true,
+          "standalone": true,
+          "receipt_commit_failed": true,
+          "dispatch_policy": {
+            "config_revision": "eb1436f6e36d6fca9d489c62145446a612041ae6e93a0a6c8347a5fbf4bacd52",
+            "fallback": "deny",
+            "mode": "required",
+            "policy_sha256": "ee6c603acd18a938ed1b1d148ab5d05a79ed4e258f92823c1729e802cdfb5c6d",
+            "profile": "ability.application-gateway",
+            "profile_version": "1beta1",
+            "schema": "dispatch.assurance-negotiation/v1beta1"
+          },
+          "first_result_sha256": "bd7ce4f826f0fa6bc9a16cf6a184d954a0c8b7784036f8c3d128342fb8a65666",
+          "second_result_sha256": "27a437883d566f63a0a7769f33bf0c385b58691534fa7f03019095a624f19b2e"
+        }
+      ]
+    },
+    {
+      "name": "sdk_adapter",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/sdk_adapter.log",
+        "bytes": 969,
+        "sha256": "27591518f78630e338114599ff40dec432a45b511b9bf5bc47861a30c3505467"
+      },
+      "tests": [
+        "Tests: 10 total, 10 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "sequential_effects",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/sequential_effects.log",
+        "bytes": 2618,
+        "sha256": "e9ee090719707b43df146a00aeebc870b896dbfbe6da635b4afb8dc2afb284df"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "roots": [
+            "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/sequential-effects-3gHgQR",
+            "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/sequential-effects-OafhF9"
+          ],
+          "checks": 80,
+          "proofs": [
+            "sqlite-independent-C-D-lifecycles",
+            "sqlite-expiry-explicit-rebind-same-attempt",
+            "sqlite-cancel-retained-replacement-explicit",
+            "sqlite-after_admission-never-replay",
+            "sqlite-after_mutation-never-replay",
+            "sqlite-after_observation-never-replay",
+            "sqlite-race-cancel-cancel",
+            "sqlite-race-cancel-admit",
+            "sqlite-race-rebind-cancel",
+            "sqlite-race-rebind-rebind",
+            "sqlite-race-rebind-admit",
+            "sqlite-crash-before_rebind",
+            "sqlite-crash-after_rebind",
+            "sqlite-crash-before_cancel",
+            "sqlite-crash-after_cancel",
+            "sqlite-crash-before_selection",
+            "sqlite-crash-after_selection",
+            "sqlite-invalid-registration",
+            "sqlite-invalid-plan",
+            "sqlite-invalid-target",
+            "sqlite-invalid-authority",
+            "sqlite-invalid-configuration",
+            "sqlite-invalid-environment",
+            "sqlite-invalid-preservation",
+            "sqlite-final-revalidation",
+            "sqlite-expiry-after-rebind",
+            "sqlite-live-prefix-uncertainty-blocks",
+            "sqlite-orphan-claim-blocks",
+            "sqlite-pre-C-cursor-cannot-select-D",
+            "sqlite-retained-evidence-required",
+            "sqlite-expire-after-admission",
+            "sqlite-registration-after-admission",
+            "sqlite-state-revision",
+            "sqlite-state-journal",
+            "sqlite-state-allowed-actions",
+            "sqlite-state-effect-state",
+            "sqlite-state-parent-attempt",
+            "sqlite-parent-replay-denied",
+            "actual-old-reader-refuses-lifecycle",
+            "sqlite-authority-over-json-mirror",
+            "sqlite-two-fresh-controllers-one-admission",
+            "git-independent-C-D-lifecycles",
+            "git-expiry-explicit-rebind-same-attempt",
+            "git-cancel-retained-replacement-explicit",
+            "git-after_admission-never-replay",
+            "git-after_mutation-never-replay",
+            "git-after_observation-never-replay",
+            "git-race-cancel-cancel",
+            "git-race-cancel-admit",
+            "git-race-rebind-cancel",
+            "git-race-rebind-rebind",
+            "git-race-rebind-admit",
+            "git-crash-before_rebind",
+            "git-crash-after_rebind",
+            "git-crash-before_cancel",
+            "git-crash-after_cancel",
+            "git-crash-before_selection",
+            "git-crash-after_selection",
+            "git-invalid-registration",
+            "git-invalid-plan",
+            "git-invalid-target",
+            "git-invalid-authority",
+            "git-invalid-configuration",
+            "git-invalid-environment",
+            "git-invalid-preservation",
+            "git-final-revalidation",
+            "git-expiry-after-rebind",
+            "git-live-prefix-uncertainty-blocks",
+            "git-orphan-claim-blocks",
+            "git-pre-C-cursor-cannot-select-D",
+            "git-retained-evidence-required",
+            "git-expire-after-admission",
+            "git-registration-after-admission",
+            "git-state-revision",
+            "git-state-journal",
+            "git-state-allowed-actions",
+            "git-state-effect-state",
+            "git-state-parent-attempt",
+            "git-parent-replay-denied",
+            "git-two-fresh-controllers-one-admission"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "state_store_sqlite",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/state_store_sqlite.log",
+        "bytes": 347,
+        "sha256": "f9c876bbe212375581483fb4ab8e1355c75164f913b6deb52f0b8574dbfccd25"
+      },
+      "tests": [
+        "Tests: 1 total, 1 passed, 0 failed"
+      ],
+      "results": []
+    },
+    {
+      "name": "static_policy_contracts",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/static_policy_contracts.log",
+        "bytes": 24,
+        "sha256": "aff3a294b3f850a0828afeec57eee807cbe2b7c54437a9a8f83298dbc0baa2b5"
+      },
+      "tests": [],
+      "results": [
+        {
+          "checks": 14,
+          "ok": true
+        }
+      ]
+    },
+    {
+      "name": "static_policy_edges",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/static_policy_edges.log",
+        "bytes": 198,
+        "sha256": "ae6c237945100ca581b9f07bf448b8e0398aa7bdbf06196edc47038a91562aa1"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "checks": 2,
+          "scenarios": [
+            "failed entry without group completion",
+            "closed terminal outcome predicate"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "static_policy_integration",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/static_policy_integration.log",
+        "bytes": 1669,
+        "sha256": "e0189a21d2e322c41ad3b6369e0acba14c4a47e72a5288b0853dce3dc829e754"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "checks": 13,
+          "scenarios": [
+            "unfinalized Eval cannot activate pass",
+            "stale assessment and scheduling without activation reject pass",
+            "only selected path independently admitted pass",
+            "alternate later evaluation cannot flap consumed branch pass",
+            "conditional join and outcome omit inactive without success pass",
+            "unfinalized Eval cannot activate fail",
+            "stale assessment and scheduling without activation reject fail",
+            "only selected path independently admitted fail",
+            "alternate later evaluation cannot flap consumed branch fail",
+            "repair is new R execution and new E2 judgment, never retry A",
+            "conditional join and outcome omit inactive without success fail",
+            "authorized human approve_override routes without direct execution or rewritten decision",
+            "authorized human abort routes without direct execution or rewritten decision"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "static_policy_recovery",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/static_policy_recovery.log",
+        "bytes": 1484,
+        "sha256": "0b492c556bfb3f215622973153fd2b2cfd5fbffd2b07427180a2b8dc44941264"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "checks": 9,
+          "scenarios": [
+            "condition fact and crash before activation do not let recovery invent a path",
+            "two fresh controllers publish exactly one branch activation",
+            "consumed downstream attempt cannot retry or change branch after crash",
+            "lost selected effect reply stays consumed; independent SQLite verification resolves it without retry",
+            "branch after_branch retains exact path without continuation",
+            "branch immutable retains exact path without continuation",
+            "fresh subgraph finalizers race for one receipt; parent then binds it",
+            "subgraph after_subgraph survives exact recovery without implied parent execution",
+            "subgraph immutable survives exact recovery without implied parent execution"
+          ],
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-jDigBD"
+        }
+      ]
+    },
+    {
+      "name": "static_policy_vectors",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/static_policy_vectors.log",
+        "bytes": 41,
+        "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203"
+      },
+      "tests": [],
+      "results": [
+        {
+          "checker": "kujo",
+          "ok": true,
+          "vectors": 7
+        }
+      ]
+    },
+    {
+      "name": "static_subgraph_integration",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/static_subgraph_integration.log",
+        "bytes": 1738,
+        "sha256": "e7f6981ba29f752db04d7411bdfe1cd47d76321bc247ff2b33687d84c5790e86"
+      },
+      "tests": [],
+      "results": [
+        {
+          "ok": true,
+          "checks": 12,
+          "scenarios": [
+            "all internal facts without subgraph terminal event block parent",
+            "recovery cannot invent subgraph completion",
+            "parent binds exact subgraph receipt and output without copying internal terminal list",
+            "subgraph provenance and independent parent execution survive graph finalization",
+            "budget exhaustion blocks new dispatch but permits consumed A resolution",
+            "budget ceiling cannot be raised through a mutable workflow",
+            "anchored budget mutation rejects after run start",
+            "explicit failure-review strategy requires new authorized decision and preserves denial",
+            "required terminal rejection follows explicit fail policy",
+            "required terminal rejection follows explicit block policy",
+            "fanout optional rejection remains history while required siblings succeed",
+            "failed subgraph terminal seals unfinished unconsumed members and blocks parent"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "typescript_after",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/typescript_after.log",
+        "bytes": 542,
+        "sha256": "4bb74cc3f619e95def06ba8810630a89a861aa7360d781e1307454e2a3da6daa"
+      },
+      "tests": [],
+      "results": [
+        {
+          "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/tmp/typescript-1790737789321",
+          "package_substitution_denials": 3,
+          "installed_package": false,
+          "artifact_tamper_denials": 2,
+          "historical_bytes_unchanged": true,
+          "ok": true,
+          "boundary": "after_commit",
+          "native_generic": true,
+          "actual_sigkill": true,
+          "controller_restart": true,
+          "participant_restart": true,
+          "checkpoint": true,
+          "logical_effects": 1,
+          "concurrency": {
+            "contenders": 4,
+            "admitted": 1,
+            "denied": 3
+          },
+          "negative_correlations": 15,
+          "trust_denials": 13,
+          "no_new_reader": true,
+          "privacy": true
+        }
+      ]
+    },
+    {
+      "name": "typescript_before",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/typescript_before.log",
+        "bytes": 543,
+        "sha256": "35551c60df9454ec6a3d071a81fa09a4026e1c80064ca5644d6dc4cbe6288384"
+      },
+      "tests": [],
+      "results": [
+        {
+          "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/tmp/typescript-1790737819454",
+          "package_substitution_denials": 3,
+          "installed_package": false,
+          "artifact_tamper_denials": 2,
+          "historical_bytes_unchanged": true,
+          "ok": true,
+          "boundary": "before_commit",
+          "native_generic": true,
+          "actual_sigkill": true,
+          "controller_restart": true,
+          "participant_restart": true,
+          "checkpoint": true,
+          "logical_effects": 1,
+          "concurrency": {
+            "contenders": 4,
+            "admitted": 1,
+            "denied": 3
+          },
+          "negative_correlations": 15,
+          "trust_denials": 13,
+          "no_new_reader": true,
+          "privacy": true
+        }
+      ]
+    },
+    {
+      "name": "typescript_build",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/typescript_build.log",
+        "bytes": 221,
+        "sha256": "24158393e216186de823227cee0b3fad00cb08ca917a14338081aabd72a69373"
+      },
+      "tests": [],
+      "results": []
+    },
+    {
+      "name": "typescript_package",
+      "evidence": {
+        "path": "/tmp/dispatch-branches-evidence/canonical-suite-logs/typescript_package.log",
+        "bytes": 20159,
+        "sha256": "a2339528882003cb7d105353be3f79d26cb9dc74e9830356f1d5af0d0635f92e"
+      },
+      "tests": [],
+      "results": []
+    }
+  ],
+  "canonical_summary": [
+    "Shard 16/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_16.kujo",
+    "dispatch-16 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-16.log",
+    "Shard 17/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_17.kujo",
+    "dispatch-17 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-17.log",
+    "Shard 18/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_18.kujo",
+    "dispatch-18 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-18.log",
+    "Shard 19/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_19.kujo",
+    "dispatch-19 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-19.log",
+    "Shard 20/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_20.kujo",
+    "dispatch-20 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-20.log",
+    "Shard 21/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_21.kujo",
+    "dispatch-21 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-21.log",
+    "Shard 22/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_22.kujo",
+    "dispatch-22 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-22.log",
+    "Shard 23/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_23.kujo",
+    "dispatch-23 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-23.log",
+    "Shard 24/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_24.kujo",
+    "dispatch-24 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-24.log",
+    "",
+    "Running command-surface smoke...",
+    "",
+    "Running bounded release workload evidence...",
+    "Dispatch v1.1 evidence passed: 3/3 runs in 11s",
+    "Evidence: tests/tmp/v1.1-evidence/evidence.json",
+    "Dispatch release gate passed."
+  ],
+  "focused_counts": {
+    "contracts": 14,
+    "branches": 13,
+    "subgraphs": 12,
+    "recovery": 9,
+    "edges": 2,
+    "portable_vectors": 7,
+    "cross_language_conformance_checks": 148,
+    "go_mcp": 5,
+    "malformed": 9
+  },
+  "baseline_counts": {
+    "heterogeneous_contracts": 10,
+    "node_contracts": 12,
+    "heterogeneous_policy": 7,
+    "failure": 20,
+    "review": 4,
+    "routing": 31
+  },
+  "kujo_counts": {
+    "passed": 13,
+    "failed": 0,
+    "ignored": 2
+  },
+  "skips": [
+    "Existing Kujo actual_cross_component_failure_evidence_conforms and actual_workspace_reexecution_artifacts_match_shared_schemas integration tests remain ignored by repository policy.",
+    "Related repositories unchanged; their standalone gates not rerun. Dispatch exercises real Workcell/Eval integrations.",
+    "No same-node retry implementation: immutable attempt-one binding and permanent claims require a separate retirement/rebinding contract."
+  ],
+  "warnings": [
+    "Existing tiny_http unused SequentialWriter import and MustBeShareDummy warnings; no suppression."
+  ],
+  "development_corrections": [
+    "Fixture workflow name and unsupported nested assignment corrected without changing runtime.",
+    "Native JSON schema does not support uniqueItems; Dispatch validator enforces uniqueness with negative coverage.",
+    "Numeric contains predicate converted to explicit boolean in test.",
+    "Recovery inventory now recognizes policy event artifact ownership; retained actor evidence no longer misclassified as unrelated orphan.",
+    "Lost-effect reply test corrected to independently verify observation before refresh/finalization; safety rejection preserved.",
+    "Required failed entry may fail graph without inventing unentered subgraph completion.",
+    "Cross-subgraph dependencies and data references require explicit receipt; finalized group seals unfinished unconsumed members."
+  ],
+  "development_commands": {
+    "dev-branch-*": "KUJO_BIN=../kujo/target/release/kujo node tests/static_policy_integration.mjs",
+    "dev-subgraph-*": "KUJO_BIN=../kujo/target/release/kujo node tests/static_subgraph_integration.mjs",
+    "dev-recovery-*": "KUJO_BIN=../kujo/target/release/kujo node tests/static_policy_recovery.mjs",
+    "dev-entry-*": "KUJO_BIN=../kujo/target/release/kujo node tests/static_policy_edges.mjs",
+    "dev-policy-contracts-* and dev-boundary-contract-*": "../kujo/target/release/kujo run tests/static_policy_contract_tests.kujo"
+  },
+  "development_exit_records": {
+    "dev-entry-1.exit": "1",
+    "dev-recovery-3.exit": "0",
+    "dev-branch-1.exit": "0",
+    "dev-recovery-2.exit": "1",
+    "dev-subgraph-2.exit": "0",
+    "dev-subgraph-1.exit": "0",
+    "dev-recovery-1.exit": "1",
+    "dev-branch-2.exit": "0"
+  },
+  "source_hashes": [
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/docs/audits/static-graph-policy.md",
+      "bytes": 6259,
+      "sha256": "106e369f2d9fb35e8b82c21c895c6dd337145bc1557a834e9392d18bbdbcd917"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/docs/contracts/static-graph-policy/crash-matrix.md",
+      "bytes": 3663,
+      "sha256": "f44d285de0c08438045cc9d977cbb8dae38caaa72c7a4e8dab1eb474b27a4b4d"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/docs/contracts/static-graph-policy/decision.md",
+      "bytes": 3719,
+      "sha256": "5b18c164b961bbeeb6f997982261b4479e25e93beecbebaa788d9e8a7b0e4164"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/docs/contracts/static-graph-policy/protocol.md",
+      "bytes": 6808,
+      "sha256": "75539688b9e15cdec2f041c35d532294a17350ad29870216b919640ae642e89e"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/schemas/node-input-binding-v1alpha3.schema.json",
+      "bytes": 6360,
+      "sha256": "ade7f5ee4d3f863491e762ce25366d4df71112e4e71157c40311a1185b96c251"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/schemas/static-graph-policy-v1alpha1.schema.json",
+      "bytes": 3367,
+      "sha256": "0c5d3af3c0be4a8695691ceb476b15f68c0c5946df58a1e220ed9880f342136b"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/scripts/run_release_gate.sh",
+      "bytes": 11148,
+      "sha256": "72fce551db56aa0ddc4346922775c92fe20b59737ef4f67713c5a34618194167"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/src/core/assurance_state.kujo",
+      "bytes": 7901,
+      "sha256": "7bce1f523ac1077b807348c1885acfe015c8cc277bbfa462d360326109317cf7"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/src/core/graph_outcome.kujo",
+      "bytes": 18696,
+      "sha256": "7a6b6f52df950f6588b4ec004dc7f2b47a06c0731af7c74cfa6320fe319453c2"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/src/core/graph_policy.kujo",
+      "bytes": 13206,
+      "sha256": "6f8552101113a3313d745bd0882d4d0e9b35ff96b7b8a8481ca46ca3feb827bb"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/src/core/graph_policy_operation.kujo",
+      "bytes": 5757,
+      "sha256": "24f205bd39076b910393e3be1ec2635f4c3fc01eb4dc3d0b96e52a4f28e72af1"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/src/core/graph_transition.kujo",
+      "bytes": 5099,
+      "sha256": "8123ce967fdb0fbf625c18fad25710b16e123fc545897a32feae129c0a24c27e"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/src/core/node_composition.kujo",
+      "bytes": 23259,
+      "sha256": "7ecec7293ef3011694faf20cd57056089bbcf0fe4a0da97546c1af85393aa246"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/src/core/node_transition.kujo",
+      "bytes": 9473,
+      "sha256": "f612bcbd4bbf5a1aa997e4048a0a04a5ba25399a3a71d677f0dd833b5130f583"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/src/core/retained_recovery.kujo",
+      "bytes": 23919,
+      "sha256": "7906f710bf62b9fa987cc665cc26e5e6a598fc7e52e9ff37d749f6dd0ddd9a7b"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/src/core/runner.kujo",
+      "bytes": 105055,
+      "sha256": "f5f3787be11fbf5454672e3f819657703a2f52880563d3cdb8a78bfa16e22b47"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/go_participant_conformance.mjs",
+      "bytes": 4638,
+      "sha256": "92a6658fbf0524bca54de7ab829e5fe38922dbe63fed1857fb667129981f90c9"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/node_composition_fixture.kujo",
+      "bytes": 20552,
+      "sha256": "d91dea858f0a7505eda2c869d24ba3710cf3a21d6d08cbf96f43c2cf7a6e3760"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/static_policy_contract_tests.kujo",
+      "bytes": 3873,
+      "sha256": "f97b8d81216247ea2f5461804fba75d294e06d0354ef8695c63f0f640923aac9"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/static_policy_edges.mjs",
+      "bytes": 1367,
+      "sha256": "c787a16e15b2c61198c05c06d611cd14d918d9390fb4718c377b566d97e7f340"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/static_policy_helpers.mjs",
+      "bytes": 1001,
+      "sha256": "0458977cd73152b04baab6b955bd386d7a3b50a150df1f7096f75637bb914c8a"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/static_policy_integration.mjs",
+      "bytes": 5141,
+      "sha256": "53823ff2036c03b1dc4a1c6db995d44c62ce840ec3ab58535605679fc3eae952"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/static_policy_recovery.mjs",
+      "bytes": 8455,
+      "sha256": "6c5a482c497c8579e0f454e66ea556859f8c87780f83e5375fc17e1e919aa60e"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/static_subgraph_integration.mjs",
+      "bytes": 6014,
+      "sha256": "017b16932e446e92a06c694ffd044f11c6c46d300fa864cbebd3fd436d4b79ff"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/vectors/static-graph-policy.json",
+      "bytes": 16706,
+      "sha256": "5476fb367f722387795a1656c3051ca2a09df07cdb2740fd7f907e9c51085612"
+    }
+  ],
+  "lockfiles": [
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/interop/typescript-participant/package-lock.json",
+      "bytes": 3709,
+      "sha256": "9c1929290f3aca19ffbf8987990cb04d18ff8670f1aebcfe3b29f0d38ca0e0c1"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/interop/python-participant/requirements.lock",
+      "bytes": 10330,
+      "sha256": "0826520f9fd33a5619053051fd8d32af49f654927a2dd867f53ee9912ae5e556"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/interop/go-participant/go.mod",
+      "bytes": 49,
+      "sha256": "3e9b4846ad65b6f228a3fd4449d637039750df9075bcc967105b1099ae405e29"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/Cargo.lock",
+      "bytes": 161510,
+      "sha256": "26061df9462d1648acc59ce38380ab34bdc3253ad4c66008f125c7793dcdc7ac"
+    }
+  ],
+  "committed_evidence": [
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/docs/evidence/static-graph-policy/baseline.txt",
+      "bytes": 5836,
+      "sha256": "11334009e83d321bde87c262435ab08b0da97f05627361f485caba684f3f7b20"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/docs/evidence/static-graph-policy/canonical.txt",
+      "bytes": 13244,
+      "sha256": "872671b31ac6d2f177223f9858f0acfd41c90fa95657af7f6df76a585eb0ac94"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/docs/evidence/static-graph-policy/development.txt",
+      "bytes": 11434,
+      "sha256": "69ec6f2e3228c4b0566e22624d064205e5e5b665eec3f3e1020d55d1e85896b1"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/docs/evidence/static-graph-policy/focused.txt",
+      "bytes": 5572,
+      "sha256": "26ec06a747958ccd4eefa6f19d589e197f4785ae1971074e508166a9eca938eb"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/docs/evidence/static-graph-policy/kujo-checks.txt",
+      "bytes": 3347,
+      "sha256": "20a66e5053976382061385ac7c66602eb18a3370ca95a36d64a2913e7ee30c93"
+    }
+  ],
+  "publication": "Evidence-only commit follows tested source; exact pushed heads and retrieval-verified Strata ID in completion.json and consolidated handoff.",
+  "scope": "Static trusted retained host; existing DAG and authority only. No dynamic/distributed scheduling, remote trust, machine-loss recovery, mixed profiles, compensation, exactly-once, rollback, public SDK or new syntax.",
+  "canonical_counts": {
+    "suite_groups": 98,
+    "native_source_tests": 101,
+    "native_suite_tests_total": 210,
+    "native_suite_tests_passed": 210,
+    "native_suite_tests_failed": 0,
+    "workload_runs_passed": 3,
+    "workload_runs_total": 3,
+    "exit_code": 0
+  },
+  "baseline_scope": "Fresh focused baseline suites ran before source edits. Broader unchanged-source baseline is the preceding full canonical evidence in docs/evidence/heterogeneous-nodes/validation.json at starting main; all broader suites were rerun in this final full canonical gate.",
+  "workload_evidence": {
+    "path": "/tmp/dispatch-branches-evidence/workload-evidence.json",
+    "sha256": "716ae53a11a34f09cd2dc4a726e9b3ad557ab16fb6dbe426f9c6d9904588bccc",
+    "result": {
+      "schema_version": "1.0",
+      "dispatch_commit": "e8953f17c7f9e543e0f3fd3f43ca53a45ede3e2d",
+      "fixture": true,
+      "requested_runs": 3,
+      "completed_runs": 3,
+      "duration_seconds": 11,
+      "generated_at_epoch": 1790738865
+    }
+  },
+  "canonical_warning_lines": [
+    "typescript_package.log: \u2139 skipped 0",
+    "control_boundary.log:   \u2713 evaluation warning can continue (1386ms)",
+    "dispatch-4.log:   \u2713 optional tool step is skipped instead of failing the run when denied by policy (13824ms)"
+  ],
+  "evidence_preparation_corrections": [
+    "A transient aggregation TypeError attempted dictionary assignment on the publication string before writing the manifest. Corrected aggregation; native counts verified from canonical log: 101 source/sharded tests, 210 total native tests across 35 native groups, all passed. This did not alter source or rerun/suppress tests."
+  ],
+  "environmental_failures": []
+}

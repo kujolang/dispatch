@@ -1,0 +1,178 @@
+=== dev-boundary-contract-1.log ===
+[KUJOVM001] [vm] Runtime Error: static_policy_contract_failed
+  --> 0:0
+
+Call stack:
+  0 at need
+
+
+=== dev-branch-1.log ===
+PASS unfinalized Eval cannot activate pass
+PASS stale assessment and scheduling without activation reject pass
+PASS only selected path independently admitted pass
+PASS alternate later evaluation cannot flap consumed branch pass
+PASS conditional join and outcome omit inactive without success pass
+PASS unfinalized Eval cannot activate fail
+PASS stale assessment and scheduling without activation reject fail
+PASS only selected path independently admitted fail
+PASS alternate later evaluation cannot flap consumed branch fail
+PASS repair is new R execution and new E2 judgment, never retry A
+PASS conditional join and outcome omit inactive without success fail
+PASS authorized human approve_override routes without direct execution or rewritten decision
+PASS authorized human abort routes without direct execution or rewritten decision
+{"ok":true,"checks":13,"scenarios":["unfinalized Eval cannot activate pass","stale assessment and scheduling without activation reject pass","only selected path independently admitted pass","alternate later evaluation cannot flap consumed branch pass","conditional join and outcome omit inactive without success pass","unfinalized Eval cannot activate fail","stale assessment and scheduling without activation reject fail","only selected path independently admitted fail","alternate later evaluation cannot flap consumed branch fail","repair is new R execution and new E2 judgment, never retry A","conditional join and outcome omit inactive without success fail","authorized human approve_override routes without direct execution or rewritten decision","authorized human abort routes without direct execution or rewritten decision"]}
+
+=== dev-branch-2.log ===
+PASS unfinalized Eval cannot activate pass
+PASS stale assessment and scheduling without activation reject pass
+PASS only selected path independently admitted pass
+PASS alternate later evaluation cannot flap consumed branch pass
+PASS conditional join and outcome omit inactive without success pass
+PASS unfinalized Eval cannot activate fail
+PASS stale assessment and scheduling without activation reject fail
+PASS only selected path independently admitted fail
+PASS alternate later evaluation cannot flap consumed branch fail
+PASS repair is new R execution and new E2 judgment, never retry A
+PASS conditional join and outcome omit inactive without success fail
+PASS authorized human approve_override routes without direct execution or rewritten decision
+PASS authorized human abort routes without direct execution or rewritten decision
+{"ok":true,"checks":13,"scenarios":["unfinalized Eval cannot activate pass","stale assessment and scheduling without activation reject pass","only selected path independently admitted pass","alternate later evaluation cannot flap consumed branch pass","conditional join and outcome omit inactive without success pass","unfinalized Eval cannot activate fail","stale assessment and scheduling without activation reject fail","only selected path independently admitted fail","alternate later evaluation cannot flap consumed branch fail","repair is new R execution and new E2 judgment, never retry A","conditional join and outcome omit inactive without success fail","authorized human approve_override routes without direct execution or rewritten decision","authorized human abort routes without direct execution or rewritten decision"]}
+
+=== dev-contracts.log ===
+{"checks":10,"ok":true}
+
+=== dev-entry-1.log ===
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'blocked'
+- 'failed'
+
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/static_policy_edges.mjs:2:263
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'blocked',
+  expected: 'failed',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+=== dev-policy-contracts-1.log ===
+[KUJOVM001] [vm] Runtime Error: Missing map key: "name"
+  --> 0:0
+
+Call stack:
+  0 at base
+
+
+=== dev-policy-contracts-2.log ===
+[KUJOVM001] [vm] Runtime Error: Stack underflow
+  --> 0:0
+
+
+=== dev-policy-contracts-3.log ===
+{"checks":11,"ok":true}
+
+=== dev-recovery-1.log ===
+PASS condition fact and crash before activation do not let recovery invent a path
+PASS two fresh controllers publish exactly one branch activation
+PASS consumed downstream attempt cannot retry or change branch after crash
+PASS branch after_branch retains exact path without continuation
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(p.plan.repairs.length)
+
+    at repair (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/static_policy_recovery.mjs:7:125)
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/static_policy_recovery.mjs:14:434 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 0,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+=== dev-recovery-2.log ===
+PASS condition fact and crash before activation do not let recovery invent a path
+PASS two fresh controllers publish exactly one branch activation
+PASS consumed downstream attempt cannot retry or change branch after crash
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"authority":"informational","ok":false,"reason":"Error { line: 0, message: sequential_effect_denied, stack: [<function with 4 params>, facts, finalization_effect_facts, require] }","status":"not_eligible"}
+
+false !== true
+
+    at finalize (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/node_composition_helpers.mjs:20:122)
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-graph-policy/tests/static_policy_recovery.mjs:14:819 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+=== dev-recovery-3.log ===
+PASS condition fact and crash before activation do not let recovery invent a path
+PASS two fresh controllers publish exactly one branch activation
+PASS consumed downstream attempt cannot retry or change branch after crash
+PASS lost selected effect reply stays consumed; independent SQLite verification resolves it without retry
+PASS branch after_branch retains exact path without continuation
+PASS branch immutable retains exact path without continuation
+PASS fresh subgraph finalizers race for one receipt; parent then binds it
+PASS subgraph after_subgraph survives exact recovery without implied parent execution
+PASS subgraph immutable survives exact recovery without implied parent execution
+{"ok":true,"checks":9,"scenarios":["condition fact and crash before activation do not let recovery invent a path","two fresh controllers publish exactly one branch activation","consumed downstream attempt cannot retry or change branch after crash","lost selected effect reply stays consumed; independent SQLite verification resolves it without retry","branch after_branch retains exact path without continuation","branch immutable retains exact path without continuation","fresh subgraph finalizers race for one receipt; parent then binds it","subgraph after_subgraph survives exact recovery without implied parent execution","subgraph immutable survives exact recovery without implied parent execution"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-BXlkiB"}
+
+=== dev-schema-1.log ===
+[KUJOVM001] [vm] Runtime Error: json_schema_validate() unsupported schema keyword 'uniqueItems'
+  --> 0:0
+
+
+=== dev-subgraph-1.log ===
+PASS all internal facts without subgraph terminal event block parent
+PASS recovery cannot invent subgraph completion
+PASS parent binds exact subgraph receipt and output without copying internal terminal list
+PASS subgraph provenance and independent parent execution survive graph finalization
+PASS budget exhaustion blocks new dispatch but permits consumed A resolution
+PASS budget ceiling cannot be raised through a mutable workflow
+PASS anchored budget mutation rejects after run start
+PASS explicit failure-review strategy requires new authorized decision and preserves denial
+PASS required terminal rejection follows explicit fail policy
+PASS required terminal rejection follows explicit block policy
+PASS fanout optional rejection remains history while required siblings succeed
+{"ok":true,"checks":11,"scenarios":["all internal facts without subgraph terminal event block parent","recovery cannot invent subgraph completion","parent binds exact subgraph receipt and output without copying internal terminal list","subgraph provenance and independent parent execution survive graph finalization","budget exhaustion blocks new dispatch but permits consumed A resolution","budget ceiling cannot be raised through a mutable workflow","anchored budget mutation rejects after run start","explicit failure-review strategy requires new authorized decision and preserves denial","required terminal rejection follows explicit fail policy","required terminal rejection follows explicit block policy","fanout optional rejection remains history while required siblings succeed"]}
+
+=== dev-subgraph-2.log ===
+PASS all internal facts without subgraph terminal event block parent
+PASS recovery cannot invent subgraph completion
+PASS parent binds exact subgraph receipt and output without copying internal terminal list
+PASS subgraph provenance and independent parent execution survive graph finalization
+PASS budget exhaustion blocks new dispatch but permits consumed A resolution
+PASS budget ceiling cannot be raised through a mutable workflow
+PASS anchored budget mutation rejects after run start
+PASS explicit failure-review strategy requires new authorized decision and preserves denial
+PASS required terminal rejection follows explicit fail policy
+PASS required terminal rejection follows explicit block policy
+PASS fanout optional rejection remains history while required siblings succeed
+PASS failed subgraph terminal seals unfinished unconsumed members and blocks parent
+{"ok":true,"checks":12,"scenarios":["all internal facts without subgraph terminal event block parent","recovery cannot invent subgraph completion","parent binds exact subgraph receipt and output without copying internal terminal list","subgraph provenance and independent parent execution survive graph finalization","budget exhaustion blocks new dispatch but permits consumed A resolution","budget ceiling cannot be raised through a mutable workflow","anchored budget mutation rejects after run start","explicit failure-review strategy requires new authorized decision and preserves denial","required terminal rejection follows explicit fail policy","required terminal rejection follows explicit block policy","fanout optional rejection remains history while required siblings succeed","failed subgraph terminal seals unfinished unconsumed members and blocks parent"]}

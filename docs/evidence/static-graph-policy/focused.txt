@@ -1,0 +1,55 @@
+=== focused-branches.log ===
+PASS unfinalized Eval cannot activate pass
+PASS stale assessment and scheduling without activation reject pass
+PASS only selected path independently admitted pass
+PASS alternate later evaluation cannot flap consumed branch pass
+PASS conditional join and outcome omit inactive without success pass
+PASS unfinalized Eval cannot activate fail
+PASS stale assessment and scheduling without activation reject fail
+PASS only selected path independently admitted fail
+PASS alternate later evaluation cannot flap consumed branch fail
+PASS repair is new R execution and new E2 judgment, never retry A
+PASS conditional join and outcome omit inactive without success fail
+PASS authorized human approve_override routes without direct execution or rewritten decision
+PASS authorized human abort routes without direct execution or rewritten decision
+{"ok":true,"checks":13,"scenarios":["unfinalized Eval cannot activate pass","stale assessment and scheduling without activation reject pass","only selected path independently admitted pass","alternate later evaluation cannot flap consumed branch pass","conditional join and outcome omit inactive without success pass","unfinalized Eval cannot activate fail","stale assessment and scheduling without activation reject fail","only selected path independently admitted fail","alternate later evaluation cannot flap consumed branch fail","repair is new R execution and new E2 judgment, never retry A","conditional join and outcome omit inactive without success fail","authorized human approve_override routes without direct execution or rewritten decision","authorized human abort routes without direct execution or rewritten decision"]}
+
+=== focused-contracts.log ===
+{"checks":14,"ok":true}
+
+=== focused-edges.log ===
+PASS failed entry permits graph failure without inventing unentered group completion
+{"ok":true,"checks":2,"scenarios":["failed entry without group completion","closed terminal outcome predicate"]}
+
+=== focused-portable-kujo.log ===
+{"checker":"kujo","ok":true,"vectors":7}
+
+=== focused-portable.log ===
+{"ok":true,"checks":148,"mcpChecks":5,"malformedChecks":9,"wireSHA256":"f87fd01de248eca96c685282b3ead0a95578f77f6c597f598fc9d587f0bec262","independence":"Go standard library; CLI and MCP share one codec"}
+
+=== focused-recovery.log ===
+PASS condition fact and crash before activation do not let recovery invent a path
+PASS two fresh controllers publish exactly one branch activation
+PASS consumed downstream attempt cannot retry or change branch after crash
+PASS lost selected effect reply stays consumed; independent SQLite verification resolves it without retry
+PASS branch after_branch retains exact path without continuation
+PASS branch immutable retains exact path without continuation
+PASS fresh subgraph finalizers race for one receipt; parent then binds it
+PASS subgraph after_subgraph survives exact recovery without implied parent execution
+PASS subgraph immutable survives exact recovery without implied parent execution
+{"ok":true,"checks":9,"scenarios":["condition fact and crash before activation do not let recovery invent a path","two fresh controllers publish exactly one branch activation","consumed downstream attempt cannot retry or change branch after crash","lost selected effect reply stays consumed; independent SQLite verification resolves it without retry","branch after_branch retains exact path without continuation","branch immutable retains exact path without continuation","fresh subgraph finalizers race for one receipt; parent then binds it","subgraph after_subgraph survives exact recovery without implied parent execution","subgraph immutable survives exact recovery without implied parent execution"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-uNYb7b"}
+
+=== focused-subgraphs.log ===
+PASS all internal facts without subgraph terminal event block parent
+PASS recovery cannot invent subgraph completion
+PASS parent binds exact subgraph receipt and output without copying internal terminal list
+PASS subgraph provenance and independent parent execution survive graph finalization
+PASS budget exhaustion blocks new dispatch but permits consumed A resolution
+PASS budget ceiling cannot be raised through a mutable workflow
+PASS anchored budget mutation rejects after run start
+PASS explicit failure-review strategy requires new authorized decision and preserves denial
+PASS required terminal rejection follows explicit fail policy
+PASS required terminal rejection follows explicit block policy
+PASS fanout optional rejection remains history while required siblings succeed
+PASS failed subgraph terminal seals unfinished unconsumed members and blocks parent
+{"ok":true,"checks":12,"scenarios":["all internal facts without subgraph terminal event block parent","recovery cannot invent subgraph completion","parent binds exact subgraph receipt and output without copying internal terminal list","subgraph provenance and independent parent execution survive graph finalization","budget exhaustion blocks new dispatch but permits consumed A resolution","budget ceiling cannot be raised through a mutable workflow","anchored budget mutation rejects after run start","explicit failure-review strategy requires new authorized decision and preserves denial","required terminal rejection follows explicit fail policy","required terminal rejection follows explicit block policy","fanout optional rejection remains history while required siblings succeed","failed subgraph terminal seals unfinished unconsumed members and blocks parent"]}

@@ -1,0 +1,74 @@
+=== kujo-build.log ===
+warning: unused import: `SequentialWriter`
+ --> vendor/tiny_http-0.12.0/src/util/mod.rs:7:28
+  |
+7 | pub use self::sequential::{SequentialWriter, SequentialWriterBuilder};
+  |                            ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: trait `MustBeShareDummy` is never used
+   --> vendor/tiny_http-0.12.0/src/lib.rs:164:7
+    |
+164 | trait MustBeShareDummy: Sync + Send {}
+    |       ^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 1.99s
+
+=== kujo-contracts.log ===
+warning: unused import: `SequentialWriter`
+ --> vendor/tiny_http-0.12.0/src/util/mod.rs:7:28
+  |
+7 | pub use self::sequential::{SequentialWriter, SequentialWriterBuilder};
+  |                            ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: trait `MustBeShareDummy` is never used
+   --> vendor/tiny_http-0.12.0/src/lib.rs:164:7
+    |
+164 | trait MustBeShareDummy: Sync + Send {}
+    |       ^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.87s
+     Running tests/architecture_docs_contract.rs (target/debug/deps/architecture_docs_contract-443e08dea44773f3)
+
+running 1 test
+test architecture_doc_matches_current_runtime_posture ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/readme_contracts.rs (target/debug/deps/readme_contracts-edc805e2be7fad5e)
+
+running 1 test
+test readme_covers_v1_status_cli_security_and_core_reference_links ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/workflow_control_contracts.rs (target/debug/deps/workflow_control_contracts-73623a130e66a84a)
+
+running 13 tests
+test actual_cross_component_failure_evidence_conforms ... ignored, requires the local Dispatch failure-gate golden-path handoff
+test actual_workspace_reexecution_artifacts_match_shared_schemas ... ignored, requires Dispatch tests/reexecution_lifecycle_fixture.kujo output
+test control_contracts_keep_secrets_as_references ... ok
+test workflow_control_schema_ids_and_contract_constants_are_unique ... ok
+test intervention_availability_is_additive_and_typed ... ok
+test evaluation_result_cannot_issue_workflow_control_action ... ok
+test oversized_evidence_and_invalid_effect_enums_are_rejected ... ok
+test portable_control_event_is_bounded_and_versioned ... ok
+test error_verdict_and_reexecution_modes_have_explicit_semantics ... ok
+test embedded_evidence_has_the_same_integrity_requirements_as_standalone ... ok
+test workflow_control_valid_fixtures_conform ... ok
+test workflow_control_rejects_missing_fields_bad_versions_and_bounds ... ok
+test producer_neutral_evaluations_preserve_error_and_rule_facts ... ok
+
+test result: ok. 11 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+
+=== kujo-fmt.log ===

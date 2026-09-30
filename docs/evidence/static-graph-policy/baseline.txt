@@ -1,0 +1,106 @@
+=== baseline-contracts.log ===
+{"checks":10,"ok":true}
+
+=== baseline-failure.log ===
+
+============================================================
+Test Results
+============================================================
+  ✓ submitted idempotency key does not authorize replay (56ms)
+  ✓ observed unknown partial effects override a pure configuration (55ms)
+  ✓ sink enforced idempotency needs an evidence reference (58ms)
+  ✓ destroyed workspace cannot be retried in place (65ms)
+  ✓ retained filesystem permits a declared same workspace adapter (69ms)
+  ✓ an evaluator decision cannot target an unrelated action (66ms)
+  ✓ terminal states reject continuation (104ms)
+  ✓ evaluation crash is indeterminate rather than failed quality (69ms)
+  ✓ negative checks and unknown contract versions fail closed (62ms)
+  ✓ policy outcome is producer neutral and deterministic (259ms)
+  ✓ evidence cannot promote itself to policy authority (65ms)
+  ✓ journal detects orphan append and tampered history (110ms)
+  ✓ expired preservation cannot authorize same workspace replay (58ms)
+  ✓ null idempotency metadata is not enforcement evidence (49ms)
+  ✓ continuation source cannot contradict its action (60ms)
+  ✓ tampered control history is detected even when JSON is valid (116ms)
+  ✓ an atomic event beyond an absent journal requires recovery (70ms)
+  ✓ review requests explain unavailable replay without granting new actions (68ms)
+  ✓ policy action availability work is bounded and duplicate actions reject (103ms)
+  ✓ compensation metadata does not prove external reversal or admit replay (43ms)
+
+Tests: 20 total, 20 passed, 0 failed
+Time:  1747ms
+============================================================
+
+All tests passed! ✨
+
+=== baseline-node.log ===
+{"checks":12,"ok":true}
+
+=== baseline-policy.log ===
+PASS human abort retains decision semantics under graph policy
+PASS human cancel retains decision semantics under graph policy
+PASS optional Eval failure stays failed but does not fail required-success graph
+PASS Eval fail mapped to review remains blocked, not automatically terminal failure
+PASS unfinalized execution failure cannot become success or admit dependent
+PASS consumer uncertainty leaves successful producer history unchanged
+PASS optional cancellation cannot satisfy a success scheduling dependency
+{"ok":true,"checks":7}
+
+=== baseline-review.log ===
+
+============================================================
+Test Results
+============================================================
+  ✓ checkpoint publication is immutable repeatable and leaves authority unchanged (1602ms)
+  ✓ missing or altered checkpoint bytes never authorize continuation (1720ms)
+  ✓ checkpoint refuses changed revision or in-flight work (2197ms)
+  ✓ orphan and torn journal prohibit checkpoint publication (2582ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  8219ms
+============================================================
+
+All tests passed! ✨
+
+=== baseline-routing.log ===
+
+============================================================
+Test Results
+============================================================
+  ✓ legacy static routing preserves requested agent model (227ms)
+  ✓ quality first routing applies capability and quality floor (323ms)
+  ✓ provider cost latency tool and schema constraints reject incompatible routes (409ms)
+  ✓ deterministic tie break and decision id ignore candidate declaration order (569ms)
+  ✓ agent substitution requires execution compatibility (280ms)
+  ✓ no route error includes candidate evaluations (218ms)
+  ✓ effective agent clone changes model without mutating source (153ms)
+  ✓ deterministic evaluation supports accepted and configured failure outcomes (151ms)
+  ✓ failure classifier separates retry fallback and terminal failures (144ms)
+  ✓ runner persists route before execution and records explicit fallback (2294ms)
+  ✓ plugin style compatible agent participates in deterministic selection (302ms)
+  ✓ context reliability risk and output schema constraints are hard filters (250ms)
+  ✓ routing rejects unknown constrained risk incompatible schemas and unsupported policy modes (242ms)
+  ✓ cost latency and balanced objectives produce deterministic distinct choices (697ms)
+  ✓ AI SDK catalog metadata is authoritative over agent candidate claims (194ms)
+  ✓ upgrade and reroute overrides enforce their distinct semantics (413ms)
+  ✓ runner records same-route retry separately from fallback (1533ms)
+  ✓ persisted decision is reused and sensitive route fields are redacted (2165ms)
+  ✓ declarative loader preserves workflow agent and step routing contracts (226ms)
+  ✓ model catalog references reject absolute and traversal paths by default (147ms)
+  ✓ narrower policy layers cannot weaken broader routing constraints (145ms)
+  ✓ strict routing validation rejects unknown fields and providers (148ms)
+  ✓ generic model handler executes a declarative routed agent (1372ms)
+  ✓ cost-bounded live routes reject missing authoritative pricing (1130ms)
+  ✓ cost budgets reserve growing context when output pricing is explicitly zero (1115ms)
+  ✓ generic model handler executes only model-requested tools with bounded idempotent replay (163ms)
+  ✓ generic model handler fails closed when tool authorization denies a request (152ms)
+  ✓ built-in deterministic agent handlers enforce tool authorization (157ms)
+  ✓ generic model handler decrements the total token envelope across rounds (166ms)
+  ✓ generic model handler persists incremental stream events (163ms)
+  ✓ route evaluation pauses for native human review and resumes stored output (1793ms)
+
+Tests: 31 total, 31 passed, 0 failed
+Time:  18103ms
+============================================================
+
+All tests passed! ✨
