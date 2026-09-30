@@ -1,3 +1,4 @@
+from src.core.graph_attempts import program_contract, accounting_enabled, accounting_budget, held_reservation
 from src.core.graph_policy import policy_enabled, path_state, failure_strategy, static_policy, dispatch_budget, policy_group
 # Installed local operator API. Inspect is informational; apply never runs nodes.
 from src.core.node_composition import runtime, spec, validate_node_outputs, local_node_inputs, node_terminal, program_node_state, retain, persist_node_transition
@@ -82,10 +83,10 @@ export func scoped_outcome_facts(graph, host, scope) {
             checked := node_terminal(graph, id, host, false);terminal = checked["identity"]
             demand(same(terminal, graph["node_completions"][id]["terminal"]), "graph_terminal_observation_stale")
             for raw in checked["artifacts"] {raws = push(raws, raw)}
-            if graph_contract(step) != "parent-finalization/v1alpha1" {
+            if program_contract(step) == false {
                 input := local_node_inputs(graph, id, host);demand(same(input["binding"], graph["graph_node_bindings"][id]), "stale_terminal_inputs")
             }
-            if graph_contract(step) == "parent-finalization/v1alpha1"&&terminal["outcome"] == "completed" {validate_node_outputs(graph, id, host)}
+            if program_contract(step)&&terminal["outcome"] == "completed" {validate_node_outputs(graph, id, host)}
             reason = "terminal"
             strategy := terminal["outcome"]
             if policy_enabled(graph) {strategy = failure_strategy(graph, step, terminal["outcome"]);reason = strategy}
@@ -97,7 +98,7 @@ export func scoped_outcome_facts(graph, host, scope) {
             # A surviving dispatch may admit in another child process. Even before
             # the claim exists it cannot be waived by optional graph completion.
             if has_key(dict_get_or(graph, "node_dispatches", {}), id) {inflight = true;reason = "dispatched_node_requires_terminal_evidence"}
-            if graph_contract(step) == "parent-finalization/v1alpha1" {
+            if program_contract(step) {
                 child := program_node_state(graph, id, host)
                 if has_key(child, "node_execution_admission")||has_key(child, "node_input_binding")&&file_exists(child["run_dir"] + "/" + node_claim_path(child["node_input_binding"])) {
                     inflight = true;reason = "consumed_node_requires_terminal_evidence"
@@ -119,11 +120,13 @@ export func scoped_outcome_facts(graph, host, scope) {
             }
         }
     }
+    if accounting_enabled(graph)&&accounting_budget(graph)["reserved"] > 0 {policy_block = true}
     if inflight == false&&policy_block == false {
         if required_failed {outcome = "failed"} else if required_cancelled {outcome = "cancelled"} else if pending == false {outcome = "completed"}
     }
     data := {"schema":"dispatch.graph-outcome-candidate/v1alpha1", "outcome":outcome, "nodes":nodes, "policy":"required-success/no-unfinished-admission/v1alpha1"}
     if policy_enabled(graph) {data["schema"] := "dispatch.graph-outcome-candidate/v1alpha2";data["policy"] := "static-active-path/v1alpha1";branches := [];for id in keys(dict_get_or(graph, "branch_activations", {})) {record := graph["branch_activations"][id];raw := portable_json(record);branches = push(branches, {"branch_id":id, "selected":record["candidate"]["selected"], "activation_ref":"sha256:" + sha256(raw)});raws = push(raws, raw)};data["branches"] := branches;data["subgraphs"] := groups;data["budget"] := dispatch_budget(graph)}
+    if accounting_enabled(graph) {raw := to_json(dict_get_or(graph, "graph_attempts", {}));data["accounting_ref"] := "sha256:" + sha256(raw);raws = push(raws, raw)}
     return {"candidate":candidate(graph, data), "artifacts":raws}
 }
 func review_request(graph, id, host) {
@@ -181,8 +184,9 @@ export func graph_terminal_operation(root, run_id, request, options) {
 
 func cancel_optional(graph, id, actor, host, options) {
     step := spec(graph, id)
+    demand(held_reservation(graph, id) == false, "release_reservation_before_cancellation")
     demand(step["optional"]&&has_key(dict_get_or(graph, "node_completions", {}), id) == 0&&has_key(dict_get_or(graph, "node_dispatches", {}), id) == 0, "optional_cancel_not_permitted")
-    demand(graph_contract(step) == "parent-finalization/v1alpha1", "optional_cancel_requires_program")
+    demand(program_contract(step), "optional_cancel_requires_program")
     child := program_node_state(graph, id, host);lock := acquire_run_lock(child);demand(lock["ok"], "node_locked")
     try {
         child = program_node_state(graph, id, host)

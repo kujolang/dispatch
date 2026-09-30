@@ -1,0 +1,17 @@
+from src.core.graph_attempts import validate_accounting, accounting_budget, fold_attempt, attempt_history, current_attempt
+func need(ok) {if ok != true {throw("attempt_contract_failed")}}
+func base(limit) {return {"workflow_definition":{"metadata":{"graph_accounting":"dispatch.graph-attempt-accounting/v1alpha1", "graph_policy":{"budget":{"max_program_dispatches":limit}}}, "steps":[{"id":"B", "config":{"terminal_contract":"program-attempt/v1alpha1", "on_unsuccessful":{"action":"retry_same_node"}, "node_execution":{"run_id":"B1", "retry_run_id":"B2", "max_attempts":2}}}]}}}
+func reservation(ordinal, prior) {return {"candidate":{"node_id":"B", "ordinal":ordinal, "run_id":"B" + to_string(ordinal), "previous_terminal_ref":prior, "candidate_id":"reservation-" + to_string(ordinal)}, "artifacts":[]}}
+checks := 0;s := base(2);need(validate_accounting(s));need(accounting_budget(s)["available"] == 2);checks = checks + 1
+r := reservation(1, null);s = fold_attempt(s, "graph_attempt_reserved", r);need(accounting_budget(s)["reserved"] == 1&&accounting_budget(s)["consumed"] == 0);checks = checks + 1
+release := {"candidate":{"node_id":"B", "reservation_id":"reservation-1"}, "artifacts":[]};released := fold_attempt(s, "graph_reservation_released", release);need(accounting_budget(released)["available"] == 2&&accounting_budget(released)["released"] == 1);checks = checks + 1
+released = fold_attempt(released, "graph_attempt_reserved", r);need(len(released["graph_attempts"]["B"]) == 2&&current_attempt(released, "B")["ordinal"] == 1);checks = checks + 1
+dispatch := {"node_id":"B", "consumer":{"run_id":"B1"}};s = fold_attempt(s, "node_start_requested", dispatch);need(accounting_budget(s)["consumed"] == 1&&accounting_budget(s)["reserved"] == 0);checks = checks + 1
+for kind in ["graph_reservation_released", "node_start_requested", "graph_attempt_reserved"] {data := r;if kind == "graph_reservation_released" {data = release};if kind == "node_start_requested" {data = dispatch};denied := false;try {fold_attempt(s, kind, data)} except err {denied = true};need(denied);checks = checks + 1}
+denied := false;try {fold_attempt(s, "graph_attempt_retried", reservation(2, "missing"))} except err {denied = true};need(denied);checks = checks + 1
+# A journal-derived view cannot silently erase permanently consumed dispatch.
+events := [{"kind":"graph_attempt_reserved", "details":{"data":r}}, {"kind":"node_start_requested", "details":{"data":dispatch}}];need(attempt_history(s, events));checks = checks + 1
+corrupt := s;corrupt["graph_attempts"] := {};denied = false;try {attempt_history(corrupt, events)} except err {denied = true};need(denied);checks = checks + 1
+empty := base(0);denied = false;try {fold_attempt(empty, "graph_attempt_reserved", r)} except err {denied = true};need(denied);checks = checks + 1
+for vector in parse_json(read_file("tests/vectors/graph-attempts.json"))["vectors"] {need(json_schema_validate(vector["input"], parse_json(read_file("schemas/node-input-binding-v1alpha4.schema.json")))["valid"]);checks = checks + 1}
+print(to_json({"ok":true, "checks":checks}))

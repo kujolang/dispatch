@@ -1,3 +1,4 @@
+from src.core.graph_attempts import program_contract, held_reservation
 from src.core.graph_policy import policy_enabled, policy_ready, dispatch_budget
 from src.core.node_composition import validate_composed_definition, advance_composed_step
 from src.core.node_transition import composition_graph
@@ -1398,11 +1399,11 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
         }
 
         if composition_graph(run_state) {
-            if policy_enabled(run_state)&&graph_contract(step) == "parent-finalization/v1alpha1"&&has_key(dict_get_or(run_state, "node_dispatches", {}), step["id"]) == 0&&dispatch_budget(run_state)["exhausted"] {index = index + 1;continue}
+            if policy_enabled(run_state)&&program_contract(step)&&held_reservation(run_state, step["id"]) == false&&has_key(dict_get_or(run_state, "node_dispatches", {}), step["id"]) == 0&&dispatch_budget(run_state)["exhausted"] {index = index + 1;continue}
             composed := advance_composed_step(run_state, index, options)
             if composed["ok"] == false {return composed}
             if composed["paused"] {
-                if heterogeneous_graph(run_state)&&graph_contract(step) != "parent-finalization/v1alpha1" {run_state = composed["run_state"];index = index + 1;continue}
+                if heterogeneous_graph(run_state)&&program_contract(step) == false {run_state = composed["run_state"];index = index + 1;continue}
                 return composed
             }
             run_state = composed["run_state"]
@@ -1845,7 +1846,7 @@ func run_workflow_impl(workflow, run_state, tool_registry, options, admission) {
                 if configured["ok"] == false {result = configured}
                 else if type(admission) == "function" {
                     admitted := admission(run_state)
-                    if admitted["ok"] == false {result = admitted}
+                    if admitted["ok"] == false {result = admitted;if has_key(admitted, "run_state") {run_state = admitted["run_state"]}}
                     else {result = run_workflow_unlocked(workflow, admitted["run_state"], tool_registry, options)}
                 } else {result = run_workflow_unlocked(workflow, run_state, tool_registry, options)}
             }

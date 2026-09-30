@@ -1,3 +1,4 @@
+from src.core.graph_attempts import accounting_enabled, validate_accounting, accounting_budget, current_attempt, attempt_limit
 # Static policy and pure projections. No execution, callbacks or expression language.
 from src.core.utils import dict_get_or
 from src.core.portable_commitments import portable_json
@@ -13,6 +14,7 @@ func prior(state, id) {
     return found
 }
 export func validate_static_policy(state) {
+    validate_accounting(state)
     if policy_enabled(state) == false {return true}
     p := static_policy(state)
     need(p["schema"] == "dispatch.static-graph-policy/v1alpha1"&&len(p["branches"]) <= 2&&len(p["subgraphs"]) <= 2, "static_policy_unsupported")
@@ -46,7 +48,8 @@ export func validate_static_policy(state) {
     }
     for step in state["workflow_definition"]["steps"] {
         action := dict_get_or(step["config"], "on_unsuccessful", {"action":"fail"})
-        need(contains(["fail", "block", "continue_optional", "route", "require_review"], action["action"]), "failure_strategy_invalid")
+        need(contains(["fail", "block", "continue_optional", "route", "require_review", "retry_same_node"], action["action"]), "failure_strategy_invalid")
+        if action["action"] == "retry_same_node" {need(accounting_enabled(state)&&step["config"]["terminal_contract"] == "program-attempt/v1alpha1", "retry_accounting_required")}
         if action["action"] == "continue_optional" {need(step["optional"], "required_failure_cannot_be_ignored")}
         if action["action"] == "route" {need(policy_branch(state, action["branch"])["source"] == step["id"], "failure_route_source_mismatch")}
         if action["action"] == "require_review" {review := policy_step(state, action["review_node"]);need(review["config"]["terminal_contract"] == "intervention-decision/v2"&&contains(prior(state, review["id"]), step["id"])&&review["optional"] == false, "failure_review_invalid")}
@@ -126,12 +129,14 @@ export func policy_controls(state, step) {
     return {"controls":controls, "artifacts":raws}
 }
 export func dispatch_budget(state) {
+    if accounting_enabled(state) {return accounting_budget(state)}
     limit := static_policy(state)["budget"]["max_program_dispatches"];used := len(keys(dict_get_or(state, "node_dispatches", {})))
     return {"unit":"program_dispatch_reservations", "used":used, "limit":limit, "exhausted":used >= limit, "on_exhaustion":"block"}
 }
 export func failure_strategy(state, step, outcome) {
     if outcome == "completed" {return "satisfied"}
     action := dict_get_or(step["config"], "on_unsuccessful", {"action":"fail"})
+    if action["action"] == "retry_same_node" {row := current_attempt(state, step["id"]);if row != null&&row["ordinal"] < attempt_limit(state, step["id"]) {return "blocked"}}
     if action["action"] == "block" {return "blocked"}
     if action["action"] == "route" {if has_key(dict_get_or(state, "branch_activations", {}), action["branch"]) {return "routed"};return "awaiting_selection"}
     if action["action"] == "require_review" {
