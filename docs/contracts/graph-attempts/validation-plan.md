@@ -48,3 +48,12 @@ or retryable flag is not evidence. Neither branch nor group policy can waive it.
   dispatch; a surviving binding alone never grants execution. The focused source
   inventory now includes the changed assurance-configuration module in place of the
   unchanged state module, retaining the existing sixteen-file manifest bound.
+- Final review reproduced a downstream provenance gap: a retry candidate could miss
+  an undispatched program's immutable input binding. The guard now checks both held
+  descendant reservations and child bindings under the graph lock. Releasing the
+  reservation does not erase the binding. A fresh-controller regression proves both.
+- Schema review found that the prior terminal schema's closed variants could not
+  describe the new program-attempt wrapper. Added node-terminal/v1alpha2 for that
+  variant and allowed it only in additive input-binding/v1alpha4. Historical terminal
+  and binding schemas remain unchanged. New vectors cover refusal and a downstream
+  consumer of a successful retry; the real chain validates its actual binding schema.

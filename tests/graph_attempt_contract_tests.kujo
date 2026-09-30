@@ -13,5 +13,5 @@ denied := false;try {fold_attempt(s, "graph_attempt_retried", reservation(2, "mi
 events := [{"kind":"graph_attempt_reserved", "details":{"data":r}}, {"kind":"node_start_requested", "details":{"data":dispatch}}];need(attempt_history(s, events));checks = checks + 1
 corrupt := s;corrupt["graph_attempts"] := {};denied = false;try {attempt_history(corrupt, events)} except err {denied = true};need(denied);checks = checks + 1
 empty := base(0);denied = false;try {fold_attempt(empty, "graph_attempt_reserved", r)} except err {denied = true};need(denied);checks = checks + 1
-for vector in parse_json(read_file("tests/vectors/graph-attempts.json"))["vectors"] {need(json_schema_validate(vector["input"], parse_json(read_file("schemas/node-input-binding-v1alpha4.schema.json")))["valid"]);checks = checks + 1}
+for vector in parse_json(read_file("tests/vectors/graph-attempts.json"))["vectors"] {path := "schemas/node-input-binding-v1alpha4.schema.json";if vector["input"]["schema"] == "dispatch.node-terminal/v1alpha2" {path = "schemas/node-terminal-v1alpha2.schema.json"};need(json_schema_validate(vector["input"], parse_json(read_file(path)))["valid"]);checks = checks + 1}
 print(to_json({"ok":true, "checks":checks}))

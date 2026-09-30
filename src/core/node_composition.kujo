@@ -1,4 +1,4 @@
-from src.core.graph_attempts import accounting_enabled, program_contract, current_attempt, attempt_run, attempt_runs, attempt_limit, held_reservation, accounting_budget
+from src.core.graph_attempts import accounting_enabled, program_contract, current_attempt, attempt_run, attempt_runs, attempt_limit, held_reservation, accounting_budget, attempt_terminal_schema
 from src.core.parent_transition import parent_state_body
 from src.core.portable_commitments import portable_json
 from src.core.graph_policy import policy_enabled, validate_static_policy, policy_ready, policy_dependencies, dependency_accepts, policy_controls, dispatch_budget
@@ -258,12 +258,12 @@ export func node_terminal(graph, id, host, success) {
         if contract == "program-attempt/v1alpha1"&&has_key(node["state"], "node_execution_refusal") {
             demand(success == false, "refused_node_not_successful");state := node["state"];receipt := state["node_execution_refusal"];binding := state["node_input_binding"]
             demand(receipt["binding_ref"] == node_reference(binding)&&has_key(state, "node_execution_admission") == 0&&file_exists(state["run_dir"] + "/" + node_claim_path(binding)) == false, "refusal_consumption_conflict")
-            raw := portable_json(receipt);return {"identity":{"schema":"dispatch.node-terminal/v1alpha1", "node_id":id, "contract":contract, "subject":binding["consumer"], "facts_ref":"sha256:" + sha256(raw), "finalized_revision":receipt["resulting_revision"], "outcome":"failed", "authority_ref":receipt["authority_ref"]}, "receipt":receipt, "artifacts":[raw, portable_json(binding)]}
+            raw := portable_json(receipt);return {"identity":{"schema":attempt_terminal_schema(contract), "node_id":id, "contract":contract, "subject":binding["consumer"], "facts_ref":"sha256:" + sha256(raw), "finalized_revision":receipt["resulting_revision"], "outcome":"failed", "authority_ref":receipt["authority_ref"]}, "receipt":receipt, "artifacts":[raw, portable_json(binding)]}
         }
         terminal := completed(node, success)
         if heterogeneous_graph(graph) {
             old := terminal["identity"]
-            terminal["identity"] := {"schema":"dispatch.node-terminal/v1alpha1", "node_id":id, "contract":contract, "subject":old["subject"], "facts_ref":old["finalization_ref"], "finalized_revision":old["finalized_revision"], "outcome":old["outcome"], "authority_ref":"sha256:" + node["state"]["assurance_negotiation"]["config_revision"]}
+            terminal["identity"] := {"schema":attempt_terminal_schema(contract), "node_id":id, "contract":contract, "subject":old["subject"], "facts_ref":old["finalization_ref"], "finalized_revision":old["finalized_revision"], "outcome":old["outcome"], "authority_ref":"sha256:" + node["state"]["assurance_negotiation"]["config_revision"]}
         }
         return terminal
     }
@@ -330,7 +330,7 @@ export func assess_attempt(graph, id, action, host) {
     if action == "retry" {
         demand(row != null&&row["dispatch"] != null&&row["terminal"] != null&&has_key(child, "node_execution_refusal")&&ordinal < attempt_limit(graph, id), "retry_not_safe")
         verified := node_terminal(graph, id, host, false);demand(same(row["terminal"]["terminal"], verified["identity"])&&verified["receipt"]["reason"] == "required_resource_unavailable", "retry_refusal_required")
-        for step in graph["workflow_definition"]["steps"] {if contains(ancestors(graph, step["id"]), id) {demand(has_key(dict_get_or(graph, "node_dispatches", {}), step["id"]) == 0&&has_key(dict_get_or(graph, "graph_node_bindings", {}), step["id"]) == 0, "retry_descendant_exists")}}
+        for step in graph["workflow_definition"]["steps"] {if contains(ancestors(graph, step["id"]), id) {demand(has_key(dict_get_or(graph, "node_dispatches", {}), step["id"]) == 0&&has_key(dict_get_or(graph, "graph_node_bindings", {}), step["id"]) == 0&&held_reservation(graph, step["id"]) == false, "retry_descendant_exists");if program_contract(step) {demand(has_key(endpoint(graph, step["id"], host)["state"], "node_input_binding") == 0, "retry_descendant_binding_exists")}}}
         for key in keys(dict_get_or(graph, "branch_activations", {})) {demand(graph["branch_activations"][key]["candidate"]["source_terminal"]["node_id"] != id, "retry_branch_already_activated")}
         for key in keys(dict_get_or(graph, "subgraph_finalizations", {})) {for fact in graph["subgraph_finalizations"][key]["candidate"]["nodes"] {demand(fact["node_id"] != id, "retry_group_already_finalized")}}
         ordinal = ordinal + 1;previous = "sha256:" + sha256(portable_json(row["terminal"]))

@@ -1,4 +1,4 @@
-from src.core.graph_attempts import accounting_enabled, program_contract, attempt_run, fold_attempt
+from src.core.graph_attempts import accounting_enabled, program_contract, attempt_run, fold_attempt, attempt_terminal_schema
 # Pure additive projections shared by the existing journal and retained recovery.
 from src.core.graph_transition import heterogeneous_graph, graph_contract, graph_event, apply_graph_transition, graph_history_projection
 from src.core.assurance_state import node_controller_features
@@ -80,7 +80,7 @@ export func apply_node_transition(state, kind, details) {
             if step["id"] == id {
                 expected_run := state["run_id"];if program_contract(step) {expected_run = attempt_run(state, id)}
                 require(contains(["pending", "paused"], step["status"])&&expected_run == data["terminal"]["subject"]["run_id"], "node_terminal_subject_mismatch")
-                if heterogeneous_graph(state) {require(data["terminal"]["schema"] == "dispatch.node-terminal/v1alpha1"&&data["terminal"]["node_id"] == id&&data["terminal"]["contract"] == graph_contract(step)&&contains(["completed", "failed", "rejected", "cancelled"], data["terminal"]["outcome"]), "node_terminal_contract_mismatch")}
+                if heterogeneous_graph(state) {require(data["terminal"]["schema"] == attempt_terminal_schema(graph_contract(step))&&data["terminal"]["node_id"] == id&&data["terminal"]["contract"] == graph_contract(step)&&contains(["completed", "failed", "rejected", "cancelled"], data["terminal"]["outcome"]), "node_terminal_contract_mismatch")}
                 step["status"] := data["terminal"]["outcome"];step["output"] := data["terminal"];steps[i] := step;state["current_step_index"] := i + 1;matched = true
             }
         }

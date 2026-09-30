@@ -94,3 +94,5 @@ export func attempt_history(state, events) {
     for event in events {if attempt_event(event["kind"])||contains(["node_start_requested", "node_terminal_observed"], event["kind"]) {view = fold_attempt(view, event["kind"], event["details"]["data"])}}
     need(to_json(dict_get_or(view, "graph_attempts", {})) == to_json(dict_get_or(state, "graph_attempts", {})), "attempt_history_mismatch");return true
 }
+
+export func attempt_terminal_schema(contract) {if contract == "program-attempt/v1alpha1" {return "dispatch.node-terminal/v1alpha2"};return "dispatch.node-terminal/v1alpha1"}

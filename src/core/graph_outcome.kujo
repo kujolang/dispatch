@@ -186,7 +186,7 @@ func cancel_optional(graph, id, actor, host, options) {
     step := spec(graph, id)
     demand(held_reservation(graph, id) == false, "release_reservation_before_cancellation")
     demand(step["optional"]&&has_key(dict_get_or(graph, "node_completions", {}), id) == 0&&has_key(dict_get_or(graph, "node_dispatches", {}), id) == 0, "optional_cancel_not_permitted")
-    demand(program_contract(step), "optional_cancel_requires_program")
+    demand(graph_contract(step) == "parent-finalization/v1alpha1", "optional_cancel_requires_program")
     child := program_node_state(graph, id, host);lock := acquire_run_lock(child);demand(lock["ok"], "node_locked")
     try {
         child = program_node_state(graph, id, host)

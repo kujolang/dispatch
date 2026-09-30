@@ -44,3 +44,10 @@ is `unknown`. `result_recorded` is not proof of effect completion. Multiple rele
 reservations can refer to one still-never-dispatched execution identity; the ledger
 retains them without charging duplicate execution attempts. There are at most sixteen
 reservation records per logical node in this bounded storage contract.
+
+Program-attempt terminals use additive `dispatch.node-terminal/v1alpha2` with the
+same universal fields and the closed `program-attempt/v1alpha1` contract. Existing
+program, Eval and human terminal alpha1 bytes/schemas are unchanged. Input alpha4
+accepts either historical alpha1 terminals or this new wrapper. A downstream held
+reservation or immutable child binding prevents retiring its producer attempt;
+releasing capacity does not erase already-bound provenance.
