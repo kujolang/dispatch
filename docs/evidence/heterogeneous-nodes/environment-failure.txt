@@ -1,0 +1,84 @@
+Runtime directory durability contract passed.
+Dispatch release gate
+Runtime: /Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/../kujo/target/release/kujo
+Shards: 24
+Source tests: 101
+
+Running smoke-gate regression checks...
+Source layout passed.
+Smoke gate tests passed (success, silent failure, diagnostics).
+Run locking, at-least-once crash replay, and external idempotency passed.
+Webhook JSONL validated: 150 unique events.
+Pinned installer bridge path resolved.
+Isolated bridge package smoke passed.
+{"status":"passed","route":"operator-approved localhost SDK/bridge HTTP route","model":"local-release-probe","requests":[{"method":"POST","path":"/v1/chat/completions","model":"local-release-probe"}],"remote_provider_certification":false}
+First workflow and scoped plugin walkthrough passed.
+Running focused integration suites...
+typescript_build passed.  Evidence: tests/tmp/dispatch-test-shards/logs/typescript_build.log
+preservation_binding passed.  Evidence: tests/tmp/dispatch-test-shards/logs/preservation_binding.log
+parent_finalization passed.  Evidence: tests/tmp/dispatch-test-shards/logs/parent_finalization.log
+heterogeneous_contracts passed.  Evidence: tests/tmp/dispatch-test-shards/logs/heterogeneous_contracts.log
+heterogeneous_integration passed.  Evidence: tests/tmp/dispatch-test-shards/logs/heterogeneous_integration.log
+heterogeneous_policy passed.  Evidence: tests/tmp/dispatch-test-shards/logs/heterogeneous_policy.log
+heterogeneous_recovery passed.  Evidence: tests/tmp/dispatch-test-shards/logs/heterogeneous_recovery.log
+heterogeneous_vectors passed.  Evidence: tests/tmp/dispatch-test-shards/logs/heterogeneous_vectors.log
+node_contracts passed.  Evidence: tests/tmp/dispatch-test-shards/logs/node_contracts.log
+node_composition passed.  Evidence: tests/tmp/dispatch-test-shards/logs/node_composition.log
+node_policy passed.  Evidence: tests/tmp/dispatch-test-shards/logs/node_policy.log
+node_recovery passed.  Evidence: tests/tmp/dispatch-test-shards/logs/node_recovery.log
+node_vectors passed.  Evidence: tests/tmp/dispatch-test-shards/logs/node_vectors.log
+parent_vectors passed.  Evidence: tests/tmp/dispatch-test-shards/logs/parent_vectors.log
+retained_recovery passed.  Evidence: tests/tmp/dispatch-test-shards/logs/retained_recovery.log
+effect_set passed.  Evidence: tests/tmp/dispatch-test-shards/logs/effect_set.log
+effect_continuation passed.  Evidence: tests/tmp/dispatch-test-shards/logs/effect_continuation.log
+sequential_effects passed.  Evidence: tests/tmp/dispatch-test-shards/logs/sequential_effects.log
+effect_lifecycle_vectors passed.  Evidence: tests/tmp/dispatch-test-shards/logs/effect_lifecycle_vectors.log
+effect_selection_vectors passed.  Evidence: tests/tmp/dispatch-test-shards/logs/effect_selection_vectors.log
+effect_set_vectors passed.  Evidence: tests/tmp/dispatch-test-shards/logs/effect_set_vectors.log
+go_participant passed.  Evidence: tests/tmp/dispatch-test-shards/logs/go_participant.log
+typescript_package passed.  Evidence: tests/tmp/dispatch-test-shards/logs/typescript_package.log
+python_package passed.  Evidence: tests/tmp/dispatch-test-shards/logs/python_package.log
+python_parity passed.  Evidence: tests/tmp/dispatch-test-shards/logs/python_parity.log
+participant_sdk_parity passed.  Evidence: tests/tmp/dispatch-test-shards/logs/participant_sdk_parity.log
+python_isolation failed (exit 1). Full evidence: tests/tmp/dispatch-test-shards/logs/python_isolation.log
+Looking in links: /Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/interop/python-participant/wheelhouse
+WARNING: Location '/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/interop/python-participant/wheelhouse' is ignored: it is either a non-existing path or lacks a specific scheme.
+ERROR: Could not find a version that satisfies the requirement attrs==26.1.0 (from versions: none)
+ERROR: No matching distribution found for attrs==26.1.0
+Traceback (most recent call last):
+  File "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/python_package_isolation.py", line 10, in <module>
+    subprocess.run([str(python),'-I','-m','pip','install','--no-index','--find-links',str(source/'wheelhouse'),'--only-binary=:all:','--require-hashes','-r',str(package/'requirements.lock')],check=True)
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/subprocess.py", line 524, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo-independent-python-5dxm25i3/participant/.venv/bin/python', '-I', '-m', 'pip', 'install', '--no-index', '--find-links', '/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/interop/python-participant/wheelhouse', '--only-binary=:all:', '--require-hashes', '-r', '/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo-independent-python-5dxm25i3/participant/requirements.lock']' returned non-zero exit status 1.
+
+ISOLATION RECHECK
+Looking in links: /Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/interop/python-participant/wheelhouse
+Processing ./interop/python-participant/wheelhouse/attrs-26.1.0-py3-none-any.whl
+Processing ./interop/python-participant/wheelhouse/jsonschema-4.23.0-py3-none-any.whl
+Processing ./interop/python-participant/wheelhouse/jsonschema_specifications-2025.9.1-py3-none-any.whl
+Processing ./interop/python-participant/wheelhouse/referencing-0.37.0-py3-none-any.whl
+Processing ./interop/python-participant/wheelhouse/rpds_py-0.30.0-cp310-cp310-macosx_10_12_x86_64.whl
+Processing ./interop/python-participant/wheelhouse/typing_extensions-4.16.0-py3-none-any.whl
+Installing collected packages: typing-extensions, rpds-py, attrs, referencing, jsonschema-specifications, jsonschema
+Successfully installed attrs-26.1.0 jsonschema-4.23.0 jsonschema-specifications-2025.9.1 referencing-0.37.0 rpds-py-0.30.0 typing-extensions-4.16.0
+test_action_attempts (test_codec.CodecTests) ... ok
+test_assets (test_codec.CodecTests) ... ok
+test_closed_extensions (test_codec.CodecTests) ... ok
+test_correlations (test_codec.CodecTests) ... ok
+test_isolated_environment (test_codec.CodecTests) ... ok
+test_limits (test_codec.CodecTests) ... ok
+test_python_numbers (test_codec.CodecTests) ... ok
+test_request (test_codec.CodecTests) ... ok
+test_roundtrip (test_codec.CodecTests) ... ok
+test_unicode (test_codec.CodecTests) ... ok
+test_vectors (test_codec.CodecTests) ... ok
+test_wire_mutations (test_codec.CodecTests) ... ok
+test_neutral_corpus (test_codec.ParityCorpusTests) ... ok
+test_shared_contract (test_sdk.SDKTests) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.364s
+
+OK
+{"ok": true, "external_copy": true, "network": false, "ecosystem_imports": false}

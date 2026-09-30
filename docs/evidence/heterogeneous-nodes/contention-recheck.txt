@@ -1,0 +1,8 @@
+import {setup,human,run,finishHuman,gop,actor,write,join,spawn,kujo,fixture,env,assert,state,fs} from '/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/heterogeneous_helpers.mjs';
+const d=setup('explicit-finalizer-outcomes',[human('H',[])]);assert.equal(run(d,'drive').ok,true);finishHuman(d,'H');const candidate=gop(d,'graph-assess').candidate;
+const path=join(d,'race-request.json');write(path,{operation:'graph-finalize',candidate,actor});
+const child=()=>new Promise((done,reject)=>{const p=spawn(kujo,['run',fixture,d,'graph-op','graph',path],{env});let out='',err='';p.stdout.on('data',x=>out+=x);p.stderr.on('data',x=>err+=x);p.on('close',code=>{try{assert.equal(code,0);assert.equal(err,'');done(JSON.parse(out))}catch(e){reject(e)}})});
+const results=await Promise.all([child(),child()]);assert.equal(results.filter(x=>x.ok).length,1);const loser=results.find(x=>!x.ok);assert.match(loser.reason||loser.error?.code||'',/graph_already_finalized|stale_graph_candidate|run_lock_timeout/);const events=fs.readFileSync(join(state(d).run_dir,'control-events.jsonl'),'utf8').trim().split('\n').map(JSON.parse);assert.equal(events.filter(e=>e.kind==='graph_finalized').length,1);console.log(JSON.stringify({ok:true,checks:1,results,evidence:d}));
+
+RESULT
+{"ok":true,"checks":1,"results":[{"ok":true,"outcome":"completed","revision":6},{"authority":"informational","ok":false,"reason":"Error { line: 0, message: graph_already_finalized, stack: [<function with 4 params>, demand] }"}],"evidence":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-WaVqAe/explicit-finalizer-outcomes"}

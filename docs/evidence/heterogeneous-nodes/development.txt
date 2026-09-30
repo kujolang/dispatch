@@ -1,0 +1,228 @@
+LOG dev-contracts.log
+{"exit_code": 0, "path": "/tmp/dispatch-heterogeneous-evidence/dev-contracts.log", "bytes": 24, "sha256": "42781b40a80c1d24c70e66b79108240013f9b319ad52b37e0b5fa42859b9333b"}
+{"checks":12,"ok":true}
+
+
+LOG dev-integration-1.log
+{"exit_code": 1, "path": "/tmp/dispatch-heterogeneous-evidence/dev-integration-1.log", "bytes": 1084, "sha256": "638c7d79f3ca217ab0bf18230026295b11b5336afae0285c6d3a947e2ed9304f"}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: [KUJOVM001] [vm] Runtime Error: assurance_verifier_invalid
+  --> 0:0
+
+Call stack:
+  0 at descriptor
+
+
+
+4 !== 0
+
+    at command (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/node_composition_helpers.mjs:12:149)
+    at run (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/node_composition_helpers.mjs:14:205)
+    at setup (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/node_composition_helpers.mjs:16:1147)
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/heterogeneous_integration.mjs:2:9
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 4,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+LOG dev-integration-2.log
+{"exit_code": 1, "path": "/tmp/dispatch-heterogeneous-evidence/dev-integration-2.log", "bytes": 1056, "sha256": "38984241ebfea821efc0499127f25d09b46ccdc4b4e9c0e6b5259eaa23acdf38"}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: [KUJOVM001] [vm] Runtime Error: Missing map key: "descriptor"
+  --> 0:0
+
+
+
+4 !== 0
+
+    at command (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/node_composition_helpers.mjs:12:149)
+    at run (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/node_composition_helpers.mjs:14:205)
+    at setup (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/node_composition_helpers.mjs:16:1390)
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/heterogeneous_integration.mjs:2:9
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 4,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+LOG dev-integration-3.log
+{"exit_code": 0, "path": "/tmp/dispatch-heterogeneous-evidence/dev-integration-3.log", "bytes": 1555, "sha256": "a0f5fe4ab24c36e8efaacdd28a6cc3c8333e862a81cac7f272fff4c26d49cde8"}
+SETUP /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-hgCqxM/heterogeneous-success
+A terminal
+BOUND {"authority":"informational","candidate":{"authority_ref":"sha256:8f8cfcc71c78c2eb2604602729501b06ce7d213459c7b6ff16345c418e4dd9cb","candidate_id":"76a83f4c4c7f68b5ac47ae6fa33b9c54e1f30d02c2dba5e30095ba5fbf7e8222","graph":{"run_id":"run-1790722121245-3609","workflow_ref":"sha256:fc98b7d2fd1d2bf52a586eb01be1b46b2170959ca77979e21d5323aa771aed0a"},"journal":"0d31a44fcb840dd3b02c529bad24d7946506002ad1827400591897e5d0d79fb5","nodes":[{"node_id":"A","reason":"terminal","required":true,"terminal":{"authority_ref":"sha256:066081ef077d8039dfc09f27a0e8828a995ae0f08d0918d693366d996fe34f6f","contract":"parent-finalization/v1alpha1","facts_ref":"sha256:b26c3fa0787d52ce141b987bef3f4f519d5292d5b05b0499c5054cd8028f394d","finalized_revision":12,"node_id":"A","outcome":"completed","schema":"dispatch.node-terminal/v1alpha1","subject":{"attempt_id":"1","run_id":"run-1790722119748-7474","step_id":"action"}}},{"node_id":"E","reason":"terminal_fact_missing","required":true,"terminal":null},{"node_id":"H","reason":"human_review_pending","required":true,"terminal":null},{"node_id":"B","reason":"terminal_fact_missing","required":true,"terminal":null}],"outcome":"blocked","policy":"required-success/no-unfinished-admission/v1alpha1","revision":7,"schema":"dispatch.graph-outcome-candidate/v1alpha1","source_sha256":"e64454ace44f67416e88e6d19d6577f53b007282082f4845c2653f8e044d69a3"},"ok":true}
+E/H terminal
+B terminal
+PASS heterogeneous success
+
+
+LOG dev-matrix-1.log
+{"exit_code": 1, "path": "/tmp/dispatch-heterogeneous-evidence/dev-matrix-1.log", "bytes": 2051, "sha256": "c4fa85b1a3bbaed430be2182e167a672190824d6b68909c13324eadbe3406172"}
+PASS unresolved program effects block parent and downstream
+PASS producer terminal is not Eval or human completion
+PASS wrong evaluation subject
+PASS wrong original result identity
+PASS stale evaluated output
+PASS wrong evaluator revision
+PASS incomplete evaluation
+PASS Eval terminal uses actual evaluation-result without execution-result
+PASS wrong human subject
+PASS stale human revision
+PASS wrong human input binding
+PASS unauthorized human actor
+PASS live human authority revocation between assessment and decision rejects
+PASS pending human prevents graph completion
+PASS authorized approval is immutable; conflicting denial rejects
+PASS heterogeneous join records why B proceeds and grants no effect admission
+PASS all node facts without graph decision stay nonterminal
+PASS changed required output cannot finalize graph
+PASS required membership cannot be downgraded
+PASS new required descendant invalidates anchored definition
+PASS stale graph assessment cannot become terminal authority
+PASS explicit graph success preserves independent node truth
+PASS anchored Eval fail policy yields failed graph and blocks B without rewriting A
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+false !== true
+
+    at complete (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/node_composition_helpers.mjs:18:137)
+    at finishProgram (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/heterogeneous_helpers.mjs:8:37)
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/heterogeneous_integration.mjs:37:224
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+LOG dev-matrix-2.log
+{"exit_code": 0, "path": "/tmp/dispatch-heterogeneous-evidence/dev-matrix-2.log", "bytes": 1636, "sha256": "7a49a5b7a3f785aa60bf7c0bbc138adb72d39c685517d55020e08dd504a51760"}
+PASS unresolved program effects block parent and downstream
+PASS producer terminal is not Eval or human completion
+PASS wrong evaluation subject
+PASS wrong original result identity
+PASS stale evaluated output
+PASS wrong evaluator revision
+PASS incomplete evaluation
+PASS Eval terminal uses actual evaluation-result without execution-result
+PASS wrong human subject
+PASS stale human revision
+PASS wrong human input binding
+PASS unauthorized human actor
+PASS live human authority revocation between assessment and decision rejects
+PASS pending human prevents graph completion
+PASS authorized approval is immutable; conflicting denial rejects
+PASS heterogeneous join records why B proceeds and grants no effect admission
+PASS missing consumer output blocks its independent finalization
+PASS all node facts without graph decision stay nonterminal
+PASS changed required output cannot finalize graph
+PASS required membership cannot be downgraded
+PASS new required descendant invalidates anchored definition
+PASS stale graph assessment cannot become terminal authority
+PASS explicit graph success preserves independent node truth
+PASS anchored Eval fail policy yields failed graph and blocks B without rewriting A
+PASS optional cancellation is not execution; completion-only H independently gates graph success
+{"ok":true,"checks":25,"evidence":["/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-A9OV63/heterogeneous-success","/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-A9OV63/evaluation-failure","/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-A9OV63/optional-and-completion-only"]}
+
+
+LOG dev-policy-1.log
+{"exit_code": 1, "path": "/tmp/dispatch-heterogeneous-evidence/dev-policy-1.log", "bytes": 1343, "sha256": "1b9d214df35611ac37a87aad17c600be32183a32798085c339818108e4b95ebb"}
+PASS human abort retains decision semantics under graph policy
+PASS human cancel retains decision semantics under graph policy
+PASS optional Eval failure stays failed but does not fail required-success graph
+PASS Eval fail mapped to review remains blocked, not automatically terminal failure
+PASS unfinalized execution failure cannot become success or admit dependent
+PASS consumer uncertainty leaves successful producer history unchanged
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+false !== true
+
+    at complete (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/node_composition_helpers.mjs:18:137)
+    at finishProgram (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/heterogeneous_helpers.mjs:8:37)
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/heterogeneous_policy.mjs:11:286
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+LOG dev-policy-2.log
+{"exit_code": 0, "path": "/tmp/dispatch-heterogeneous-evidence/dev-policy-2.log", "bytes": 536, "sha256": "7a0e13d2c7201b21e1c55e0f95a5e8c4c2f851c16add8c2a74d0981661b8c980"}
+PASS human abort retains decision semantics under graph policy
+PASS human cancel retains decision semantics under graph policy
+PASS optional Eval failure stays failed but does not fail required-success graph
+PASS Eval fail mapped to review remains blocked, not automatically terminal failure
+PASS unfinalized execution failure cannot become success or admit dependent
+PASS consumer uncertainty leaves successful producer history unchanged
+PASS optional cancellation cannot satisfy a success scheduling dependency
+{"ok":true,"checks":7}
+
+
+LOG dev-recovery-1.log
+{"exit_code": 0, "path": "/tmp/dispatch-heterogeneous-evidence/dev-recovery-1.log", "bytes": 1124, "sha256": "bfa37bd851908171ffb327a350119c54b3384546ed437b3618d5c3688bb72aac"}
+PASS Eval terminal reply loss survives a fresh controller without a fake execution
+PASS actual human terminal orphan repairs exact decision but not graph completion
+PASS all durable terminal facts and recovery still require separate graph decision
+PASS two fresh finalizers: one exact durable graph terminal transition
+PASS graph crash before_terminal preserves exact terminal boundary
+PASS graph crash after_terminal preserves exact terminal boundary
+PASS graph crash immutable preserves exact terminal boundary
+{"ok":true,"checks":7,"scenarios":["Eval terminal reply loss survives a fresh controller without a fake execution","actual human terminal orphan repairs exact decision but not graph completion","all durable terminal facts and recovery still require separate graph decision","two fresh finalizers: one exact durable graph terminal transition","graph crash before_terminal preserves exact terminal boundary","graph crash after_terminal preserves exact terminal boundary","graph crash immutable preserves exact terminal boundary"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-zcSvOt"}
+
+
+LOG dev-recovery-2.log
+{"exit_code": 0, "path": "/tmp/dispatch-heterogeneous-evidence/dev-recovery-2.log", "bytes": 1289, "sha256": "bb7af5281f5e540edb5c6eaa6cf551a812620b02483355262cf1de0e8fb19aec"}
+PASS Eval terminal reply loss survives a fresh controller without a fake execution
+PASS actual human terminal orphan repairs exact decision but not graph completion
+PASS all durable terminal facts and recovery still require separate graph decision
+PASS two fresh finalizers: one exact durable graph terminal transition
+PASS graph crash before_terminal preserves exact terminal boundary
+PASS graph crash after_terminal preserves exact terminal boundary
+PASS graph crash immutable preserves exact terminal boundary
+PASS optional outstanding dispatch blocks graph finalization before child admission
+{"ok":true,"checks":8,"scenarios":["Eval terminal reply loss survives a fresh controller without a fake execution","actual human terminal orphan repairs exact decision but not graph completion","all durable terminal facts and recovery still require separate graph decision","two fresh finalizers: one exact durable graph terminal transition","graph crash before_terminal preserves exact terminal boundary","graph crash after_terminal preserves exact terminal boundary","graph crash immutable preserves exact terminal boundary","optional outstanding dispatch blocks graph finalization before child admission"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-DQKRYb"}

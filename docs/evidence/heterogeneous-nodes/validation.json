@@ -1,0 +1,2285 @@
+{
+  "schema": "dispatch.heterogeneous-node-validation/v1alpha1",
+  "source_commit": "2b6932651af38cca8063c6e0c303a4e541b17ede",
+  "design_commit": "f330b9158da1e9ef7b1f06b6133606ae9433c645",
+  "kujo_documentation_commit": "59775d10f459d6421158941abf0a166c248fbac4",
+  "repositories": {
+    "dispatch": {
+      "commit": "ccfe22810cdfad21b2c5aa101bb1961adb283bb1",
+      "observed_status": ""
+    },
+    "kujo": {
+      "commit": "914131732baa8b8f72c3449deb807aa4caa68ede",
+      "observed_status": " M ROADMAP.md\n M docs/NEXT_PHASE_ARCHITECTURE.md\n M docs/WAVE_F_NODE_COMPOSITION.md\n?? docs/WAVE_F_HETEROGENEOUS_TERMINALS.md\n",
+      "initial_clean_verified": true
+    },
+    "workcell": {
+      "commit": "e645d80e697cb722d49c35982905b2294da0a627",
+      "observed_status": ""
+    },
+    "eval": {
+      "commit": "6a5ab09e5c24cc1a842b374afccb64da40db2874",
+      "observed_status": ""
+    },
+    "agents-sdk": {
+      "commit": "af0aa28f5960232cbafa7cf528a32db8cb36c7a9",
+      "observed_status": "?? docs/MAINTENANCE_AGENT.md\n?? maintenance_agent.kujo\n?? src/maintenance/\n?? tests/maintenance_agent_tests.kujo\n"
+    },
+    "leash": {
+      "commit": "56c59c90b81433482683e72a411748ca82a61b24",
+      "observed_status": ""
+    },
+    "runledger": {
+      "commit": "97cb607a062efeecc7fcdc4e4a4e0308f90d45fe",
+      "observed_status": ""
+    },
+    "scent": {
+      "commit": "969f0fdc853c88cd051248a6ebcd9ce0434d9f43",
+      "observed_status": ""
+    },
+    "rag": {
+      "commit": "85743f88c152d7c65f59d4697111faf85e36d8eb",
+      "observed_status": ""
+    }
+  },
+  "toolchain": {
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "node": "v26.7.0",
+    "npm": "11.19.0",
+    "go": "go version go1.25.3 darwin/amd64",
+    "python": "Python 3.10.5",
+    "host": "Darwin 25.6.0 x86_64",
+    "kujo_binary_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47"
+  },
+  "commands": [
+    {
+      "phase": "baseline canonical",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+      "log": "baseline.log",
+      "exit": "baseline.exit",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "exit_code": 0,
+      "evidence": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/baseline.log",
+        "bytes": 12064,
+        "sha256": "1a2322d4219448619c247637090e7b2a1e447a30e85af41204e97721b11ac6c9"
+      }
+    },
+    {
+      "phase": "baseline node contracts",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" DISPATCH_OFFLINE_FIXTURE=true ../kujo/target/release/kujo run tests/node_contract_tests.kujo",
+      "log": "baseline-contracts.log",
+      "exit": "baseline-contracts.exit",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "exit_code": 0,
+      "evidence": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/baseline-contracts.log",
+        "bytes": 24,
+        "sha256": "42781b40a80c1d24c70e66b79108240013f9b319ad52b37e0b5fa42859b9333b"
+      }
+    },
+    {
+      "phase": "focused integration",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/heterogeneous_integration.mjs",
+      "log": "dev-matrix-2.log",
+      "exit": "dev-matrix-2.exit",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous",
+      "exit_code": 0,
+      "evidence": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/dev-matrix-2.log",
+        "bytes": 1636,
+        "sha256": "7a49a5b7a3f785aa60bf7c0bbc138adb72d39c685517d55020e08dd504a51760"
+      }
+    },
+    {
+      "phase": "focused policy",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/heterogeneous_policy.mjs",
+      "log": "dev-policy-2.log",
+      "exit": "dev-policy-2.exit",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous",
+      "exit_code": 0,
+      "evidence": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/dev-policy-2.log",
+        "bytes": 536,
+        "sha256": "7a0e13d2c7201b21e1c55e0f95a5e8c4c2f851c16add8c2a74d0981661b8c980"
+      }
+    },
+    {
+      "phase": "focused recovery",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node tests/heterogeneous_recovery.mjs",
+      "log": "dev-recovery-2.log",
+      "exit": "dev-recovery-2.exit",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous",
+      "exit_code": 0,
+      "evidence": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/dev-recovery-2.log",
+        "bytes": 1289,
+        "sha256": "bb7af5281f5e540edb5c6eaa6cf551a812620b02483355262cf1de0e8fb19aec"
+      }
+    },
+    {
+      "phase": "portable vectors",
+      "command": "npm --prefix interop/typescript-participant run build && node tests/go_participant_conformance.mjs && ../kujo/target/release/kujo run tests/portable_commitments.kujo tests/vectors/heterogeneous-terminals.json",
+      "log": "focused-four-language.log",
+      "exit": "focused-vectors.exit",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous",
+      "exit_code": 0,
+      "evidence": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/focused-four-language.log",
+        "bytes": 205,
+        "sha256": "a73bfcbb6aef8516785c3557ffe42907206028c7518c8e83f15c9ed069c226cd"
+      }
+    },
+    {
+      "phase": "final canonical",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+      "log": "canonical.log",
+      "exit": "canonical.exit",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous",
+      "exit_code": 0,
+      "evidence": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/canonical.log",
+        "bytes": 12605,
+        "sha256": "10251c2fdf20a39faa2f5eff385b190209be339ea960f1cca05882c4e1b65e61"
+      }
+    },
+    {
+      "phase": "Kujo baseline",
+      "command": "cargo fmt --check && cargo test --locked --test architecture_docs_contract --test workflow_control_contracts --test readme_contracts && cargo build --release --locked",
+      "log": "kujo-baseline-contracts.log",
+      "exit": "kujo-baseline.exit",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo",
+      "exit_code": 0,
+      "evidence": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/kujo-baseline-contracts.log",
+        "bytes": 2544,
+        "sha256": "34b0334b5c8db93d30f6238ad70ed1aeb109b09f78ac487494bd80b569c0560c"
+      }
+    },
+    {
+      "phase": "Kujo final",
+      "command": "cargo fmt --check && cargo test --locked --test architecture_docs_contract --test workflow_control_contracts --test readme_contracts && cargo build --release --locked",
+      "log": "kujo-final-contracts.log",
+      "exit": "kujo-final.exit",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo",
+      "exit_code": 0,
+      "evidence": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/kujo-final-contracts.log",
+        "bytes": 2544,
+        "sha256": "1f867f99489fc9da2431fc835a2bfc1a20ec7439fda8ba1cfa943026c31b852f"
+      }
+    },
+    {
+      "phase": "historical bytes",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous",
+      "command": "git diff --exit-code ccfe22810cdfad21b2c5aa101bb1961adb283bb1 -- src/core/parent_finalization.kujo src/core/parent_transition.kujo interop/typescript-participant interop/python-participant interop/go-participant tests/vectors/commitments.json tests/vectors/sqlite-commitments.json tests/vectors/effect-set.json tests/vectors/effect-selection.json tests/vectors/effect-lifecycle.json tests/vectors/parent-finalization.json tests/vectors/node-composition.json",
+      "log": "historical-bytes.log",
+      "exit": "historical-bytes.exit",
+      "exit_code": 0,
+      "evidence": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/historical-bytes.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "phase": "runtime unchanged",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo",
+      "command": "git diff --exit-code 914131732baa8b8f72c3449deb807aa4caa68ede -- src schemas tests",
+      "log": "kujo-runtime-unchanged.log",
+      "exit": "kujo-runtime-unchanged.exit",
+      "exit_code": 0,
+      "evidence": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/kujo-runtime-unchanged.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "phase": "explicit finalizer outcomes supplemental proof",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous",
+      "command": "KUJO_BIN=\"$PWD/../kujo/target/release/kujo\" node /tmp/dispatch-heterogeneous-evidence/verify-finalizer-race.mjs",
+      "log": "explicit-finalizer-race.log",
+      "exit": "explicit-finalizer-race.exit",
+      "exit_code": 0,
+      "evidence": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/explicit-finalizer-race.log",
+        "bytes": 343,
+        "sha256": "98ef268907e05cf076e974db883dec1dda53ee68226c6af3b73f0372c1a4127d"
+      }
+    },
+    {
+      "phase": "offline Python isolation environment recheck",
+      "command": "python3 tests/python_package_isolation.py",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous",
+      "log": "python-isolation-recheck.log",
+      "exit": "python-isolation-recheck.exit",
+      "exit_code": 0,
+      "evidence": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/python-isolation-recheck.log",
+        "bytes": 1806,
+        "sha256": "8023953d33de1c2eff34e5840b1979eb19c8b040e8ba2d2b68153d21b1f236d1"
+      }
+    }
+  ],
+  "baseline_order": "The full baseline ran on unchanged ccfe228 main while implementation proceeded in an isolated worktree. Node contracts and preservation passed before source implementation; the parent/composition/recovery portions completed during isolated implementation. Final source verification is the complete separate canonical gate.",
+  "explicit_skips": [
+    {
+      "tests": [
+        "actual_cross_component_failure_evidence_conforms",
+        "actual_workspace_reexecution_artifacts_match_shared_schemas"
+      ],
+      "reason": "Existing Kujo ignored tests require separately supplied failure-gate/workspace artifact handoffs. No ignored test was newly introduced."
+    },
+    {
+      "scope": "Related repository standalone gates",
+      "reason": "Workcell/Eval/Agents SDK/Leash/RunLedger/Scent/RAG unmodified; actual Workcell/Eval integration exercised in Dispatch."
+    },
+    {
+      "scope": "Remote/live model/hostile-storage/machine-loss certification",
+      "reason": "Not within this local trusted-host static composition proof."
+    }
+  ],
+  "scope": "Static serial graph, at most eight nodes, closed terminal variants, retained trusted host, filesystem-backed new integration; existing SQLite store separately compatibility-gated. No dynamic topology, distributed scheduling, remote trust, machine loss, mixed profiles, compensation, exactly-once, rollback, stable/public SDK or new syntax.",
+  "next_phase": "Wave F graph failure strategy and bounded conditional branches/subgraphs with explicit outcome/budget policy.",
+  "dependency_preparation": "Private worktree reused copies of the existing locked TypeScript node_modules and Python venv from the primary checkout; TypeScript rebuilt before four-language checks. No participant dependency/source files changed. The first full final gate stopped at Python isolated installation because the worktree lacked the ignored offline wheelhouse. Copied the baseline wheelhouse, retained failure logs, and reran the complete gate on the unchanged source.",
+  "environmental_failures": [
+    {
+      "command": "python3 tests/python_package_isolation.py",
+      "exit_code": 1,
+      "reason": "Missing ignored offline wheelhouse in isolated worktree; no matching attrs distribution with --no-index.",
+      "resolved_by": "Copy existing baseline wheelhouse; hash-enforced installation and complete canonical rerun.",
+      "log": "/tmp/dispatch-heterogeneous-evidence/canonical-attempt-1-suite-logs/python_isolation.log",
+      "canonical_log": "/tmp/dispatch-heterogeneous-evidence/canonical-attempt-1.log",
+      "source_commit": "2b6932651af38cca8063c6e0c303a4e541b17ede"
+    }
+  ],
+  "offline_wheelhouse": [
+    {
+      "name": "attrs-26.1.0-py3-none-any.whl",
+      "sha256": "c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309"
+    },
+    {
+      "name": "jsonschema-4.23.0-py3-none-any.whl",
+      "sha256": "fbadb6f8b144a8f8cf9f0b89ba94501d143e50411a1278633f56a7acf7fd5566"
+    },
+    {
+      "name": "jsonschema_specifications-2025.9.1-py3-none-any.whl",
+      "sha256": "98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe"
+    },
+    {
+      "name": "referencing-0.37.0-py3-none-any.whl",
+      "sha256": "381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231"
+    },
+    {
+      "name": "rpds_py-0.30.0-cp310-cp310-macosx_10_12_x86_64.whl",
+      "sha256": "679ae98e00c0e8d68a7fda324e16b90fd5260945b45d3b824c892cec9eea3288"
+    },
+    {
+      "name": "typing_extensions-4.16.0-py3-none-any.whl",
+      "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+    }
+  ],
+  "retained_log_archives": {
+    "baseline": "/tmp/dispatch-heterogeneous-evidence/baseline-suite-logs",
+    "canonical": "/tmp/dispatch-heterogeneous-evidence/canonical-suite-logs"
+  },
+  "baseline": {
+    "suite_groups": 87,
+    "native_tests": {
+      "total": 210,
+      "passed": 210,
+      "failed": 0
+    },
+    "logs": [
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/ability_assurance.log",
+        "bytes": 1774,
+        "sha256": "d8cfb717dbc2b1c7c53923ac2502bab7e3cd0fce128147fb96e37fc1d1a90ecd",
+        "suite": "ability_assurance",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/assurance_capabilities.log",
+        "bytes": 90,
+        "sha256": "59e2d9253c4c80fec2597c57607cc743a2484ad79f959893db24d0c409450f93",
+        "suite": "assurance_capabilities",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/assurance_compatibility.log",
+        "bytes": 75,
+        "sha256": "24ea6fa02433c4e78ab02b0a54b1983390fdc037dee2167a1b138794acf52715",
+        "suite": "assurance_compatibility",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/beta_contracts.log",
+        "bytes": 75,
+        "sha256": "8cf1f333a0a356f50b46b22b8ca56c5be9e9ce423eb16ff385f90f3914bc141a",
+        "suite": "beta_contracts",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/beta_migration.log",
+        "bytes": 2477,
+        "sha256": "03975273a1fa130eb5982ce632b1556feadb110ce98fe4fed3d467284d21e5e5",
+        "suite": "beta_migration",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/control_boundary.log",
+        "bytes": 1266,
+        "sha256": "8f0766dc3cc4c0996d16ed439dbe53d784ca80ac383fcc12dcfbf6ad944a550b",
+        "suite": "control_boundary",
+        "native_test_counts": [
+          {
+            "total": 14,
+            "passed": 14,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/decision_claim.log",
+        "bytes": 82,
+        "sha256": "f0700708134088c7d6c802f6f8405e8504abfdef68beacab7a8424e872ecaade",
+        "suite": "decision_claim",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-1.log",
+        "bytes": 585,
+        "sha256": "4b6396092e010e3077365d5ff16eb3d5e129d1ef8d213d105245689362c35559",
+        "suite": "dispatch-1",
+        "native_test_counts": [
+          {
+            "total": 5,
+            "passed": 5,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-10.log",
+        "bytes": 542,
+        "sha256": "6b7106f0e51a62baa3de5ebb67111e720292e0c072a44f5d7b777327ae8a495a",
+        "suite": "dispatch-10",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-11.log",
+        "bytes": 544,
+        "sha256": "fb83baed51bad42bf8c0348dfda19ebf62d06445184c53e387b7b6d28a84d9f8",
+        "suite": "dispatch-11",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-12.log",
+        "bytes": 543,
+        "sha256": "c5b81bcc720f435c907e724a34ffbe1a885dcbf4ed2d43a8ecc9861c6028cef6",
+        "suite": "dispatch-12",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-13.log",
+        "bytes": 592,
+        "sha256": "6e74d262cdea467db3bfa53fdac2052b7d5481777e731645ec9f51188cfb9f19",
+        "suite": "dispatch-13",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-14.log",
+        "bytes": 567,
+        "sha256": "778497d25ac8d5cfacc9d46003331eed93baebe83240866e9cd4233991f62b2a",
+        "suite": "dispatch-14",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-15.log",
+        "bytes": 582,
+        "sha256": "e099ca8edebcc022a157a4e9384be17aec0c896ecb4399ec6d266911938a35ce",
+        "suite": "dispatch-15",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-16.log",
+        "bytes": 577,
+        "sha256": "8517ae651142bcfba297bf7175ba70132e8ee2d792dc31c2df1e8d60de0f46d3",
+        "suite": "dispatch-16",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-17.log",
+        "bytes": 537,
+        "sha256": "ba2b173ba3cfaf55870c5cc02121e7508e46d5d17b882b934bcdcab1c7c357c5",
+        "suite": "dispatch-17",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-18.log",
+        "bytes": 542,
+        "sha256": "6dfcf544406d5aaf7e759bd898516813b753e0ae46022f24c0cf1afa2ea52075",
+        "suite": "dispatch-18",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-19.log",
+        "bytes": 565,
+        "sha256": "5d8a52d29cd0cc5a71b974f8cf9241102267c5f7f9324271a1eca6dc26bece77",
+        "suite": "dispatch-19",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-2.log",
+        "bytes": 604,
+        "sha256": "7c683084e1fd263f1ca5b99244ff87fb579aae2ea19b61e797996fceeba18fbe",
+        "suite": "dispatch-2",
+        "native_test_counts": [
+          {
+            "total": 5,
+            "passed": 5,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-20.log",
+        "bytes": 548,
+        "sha256": "143b0510e8c8d80ea4977dd1035e13993d7bfbcfce5e2c7be842310a667ae708",
+        "suite": "dispatch-20",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-21.log",
+        "bytes": 522,
+        "sha256": "45ddf1daf2aa7bcd62600298ac2e99ea928e5c15c55d447ee5d5ac738a9b483a",
+        "suite": "dispatch-21",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-22.log",
+        "bytes": 540,
+        "sha256": "2cb264a43bfc486cc22b971031e0882d13735d29019dd1229a83a41bd36b96d0",
+        "suite": "dispatch-22",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-23.log",
+        "bytes": 566,
+        "sha256": "9bd62ee2e9ed761259f6737ebee59cd44048f83cd66771b10374f4ea9765b6cb",
+        "suite": "dispatch-23",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-24.log",
+        "bytes": 527,
+        "sha256": "3e9dc2dee74d7e09e0c397ddcdb0d8d5bdade7f590ea0dfd4a8e2f7d4f51bfdf",
+        "suite": "dispatch-24",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-3.log",
+        "bytes": 633,
+        "sha256": "a8dc46b998f8c358581a09c699921f2320831ce7e7a6af4b241ffb61d58ac0f9",
+        "suite": "dispatch-3",
+        "native_test_counts": [
+          {
+            "total": 5,
+            "passed": 5,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-4.log",
+        "bytes": 639,
+        "sha256": "e6d20291c0987a4b855c227b18eaf48f2a7f9b925b6f64ffc6f0278d55eb6052",
+        "suite": "dispatch-4",
+        "native_test_counts": [
+          {
+            "total": 5,
+            "passed": 5,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-5.log",
+        "bytes": 648,
+        "sha256": "23c07c7c46e856e6dbd532b07acacd924f474784f6fb8016c71af40fd344910e",
+        "suite": "dispatch-5",
+        "native_test_counts": [
+          {
+            "total": 5,
+            "passed": 5,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-6.log",
+        "bytes": 527,
+        "sha256": "d4fb2c1d2d892253143aebda4a00a6b4a7b3e46b0bbd781f3909f0e76fa9c401",
+        "suite": "dispatch-6",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-7.log",
+        "bytes": 543,
+        "sha256": "931baefa19be61e0ef5c8ea631ba96618d1f23d44598973831b91f781b66c8e3",
+        "suite": "dispatch-7",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-8.log",
+        "bytes": 539,
+        "sha256": "074123e12c02b8fc84375f5333e6c36f064bbdd3784912dd000c4630ca486f0e",
+        "suite": "dispatch-8",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/dispatch-9.log",
+        "bytes": 570,
+        "sha256": "1ba17de0bbd06651a69cb3b56e13de7cb79b223da0e10ae6dfd0f240b037cf9f",
+        "suite": "dispatch-9",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/effect_assurance.log",
+        "bytes": 780,
+        "sha256": "1a5f35441d72cc7b552175a23b639aceb9308c2b4f0bfd5f3453af6aec87546c",
+        "suite": "effect_assurance",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/effect_assurance_schema.log",
+        "bytes": 82,
+        "sha256": "d95aba4532c54939c2a30a721827e022b0a2f332b589242c310d95e8b89b5934",
+        "suite": "effect_assurance_schema",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/effect_continuation.log",
+        "bytes": 979,
+        "sha256": "9f31ff49d77025ebd50308555e5a16ad2c3e826decdcafec1e8f4bda32ae3266",
+        "suite": "effect_continuation",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/effect_lifecycle_vectors.log",
+        "bytes": 41,
+        "sha256": "855489c71c8caa184ff3cebb2a6de80b9fb34c56fae0742229d3de4d099ee011",
+        "suite": "effect_lifecycle_vectors",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/effect_selection_vectors.log",
+        "bytes": 41,
+        "sha256": "c609139c4a563176624c0ca76051dcd9b01ddf6c3c02c7b8f22c1be3e0e0ac75",
+        "suite": "effect_selection_vectors",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/effect_set.log",
+        "bytes": 3816,
+        "sha256": "04b347ff14e04f30ad6e1f2b2fd4c934fdcdbfc64c11b13f73ee156106f8a1f5",
+        "suite": "effect_set",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/effect_set_vectors.log",
+        "bytes": 41,
+        "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203",
+        "suite": "effect_set_vectors",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/failure_gate_execution.log",
+        "bytes": 780,
+        "sha256": "ce0c866b3b51414ba43a9b2362f3b83047d646fd27cd5863d80afd41093b27f7",
+        "suite": "failure_gate_execution",
+        "native_test_counts": [
+          {
+            "total": 6,
+            "passed": 6,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/failure_gate_safety.log",
+        "bytes": 1680,
+        "sha256": "10b73cb6fcc4846c3cb2190c70460a289833880b3ee6f23b79f6c601bf58eb27",
+        "suite": "failure_gate_safety",
+        "native_test_counts": [
+          {
+            "total": 20,
+            "passed": 20,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/git_participant_after.log",
+        "bytes": 809,
+        "sha256": "d79994a16b83645102bb7e440609c9d2da7635df848e4d48c0c3b3b7682650d4",
+        "suite": "git_participant_after",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/git_participant_before.log",
+        "bytes": 812,
+        "sha256": "845892dd0dd06448d8af078f2e1658fbc51ad203a8f1010032058d1087f7c0f3",
+        "suite": "git_participant_before",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/go_participant.log",
+        "bytes": 205,
+        "sha256": "7e1ba9029a5f964f3170b3478de29d5e33b059427fcd75ce0a88b89f979fb364",
+        "suite": "go_participant",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/hardening.log",
+        "bytes": 893,
+        "sha256": "1214596380ea47a9a2011ced285d9f2edbf1d6f3ee9c86adfa06e1f2e60b8de7",
+        "suite": "hardening",
+        "native_test_counts": [
+          {
+            "total": 8,
+            "passed": 8,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/http_application_error.log",
+        "bytes": 854,
+        "sha256": "3f1a5513be984fa6a3798940e5d92204c19f6f7e5df4303c24d489c5aacff022",
+        "suite": "http_application_error",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/http_response_loss.log",
+        "bytes": 846,
+        "sha256": "c7ff1bfcc6e672892ecfc2f9e799c8e6c8ef0103b4b094fecd5876dca9e36669",
+        "suite": "http_response_loss",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/http_timeout_before.log",
+        "bytes": 841,
+        "sha256": "fcc232485c12943ae7a5b169b7fe64ca5e245094e21ba952de9c23e0c4a9e39f",
+        "suite": "http_timeout_before",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/interop_history.log",
+        "bytes": 127,
+        "sha256": "e4d0b65a5d3fcbbbab2bcd5f3dc04dc966ce041f01ae17c829852db283741279",
+        "suite": "interop_history",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/interop_oracles.log",
+        "bytes": 40,
+        "sha256": "ccb5b6b0475728fb2435f59803211d47cff242001d02f2730272aa247a39edb6",
+        "suite": "interop_oracles",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/mcp_ability.log",
+        "bytes": 1049,
+        "sha256": "8a42153b5ff2efbd40c29edbe4411890630f59a1525c5f7ea2fcd4e7dc649538",
+        "suite": "mcp_ability",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/mcp_stdio_loss.log",
+        "bytes": 1044,
+        "sha256": "9f2be35ee816214a45982f3816f015bff279c7917bc059d039ef6475c2a5af2e",
+        "suite": "mcp_stdio_loss",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/node_composition.log",
+        "bytes": 2441,
+        "sha256": "7bb2755c1b5a664f5e2857ccd63f26d4bd4278469b570f083aba2006e3cd08f1",
+        "suite": "node_composition",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/node_contracts.log",
+        "bytes": 24,
+        "sha256": "42781b40a80c1d24c70e66b79108240013f9b319ad52b37e0b5fa42859b9333b",
+        "suite": "node_contracts",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/node_policy.log",
+        "bytes": 585,
+        "sha256": "b13cc89fac2e2d6481a1446d0ab7efac403ac0048ec50ede01780f521681387c",
+        "suite": "node_policy",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/node_recovery.log",
+        "bytes": 1001,
+        "sha256": "9d2bb31ad0ca0088104c12fac9755084fd797405e1673923c50f49ac5632ea11",
+        "suite": "node_recovery",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/node_vectors.log",
+        "bytes": 41,
+        "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203",
+        "suite": "node_vectors",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/operational_controls.log",
+        "bytes": 960,
+        "sha256": "a595fb3ecfbcdd26b5a6b4a1ceb46fa469484e0d49a6ec83f14c8d0ef74383e7",
+        "suite": "operational_controls",
+        "native_test_counts": [
+          {
+            "total": 9,
+            "passed": 9,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/parent_finalization.log",
+        "bytes": 2653,
+        "sha256": "fc1e4904a2c89d63a9db9853b15648daf0a20cc2220dc0504e00703c225eb3d7",
+        "suite": "parent_finalization",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/parent_vectors.log",
+        "bytes": 41,
+        "sha256": "11b138dd7d06156f9334506449e2c91bc25cfe8c851277956c1a1b7b2c2bd9ec",
+        "suite": "parent_vectors",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/participant_sdk_parity.log",
+        "bytes": 172,
+        "sha256": "2d94d6b4bf5a14c819c19f3f500fb9391295ff2bd08d00e68448181df4e9fb0e",
+        "suite": "participant_sdk_parity",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/persisted_negotiation.log",
+        "bytes": 1983,
+        "sha256": "b1ae151a976c28e4a750d1fa8c504fa4ae4345c8dcfba9a0ac779f08d8f73297",
+        "suite": "persisted_negotiation",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/persisted_negotiation_adapters.log",
+        "bytes": 735,
+        "sha256": "51c4ba9cec0289e8a90ea4c68dab1ff3ce1ade3dde7f9bbed6ca4374af108af9",
+        "suite": "persisted_negotiation_adapters",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/persisted_negotiation_contracts.log",
+        "bytes": 90,
+        "sha256": "bb138e49d767e9482d8e99a70bb3408f9abcf11fc3a6c7e5fd29248cda42a8a3",
+        "suite": "persisted_negotiation_contracts",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/persisted_negotiation_legacy.log",
+        "bytes": 81,
+        "sha256": "badc442072a3c9bfd5230e985d5058444eaaea7c5a5a57311e43993053364f52",
+        "suite": "persisted_negotiation_legacy",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/persisted_negotiation_schemas.log",
+        "bytes": 83,
+        "sha256": "f4b329501ccd6595f478681867b4b03a9e3aa2f865bba8eb3ca5fd784e2495dd",
+        "suite": "persisted_negotiation_schemas",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/policy_precedence.log",
+        "bytes": 507,
+        "sha256": "1dd6ffd80f41d436a658251f81aa27761c926fe6cb0a0f47b4b21b94368e11cb",
+        "suite": "policy_precedence",
+        "native_test_counts": [
+          {
+            "total": 3,
+            "passed": 3,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/portable_clean_room.log",
+        "bytes": 356,
+        "sha256": "104023b5f77fca352e401652c5521630ef388a435c62de6502f272e8e9ad6f53",
+        "suite": "portable_clean_room",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/portable_commitments.log",
+        "bytes": 42,
+        "sha256": "6374b98979775b0e93e24a795520804c41ea55b74e6a16d1b0dab7298aa4b44f",
+        "suite": "portable_commitments",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/preservation_binding.log",
+        "bytes": 848,
+        "sha256": "7becddb4da3135dfc2a9346432de17ef2e44b0e34e2e263e92e30c430dabe609",
+        "suite": "preservation_binding",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/python_integration.log",
+        "bytes": 771,
+        "sha256": "4f46f8863e9ebc840f4a300c4c39efedb8d027e0c998da63c97b4d950846239c",
+        "suite": "python_integration",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/python_isolation.log",
+        "bytes": 1792,
+        "sha256": "c86db68dd9b671738f94f3c0b408fe30f2bda3760755bfe6a26d89b90430deaa",
+        "suite": "python_isolation",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/python_package.log",
+        "bytes": 783,
+        "sha256": "9a8e210fbcdbc31df9c704d61180149f565145f178a56d3c8b8cf457a5cd0a97",
+        "suite": "python_package",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/python_parity.log",
+        "bytes": 122,
+        "sha256": "4b4988f27db2bb0ab909456f968785d3b2971d3c679a5a6b62a3a2244cd0b581",
+        "suite": "python_parity",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/reexecution_lifecycle.log",
+        "bytes": 235,
+        "sha256": "bf1cfc0f9c4f2f62fdabdcbb523ee156f8d7795cf673fcb0423d976c9c273916",
+        "suite": "reexecution_lifecycle",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/resume_policy.log",
+        "bytes": 681,
+        "sha256": "976c80ce0168f6c954dfbffe59b262fcd2339e420fb8bef282095691daeba7a3",
+        "suite": "resume_policy",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/retained_recovery.log",
+        "bytes": 849,
+        "sha256": "d788d4a8ebf00f84e119f8324367e55a65b595bc0c7bbd72e8345c9c6a6a0b5d",
+        "suite": "retained_recovery",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/retrieval_preferences.log",
+        "bytes": 547,
+        "sha256": "2498af1c65a2faba4e17d439159da9abdf2442413affaa20da6f898807ee01ad",
+        "suite": "retrieval_preferences",
+        "native_test_counts": [
+          {
+            "total": 3,
+            "passed": 3,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/review_checkpoint.log",
+        "bytes": 583,
+        "sha256": "65495cb1326901e465100e907acbc7c59863d7f91e32ed5f394ad783afae101b",
+        "suite": "review_checkpoint",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/routing.log",
+        "bytes": 2814,
+        "sha256": "8404e403e528232bb9461309b62459cc3c777fa39831ebe45e32225b993130c6",
+        "suite": "routing",
+        "native_test_counts": [
+          {
+            "total": 31,
+            "passed": 31,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/sdk_ability.log",
+        "bytes": 933,
+        "sha256": "0a100b764e79bebb51a9b14e2c8ce30af7197402082bf8cd88e0bd67b972d3af",
+        "suite": "sdk_ability",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/sdk_adapter.log",
+        "bytes": 972,
+        "sha256": "69c8384700d8d803f1a9279ed7c00ac6bbfa76e60018c0c030102acf31f75761",
+        "suite": "sdk_adapter",
+        "native_test_counts": [
+          {
+            "total": 10,
+            "passed": 10,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/sequential_effects.log",
+        "bytes": 2618,
+        "sha256": "85eb5b29096330e9fecc2bb8f44dab665c2125b5c910235939c3311a64633461",
+        "suite": "sequential_effects",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/state_store_sqlite.log",
+        "bytes": 347,
+        "sha256": "6865966931f9c4dcac7e1e6df5f71beaa5c2abef97f4cfb93e89c5ddc6e3e704",
+        "suite": "state_store_sqlite",
+        "native_test_counts": [
+          {
+            "total": 1,
+            "passed": 1,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/typescript_after.log",
+        "bytes": 529,
+        "sha256": "331f40d176debd103e7967ad895031a441b1a39242a2976f41f803b5afcf4e03",
+        "suite": "typescript_after",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/typescript_before.log",
+        "bytes": 530,
+        "sha256": "77420d657c0f3efa390cefe6f3bdc9ce8cb1a7dfe528bae4f9556363ca2d26f3",
+        "suite": "typescript_before",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/typescript_build.log",
+        "bytes": 221,
+        "sha256": "24158393e216186de823227cee0b3fad00cb08ca917a14338081aabd72a69373",
+        "suite": "typescript_build",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/dispatch-test-shards/logs/typescript_package.log",
+        "bytes": 20158,
+        "sha256": "f392722cefb041313531147a512b56f3b8b50142852c1e2ee3060fe567aa6d61",
+        "suite": "typescript_package",
+        "native_test_counts": []
+      }
+    ]
+  },
+  "canonical": {
+    "suite_groups": 92,
+    "native_tests": {
+      "total": 210,
+      "passed": 210,
+      "failed": 0
+    },
+    "logs": [
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/ability_assurance.log",
+        "bytes": 1774,
+        "sha256": "6505503ff16eabf1e0e2133a23566d6d8f03ef09010226b2def9e2791347ba6b",
+        "suite": "ability_assurance",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/assurance_capabilities.log",
+        "bytes": 90,
+        "sha256": "59e2d9253c4c80fec2597c57607cc743a2484ad79f959893db24d0c409450f93",
+        "suite": "assurance_capabilities",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/assurance_compatibility.log",
+        "bytes": 75,
+        "sha256": "24ea6fa02433c4e78ab02b0a54b1983390fdc037dee2167a1b138794acf52715",
+        "suite": "assurance_compatibility",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/beta_contracts.log",
+        "bytes": 75,
+        "sha256": "8cf1f333a0a356f50b46b22b8ca56c5be9e9ce423eb16ff385f90f3914bc141a",
+        "suite": "beta_contracts",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/beta_migration.log",
+        "bytes": 2491,
+        "sha256": "194f1b1be56a542afe1346773a51bf382471bdae5869c4f65c3656b3eb7a50e9",
+        "suite": "beta_migration",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/control_boundary.log",
+        "bytes": 1265,
+        "sha256": "12f2ec4e112cb620aa407c2413d72e3ecbd359394ea7734ea7ed84810c60efbc",
+        "suite": "control_boundary",
+        "native_test_counts": [
+          {
+            "total": 14,
+            "passed": 14,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/decision_claim.log",
+        "bytes": 82,
+        "sha256": "f0700708134088c7d6c802f6f8405e8504abfdef68beacab7a8424e872ecaade",
+        "suite": "decision_claim",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-1.log",
+        "bytes": 585,
+        "sha256": "b7bdd97125570e3eada71e0aec4acbb0c6952427a87a064d541c58d496b5a0e3",
+        "suite": "dispatch-1",
+        "native_test_counts": [
+          {
+            "total": 5,
+            "passed": 5,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-10.log",
+        "bytes": 542,
+        "sha256": "dc8297228f7e48eed15a69aee05c2b006bd6b22cb16d27e8b427e348624e828d",
+        "suite": "dispatch-10",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-11.log",
+        "bytes": 544,
+        "sha256": "f94dcfa6a45ffc9197529223fa0d3c6ea9760ca76aee5cdf65249de9c64fdd02",
+        "suite": "dispatch-11",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-12.log",
+        "bytes": 543,
+        "sha256": "163b9f1d7c4f13d0c7f5648b3debb9a83d21fe377a2a09735e14e2c839b27bad",
+        "suite": "dispatch-12",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-13.log",
+        "bytes": 592,
+        "sha256": "02516c1637701afa881bb0ee2d5214e30c8c7c5eee4be2eeb722848b58beafa5",
+        "suite": "dispatch-13",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-14.log",
+        "bytes": 567,
+        "sha256": "cdb68d178d9fcdf54127ffdb2db14f410a66ae8747499b5feecfd0a9140995ec",
+        "suite": "dispatch-14",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-15.log",
+        "bytes": 582,
+        "sha256": "a368c8087501ab117fae526af47440a4609c6993102e9394117490b26d65903c",
+        "suite": "dispatch-15",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-16.log",
+        "bytes": 577,
+        "sha256": "e9232e3f4460dc8374881654b0e90dfa6196965d7b4940dedd2cd5a6ed6e931f",
+        "suite": "dispatch-16",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-17.log",
+        "bytes": 537,
+        "sha256": "6b13d503522942cf1d3624647d09f6e613f9673a69476bc2f35072cd947554cf",
+        "suite": "dispatch-17",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-18.log",
+        "bytes": 542,
+        "sha256": "c11bc1dd6cbcd46634f19847b0e52c7c5154fc4967add879d061eff2bce24ebc",
+        "suite": "dispatch-18",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-19.log",
+        "bytes": 564,
+        "sha256": "8780937b234c03101be07ba7be9b0e6dda9b36d0e73110f684a7a4e2f181177a",
+        "suite": "dispatch-19",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-2.log",
+        "bytes": 604,
+        "sha256": "16627b08a641c358bfa7babb37e546880e7732e76d02b40aee3a1964bca87fc1",
+        "suite": "dispatch-2",
+        "native_test_counts": [
+          {
+            "total": 5,
+            "passed": 5,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-20.log",
+        "bytes": 548,
+        "sha256": "0f62b6dc66219b432214846ebed2d984c7ba8c0503220e75924b8a71e5b6fb98",
+        "suite": "dispatch-20",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-21.log",
+        "bytes": 521,
+        "sha256": "52b681c861989330fed36107dcef36eb9064784d36f190bd243d8ccaf81023b5",
+        "suite": "dispatch-21",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-22.log",
+        "bytes": 539,
+        "sha256": "d3b4873f08c4b711be2254bd3c146391b30db59ed3ec754ba8bf607c0c1d4b53",
+        "suite": "dispatch-22",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-23.log",
+        "bytes": 566,
+        "sha256": "4e0a4f6ac2f1131a0d97df6a92989fe5358bbcf152bf884a7ea66e6884139982",
+        "suite": "dispatch-23",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-24.log",
+        "bytes": 527,
+        "sha256": "1f1e546592dd0767425d640a5c9c1550626607b8ade0a0d197dfd5472bccc107",
+        "suite": "dispatch-24",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-3.log",
+        "bytes": 630,
+        "sha256": "a28531b72d66a8dba3342d74583c7dd51deba46dd61ccbbd9cb1d0ebd1d191e2",
+        "suite": "dispatch-3",
+        "native_test_counts": [
+          {
+            "total": 5,
+            "passed": 5,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-4.log",
+        "bytes": 639,
+        "sha256": "80e8f387743912717c6ae1e8aa93ac1939db287fa31244d67db7a131ecb47d02",
+        "suite": "dispatch-4",
+        "native_test_counts": [
+          {
+            "total": 5,
+            "passed": 5,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-5.log",
+        "bytes": 649,
+        "sha256": "3f4e78695ad1eeae1f8b458df2fd352d5f3ad14cdb0ab2c03fe12c3dae1790c2",
+        "suite": "dispatch-5",
+        "native_test_counts": [
+          {
+            "total": 5,
+            "passed": 5,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-6.log",
+        "bytes": 527,
+        "sha256": "8a4ab60452b65e021099ad1beeda4687ec0bd20e69fd4d7c0fe4390295d97bf5",
+        "suite": "dispatch-6",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-7.log",
+        "bytes": 544,
+        "sha256": "601c20c67f15096e397c767eca2175b1b625156a12afe641b5b35847bfe8a69a",
+        "suite": "dispatch-7",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-8.log",
+        "bytes": 539,
+        "sha256": "7e6db626bcc0aef5ae0717d8e8f0249846ba8f6d71b799696c457694eca9fcdd",
+        "suite": "dispatch-8",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/dispatch-9.log",
+        "bytes": 569,
+        "sha256": "4c01b3c35d4cd85e83a396e876b7f420d446304f6e266c4c5d59cb7c1b7da41a",
+        "suite": "dispatch-9",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/effect_assurance.log",
+        "bytes": 794,
+        "sha256": "4c0af0587a3d5b2482cdc421caedb02bfdc795910d3f5070fb6b9aed3522fbb5",
+        "suite": "effect_assurance",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/effect_assurance_schema.log",
+        "bytes": 82,
+        "sha256": "d95aba4532c54939c2a30a721827e022b0a2f332b589242c310d95e8b89b5934",
+        "suite": "effect_assurance_schema",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/effect_continuation.log",
+        "bytes": 979,
+        "sha256": "e75fc3e920c45c8662a10680fbe4ea99132a0bd4c5cacdad627c320f07815c99",
+        "suite": "effect_continuation",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/effect_lifecycle_vectors.log",
+        "bytes": 41,
+        "sha256": "855489c71c8caa184ff3cebb2a6de80b9fb34c56fae0742229d3de4d099ee011",
+        "suite": "effect_lifecycle_vectors",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/effect_selection_vectors.log",
+        "bytes": 41,
+        "sha256": "c609139c4a563176624c0ca76051dcd9b01ddf6c3c02c7b8f22c1be3e0e0ac75",
+        "suite": "effect_selection_vectors",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/effect_set.log",
+        "bytes": 3816,
+        "sha256": "5bbac19cdd1305b7545d401398bb11d94b18b8121ca6da9d444c46fab3fac4cb",
+        "suite": "effect_set",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/effect_set_vectors.log",
+        "bytes": 41,
+        "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203",
+        "suite": "effect_set_vectors",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/failure_gate_execution.log",
+        "bytes": 778,
+        "sha256": "7a3c26f04ae053a38ada179eac3c87efc00b597d1ee250e8ef24b1bc328ddead",
+        "suite": "failure_gate_execution",
+        "native_test_counts": [
+          {
+            "total": 6,
+            "passed": 6,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/failure_gate_safety.log",
+        "bytes": 1679,
+        "sha256": "15f353b2827dcfd64bb88e7d20bc3315c3beab097865cfcb7a35a48a37c6431d",
+        "suite": "failure_gate_safety",
+        "native_test_counts": [
+          {
+            "total": 20,
+            "passed": 20,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/git_participant_after.log",
+        "bytes": 823,
+        "sha256": "28cec8195373bdae145da2ecd52df446c408b6d96b70e6d3f982c9238eb665e2",
+        "suite": "git_participant_after",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/git_participant_before.log",
+        "bytes": 826,
+        "sha256": "b95d45acde7b7ece5ff18fbe2a11f568bdebe989fd1fcc6173c9dfed5d9a0985",
+        "suite": "git_participant_before",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/go_participant.log",
+        "bytes": 205,
+        "sha256": "a73bfcbb6aef8516785c3557ffe42907206028c7518c8e83f15c9ed069c226cd",
+        "suite": "go_participant",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/hardening.log",
+        "bytes": 890,
+        "sha256": "3a3be84e8215b9cd986a6c65b4657968777742235182eb7299a19cca7825737e",
+        "suite": "hardening",
+        "native_test_counts": [
+          {
+            "total": 8,
+            "passed": 8,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/heterogeneous_contracts.log",
+        "bytes": 24,
+        "sha256": "a1257fcfbb8a2b701410f9acbf8f60b8c4856e014426f4d02ee89b6d95459a4e",
+        "suite": "heterogeneous_contracts",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/heterogeneous_integration.log",
+        "bytes": 1636,
+        "sha256": "f37e1b798242ea30286e34c87436f24ff69833559e138e5a73dab53facaee5fd",
+        "suite": "heterogeneous_integration",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/heterogeneous_policy.log",
+        "bytes": 536,
+        "sha256": "7a0e13d2c7201b21e1c55e0f95a5e8c4c2f851c16add8c2a74d0981661b8c980",
+        "suite": "heterogeneous_policy",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/heterogeneous_recovery.log",
+        "bytes": 1289,
+        "sha256": "0705be0cd6264486aadf2d5d079cf11f365edb86fa648d0870fd17edee4a7b2b",
+        "suite": "heterogeneous_recovery",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/heterogeneous_vectors.log",
+        "bytes": 41,
+        "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203",
+        "suite": "heterogeneous_vectors",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/http_application_error.log",
+        "bytes": 868,
+        "sha256": "adbeab92256080547a270f4c60d34bfced1703b885ab6ec561f6df7d1b27a802",
+        "suite": "http_application_error",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/http_response_loss.log",
+        "bytes": 860,
+        "sha256": "8ce11b35a18fc81a81ec2274efb2a65deeba1c97c29df974475e754b86933de6",
+        "suite": "http_response_loss",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/http_timeout_before.log",
+        "bytes": 855,
+        "sha256": "9950d2aa6f295b9eb8c4fd2a55ff1eb088c178d2074170a429c3462c9d2aa42b",
+        "suite": "http_timeout_before",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/interop_history.log",
+        "bytes": 127,
+        "sha256": "e4d0b65a5d3fcbbbab2bcd5f3dc04dc966ce041f01ae17c829852db283741279",
+        "suite": "interop_history",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/interop_oracles.log",
+        "bytes": 40,
+        "sha256": "ccb5b6b0475728fb2435f59803211d47cff242001d02f2730272aa247a39edb6",
+        "suite": "interop_oracles",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/mcp_ability.log",
+        "bytes": 1063,
+        "sha256": "4e123f2ce34846b0d684955e4c55349d78bddd12ba4215c8629193c90b982698",
+        "suite": "mcp_ability",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/mcp_stdio_loss.log",
+        "bytes": 1058,
+        "sha256": "96c06fbea8970d9adca9212d6f76f06244a688ba983c6bc3694a519d5d24ce50",
+        "suite": "mcp_stdio_loss",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/node_composition.log",
+        "bytes": 2441,
+        "sha256": "e98160dc6ec45515398f7e05f34c645e95a2025cd45871c139015c627369e0d1",
+        "suite": "node_composition",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/node_contracts.log",
+        "bytes": 24,
+        "sha256": "42781b40a80c1d24c70e66b79108240013f9b319ad52b37e0b5fa42859b9333b",
+        "suite": "node_contracts",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/node_policy.log",
+        "bytes": 585,
+        "sha256": "26113c0d5ece3e7a5b7f5c1c05d452a51fb9d46764a2ad9f05dbb399af58996c",
+        "suite": "node_policy",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/node_recovery.log",
+        "bytes": 1001,
+        "sha256": "2f02be0c4f7e78f4a6fcbbe0adeddf0e46ac2cde11bf0abe3f2a0b64bc904981",
+        "suite": "node_recovery",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/node_vectors.log",
+        "bytes": 41,
+        "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203",
+        "suite": "node_vectors",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/operational_controls.log",
+        "bytes": 959,
+        "sha256": "ddbe3260c644c5ef62f61150c2cbdc4bdeaf0f5cf8c4ca12c775541c727012c0",
+        "suite": "operational_controls",
+        "native_test_counts": [
+          {
+            "total": 9,
+            "passed": 9,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/parent_finalization.log",
+        "bytes": 2653,
+        "sha256": "221a11f0ca8f63db272d90ea9b88f4d81eb76a5f3999a13b3cfba5325b1789bf",
+        "suite": "parent_finalization",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/parent_vectors.log",
+        "bytes": 41,
+        "sha256": "11b138dd7d06156f9334506449e2c91bc25cfe8c851277956c1a1b7b2c2bd9ec",
+        "suite": "parent_vectors",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/participant_sdk_parity.log",
+        "bytes": 172,
+        "sha256": "2d94d6b4bf5a14c819c19f3f500fb9391295ff2bd08d00e68448181df4e9fb0e",
+        "suite": "participant_sdk_parity",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/persisted_negotiation.log",
+        "bytes": 1997,
+        "sha256": "70a0b4c7ac0a756fe36d92f12f245b273387ac7679917c8fbdc5133b74c779f7",
+        "suite": "persisted_negotiation",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/persisted_negotiation_adapters.log",
+        "bytes": 749,
+        "sha256": "b40ddc3cb5352ecec213d2ea71550a7e342630bc914344cf9265e983c0b7ac81",
+        "suite": "persisted_negotiation_adapters",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/persisted_negotiation_contracts.log",
+        "bytes": 90,
+        "sha256": "bb138e49d767e9482d8e99a70bb3408f9abcf11fc3a6c7e5fd29248cda42a8a3",
+        "suite": "persisted_negotiation_contracts",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/persisted_negotiation_legacy.log",
+        "bytes": 81,
+        "sha256": "badc442072a3c9bfd5230e985d5058444eaaea7c5a5a57311e43993053364f52",
+        "suite": "persisted_negotiation_legacy",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/persisted_negotiation_schemas.log",
+        "bytes": 83,
+        "sha256": "f4b329501ccd6595f478681867b4b03a9e3aa2f865bba8eb3ca5fd784e2495dd",
+        "suite": "persisted_negotiation_schemas",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/policy_precedence.log",
+        "bytes": 507,
+        "sha256": "6d31f7846687983b01875512064364caf7f0c17eb0113b70dc9dba329e88e4f8",
+        "suite": "policy_precedence",
+        "native_test_counts": [
+          {
+            "total": 3,
+            "passed": 3,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/portable_clean_room.log",
+        "bytes": 356,
+        "sha256": "71e83ee30a3c77e4450b4f2b44810ff5a553db2cb9dd8664f2f4817c96429790",
+        "suite": "portable_clean_room",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/portable_commitments.log",
+        "bytes": 42,
+        "sha256": "6374b98979775b0e93e24a795520804c41ea55b74e6a16d1b0dab7298aa4b44f",
+        "suite": "portable_commitments",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/preservation_binding.log",
+        "bytes": 848,
+        "sha256": "7becddb4da3135dfc2a9346432de17ef2e44b0e34e2e263e92e30c430dabe609",
+        "suite": "preservation_binding",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/python_integration.log",
+        "bytes": 785,
+        "sha256": "01b79e81697a9842025260509b13770336ceb8365f8c73cc9e3041dd2d6e6e1c",
+        "suite": "python_integration",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/python_isolation.log",
+        "bytes": 1806,
+        "sha256": "7ea688cf9bf6b19f85f45c87c33986ba53e0dca3782e32730174d07c3aa742e5",
+        "suite": "python_isolation",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/python_package.log",
+        "bytes": 783,
+        "sha256": "a4f8b62c2cb6f1d8239063355489453c163d24b231a75a8bd1cc01960e2f00ad",
+        "suite": "python_package",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/python_parity.log",
+        "bytes": 122,
+        "sha256": "4b4988f27db2bb0ab909456f968785d3b2971d3c679a5a6b62a3a2244cd0b581",
+        "suite": "python_parity",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/reexecution_lifecycle.log",
+        "bytes": 235,
+        "sha256": "bf1cfc0f9c4f2f62fdabdcbb523ee156f8d7795cf673fcb0423d976c9c273916",
+        "suite": "reexecution_lifecycle",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/resume_policy.log",
+        "bytes": 681,
+        "sha256": "976c80ce0168f6c954dfbffe59b262fcd2339e420fb8bef282095691daeba7a3",
+        "suite": "resume_policy",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/retained_recovery.log",
+        "bytes": 849,
+        "sha256": "91db77feaf250a852faf1305d28e4adcf204e1b6beab3d472b9cfea4c1118bf6",
+        "suite": "retained_recovery",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/retrieval_preferences.log",
+        "bytes": 547,
+        "sha256": "4eb242177f0e9d3902c4e6054699f9936333d90bbc321aad2922fa27e4f868de",
+        "suite": "retrieval_preferences",
+        "native_test_counts": [
+          {
+            "total": 3,
+            "passed": 3,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/review_checkpoint.log",
+        "bytes": 583,
+        "sha256": "570bc30aa110ca267f6067871867464918360af0f9a37d8aea3d3bcd91764e23",
+        "suite": "review_checkpoint",
+        "native_test_counts": [
+          {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/routing.log",
+        "bytes": 2814,
+        "sha256": "5775e1c9531aabfc18393fb3422cf2d92acbec74aefe3e3ac35a605f5e62c3e3",
+        "suite": "routing",
+        "native_test_counts": [
+          {
+            "total": 31,
+            "passed": 31,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/sdk_ability.log",
+        "bytes": 947,
+        "sha256": "fa8f3b7a993acfc71932ed39058c9e3d02ff321fe807404fe8b9a508422ab72b",
+        "suite": "sdk_ability",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/sdk_adapter.log",
+        "bytes": 971,
+        "sha256": "212ba204585bc81ed34bf85cca1326d06a9940ba504a2c0675194315aead8d25",
+        "suite": "sdk_adapter",
+        "native_test_counts": [
+          {
+            "total": 10,
+            "passed": 10,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/sequential_effects.log",
+        "bytes": 2618,
+        "sha256": "e21fab41ecb90a357383916f2af2b0f96d5173f0d61029a60fcc49e21b68cf08",
+        "suite": "sequential_effects",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/state_store_sqlite.log",
+        "bytes": 347,
+        "sha256": "33f32addcdf90189867456b9eac695338896186929f71d79a5b2b1c201012b81",
+        "suite": "state_store_sqlite",
+        "native_test_counts": [
+          {
+            "total": 1,
+            "passed": 1,
+            "failed": 0
+          }
+        ]
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/typescript_after.log",
+        "bytes": 543,
+        "sha256": "bc47fd607c03af1bfee44914b1b7fffd991a252f7df0db36c746968262112682",
+        "suite": "typescript_after",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/typescript_before.log",
+        "bytes": 544,
+        "sha256": "c6fd86a75cfb809594f6f78119d687ac9fd11f90c05ccf7d787d58c2014a3b26",
+        "suite": "typescript_before",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/typescript_build.log",
+        "bytes": 221,
+        "sha256": "24158393e216186de823227cee0b3fad00cb08ca917a14338081aabd72a69373",
+        "suite": "typescript_build",
+        "native_test_counts": []
+      },
+      {
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/typescript_package.log",
+        "bytes": 20154,
+        "sha256": "eb56a644b456b810c11286ae8f5339c0fb42052cbc0cbfee9c2bdec3c686ea71",
+        "suite": "typescript_package",
+        "native_test_counts": []
+      }
+    ]
+  },
+  "development_failures": [
+    {
+      "log": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/dev-integration-1.log",
+        "bytes": 1084,
+        "sha256": "638c7d79f3ca217ab0bf18230026295b11b5336afae0285c6d3a947e2ed9304f"
+      },
+      "exit_code": 1,
+      "resolved": true
+    },
+    {
+      "log": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/dev-integration-2.log",
+        "bytes": 1056,
+        "sha256": "38984241ebfea821efc0499127f25d09b46ccdc4b4e9c0e6b5259eaa23acdf38"
+      },
+      "exit_code": 1,
+      "resolved": true
+    },
+    {
+      "log": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/dev-matrix-1.log",
+        "bytes": 2051,
+        "sha256": "c4fa85b1a3bbaed430be2182e167a672190824d6b68909c13324eadbe3406172"
+      },
+      "exit_code": 1,
+      "resolved": true
+    },
+    {
+      "log": {
+        "path": "/tmp/dispatch-heterogeneous-evidence/dev-policy-1.log",
+        "bytes": 1343,
+        "sha256": "1b9d214df35611ac37a87aad17c600be32183a32798085c339818108e4b95ebb"
+      },
+      "exit_code": 1,
+      "resolved": true
+    }
+  ],
+  "new_proof_counts": {
+    "integration": 25,
+    "policy": 7,
+    "recovery_contention": 8,
+    "contract": 10,
+    "new_vectors": 7,
+    "languages": [
+      "Kujo",
+      "TypeScript",
+      "Python",
+      "Go"
+    ]
+  },
+  "kujo_validation": {
+    "format": "passed",
+    "contracts_passed": 13,
+    "failed": 0,
+    "existing_ignored": 2,
+    "locked_release_build": "passed",
+    "runtime_changed": false
+  },
+  "warnings_observed": [
+    {
+      "path": "/tmp/dispatch-heterogeneous-evidence/kujo-baseline-build.log",
+      "line": "warning: unused import: `SequentialWriter`"
+    },
+    {
+      "path": "/tmp/dispatch-heterogeneous-evidence/kujo-baseline-build.log",
+      "line": "warning: trait `MustBeShareDummy` is never used"
+    },
+    {
+      "path": "/tmp/dispatch-heterogeneous-evidence/kujo-baseline-build.log",
+      "line": "warning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)"
+    },
+    {
+      "path": "/tmp/dispatch-heterogeneous-evidence/kujo-baseline-contracts.log",
+      "line": "warning: unused import: `SequentialWriter`"
+    },
+    {
+      "path": "/tmp/dispatch-heterogeneous-evidence/kujo-baseline-contracts.log",
+      "line": "warning: trait `MustBeShareDummy` is never used"
+    },
+    {
+      "path": "/tmp/dispatch-heterogeneous-evidence/kujo-baseline-contracts.log",
+      "line": "warning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)"
+    },
+    {
+      "path": "/tmp/dispatch-heterogeneous-evidence/kujo-final-build.log",
+      "line": "warning: unused import: `SequentialWriter`"
+    },
+    {
+      "path": "/tmp/dispatch-heterogeneous-evidence/kujo-final-build.log",
+      "line": "warning: trait `MustBeShareDummy` is never used"
+    },
+    {
+      "path": "/tmp/dispatch-heterogeneous-evidence/kujo-final-build.log",
+      "line": "warning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)"
+    },
+    {
+      "path": "/tmp/dispatch-heterogeneous-evidence/kujo-final-contracts.log",
+      "line": "warning: unused import: `SequentialWriter`"
+    },
+    {
+      "path": "/tmp/dispatch-heterogeneous-evidence/kujo-final-contracts.log",
+      "line": "warning: trait `MustBeShareDummy` is never used"
+    },
+    {
+      "path": "/tmp/dispatch-heterogeneous-evidence/kujo-final-contracts.log",
+      "line": "warning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/typescript_package.log",
+      "line": "npm warn Unknown user config \"python\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options."
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/typescript_package.log",
+      "line": "npm warn Unknown env config \"python\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options."
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/typescript_package.log",
+      "line": "npm warn Unknown user config \"python\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options."
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/typescript_build.log",
+      "line": "npm warn Unknown user config \"python\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options."
+    }
+  ],
+  "tested_source_files": [
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/schemas/node-input-binding-v1alpha2.schema.json",
+      "bytes": 5773,
+      "sha256": "39b9c854a129b092c4532a64a445f10b9df4c6091a69c0c03d92f8df6b7647f5"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/schemas/node-terminal-v1alpha1.schema.json",
+      "bytes": 1177,
+      "sha256": "76812f22012528fcc25686a3ef7e82b42966176662ef7f137642c2215f64bfe5"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/scripts/run_release_gate.sh",
+      "bytes": 10545,
+      "sha256": "528136f246d2588def8d89f2dfcb67959d21f411dccf2c044ed002600e227f44"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/src/core/assurance_state.kujo",
+      "bytes": 7603,
+      "sha256": "cccc1dc30334183e062000eb92e4c0ebd426cce605f01c0d73ea34996bd9f6ea"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/src/core/graph_outcome.kujo",
+      "bytes": 16165,
+      "sha256": "e1ce4e52e78e8573fb8fb50cb7a55c319b2ce876b0c65fb04c3880a715d5e9fe"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/src/core/graph_transition.kujo",
+      "bytes": 4769,
+      "sha256": "c932df65ee67b0d7d049e2cb2ef6a70cd04646fd56827e9385a4aec42831209f"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/src/core/node_composition.kujo",
+      "bytes": 21813,
+      "sha256": "552d71ca37851adc8935e0caf33a1aa41f1196f26e6138c16b738885c445fb18"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/src/core/node_transition.kujo",
+      "bytes": 9433,
+      "sha256": "c7089391b757a578c3482f8942a0c68dbafd3812cc2078927440e73aef086a05"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/src/core/retained_recovery.kujo",
+      "bytes": 23711,
+      "sha256": "667f520a1d4161adbe29df8d3845c7529e8e6e453ecd9a21e2257298da1f3016"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/src/core/runner.kujo",
+      "bytes": 104635,
+      "sha256": "b9cf0afbf0deb0c4615244d93f273072b9f550225dbb7d2ed8e2034711fb601d"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/go_participant_conformance.mjs",
+      "bytes": 4556,
+      "sha256": "60fa2718ffbb324a8ab8198f302b8ecd9e9b8e419539467b9f6e1e5247418503"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/heterogeneous_contract_tests.kujo",
+      "bytes": 1494,
+      "sha256": "a831f81e1dae3fecc7c2d22996221dc96413ee37a5fb27ace8754bf227f2be6e"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/heterogeneous_helpers.mjs",
+      "bytes": 2509,
+      "sha256": "0108ae762e533118d5a3f53f9e6baa5482bca969e10bff7babe3a9428c437c8b"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/heterogeneous_integration.mjs",
+      "bytes": 7362,
+      "sha256": "7091cfc86a8dda72de37a72897b32d4ed5c90792c77c2491d9b28c33c5be070f"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/heterogeneous_policy.mjs",
+      "bytes": 3524,
+      "sha256": "7bbf254a7a6b24fd3a79621ff2685ee942132712122766002d23644b0224af60"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/heterogeneous_recovery.mjs",
+      "bytes": 6351,
+      "sha256": "cf8598dfeeef9643788118c22deffaeb48766cb5dc0d8c74922b19284004c698"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/node_composition_fixture.kujo",
+      "bytes": 20110,
+      "sha256": "26144b51573fbc15b31d0a3b6b9908269bd2cde60ea3ce0dcb60b2a3ec85e9da"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/node_composition_helpers.mjs",
+      "bytes": 4756,
+      "sha256": "2a2cc86453343e6ba6fe8000af50403405c080dbdb0f986e3c4396ffdf18f531"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/vectors/heterogeneous-terminals.json",
+      "bytes": 12383,
+      "sha256": "3454990fd7f90b246572ca08e95b10c2eeb84d2c4d17bc27e954802bf3954177"
+    }
+  ],
+  "lockfiles": [
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/interop/typescript-participant/package-lock.json",
+      "bytes": 3709,
+      "sha256": "9c1929290f3aca19ffbf8987990cb04d18ff8670f1aebcfe3b29f0d38ca0e0c1"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/interop/python-participant/requirements.lock",
+      "bytes": 10330,
+      "sha256": "0826520f9fd33a5619053051fd8d32af49f654927a2dd867f53ee9912ae5e556"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/interop/go-participant/go.mod",
+      "bytes": 49,
+      "sha256": "3e9b4846ad65b6f228a3fd4449d637039750df9075bcc967105b1099ae405e29"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/../kujo/Cargo.lock",
+      "bytes": 161510,
+      "sha256": "26061df9462d1648acc59ce38380ab34bdc3253ad4c66008f125c7793dcdc7ac"
+    }
+  ],
+  "supplemental_contention_result": {
+    "ok": true,
+    "checks": 1,
+    "results": [
+      {
+        "ok": true,
+        "outcome": "completed",
+        "revision": 6
+      },
+      {
+        "authority": "informational",
+        "ok": false,
+        "reason": "Error { line: 0, message: graph_already_finalized, stack: [<function with 4 params>, demand] }"
+      }
+    ],
+    "evidence": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-WaVqAe/explicit-finalizer-outcomes"
+  },
+  "committed_evidence": [
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/docs/evidence/heterogeneous-nodes/baseline.txt",
+      "bytes": 12064,
+      "sha256": "1a2322d4219448619c247637090e7b2a1e447a30e85af41204e97721b11ac6c9"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/docs/evidence/heterogeneous-nodes/canonical.txt",
+      "bytes": 12605,
+      "sha256": "10251c2fdf20a39faa2f5eff385b190209be339ea960f1cca05882c4e1b65e61"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/docs/evidence/heterogeneous-nodes/contention-recheck.txt",
+      "bytes": 1624,
+      "sha256": "56b389685079d322f8974fb5a9e13590fd6c50db3ce874d17cb09e4db9de6ce0"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/docs/evidence/heterogeneous-nodes/development.txt",
+      "bytes": 13713,
+      "sha256": "b6e2dca0d41b95e1056817b13f71fe5bc1a331d72dea24fc506356e44ea99d44"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/docs/evidence/heterogeneous-nodes/environment-failure.txt",
+      "bytes": 6815,
+      "sha256": "7f17702f9ce471758ad63edb027d47384dd403be3727c78defaef1ddc05db786"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/docs/evidence/heterogeneous-nodes/focused-results.json",
+      "bytes": 3697,
+      "sha256": "2f8658e26aa140cbaa7e36fedbb009afffa58ae8f1552cbd0421919719e50211"
+    },
+    {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/docs/evidence/heterogeneous-nodes/kujo-checks.txt",
+      "bytes": 6755,
+      "sha256": "c32874be065b6bbcaba9ac1f77d83c56761f08f8ede500705f652f0fac27c0cf"
+    }
+  ],
+  "publication": {
+    "tested_dispatch_source": "2b6932651af38cca8063c6e0c303a4e541b17ede",
+    "evidence_commit": "The commit containing this manifest; exact final pushed heads are recorded in /tmp/dispatch-heterogeneous-evidence/completion.json and the retrieval-verified Strata handoff.",
+    "source_worktree": "Private isolated worktree; primary baseline ran separately on starting main."
+  },
+  "verified": true
+}

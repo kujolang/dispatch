@@ -1,0 +1,101 @@
+{
+  "heterogeneous_contracts": {
+    "log": {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/heterogeneous_contracts.log",
+      "bytes": 24,
+      "sha256": "a1257fcfbb8a2b701410f9acbf8f60b8c4856e014426f4d02ee89b6d95459a4e"
+    },
+    "results": [
+      {
+        "checks": 10,
+        "ok": true
+      }
+    ]
+  },
+  "heterogeneous_integration": {
+    "log": {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/heterogeneous_integration.log",
+      "bytes": 1636,
+      "sha256": "f37e1b798242ea30286e34c87436f24ff69833559e138e5a73dab53facaee5fd"
+    },
+    "results": [
+      {
+        "ok": true,
+        "checks": 25,
+        "evidence": [
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-aox4kO/heterogeneous-success",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-aox4kO/evaluation-failure",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-aox4kO/optional-and-completion-only"
+        ]
+      }
+    ]
+  },
+  "heterogeneous_policy": {
+    "log": {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/heterogeneous_policy.log",
+      "bytes": 536,
+      "sha256": "7a0e13d2c7201b21e1c55e0f95a5e8c4c2f851c16add8c2a74d0981661b8c980"
+    },
+    "results": [
+      {
+        "ok": true,
+        "checks": 7
+      }
+    ]
+  },
+  "heterogeneous_recovery": {
+    "log": {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/heterogeneous_recovery.log",
+      "bytes": 1289,
+      "sha256": "0705be0cd6264486aadf2d5d079cf11f365edb86fa648d0870fd17edee4a7b2b"
+    },
+    "results": [
+      {
+        "ok": true,
+        "checks": 8,
+        "scenarios": [
+          "Eval terminal reply loss survives a fresh controller without a fake execution",
+          "actual human terminal orphan repairs exact decision but not graph completion",
+          "all durable terminal facts and recovery still require separate graph decision",
+          "two fresh finalizers: one exact durable graph terminal transition",
+          "graph crash before_terminal preserves exact terminal boundary",
+          "graph crash after_terminal preserves exact terminal boundary",
+          "graph crash immutable preserves exact terminal boundary",
+          "optional outstanding dispatch blocks graph finalization before child admission"
+        ],
+        "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-58EHB3"
+      }
+    ]
+  },
+  "heterogeneous_vectors": {
+    "log": {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/heterogeneous_vectors.log",
+      "bytes": 41,
+      "sha256": "673fd762e7d22822c2d7a7f6717870fc8844f89a9d41781e647b87680552e203"
+    },
+    "results": [
+      {
+        "checker": "kujo",
+        "ok": true,
+        "vectors": 7
+      }
+    ]
+  },
+  "go_participant": {
+    "log": {
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-heterogeneous/tests/tmp/dispatch-test-shards/logs/go_participant.log",
+      "bytes": 205,
+      "sha256": "a73bfcbb6aef8516785c3557ffe42907206028c7518c8e83f15c9ed069c226cd"
+    },
+    "results": [
+      {
+        "ok": true,
+        "checks": 141,
+        "mcpChecks": 5,
+        "malformedChecks": 9,
+        "wireSHA256": "f87fd01de248eca96c685282b3ead0a95578f77f6c597f598fc9d587f0bec262",
+        "independence": "Go standard library; CLI and MCP share one codec"
+      }
+    ]
+  }
+}
