@@ -1,4 +1,4 @@
-import Ajv from '../interop/typescript-participant/node_modules/ajv/dist/ajv.js';
+import Ajv from '../interop/typescript-participant/node_modules/ajv/dist/2020.js';
 import {setup,program,policy,run,pop,actor,assert,state,root,read,write,join,finishProgram,finishGraph,gop,edge,patch,fs} from './static_policy_helpers.mjs';
 const accounting='dispatch.graph-attempt-accounting/v1alpha1';
 const retry=(id,deps=[],inputs=[])=>({...program(id,deps,inputs),terminal_contract:'program-attempt/v1alpha1',max_attempts:2,on_unsuccessful:{action:'retry_same_node'}});

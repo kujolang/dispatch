@@ -57,3 +57,8 @@ or retryable flag is not evidence. Neither branch nor group policy can waive it.
   variant and allowed it only in additive input-binding/v1alpha4. Historical terminal
   and binding schemas remain unchanged. New vectors cover refusal and a downstream
   consumer of a successful retry; the real chain validates its actual binding schema.
+
+- The first full canonical run reached the new real-chain schema assertion and
+  rejected the test harness default AJV validator because the schema declares Draft
+  2020-12. Selected the installed Draft 2020-12 validator explicitly; schema checking
+  remains enabled. The failed canonical transcript is retained before the full rerun.
