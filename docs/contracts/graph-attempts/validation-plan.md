@@ -28,3 +28,23 @@ A release cannot race a legal dispatch because the same graph lock serializes bo
 A refusal is published before the child admission claim and seals the child run.
 Only Dispatch can produce this admission fact; a participant-supplied refusal file
 or retryable flag is not evidence. Neither branch nor group policy can waive it.
+
+## Development corrections to retain in final evidence
+
+- Initial recovery artifact inventory edit missed one closing brace; parser rejected
+  fixture initialization. Corrected before the successful smoke/recovery proofs.
+- First Go/TypeScript/Python run found the isolated checkout's missing TypeScript
+  build output. Built with its pinned local compiler and reran successfully.
+- A full A → refused B1 → B2 → C lifecycle reached independent finalization, then
+  graph assessment rejected `commitment_bound`: the full internal ledger exceeded
+  portable-json's 8 KiB bound. Kept that bound unchanged and used an exact retained
+  internal JSON digest. The concurrent development policy run was explicitly stopped
+  before changing its installed source, after one passing branch check; a complete
+  rerun follows. No partial run is counted as a canonical pass.
+- A changed child configuration initially failed at child admission after graph
+  dispatch had already consumed a unit. Added a distinct exact-authority inspection
+  before dispatch. Full execution admission still validates exact inputs and a durable
+  dispatch. The distinction also permits safe release after input binding but before
+  dispatch; a surviving binding alone never grants execution. The focused source
+  inventory now includes the changed assurance-configuration module in place of the
+  unchanged state module, retaining the existing sixteen-file manifest bound.

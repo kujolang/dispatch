@@ -1,7 +1,8 @@
 # Explicit attempts and reservations (implementation contract)
 
-This is the intended opt-in contract, pending the accompanying proof and release
-gate. Existing static-policy runs retain their original bytes and dispatch behavior.
+This is the opt-in implementation contract. The validation record distinguishes
+focused proofs from the complete release gate. Existing static-policy runs retain
+their original bytes and dispatch behavior.
 
 ## Authority and units
 
@@ -72,3 +73,9 @@ dynamic topology, distributed workers, remote authentication, machine-loss recov
 mixed profiles, compensation, exactly-once effects and universal rollback remain
 outside this contract. RunLedger and Watchdog may report these facts; neither owns
 a reservation, refund, retry or admission decision.
+
+The graph terminal decision references the exact internal ledger by SHA-256 over its
+retained JSON bytes. The ledger is not serialized as one portable participant
+commitment: a multi-node history legitimately exceeds that codec's 8 KiB bound.
+The bound and all historical portable encodings remain unchanged. Only the compact
+input-binding/v1alpha4 addition crosses the existing portable codec boundary.

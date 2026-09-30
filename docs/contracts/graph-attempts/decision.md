@@ -21,7 +21,7 @@ and preserved; documentation/build work uses an isolated checkout of main.
 | Branch activation | Durable path policy | Consumes no execution unit; inactive nodes reserve nothing |
 | Subgraph terminal receipt | Group policy conclusion over member facts | No extra execution unit; count each executed member attempt once |
 
-## Proposed bounded extension
+## Bounded extension
 
 An opt-in accounting contract uses the existing graph lock, journal and immutable
 record machinery. Reservation precedes child binding/dispatch. Availability is limit
