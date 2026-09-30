@@ -1,0 +1,289 @@
+{
+  "schema": "dispatch.commitment-vectors/v1",
+  "algorithm": "sha256",
+  "encoding": "utf-8",
+  "output": "lowercase-hex-unprefixed",
+  "vectors": [
+    {
+      "name": "branch-eval-failure",
+      "recipe": "portable_json",
+      "input": {
+        "schema": "dispatch.branch-candidate/v1alpha1",
+        "branch_id": "quality",
+        "predicate": "evaluation_verdict",
+        "source_terminal": {
+          "schema": "dispatch.node-terminal/v1alpha1",
+          "node_id": "E",
+          "contract": "evaluation-result/v1",
+          "subject": {
+            "run_id": "graph",
+            "step_id": "H",
+            "decision_instance": "1"
+          },
+          "facts_ref": "sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6",
+          "finalized_revision": 19,
+          "outcome": "failed",
+          "authority_ref": "sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68"
+        },
+        "source_fact_ref": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "selected": "fail",
+        "active_nodes": [
+          "R",
+          "E2"
+        ],
+        "inactive_nodes": [
+          "B"
+        ],
+        "revision": 17,
+        "journal": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "graph": {
+          "run_id": "graph",
+          "workflow_ref": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "authority_ref": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "preimage_utf8": "{\"active_nodes\":[\"R\",\"E2\"],\"authority_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"branch_id\":\"quality\",\"graph\":{\"run_id\":\"graph\",\"workflow_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"},\"inactive_nodes\":[\"B\"],\"journal\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"predicate\":\"evaluation_verdict\",\"revision\":17,\"schema\":\"dispatch.branch-candidate/v1alpha1\",\"selected\":\"fail\",\"source_fact_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"source_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"source_terminal\":{\"authority_ref\":\"sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68\",\"contract\":\"evaluation-result/v1\",\"facts_ref\":\"sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6\",\"finalized_revision\":19,\"node_id\":\"E\",\"outcome\":\"failed\",\"schema\":\"dispatch.node-terminal/v1alpha1\",\"subject\":{\"decision_instance\":\"1\",\"run_id\":\"graph\",\"step_id\":\"H\"}}}",
+      "sha256": "249b41645b23bee3289bc3fa4cca8daf6c5778a6220603f12f337198f0e14905"
+    },
+    {
+      "name": "subgraph-terminal",
+      "recipe": "portable_json",
+      "input": {
+        "schema": "dispatch.subgraph-candidate/v1alpha1",
+        "subgraph_id": "RepairFlow",
+        "entries": [
+          {
+            "schema": "dispatch.node-terminal/v1alpha1",
+            "node_id": "H",
+            "contract": "intervention-decision/v2",
+            "subject": {
+              "run_id": "graph",
+              "step_id": "H",
+              "decision_instance": "1"
+            },
+            "facts_ref": "sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6",
+            "finalized_revision": 19,
+            "outcome": "completed",
+            "authority_ref": "sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68"
+          }
+        ],
+        "nodes": [
+          {
+            "node_id": "R",
+            "required": true,
+            "terminal": {
+              "schema": "dispatch.node-terminal/v1alpha1",
+              "node_id": "H",
+              "contract": "intervention-decision/v2",
+              "subject": {
+                "run_id": "graph",
+                "step_id": "H",
+                "decision_instance": "1"
+              },
+              "facts_ref": "sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6",
+              "finalized_revision": 19,
+              "outcome": "completed",
+              "authority_ref": "sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68"
+            },
+            "reason": "satisfied"
+          }
+        ],
+        "outcome": "completed",
+        "policy": "required-success",
+        "revision": 23,
+        "journal": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "graph": {
+          "run_id": "graph",
+          "workflow_ref": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "authority_ref": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "preimage_utf8": "{\"authority_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"entries\":[{\"authority_ref\":\"sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68\",\"contract\":\"intervention-decision/v2\",\"facts_ref\":\"sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6\",\"finalized_revision\":19,\"node_id\":\"H\",\"outcome\":\"completed\",\"schema\":\"dispatch.node-terminal/v1alpha1\",\"subject\":{\"decision_instance\":\"1\",\"run_id\":\"graph\",\"step_id\":\"H\"}}],\"graph\":{\"run_id\":\"graph\",\"workflow_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"},\"journal\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"nodes\":[{\"node_id\":\"R\",\"reason\":\"satisfied\",\"required\":true,\"terminal\":{\"authority_ref\":\"sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68\",\"contract\":\"intervention-decision/v2\",\"facts_ref\":\"sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6\",\"finalized_revision\":19,\"node_id\":\"H\",\"outcome\":\"completed\",\"schema\":\"dispatch.node-terminal/v1alpha1\",\"subject\":{\"decision_instance\":\"1\",\"run_id\":\"graph\",\"step_id\":\"H\"}}}],\"outcome\":\"completed\",\"policy\":\"required-success\",\"revision\":23,\"schema\":\"dispatch.subgraph-candidate/v1alpha1\",\"source_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"subgraph_id\":\"RepairFlow\"}",
+      "sha256": "6382ec32b382b0cb4a4b87d7a6b32bd60d72d9052701a66f0a477d7513a68296"
+    },
+    {
+      "name": "inactive-explanation",
+      "recipe": "portable_json",
+      "input": {
+        "node_id": "R",
+        "required": false,
+        "declared_required": true,
+        "terminal": null,
+        "reason": "not_selected"
+      },
+      "preimage_utf8": "{\"declared_required\":true,\"node_id\":\"R\",\"reason\":\"not_selected\",\"required\":false,\"terminal\":null}",
+      "sha256": "6b01e3f394158264c51fe61dd31ca33e720102bafac33da940fdd166a29838cc"
+    },
+    {
+      "name": "dispatch-budget",
+      "recipe": "portable_json",
+      "input": {
+        "unit": "program_dispatch_reservations",
+        "used": 4,
+        "limit": 4,
+        "exhausted": true,
+        "on_exhaustion": "block"
+      },
+      "preimage_utf8": "{\"exhausted\":true,\"limit\":4,\"on_exhaustion\":\"block\",\"unit\":\"program_dispatch_reservations\",\"used\":4}",
+      "sha256": "685ced8a268f5e599e428154f4b1dd3b202db1c6eb09b553d3605b7af8b55a9e"
+    },
+    {
+      "name": "policy-consumer-binding",
+      "recipe": "portable_json",
+      "input": {
+        "schema": "dispatch.node-input-binding/v1alpha3",
+        "graph": {
+          "run_id": "graph",
+          "workflow_ref": "sha256:5bf0c8be1e4a38fb76f5a35d6ee5cf5964872d47128e917e9287f6f71ea3c479"
+        },
+        "node_id": "B",
+        "consumer": {
+          "run_id": "consumer",
+          "step_id": "action",
+          "attempt_id": "1"
+        },
+        "predecessors": [
+          {
+            "node_id": "H",
+            "terminal": {
+              "schema": "dispatch.node-terminal/v1alpha1",
+              "node_id": "H",
+              "contract": "intervention-decision/v2",
+              "subject": {
+                "run_id": "graph",
+                "step_id": "H",
+                "decision_instance": "1"
+              },
+              "facts_ref": "sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6",
+              "finalized_revision": 19,
+              "outcome": "completed",
+              "authority_ref": "sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68"
+            }
+          }
+        ],
+        "inputs": [
+          {
+            "producer_node": "A",
+            "producer_subject": {
+              "run_id": "producer",
+              "step_id": "action",
+              "attempt_id": "1"
+            },
+            "result_ref": "sha256:dab1f9f0f88f2131eea4a3df0415d3e492c2151ccdc9c9e16e340ce78796ec7b",
+            "finalization_ref": "sha256:9d344158ebdfdeba22837fcafdd28995e05b9c2c06df37fedd4dd7aa162fb89e",
+            "finalized_revision": 17,
+            "output_name": "report",
+            "type_id": "kujo.example/node-summary/v1",
+            "schema_ref": "sha256:df0ad6e43880f09c90ebf95f19110178aba6890df0010ebda7485029e2b543b4",
+            "evidence_ref": "sha256:45447b7afbd5e544f7d0f1df0fccd26014d9850130abd3f020b89ff96b82079f",
+            "content_ref": "sha256:4d7459b3eb4d7c8f99bbbf2baafb44db2dfdf2843ee16e956385a7dd0718bf16",
+            "name": "input"
+          }
+        ],
+        "artifacts": [
+          "sha256:9d344158ebdfdeba22837fcafdd28995e05b9c2c06df37fedd4dd7aa162fb89e",
+          "sha256:dab1f9f0f88f2131eea4a3df0415d3e492c2151ccdc9c9e16e340ce78796ec7b",
+          "sha256:45447b7afbd5e544f7d0f1df0fccd26014d9850130abd3f020b89ff96b82079f",
+          "sha256:4d7459b3eb4d7c8f99bbbf2baafb44db2dfdf2843ee16e956385a7dd0718bf16"
+        ],
+        "policy": {
+          "branches": [
+            "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          ],
+          "subgraphs": [
+            "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+          ]
+        }
+      },
+      "preimage_utf8": "{\"artifacts\":[\"sha256:9d344158ebdfdeba22837fcafdd28995e05b9c2c06df37fedd4dd7aa162fb89e\",\"sha256:dab1f9f0f88f2131eea4a3df0415d3e492c2151ccdc9c9e16e340ce78796ec7b\",\"sha256:45447b7afbd5e544f7d0f1df0fccd26014d9850130abd3f020b89ff96b82079f\",\"sha256:4d7459b3eb4d7c8f99bbbf2baafb44db2dfdf2843ee16e956385a7dd0718bf16\"],\"consumer\":{\"attempt_id\":\"1\",\"run_id\":\"consumer\",\"step_id\":\"action\"},\"graph\":{\"run_id\":\"graph\",\"workflow_ref\":\"sha256:5bf0c8be1e4a38fb76f5a35d6ee5cf5964872d47128e917e9287f6f71ea3c479\"},\"inputs\":[{\"content_ref\":\"sha256:4d7459b3eb4d7c8f99bbbf2baafb44db2dfdf2843ee16e956385a7dd0718bf16\",\"evidence_ref\":\"sha256:45447b7afbd5e544f7d0f1df0fccd26014d9850130abd3f020b89ff96b82079f\",\"finalization_ref\":\"sha256:9d344158ebdfdeba22837fcafdd28995e05b9c2c06df37fedd4dd7aa162fb89e\",\"finalized_revision\":17,\"name\":\"input\",\"output_name\":\"report\",\"producer_node\":\"A\",\"producer_subject\":{\"attempt_id\":\"1\",\"run_id\":\"producer\",\"step_id\":\"action\"},\"result_ref\":\"sha256:dab1f9f0f88f2131eea4a3df0415d3e492c2151ccdc9c9e16e340ce78796ec7b\",\"schema_ref\":\"sha256:df0ad6e43880f09c90ebf95f19110178aba6890df0010ebda7485029e2b543b4\",\"type_id\":\"kujo.example/node-summary/v1\"}],\"node_id\":\"B\",\"policy\":{\"branches\":[\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"],\"subgraphs\":[\"sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\"]},\"predecessors\":[{\"node_id\":\"H\",\"terminal\":{\"authority_ref\":\"sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68\",\"contract\":\"intervention-decision/v2\",\"facts_ref\":\"sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6\",\"finalized_revision\":19,\"node_id\":\"H\",\"outcome\":\"completed\",\"schema\":\"dispatch.node-terminal/v1alpha1\",\"subject\":{\"decision_instance\":\"1\",\"run_id\":\"graph\",\"step_id\":\"H\"}}}],\"schema\":\"dispatch.node-input-binding/v1alpha3\"}",
+      "sha256": "b00d9c5566be06c906453814303be73b140d239a9ef5795f166ff48ea1f6a3b0"
+    },
+    {
+      "name": "local-policy-binding",
+      "recipe": "portable_json",
+      "input": {
+        "schema": "dispatch.node-terminal-input/v1alpha2",
+        "node_id": "H",
+        "graph": {
+          "run_id": "graph",
+          "workflow_ref": "sha256:5bf0c8be1e4a38fb76f5a35d6ee5cf5964872d47128e917e9287f6f71ea3c479"
+        },
+        "instance_id": "1",
+        "predecessors": [
+          {
+            "node_id": "H",
+            "terminal": {
+              "schema": "dispatch.node-terminal/v1alpha1",
+              "node_id": "H",
+              "contract": "intervention-decision/v2",
+              "subject": {
+                "run_id": "graph",
+                "step_id": "H",
+                "decision_instance": "1"
+              },
+              "facts_ref": "sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6",
+              "finalized_revision": 19,
+              "outcome": "completed",
+              "authority_ref": "sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68"
+            }
+          }
+        ],
+        "inputs": [],
+        "artifacts": [
+          "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        ],
+        "policy": {
+          "branches": [
+            "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          ],
+          "subgraphs": []
+        }
+      },
+      "preimage_utf8": "{\"artifacts\":[\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"],\"graph\":{\"run_id\":\"graph\",\"workflow_ref\":\"sha256:5bf0c8be1e4a38fb76f5a35d6ee5cf5964872d47128e917e9287f6f71ea3c479\"},\"inputs\":[],\"instance_id\":\"1\",\"node_id\":\"H\",\"policy\":{\"branches\":[\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"],\"subgraphs\":[]},\"predecessors\":[{\"node_id\":\"H\",\"terminal\":{\"authority_ref\":\"sha256:45a176d70438d20dd5125bbefd224dfe7fcc9e6fbaf45d7356a83b4ec3335e68\",\"contract\":\"intervention-decision/v2\",\"facts_ref\":\"sha256:1b0786ee4262f6b56d1c2e3d92537aff2dc1f37d0e1d061ada3cd4c1fd164bc6\",\"finalized_revision\":19,\"node_id\":\"H\",\"outcome\":\"completed\",\"schema\":\"dispatch.node-terminal/v1alpha1\",\"subject\":{\"decision_instance\":\"1\",\"run_id\":\"graph\",\"step_id\":\"H\"}}}],\"schema\":\"dispatch.node-terminal-input/v1alpha2\"}",
+      "sha256": "070231e03b055b12d6f690d496d0f0bc5400ab09ea28df207114460efef245db"
+    },
+    {
+      "name": "active-path-outcome",
+      "recipe": "portable_json",
+      "input": {
+        "schema": "dispatch.graph-outcome-candidate/v1alpha2",
+        "outcome": "blocked",
+        "nodes": [
+          {
+            "node_id": "R",
+            "required": true,
+            "terminal": null,
+            "reason": "human_review_pending"
+          },
+          {
+            "node_id": "B",
+            "required": false,
+            "declared_required": true,
+            "terminal": null,
+            "reason": "not_selected"
+          }
+        ],
+        "policy": "static-active-path/v1alpha1",
+        "branches": [
+          {
+            "branch_id": "quality",
+            "selected": "fail",
+            "activation_ref": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        ],
+        "subgraphs": [],
+        "budget": {
+          "unit": "program_dispatch_reservations",
+          "used": 2,
+          "limit": 3,
+          "exhausted": false,
+          "on_exhaustion": "block"
+        }
+      },
+      "preimage_utf8": "{\"branches\":[{\"activation_ref\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"branch_id\":\"quality\",\"selected\":\"fail\"}],\"budget\":{\"exhausted\":false,\"limit\":3,\"on_exhaustion\":\"block\",\"unit\":\"program_dispatch_reservations\",\"used\":2},\"nodes\":[{\"node_id\":\"R\",\"reason\":\"human_review_pending\",\"required\":true,\"terminal\":null},{\"declared_required\":true,\"node_id\":\"B\",\"reason\":\"not_selected\",\"required\":false,\"terminal\":null}],\"outcome\":\"blocked\",\"policy\":\"static-active-path/v1alpha1\",\"schema\":\"dispatch.graph-outcome-candidate/v1alpha2\",\"subgraphs\":[]}",
+      "sha256": "96fb890478d3009d7dbd4c325f216c40449efa9122d45a03b23fd23e881df4df"
+    }
+  ]
+}

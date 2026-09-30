@@ -1,0 +1,35 @@
+from src.core.graph_policy import validate_static_policy, policy_ready, path_state, failure_strategy, dispatch_budget
+from src.core.step import create_step
+from src.workflows.workflow import create_workflow
+from src.core.utils import dict_get_or
+func need(ok) {if ok != true {throw("static_policy_contract_failed")}}
+func base(change) {
+    predicate := "human_action";other := "R";attempts := 1;limit := 1;groups := []
+    if change == "predicate" {predicate = "eval(expression)"}
+    if change == "duplicate" {other = "B"}
+    if change == "retry" {attempts = 2}
+    if change == "budget" {limit = -1}
+    if change == "group" {groups = [{"id":"nested", "members":["B"], "entry":["A"], "policy":"required-success"}]}
+    a := create_step("A", "A", "tool", {"terminal_contract":"intervention-decision/v2", "inputs":[]})
+    b := create_step("B", "B", "tool", {"depends_on":["A"], "terminal_contract":"intervention-decision/v2", "inputs":[]})
+    r := create_step("R", "R", "tool", {"depends_on":["A"], "terminal_contract":"intervention-decision/v2", "inputs":[], "accept_terminal":{"A":["rejected"]}})
+    if change == "optional" {config := a["config"];config["on_unsuccessful"] := {"action":"continue_optional"};a["config"] := config}
+    workflow := {"id":"policy", "steps":[a,b,r], "metadata":{"graph_outcome":"dispatch.graph-outcome/v1alpha1", "graph_policy":{"schema":"dispatch.static-graph-policy/v1alpha1", "branches":[{"id":"choice", "source":"A", "predicate":predicate, "cases":[{"value":"approve_override", "nodes":["B"]}, {"value":"abort", "nodes":[other]}]}], "subgraphs":groups, "budget":{"max_program_dispatches":limit, "on_exhaustion":"block"}}}, "default_retry_policy":{"max_attempts":attempts}}
+    return {"workflow_definition":workflow, "node_completions":{"A":{"terminal":{"outcome":"completed"}}}}
+}
+checks := 0
+s := base("none");need(validate_static_policy(s));checks = checks + 1
+need(path_state(s, "B") == "awaiting_selection"&&policy_ready(s, s["workflow_definition"]["steps"][1]) == false);checks = checks + 1
+s["branch_activations"] := {"choice":{"candidate":{"selected":"approve_override"}}};need(path_state(s, "B") == "active"&&path_state(s, "R") == "not_selected");checks = checks + 1
+need(policy_ready(s, s["workflow_definition"]["steps"][1])&&policy_ready(s, s["workflow_definition"]["steps"][2]) == false);checks = checks + 1
+for change in ["predicate", "duplicate", "retry", "optional", "budget", "group"] {
+    s = base(change);rejected := false;try {validate_static_policy(s)} except err {rejected = true};need(rejected);checks = checks + 1
+}
+s = base("none");s["node_dispatches"] := {"A":{}};need(dispatch_budget(s)["exhausted"]);checks = checks + 1
+s = base("none");need(json_schema_validate(s["workflow_definition"]["metadata"]["graph_policy"], parse_json(read_file("schemas/static-graph-policy-v1alpha1.schema.json")))["valid"]);checks = checks + 1
+for vector in parse_json(read_file("tests/vectors/static-graph-policy.json"))["vectors"] {if vector["name"] == "policy-consumer-binding" {need(json_schema_validate(vector["input"], parse_json(read_file("schemas/node-input-binding-v1alpha3.schema.json")))["valid"]);checks = checks + 1}}
+s = base("none");w := s["workflow_definition"];metadata := w["metadata"];p := metadata["graph_policy"]
+p["branches"] := [];p["subgraphs"] := [{"id":"SG", "members":["B"], "entry":["A"], "policy":"required-success"}]
+metadata["graph_policy"] := p;w["metadata"] := metadata;steps := w["steps"];steps[2] := create_step("R", "R", "tool", {"depends_on":["B"], "terminal_contract":"intervention-decision/v2", "inputs":[]});w["steps"] := steps;s["workflow_definition"] := w
+rejected := false;try {validate_static_policy(s)} except err {if contains(to_string(err), "subgraph_receipt_dependency_required") {rejected = true}};need(rejected);checks = checks + 1
+print(to_json({"ok":true, "checks":checks}))

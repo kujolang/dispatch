@@ -1,0 +1,65 @@
+# Installed operator API. Assessment never schedules; apply revalidates under run lock.
+from src.core.graph_policy import policy_enabled, policy_branch, policy_group
+from src.core.graph_outcome import candidate, authorize, scoped_outcome_facts
+from src.core.graph_transition import graph_contract
+from src.core.node_composition import runtime, spec, node_terminal, local_node_inputs, validate_node_outputs, retain, persist_node_transition
+from src.core.node_transition import node_raw
+from src.core.state import load_run_state, acquire_run_lock, release_run_lock
+from src.core.portable_commitments import portable_json
+from src.core.utils import dict_get_or
+func need(ok, reason) {if ok != true {throw(reason)}}
+func assess(graph, request, host) {
+    kind := request["kind"];id := request["id"]
+    if kind == "branch" {
+        need(has_key(dict_get_or(graph, "branch_activations", {}), id) == 0, "branch_already_activated")
+        branch := policy_branch(graph, id);source := branch["source"]
+        verified := node_terminal(graph, source, host, false);terminal := verified["identity"]
+        need(to_json(terminal) == to_json(graph["node_completions"][source]["terminal"]), "branch_source_not_observed")
+        contract := graph_contract(spec(graph, source))
+        if contract == "parent-finalization/v1alpha1" {if terminal["outcome"] == "completed" {validate_node_outputs(graph, source, host)}}
+        else {need(to_json(local_node_inputs(graph, source, host)["binding"]) == to_json(graph["graph_node_bindings"][source]), "branch_source_inputs_stale")}
+        value := terminal["outcome"];fact_ref := terminal["facts_ref"]
+        if branch["predicate"] != "terminal_outcome" {
+            fact_ref = verified["receipt"]["candidate"]["fact_ref"];fact := parse_json(node_raw(graph, fact_ref))
+            if branch["predicate"] == "evaluation_verdict" {value = fact["verdict"]} else {value = fact["action"]}
+        }
+        selected := null;inactive := []
+        for choice in branch["cases"] {if choice["value"] == value {selected = choice} else {for node in choice["nodes"] {inactive = push(inactive, node)}}}
+        need(selected != null, "branch_condition_unmatched")
+        data := {"schema":"dispatch.branch-candidate/v1alpha1", "branch_id":id, "predicate":branch["predicate"], "source_terminal":terminal, "source_fact_ref":fact_ref, "selected":value, "active_nodes":selected["nodes"], "inactive_nodes":inactive}
+        return {"candidate":candidate(graph, data), "artifacts":verified["artifacts"]}
+    }
+    need(kind == "subgraph", "policy_operation_kind_invalid")
+    need(has_key(dict_get_or(graph, "subgraph_finalizations", {}), id) == 0, "subgraph_already_finalized")
+    group := policy_group(graph, id);checked := scoped_outcome_facts(graph, host, group["members"])
+    # The entry facts are independently terminal, even when the group fails early.
+    entries := []
+    for entry in group["entry"] {verified := node_terminal(graph, entry, host, true);entries = push(entries, verified["identity"]);for raw in verified["artifacts"] {checked["artifacts"] := push(checked["artifacts"], raw)}}
+    data := {"schema":"dispatch.subgraph-candidate/v1alpha1", "subgraph_id":id, "entries":entries, "nodes":checked["candidate"]["nodes"], "outcome":checked["candidate"]["outcome"], "policy":group["policy"]}
+    checked["candidate"] := candidate(graph, data);return checked
+}
+export func graph_policy_operation(root, run_id, request, options) {
+    loaded := load_run_state(root, run_id);if loaded["ok"] == false {return loaded}
+    lock := null;apply := request["operation"] == "apply";answer := {"ok":false}
+    if apply {lock = acquire_run_lock(loaded["run_state"]);if lock["ok"] == false {return lock}}
+    try {
+        graph := load_run_state(root, run_id)["run_state"];need(policy_enabled(graph)&&has_key(graph, "graph_finalization") == 0, "policy_graph_terminal_or_unsupported")
+        host := runtime(graph, options);checked := assess(graph, request, host)
+        if apply {
+            need(to_json(checked["candidate"]) == to_json(request["candidate"]), "stale_policy_candidate")
+            if request["kind"] == "subgraph" {need(checked["candidate"]["outcome"] != "blocked", "subgraph_blocked")}
+            authorize(host, request["actor"], graph, checked["candidate"])
+            hook := dict_get_or(options, "graph_boundary", null);if type(hook) == "function" {hook("before_" + request["kind"])}
+            actor_raw := to_json(request["actor"]);retain(graph, push(checked["artifacts"], actor_raw))
+            graph = load_run_state(root, run_id)["run_state"];host = runtime(graph, options);latest := assess(graph, request, host)
+            need(to_json(latest["candidate"]) == to_json(request["candidate"]), "stale_policy_candidate");authorize(host, request["actor"], graph, latest["candidate"])
+            refs := ["sha256:" + sha256(actor_raw)];for raw in latest["artifacts"] {refs = push(refs, "sha256:" + sha256(raw))}
+            data := {"candidate":latest["candidate"], "actor_ref":"sha256:" + sha256(actor_raw), "artifacts":refs, "resulting_revision":graph["revision"] + 1}
+            kind := "graph_branch_activated";if request["kind"] == "subgraph" {kind = "graph_subgraph_finalized"}
+            graph = persist_node_transition(graph, kind, data)
+            if type(hook) == "function" {hook("after_" + request["kind"])}
+            answer = {"ok":true, "receipt":data, "continuation":"not_authorized"}
+        } else {need(request["operation"] == "assess", "policy_operation_invalid");answer = {"ok":true, "candidate":checked["candidate"], "authority":"informational"}}
+    } except err {answer = {"ok":false, "reason":to_string(err)}}
+    if lock != null {release_run_lock(lock)};return answer
+}

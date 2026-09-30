@@ -1,10 +1,11 @@
+from src.core.graph_policy import policy_event, apply_policy_transition, policy_history
 # Pure graph-local projections. No participant callback, execution or scheduler.
 from src.core.utils import dict_get_or
 from src.core.portable_commitments import portable_json
 func demand(ok, reason) {if ok != true {throw(reason)}}
 export func heterogeneous_graph(state) {return dict_get_or(dict_get_or(dict_get_or(state, "workflow_definition", {}), "metadata", {}), "graph_outcome", "") == "dispatch.graph-outcome/v1alpha1"}
 export func graph_contract(step) {return dict_get_or(step["config"], "terminal_contract", "parent-finalization/v1alpha1")}
-export func graph_event(kind) {return contains(["graph_node_bound", "graph_review_requested", "graph_finalized"], kind)}
+export func graph_event(kind) {return policy_event(kind)||contains(["graph_node_bound", "graph_review_requested", "graph_finalized"], kind)}
 export func graph_refs(state, refs) {
     for ref in refs {
         demand(type(ref) == "string"&&regex_match(ref, "^sha256:[0-9a-f]{64}$"), "graph_reference_invalid")
@@ -15,6 +16,7 @@ export func graph_refs(state, refs) {
 }
 export func apply_graph_transition(state, kind, data) {
     demand(heterogeneous_graph(state)&&has_key(state, "graph_finalization") == 0, "graph_terminal_or_unsupported")
+    if policy_event(kind) {graph_refs(state, data["artifacts"]);return apply_policy_transition(state, kind, data)}
     id := dict_get_or(data, "node_id", "")
     if kind == "graph_node_bound" {
         bindings := dict_get_or(state, "graph_node_bindings", {})
@@ -36,12 +38,14 @@ export func apply_graph_transition(state, kind, data) {
     return state
 }
 export func graph_history_projection(state, events) {
+    policy_history(state, events)
     bindings := {};reviews := {};finalized := null
     for event in events {
         kind := event["kind"]
         if graph_event(kind) {
             demand(finalized == null, "graph_event_after_terminal")
             data := event["details"]["data"]
+            if policy_event(kind) {graph_refs(state, data["artifacts"])}
             if kind == "graph_node_bound" {demand(has_key(bindings, data["node_id"]) == 0, "duplicate_graph_binding");bindings[data["node_id"]] := data;graph_refs(state, data["artifacts"])}
             if kind == "graph_review_requested" {reviews[data["node_id"]] := data}
             if kind == "graph_finalized" {finalized = data;graph_refs(state, data["artifacts"])}

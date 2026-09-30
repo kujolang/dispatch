@@ -1,3 +1,4 @@
+from src.core.graph_policy_operation import graph_policy_operation
 from src.core.graph_outcome import graph_terminal_operation
 from src.core.node_transition import node_raw
 from src.core.node_composition import assess_node_inputs, bind_node_inputs, validate_bound_node_inputs, read_bound_node_input
@@ -27,7 +28,7 @@ func pointer(path) {return parse_json(read_file(path + "/pointer.json"))}
 func state(path) {p := pointer(path);loaded := load_run_state(path + "/runs", p["run_id"]);need(loaded["ok"]);return loaded["run_state"]}
 func inventory() {
     files := []
-    for path in ["src/core/graph_outcome.kujo", "src/core/graph_transition.kujo", "src/core/node_transition.kujo", "src/core/node_composition.kujo", "src/core/node_execution.kujo", "src/core/runner.kujo", "src/core/assurance_state.kujo", "src/core/assurance_configuration.kujo", "src/core/control_journal.kujo", "src/core/sequential_effects.kujo", "src/core/parent_finalization.kujo", "src/core/preservation_binding.kujo", "src/core/state.kujo", "src/adapters/sqlite_continuation.kujo", "tests/node_composition_fixture.kujo"] {files = push(files, {"root":os_getcwd(), "path":path})}
+    for path in ["src/core/graph_outcome.kujo", "src/core/graph_transition.kujo", "src/core/node_transition.kujo", "src/core/node_composition.kujo", "src/core/node_execution.kujo", "src/core/runner.kujo", "src/core/assurance_state.kujo", "src/core/retained_recovery.kujo", "src/core/control_journal.kujo", "src/core/graph_policy.kujo", "src/core/graph_policy_operation.kujo", "src/core/state.kujo", "src/adapters/sqlite_continuation.kujo", "tests/node_composition_fixture.kujo"] {files = push(files, {"root":os_getcwd(), "path":path})}
     files = push(files, {"root":os_getcwd() + "/../workcell", "path":"src/evidence/retained_workspace.kujo"});return files
 }
 func descriptor(path) {return {"schema":"dispatch.assurance-configuration/v1beta1", "mode":"required", "fallback":"deny", "profile":"dispatch.sqlite-unique", "profile_version":"1beta1", "issuer":"sqlite-local", "mechanism":"sqlite_unique_transaction", "verifier_id":"node-host", "verifier_version":"1", "verifier_sha256":implementation_digest(inventory()), "authority_sha256":sha256(path)}}
@@ -75,9 +76,11 @@ func graph_workflow() {
         if has_key(node, "terminal_contract") {heterogeneous = true;node_config["terminal_contract"] := contract}
         if contract == "parent-finalization/v1alpha1" {node_config["node_execution"] := {"schema":"dispatch.run-backed-node/v1alpha1", "run_id":pointer(base + "/" + node["id"])["run_id"], "step_id":"action", "inputs":node["inputs"], "outputs":outputs()}}
         else {node_config["inputs"] := node["inputs"];if contract == "evaluation-result/v1" {node_config["evaluator"] := {"name":"eval", "version":"2.0.0", "configuration_sha256":sha256(read_file(base + "/" + node["id"] + "/eval-config.json"))}}}
+        for key in ["accept_terminal", "after_subgraphs", "on_unsuccessful"] {if has_key(node, key) {node_config[key] := node[key]}}
         steps = push(steps, create_step(node["id"], node["id"], "tool", node_config))
     }
     metadata := {"node_composition":"dispatch.node-composition/v1alpha1"};if heterogeneous {metadata["graph_outcome"] := "dispatch.graph-outcome/v1alpha1"}
+    if has_key(definition, "graph_policy") {metadata["graph_policy"] := definition["graph_policy"]}
     return create_workflow({"id":"static-composition", "metadata":metadata, "name":"Static node DAG", "description":"Separate data and scheduling", "input_schema":{"type":"dict"}, "output_schema":{"type":"dict"}, "agents":{}, "tools":[], "steps":steps, "routing":{"enabled":false}, "control":dict_get_or(definition, "control", {"policy_id":"graph", "policy_version":"1", "policies":[]}), "default_retry_policy":{"max_attempts":1}, "approval_config":{"auto_approve":false}, "memory_config":{}, "budgets":{}, "max_parallel_steps":1})
 }
 func action(input, context) {
@@ -124,6 +127,8 @@ if mode == "init-node" {
     config := {"descriptor":descriptor(base)};write_file(base + "/host.json", to_json(config), true)
     created := create_negotiated_run(graph_workflow(), {}, base + "/runs", {}, config["descriptor"], graph_host);need(created["ok"])
     write_file(base + "/pointer.json", to_json({"run_id":created["run_state"]["run_id"], "run_dir":created["run_state"]["run_dir"]}), true);print(to_json({"ok":true}))
+} else if mode == "policy-op" {
+    request := parse_json(read_file(arguments[3]));print(to_json(graph_policy_operation(base + "/runs", pointer(base)["run_id"], request, graph_options())))
 } else if mode == "graph-op" {
     request := parse_json(read_file(arguments[3]));print(to_json(graph_terminal_operation(base + "/runs", pointer(base)["run_id"], request, graph_options())))
 } else if mode == "evaluate" {

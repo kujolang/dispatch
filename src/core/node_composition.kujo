@@ -1,3 +1,4 @@
+from src.core.graph_policy import policy_enabled, validate_static_policy, policy_ready, policy_dependencies, dependency_accepts, policy_controls, dispatch_budget
 # Installed run-backed step adapter. The existing runner owns dependency scheduling.
 from src.core.graph_transition import heterogeneous_graph, graph_contract
 from src.core.state import load_run_state, acquire_run_lock, release_run_lock, persist_run_state
@@ -20,7 +21,7 @@ func ancestors(state, id) {
 }
 export func validate_composed_definition(state) {
     demand(composition_graph(state)&&assurance_protected(state)&&validate_assurance_anchor(state), "node_graph_authority_required")
-    validate_parent_topology(state)
+    validate_parent_topology(state);validate_static_policy(state)
     definition := state["workflow_definition"];steps := definition["steps"]
     demand(len(steps) > 0&&len(steps) <= 8&&definition["max_parallel_steps"] == 1, "node_graph_limit")
     ids := [];runs := []
@@ -99,9 +100,10 @@ func output(graph, id, name, type_id, host) {
     return {"input":bound, "artifacts":push(push(terminal["artifacts"], raw), content)}
 }
 func prepare(graph, id, host) {
-    node := endpoint(graph, id, host);step := spec(graph, id);predecessors := [];inputs := [];raws := [];refs := []
-    for dependency in step["depends_on"] {
-        terminal := node_terminal(graph, dependency, host, true);predecessors = push(predecessors, {"node_id":dependency, "terminal":terminal["identity"]})
+    step := spec(graph, id);if policy_enabled(graph) {demand(policy_ready(graph, step), "policy_dependency_blocked")}
+    node := endpoint(graph, id, host);predecessors := [];inputs := [];raws := [];refs := []
+    for dependency in policy_dependencies(graph, step) {
+        terminal := node_terminal(graph, dependency, host, false);demand(dependency_accepts(graph, step, dependency, terminal["identity"]["outcome"]), "node_dependency_not_successful");predecessors = push(predecessors, {"node_id":dependency, "terminal":terminal["identity"]})
         for raw in terminal["artifacts"] {raws = push(raws, raw)}
     }
     for edge in node["declaration"]["inputs"] {
@@ -109,10 +111,12 @@ func prepare(graph, id, host) {
         item := bound["input"];item["name"] := edge["name"];inputs = push(inputs, item)
         for raw in bound["artifacts"] {raws = push(raws, raw)}
     }
+    controls := policy_controls(graph, step);for raw in controls["artifacts"] {raws = push(raws, raw)}
     total := 0;unique := []
     for raw in raws {ref := "sha256:" + sha256(raw);if contains(refs, ref) == false {refs = push(refs, ref);unique = push(unique, raw);total = total + byte_length(raw)}}
     demand(total <= 4194304, "node_binding_limit")
     binding := {"schema":input_binding_schema(graph), "graph":{"run_id":graph["run_id"], "workflow_ref":"sha256:" + sha256(to_json(graph["workflow_definition"]))}, "node_id":id, "consumer":{"run_id":node["state"]["run_id"], "step_id":node["declaration"]["step_id"], "attempt_id":"1"}, "predecessors":predecessors, "inputs":inputs, "artifacts":refs}
+    if policy_enabled(graph) {binding["policy"] := controls["controls"]}
     return {"binding":binding, "artifacts":unique, "node":node}
 }
 export func retain(state, raws) {
@@ -189,6 +193,7 @@ export func read_bound_node_input(state, name) {
 export func advance_composed_step(graph, index, options) {
     loaded := load_run_state(graph["output_root"], graph["run_id"]);demand(loaded["ok"], "node_graph_missing");graph = loaded["run_state"]
     host := runtime(graph, options);id := graph["steps"][index]["id"]
+    if policy_enabled(graph) {demand(policy_ready(graph, spec(graph, id)), "policy_dependency_blocked")}
     if graph_contract(spec(graph, id)) != "parent-finalization/v1alpha1" {
         checked := local_node_inputs(graph, id, host)
         if has_key(dict_get_or(graph, "graph_node_bindings", {}), id) == 0 {
@@ -210,6 +215,7 @@ export func advance_composed_step(graph, index, options) {
         return {"ok":true, "paused":false, "run_state":graph}
     }
     if has_key(child, "node_execution_admission") == 0&&file_exists(child["run_dir"] + "/" + node_claim_path(checked["binding"])) == false {
+        if policy_enabled(graph)&&has_key(dict_get_or(graph, "node_dispatches", {}), id) == 0 {demand(dispatch_budget(graph)["exhausted"] == false, "graph_dispatch_budget_exhausted")}
         if has_key(dict_get_or(graph, "node_dispatches", {}), id) == 0 {graph = persist_node_transition(graph, "node_start_requested", {"node_id":id, "binding_ref":node_reference(checked["binding"]), "consumer":checked["binding"]["consumer"]})}
         if type(boundary) == "function" {boundary("after_node_start_requested", id)}
         result := host["start"](id, checked["binding"])
@@ -220,7 +226,7 @@ export func advance_composed_step(graph, index, options) {
     return {"ok":true, "paused":true, "reason":"node_requires_independent_finalization", "run_state":graph}
 }
 
-func input_binding_schema(graph) {if heterogeneous_graph(graph) {return "dispatch.node-input-binding/v1alpha2"};return "dispatch.node-input-binding/v1alpha1"}
+func input_binding_schema(graph) {if policy_enabled(graph) {return "dispatch.node-input-binding/v1alpha3"};if heterogeneous_graph(graph) {return "dispatch.node-input-binding/v1alpha2"};return "dispatch.node-input-binding/v1alpha1"}
 func node_input_edges(step) {if graph_contract(step) == "parent-finalization/v1alpha1" {return step["config"]["node_execution"]["inputs"]};return step["config"]["inputs"]}
 # Closed host-owned terminal variants. A descriptive kind is never consulted.
 export func node_terminal(graph, id, host, success) {
@@ -250,9 +256,10 @@ export func node_terminal(graph, id, host, success) {
     return {"identity":identity, "receipt":receipt, "artifacts":raws}
 }
 export func local_node_inputs(graph, id, host) {
-    step := spec(graph, id);predecessors := [];inputs := [];raws := [];refs := []
-    for dependency in step["depends_on"] {
-        terminal := node_terminal(graph, dependency, host, true)
+    step := spec(graph, id);if policy_enabled(graph) {demand(policy_ready(graph, step), "policy_dependency_blocked")}
+    predecessors := [];inputs := [];raws := [];refs := []
+    for dependency in policy_dependencies(graph, step) {
+        terminal := node_terminal(graph, dependency, host, false);demand(dependency_accepts(graph, step, dependency, terminal["identity"]["outcome"]), "node_dependency_not_successful")
         predecessors = push(predecessors, {"node_id":dependency, "terminal":terminal["identity"]})
         for raw in terminal["artifacts"] {raws = push(raws, raw)}
     }
@@ -261,10 +268,13 @@ export func local_node_inputs(graph, id, host) {
         item := bound["input"];item["name"] := edge["name"];inputs = push(inputs, item)
         for raw in bound["artifacts"] {raws = push(raws, raw)}
     }
+    controls := policy_controls(graph, step);for raw in controls["artifacts"] {raws = push(raws, raw)}
     total := 0;unique := []
     for raw in raws {ref := "sha256:" + sha256(raw);if contains(refs, ref) == false {refs = push(refs, ref);unique = push(unique, raw);total = total + byte_length(raw)}}
     demand(total <= 4194304, "node_binding_limit")
-    return {"binding":{"schema":"dispatch.node-terminal-input/v1alpha1", "node_id":id, "graph":{"run_id":graph["run_id"], "workflow_ref":"sha256:" + sha256(to_json(graph["workflow_definition"]))}, "instance_id":"1", "predecessors":predecessors, "inputs":inputs, "artifacts":refs}, "artifacts":unique}
+    binding := {"schema":"dispatch.node-terminal-input/v1alpha1", "node_id":id, "graph":{"run_id":graph["run_id"], "workflow_ref":"sha256:" + sha256(to_json(graph["workflow_definition"]))}, "instance_id":"1", "predecessors":predecessors, "inputs":inputs, "artifacts":refs}
+    if policy_enabled(graph) {binding["schema"] := "dispatch.node-terminal-input/v1alpha2";binding["policy"] := controls["controls"]}
+    return {"binding":binding, "artifacts":unique}
 }
 export func program_node_state(graph, id, host) {return endpoint(graph, id, host)["state"]}
 

@@ -15,7 +15,7 @@ export func node_raw(state, reference) {
 }
 export func node_claim_path(binding) {return "node-input/" + substring(node_reference(binding), 7, 71) + ".claim"}
 export func validate_node_binding_bytes(state, binding) {
-    require(contains(["dispatch.node-input-binding/v1alpha1", "dispatch.node-input-binding/v1alpha2"], binding["schema"])&&binding["consumer"]["run_id"] == state["run_id"], "node_binding_subject_mismatch")
+    require(contains(["dispatch.node-input-binding/v1alpha1", "dispatch.node-input-binding/v1alpha2", "dispatch.node-input-binding/v1alpha3"], binding["schema"])&&binding["consumer"]["run_id"] == state["run_id"], "node_binding_subject_mismatch")
     require(len(binding["inputs"]) <= 8&&len(binding["predecessors"]) <= 8, "node_input_limit")
     for reference in binding["artifacts"] {node_raw(state, reference)}
     for input in binding["inputs"] {

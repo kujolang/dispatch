@@ -1,3 +1,4 @@
+from src.core.graph_policy import policy_enabled, policy_ready, dispatch_budget
 from src.core.node_composition import validate_composed_definition, advance_composed_step
 from src.core.node_transition import composition_graph
 from src.core.graph_transition import heterogeneous_graph, graph_contract
@@ -1383,7 +1384,9 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
             if heterogeneous_graph(run_state) {return pause_graph_outcome(run_state, "graph_cancellation_requires_decision")}
             return build_cancelled_result(run_state, cancel_before_step["reason"], options)
         }
-        if step_dependencies_satisfied(run_state["steps"], step) == false {
+        ready := step_dependencies_satisfied(run_state["steps"], step)
+        if policy_enabled(run_state) {ready = policy_ready(run_state, step)}
+        if ready == false {
             index := index + 1
             continue
         }
@@ -1395,6 +1398,7 @@ func run_workflow_unlocked(workflow, run_state, tool_registry, options) {
         }
 
         if composition_graph(run_state) {
+            if policy_enabled(run_state)&&graph_contract(step) == "parent-finalization/v1alpha1"&&has_key(dict_get_or(run_state, "node_dispatches", {}), step["id"]) == 0&&dispatch_budget(run_state)["exhausted"] {index = index + 1;continue}
             composed := advance_composed_step(run_state, index, options)
             if composed["ok"] == false {return composed}
             if composed["paused"] {
