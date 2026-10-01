@@ -2,7 +2,7 @@
 from src.core.utils import dict_get_or
 from src.core.portable_commitments import portable_json
 func need(ok, reason) {if ok != true {throw(reason)}}
-export func accounting_enabled(state) {return dict_get_or(dict_get_or(state["workflow_definition"], "metadata", {}), "graph_accounting", "") == "dispatch.graph-attempt-accounting/v1alpha1"}
+export func accounting_enabled(state) {return dict_get_or(dict_get_or(dict_get_or(state, "workflow_definition", {}), "metadata", {}), "graph_accounting", "") == "dispatch.graph-attempt-accounting/v1alpha1"}
 export func program_contract(step) {return contains(["parent-finalization/v1alpha1", "program-attempt/v1alpha1"], dict_get_or(step["config"], "terminal_contract", "parent-finalization/v1alpha1"))}
 func definition(state, id) {for step in state["workflow_definition"]["steps"] {if step["id"] == id {return step}};throw("attempt_node_missing")}
 export func attempt_runs(state, id) {
@@ -90,7 +90,7 @@ export func fold_attempt(state, kind, data) {
     history[id] := rows;state["graph_attempts"] := history;accounting_budget(state);return state
 }
 export func attempt_history(state, events) {
-    view := {"workflow_definition":state["workflow_definition"]}
+    view := {"workflow_definition":dict_get_or(state, "workflow_definition", {})}
     for event in events {if attempt_event(event["kind"])||contains(["node_start_requested", "node_terminal_observed"], event["kind"]) {view = fold_attempt(view, event["kind"], event["details"]["data"])}}
     need(to_json(dict_get_or(view, "graph_attempts", {})) == to_json(dict_get_or(state, "graph_attempts", {})), "attempt_history_mismatch");return true
 }

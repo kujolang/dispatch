@@ -62,3 +62,10 @@ or retryable flag is not evidence. Neither branch nor group policy can waive it.
   rejected the test harness default AJV validator because the schema declares Draft
   2020-12. Selected the installed Draft 2020-12 validator explicitly; schema checking
   remains enabled. The failed canonical transcript is retained before the full rerun.
+
+- The post-restart canonical run found a real legacy compatibility regression:
+  accounting history inspection assumed every retained state carried a workflow
+  definition. Historical observation-only effect-set journals do not. The opt-in
+  detector/history view now treats a missing definition as non-accounting, while
+  rejecting accounting events or unexplained ledger rows. Added three contract
+  assertions and reran the real historical effect-set crash/renewal suite.
