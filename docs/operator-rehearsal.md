@@ -24,7 +24,7 @@ cat > operator.refs <<'REFS'
 kujo=v1.6.0
 ai-sdk=5184a122590dd5698770b50d99b69ed11c7ec84a
 agents-sdk=5a9d5525e511a293b743b1c44d9ef270fd491f9f
-dispatch=1fd7b46289ae3c07ee0cec2cf88a80bdca377246
+dispatch=21aac0d35d8709ea3b8cb09844315c7b14fde5bd
 REFS
 bash install.sh --package dispatch --release-manifest "$PWD/operator.refs" \
   --prefix "$PWD/installed" --bin-dir "$PWD/bin"
