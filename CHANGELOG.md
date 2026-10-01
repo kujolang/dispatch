@@ -4,6 +4,14 @@ Version source: `kennel.toml`; CLI and `kujo.toml` must agree. Historical releas
 entries are retained below. Experimental contract versions are independent of
 Dispatch's version.
 
+## Unreleased — experimental operator rehearsal
+
+- Add a bounded installed batch-summary operator host with separate inspect,
+  plan, apply, review and run commands over existing Dispatch control APIs.
+- Provide human/JSON output and exact Workcell/Eval dependency setup for the
+  experimental graph path; retain source-runtime and trusted-host boundaries.
+- Add installed-package failure, review, budget and real controller-crash proofs.
+
 ## Unreleased — sourced resources and Eval budgets
 
 - Add opt-in graph/node Eval ceilings with locked reservations, durable dispatch

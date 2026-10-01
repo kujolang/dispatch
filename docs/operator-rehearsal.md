@@ -14,17 +14,29 @@ path needs Cargo. To use a binary-only installation, use the verified 1.6.0 rele
 archive and its published SHA-256 file instead. Do not mistake an unavailable
 release named after a source SHA for a verified binary installation.
 
-Install the Dispatch revision containing this walkthrough using the ecosystem
-installer's `--package dispatch` and `--repo-ref dispatch=<revision>` support,
-or unpack that exact source archive alongside the installed Kujo binary. Source
-archives are the installed package format; an editable Git checkout is not needed.
-From the installed Dispatch directory, install its two pinned experimental host
-dependencies:
+The following binary-install manifest was rehearsed without Cargo. The installer
+verifies the runtime release checksum. Use a new prefix and run the commands from
+a fresh directory (the source refs below are intentionally pinned):
 
 ```bash
-bash scripts/install_operator_dependencies.sh
-export PATH="/path/to/kujo/bin:$PATH"
+curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/fc53093f35e4236682bbbf5ab1ccc8d2b4df990c/install.sh -o install.sh
+cat > operator.refs <<'REFS'
+kujo=v1.6.0
+ai-sdk=5184a122590dd5698770b50d99b69ed11c7ec84a
+agents-sdk=5a9d5525e511a293b743b1c44d9ef270fd491f9f
+dispatch=1fd7b46289ae3c07ee0cec2cf88a80bdca377246
+REFS
+bash install.sh --package dispatch --release-manifest "$PWD/operator.refs" \
+  --prefix "$PWD/installed" --bin-dir "$PWD/bin"
+export PATH="$PWD/bin:$PATH"
+bash installed/sources/dispatch/scripts/install_operator_dependencies.sh
+cp installed/sources/dispatch/examples/operator/batch.json batch.json
 ```
+
+Source archives are the installed package format; an editable Git checkout is not
+needed. This manifest installs the bounded host, not an unpublished participant
+SDK or a new stable graph release. The package's default source-runtime manifest
+remains unchanged for canonical source-build validation.
 
 The script downloads Workcell and Eval into `.operator-deps` without symlinks or
 test-fixture preparation. It refuses to overwrite an existing dependency directory.
