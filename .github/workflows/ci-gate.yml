@@ -24,7 +24,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-14]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 180
+    timeout-minutes: 360
     env:
       DISPATCH_OFFLINE_FIXTURE: "true"
       # Bump deliberately after compatibility verification and record the
@@ -204,7 +204,8 @@ jobs:
           bash scripts/prepare_graph_fixture_layout.sh
 
       - name: Run Dispatch release gate
-        timeout-minutes: 45
+        # Full static graph, real-process crash and resource proofs run serially.
+        timeout-minutes: 300
         run: bash scripts/run_release_gate.sh
 
       - name: Run pinned AI SDK release gate

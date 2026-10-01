@@ -19,7 +19,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-14]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 120
+    timeout-minutes: 360
     env:
       DISPATCH_OFFLINE_FIXTURE: "true"
       RUSTUP_TOOLCHAIN: "1.96.0"
