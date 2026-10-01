@@ -28,6 +28,10 @@ reviewed logs while rejecting ordinary output. Kujo's separate release-state che
 fails because the existing `v1.7.0` tag conflicts with unchanged `v1.6.0` stable
 installation defaults; that release-owned mismatch is recorded, not hidden or
 folded into this resource tranche. See `hosted_followup` in the validation record.
+Hosted Kujo Clippy also reports Rust 1.99 atomic API deprecations in three unchanged
+runtime files; the local documentation/build validation used Rust 1.96. This separate
+runtime/MSRV issue is retained with its exact job evidence and was not silently fixed
+inside the protected concurrent work.
 
 ## Implementation and authority
 

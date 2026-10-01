@@ -254,7 +254,8 @@
       "local_checks": 3,
       "full_pushed_history_guard": "passed",
       "workflow_yaml": "passed",
-      "initial_followup_failure": "Exception first appeared before a later duplicate *.log rule; moved to end. Original artifact-policy.txt retained."
+      "initial_followup_failure": "Exception first appeared before a later duplicate *.log rule; moved to end. Original artifact-policy.txt retained.",
+      "hosted_after_fix": "passed on e0d83a764968efe98c1f0facb0ad271b5ad625be"
     },
     "kujo_release_state": {
       "run": "https://github.com/kujolang/kujo/actions/runs/36890843345",
@@ -273,6 +274,15 @@
       "capture": "cap_f1cfeb80-17b6-4724-a0b5-6c1193e003ea",
       "signal": "sig_4c70588c-1cc7-4905-a35e-d9a1cdcb198b"
     },
-    "other_hosted_checks": "Pending at publication; no hosted canonical success claimed"
+    "other_hosted_checks": "Pending at publication; no hosted canonical success claimed",
+    "kujo_clippy": {
+      "status": "failed",
+      "toolchain": "Rust 1.99.0",
+      "reason": "Atomic::fetch_update deprecation under -D warnings in three unchanged runtime files",
+      "job": "https://github.com/kujolang/kujo/actions/runs/36890843386/job/110465770503",
+      "capture": "cap_df13cc5e-ed4b-4d8a-93f0-722a574bfa5f",
+      "signal": "sig_19025086-bbcc-44ca-b742-cdc8534de972",
+      "scope": "Independent runtime/MSRV repair; protected concurrent work preserved"
+    }
   }
 }
