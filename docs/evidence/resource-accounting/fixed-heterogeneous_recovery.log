@@ -1,0 +1,9 @@
+PASS Eval terminal reply loss survives a fresh controller without a fake execution
+PASS actual human terminal orphan repairs exact decision but not graph completion
+PASS all durable terminal facts and recovery still require separate graph decision
+PASS two fresh finalizers: one exact durable graph terminal transition
+PASS graph crash before_terminal preserves exact terminal boundary
+PASS graph crash after_terminal preserves exact terminal boundary
+PASS graph crash immutable preserves exact terminal boundary
+PASS optional outstanding dispatch blocks graph finalization before child admission
+{"ok":true,"checks":8,"scenarios":["Eval terminal reply loss survives a fresh controller without a fake execution","actual human terminal orphan repairs exact decision but not graph completion","all durable terminal facts and recovery still require separate graph decision","two fresh finalizers: one exact durable graph terminal transition","graph crash before_terminal preserves exact terminal boundary","graph crash after_terminal preserves exact terminal boundary","graph crash immutable preserves exact terminal boundary","optional outstanding dispatch blocks graph finalization before child admission"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-1lYuRQ"}

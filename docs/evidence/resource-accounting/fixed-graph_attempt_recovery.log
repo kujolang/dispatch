@@ -1,0 +1,15 @@
+PASS two fresh controllers reserve exactly one last graph unit
+PASS release contention records one release and restores only never-dispatched capacity
+PASS crash A: durable reservation before binding releases without phantom execution
+PASS bound but undispatched reservation releases; its surviving input binding grants no admission
+PASS crash before_child_load: consumed dispatch is not redelivered, released or retried
+PASS crash before_node_admission: consumed dispatch is not redelivered, released or retried
+PASS crash after_node_admission: consumed dispatch is not redelivered, released or retried
+PASS same-node retry and next-attempt creation race publishes one new reserved instance
+PASS crash E: real SQLite mutation reply lost; consumed accounting cannot authorize replay
+PASS orphan reserve: immutable record/index gap repaired by fresh controller without execution
+PASS orphan release: immutable record/index gap repaired by fresh controller without execution
+PASS orphan retry: immutable record/index gap repaired by fresh controller without execution
+PASS crash F: durable terminal observation repairs stale accounting without refund or graph finalization
+PASS orphan child refusal remains sealed through exact retained-host repair
+{"ok":true,"checks":14,"proofs":["two fresh controllers reserve exactly one last graph unit","release contention records one release and restores only never-dispatched capacity","crash A: durable reservation before binding releases without phantom execution","bound but undispatched reservation releases; its surviving input binding grants no admission","crash before_child_load: consumed dispatch is not redelivered, released or retried","crash before_node_admission: consumed dispatch is not redelivered, released or retried","crash after_node_admission: consumed dispatch is not redelivered, released or retried","same-node retry and next-attempt creation race publishes one new reserved instance","crash E: real SQLite mutation reply lost; consumed accounting cannot authorize replay","orphan reserve: immutable record/index gap repaired by fresh controller without execution","orphan release: immutable record/index gap repaired by fresh controller without execution","orphan retry: immutable record/index gap repaired by fresh controller without execution","crash F: durable terminal observation repairs stale accounting without refund or graph finalization","orphan child refusal remains sealed through exact retained-host repair"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-T5eS33"}

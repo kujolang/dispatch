@@ -1,0 +1,34 @@
+{
+  "dispatch-resource-accounting": {
+    "commit": "cdc0cea9013c9e352604b541c901e266bf1b2392",
+    "status": "M CHANGELOG.md\n M README.md\n M docs/contracts/resources/decision.md\n M scripts/run_release_gate.sh\n M tests/node_composition_fixture.kujo\n?? docs/audits/resource-accounting.md\n?? docs/contracts/resources/crash-matrix.md\n?? docs/contracts/resources/protocol.md\n?? tests/resource_contract_tests.kujo\n?? tests/resource_eval_worker.kujo\n?? tests/resource_helpers.mjs\n?? tests/resource_integration.mjs\n?? tests/resource_limits_tests.kujo\n?? tests/resource_model_fixture.kujo\n?? tests/resource_policy.mjs\n?? tests/resource_recovery.mjs"
+  },
+  "kujo-resource-accounting": {
+    "commit": "e65bb57b39814daa1552762778d2b051fbcf7013",
+    "status": "M ROADMAP.md\n M docs/NEXT_PHASE_ARCHITECTURE.md\n?? docs/WAVE_F_RESOURCE_ACCOUNTING.md"
+  },
+  "workcell": {
+    "commit": "0f9595b79872d2500f0bb35a8cf6227171fd7eeb",
+    "status": ""
+  },
+  "eval": {
+    "commit": "6a5ab09e5c24cc1a842b374afccb64da40db2874",
+    "status": ""
+  },
+  "agents-sdk": {
+    "commit": "5a9d5525e511a293b743b1c44d9ef270fd491f9f",
+    "status": "?? docs/MAINTENANCE_AGENT.md\n?? maintenance_agent.kujo\n?? src/maintenance/\n?? tests/maintenance_agent_tests.kujo"
+  },
+  "watchdog": {
+    "commit": "fafea3abb594638e442127496ca6ac4c9bcd5390",
+    "status": "M watchdog_proxy_config.json"
+  },
+  "runledger": {
+    "commit": "97cb607a062efeecc7fcdc4e4a4e0308f90d45fe",
+    "status": ""
+  },
+  "ability": {
+    "commit": "bcbecb49b147023877e83d5f2ea647dfede030b5",
+    "status": ""
+  }
+}

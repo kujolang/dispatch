@@ -7,6 +7,22 @@ ownership audit; the [protocol](../contracts/resources/protocol.md) and
 [crash matrix](../contracts/resources/crash-matrix.md) define the bounded contract.
 Validation status and exact source/toolchain pins belong in the accompanying evidence.
 
+## Verified source
+
+The [validation record](../evidence/resource-accounting/validation.json) covers
+Dispatch `2577c60ff7ef79992f34b4627799f488cf5edcd6`: all 87 focused canonical suites,
+24 shards (101 tests), command-surface checks and 3/3 release workloads passed.
+New coverage includes 20 native assertions and 19 process integration proof groups.
+The first canonical run failed because isolated recovery copies omitted the new
+source-bound evaluator worker; that failure, its correction and the full successful
+rerun are retained. No failing run is presented as passing.
+
+Kujo documentation source `51369e42b38efb4479af440c8370ac8a4fea3a7a` passed formatting,
+the locked release build and 13 contract tests; two existing artifact-dependent
+tests remained explicitly ignored. Concurrent primary Kujo runtime edits were not
+incorporated. The evidence includes commands, warnings, source pins and verified
+SHA-256 inventories. Hosted CI is not claimed by these local results.
+
 ## Implementation and authority
 
 Program attempts retain their existing unit and identities. First-class Eval nodes

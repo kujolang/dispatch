@@ -1,0 +1,2 @@
+PASS YAML parse: .github/workflows/ci-gate.yml
+PASS YAML parse: .github/workflows/release-artifacts.yml

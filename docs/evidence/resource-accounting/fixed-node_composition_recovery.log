@@ -1,0 +1,7 @@
+{"contention":[{"ok":false,"reason":"run_lock_timeout"},{"ok":true,"reason":"node_requires_independent_finalization"}],"admissions":1}
+PASS two fresh graph controllers: one consumer admission and action
+PASS real observation crash: repair retains consumption and requires separate finalization
+PASS raw output orphan cannot synthesize a binding
+PASS real immutable orphan node_inputs_bound reconciled without implicit execution
+PASS real immutable orphan node_terminal_observed reconciled without implicit execution
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-ChMoHd","checks":5,"scenarios":["two fresh graph controllers: one consumer admission and action","real observation crash: repair retains consumption and requires separate finalization","raw output orphan cannot synthesize a binding","real immutable orphan node_inputs_bound reconciled without implicit execution","real immutable orphan node_terminal_observed reconciled without implicit execution"]}

@@ -1,0 +1,3 @@
+PASS downstream reservation blocks retry before child binding
+PASS retry cannot retire a terminal already bound by an undispatched program descendant
+{"ok":true,"checks":2,"proofs":["downstream reservation blocks retry before child binding","retry cannot retire a terminal already bound by an undispatched program descendant"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-kv3swk"}

@@ -1,0 +1,9 @@
+{
+  "source_commit": "51369e42b38efb4479af440c8370ac8a4fea3a7a",
+  "base": "e65bb57b39814daa1552762778d2b051fbcf7013",
+  "command": "cargo build --release --locked",
+  "exit": 0,
+  "binary_sha256": "e94323ac307a7fff1df0d081798e6a58b0ab6e6f1c77bd112bd13d641c090005",
+  "cargo_lock_sha256": "ddf95c41b0bbc82550a56ca5bc3576de8f79928a562eb17cdc7aad80297febf5",
+  "note": "Isolated current-main source plus documentation only. Dispatch canonical uses its retained compatible 1.6 binary, not concurrent primary artifacts."
+}

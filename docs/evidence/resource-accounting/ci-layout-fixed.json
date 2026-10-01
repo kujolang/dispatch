@@ -1,0 +1,9 @@
+{
+  "baseline_reproduction": "ci-layout-reproduction.json",
+  "helper": "scripts/prepare_graph_fixture_layout.sh",
+  "module_exit": 0,
+  "module_output": "graph modules available\n",
+  "sdk_exit": 0,
+  "sdk_input_tokens": 41,
+  "scope": "Local exact CI alias layout with archived reviewed source pins; GitHub-hosted jobs not executed here."
+}

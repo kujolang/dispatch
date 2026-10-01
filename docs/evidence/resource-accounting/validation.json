@@ -1,0 +1,251 @@
+{
+  "schema": "dispatch.resource-accounting-validation/v1alpha1",
+  "verified": true,
+  "starting_commits": {
+    "dispatch": "b724f369ab4101a46ea0d5493cc41fc3d0fa3b9c",
+    "kujo": "e65bb57b39814daa1552762778d2b051fbcf7013"
+  },
+  "scope": "experimental static retained trusted-host graphs; installed local resource/Eval API",
+  "baseline": {
+    "passed_checks": 70,
+    "failed": 0,
+    "log": "baseline.log"
+  },
+  "new_native_assertions": 20,
+  "new_integration_proof_groups": 19,
+  "portable_changes": "none; historical vectors and participant bytes unchanged",
+  "skips": [
+    {
+      "test": "actual_cross_component_failure_evidence_conforms",
+      "reason": "Existing ignored test needs local failure-gate handoff artifacts"
+    },
+    {
+      "test": "actual_workspace_reexecution_artifacts_match_shared_schemas",
+      "reason": "Existing ignored test needs fixture artifacts"
+    },
+    {
+      "gate": "Hosted GitHub Actions",
+      "reason": "Local canonical verification only; hosted CI result not claimed"
+    },
+    {
+      "gate": "Unrelated full Kujo runtime suite",
+      "reason": "Documentation-only isolated change; requested compatible format, contracts and locked release build passed"
+    }
+  ],
+  "boundaries": [
+    "no hard numeric token/runtime/currency ceiling",
+    "no provider pricing or inferred monetary cost",
+    "no malicious-source or overlapping-invocation verification",
+    "Eval budget covers only first-class Dispatch-managed invocations",
+    "no automatic retry of uncertain work",
+    "no remote trust, distributed reservations, machine-loss recovery, dynamic topology, mixed profiles, compensation, exactly-once, universal rollback, public SDK or language syntax changes"
+  ],
+  "concurrent_work_preserved": [
+    "Kujo src/main.rs",
+    "Kujo src/compiler.rs",
+    "Kujo src/jit.rs",
+    "Kujo tests/jit_execution_contract.rs",
+    "Kujo benchmarks/cross-language/kujo-go-runtime/README.md",
+    "Kujo benchmarks/cross-language/kujo-go-runtime/run.sh",
+    "Kujo VS Code lockfile (independently committed in starting main)",
+    "Agents SDK untracked maintenance work",
+    "Watchdog watchdog_proxy_config.json"
+  ],
+  "next_major_phase": "bounded human adoption and operator inspect/plan/apply usability over one installed workflow; use evidence to prioritize typed Wave E lineage",
+  "tested_source_commits": {
+    "dispatch": "2577c60ff7ef79992f34b4627799f488cf5edcd6",
+    "kujo": "51369e42b38efb4479af440c8370ac8a4fea3a7a"
+  },
+  "canonical": {
+    "command": "KUJO_BIN=/Users/robertdevore/2026/Kujolang/validation/graph-attempt-accounting/kujo-verified DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+    "exit": 0,
+    "log": "canonical-2.log",
+    "focused_suites": 87,
+    "shards": 24,
+    "shard_tests_passed": 101,
+    "shard_tests_failed": 0,
+    "all_suite_invocations_passed": 111,
+    "command_surface": "VM and interpreter passed",
+    "release_workloads": {
+      "schema_version": "1.0",
+      "dispatch_commit": "2577c60ff7ef79992f34b4627799f488cf5edcd6",
+      "fixture": true,
+      "requested_runs": 3,
+      "completed_runs": 3,
+      "duration_seconds": 11,
+      "generated_at_epoch": 1790871121
+    },
+    "suite_names": [
+      "typescript_build",
+      "preservation_binding",
+      "parent_finalization",
+      "static_policy_contracts",
+      "static_policy_integration",
+      "static_subgraph_integration",
+      "static_policy_edges",
+      "static_policy_recovery",
+      "resource_contracts",
+      "resource_limits",
+      "resource_integration",
+      "resource_policy",
+      "resource_recovery",
+      "graph_attempt_vectors",
+      "graph_attempt_contracts",
+      "graph_attempt_binding_safety",
+      "graph_attempt_authority",
+      "graph_attempt_smoke",
+      "graph_attempt_integration",
+      "graph_attempt_recovery",
+      "graph_attempt_policy",
+      "static_policy_vectors",
+      "heterogeneous_contracts",
+      "heterogeneous_integration",
+      "heterogeneous_policy",
+      "heterogeneous_recovery",
+      "heterogeneous_vectors",
+      "node_contracts",
+      "node_composition",
+      "node_policy",
+      "node_recovery",
+      "node_vectors",
+      "parent_vectors",
+      "retained_recovery",
+      "effect_set",
+      "effect_continuation",
+      "sequential_effects",
+      "effect_lifecycle_vectors",
+      "effect_selection_vectors",
+      "effect_set_vectors",
+      "go_participant",
+      "typescript_package",
+      "python_package",
+      "python_parity",
+      "participant_sdk_parity",
+      "python_isolation",
+      "python_integration",
+      "typescript_after",
+      "typescript_before",
+      "control_boundary",
+      "failure_gate_safety",
+      "failure_gate_execution",
+      "review_checkpoint",
+      "persisted_negotiation_legacy",
+      "persisted_negotiation_schemas",
+      "persisted_negotiation_contracts",
+      "persisted_negotiation",
+      "persisted_negotiation_adapters",
+      "beta_contracts",
+      "portable_commitments",
+      "portable_clean_room",
+      "interop_oracles",
+      "interop_history",
+      "git_participant_after",
+      "git_participant_before",
+      "http_response_loss",
+      "http_timeout_before",
+      "http_application_error",
+      "mcp_ability",
+      "mcp_stdio_loss",
+      "sdk_ability",
+      "beta_migration",
+      "assurance_compatibility",
+      "assurance_capabilities",
+      "effect_assurance_schema",
+      "effect_assurance",
+      "ability_assurance",
+      "reexecution_lifecycle",
+      "resume_policy",
+      "decision_claim",
+      "sdk_adapter",
+      "policy_precedence",
+      "retrieval_preferences",
+      "routing",
+      "state_store_sqlite",
+      "operational_controls",
+      "hardening",
+      "dispatch-1",
+      "dispatch-2",
+      "dispatch-3",
+      "dispatch-4",
+      "dispatch-5",
+      "dispatch-6",
+      "dispatch-7",
+      "dispatch-8",
+      "dispatch-9",
+      "dispatch-10",
+      "dispatch-11",
+      "dispatch-12",
+      "dispatch-13",
+      "dispatch-14",
+      "dispatch-15",
+      "dispatch-16",
+      "dispatch-17",
+      "dispatch-18",
+      "dispatch-19",
+      "dispatch-20",
+      "dispatch-21",
+      "dispatch-22",
+      "dispatch-23",
+      "dispatch-24"
+    ]
+  },
+  "kujo": {
+    "command_log": "commands.md",
+    "format": "passed",
+    "locked_release_build": "passed",
+    "contracts": {
+      "passed": 13,
+      "failed": 0,
+      "ignored": 2
+    },
+    "artifact": "kujo-build-artifact.json"
+  },
+  "warnings": [
+    "Existing tiny_http unused SequentialWriter and dead MustBeShareDummy warnings in isolated Kujo build/contracts",
+    "npm unknown user config python warning",
+    "Python bootstrap pip version notice",
+    "git diff --check reports trailing blank lines in two retained raw logs (failed-canonical-1-suites.log and kujo-contracts.log); raw bytes preserved, source/docs check excluding raw logs passes"
+  ],
+  "development_failures": {
+    "canonical_1": {
+      "exit": 1,
+      "cause": "Isolated recovery fixture source copies omitted newly bound evaluator worker",
+      "correction_commit": "2577c60ff7ef79992f34b4627799f488cf5edcd6",
+      "focused_reverification": {
+        "passed_groups": 38,
+        "failed": 0
+      },
+      "full_rerun": "canonical-2.log"
+    },
+    "details": "development.md",
+    "ci_layout": {
+      "baseline_missing_import_exit": 4,
+      "corrected": "ci-layout-fixed.json",
+      "layout_checks": 5,
+      "yaml_checks": 2,
+      "hosted_ci_not_run": true
+    }
+  },
+  "toolchain": {
+    "runtime": {
+      "version": "1.6.0",
+      "path": "/Users/robertdevore/2026/Kujolang/validation/graph-attempt-accounting/kujo-verified",
+      "sha256": "dbddb62bba1f08682a1c9b5cc74fa5a94fe9e1b2320b26b61fb857b82db71ad3"
+    },
+    "rustc": "1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "1.96.0 (30a34c682 2026-05-25)",
+    "node": "26.7.0",
+    "npm": "11.19.0",
+    "python": "3.10.5",
+    "go": "1.25.3 darwin/amd64",
+    "host": "Darwin x86_64"
+  },
+  "source_ownership": {
+    "related_repository_pins": "repository-pins.json",
+    "note": "Related-repository file inventories record the development checkpoint. Starting and final tested commits are explicit above. No related repository was modified.",
+    "concurrent_kujo_main_at_completion": "5926176f24886b024fc929ae5c8ee49a2e8469bc",
+    "concurrent_kujo_note": "Unrelated runtime/benchmark edits advanced main independently. They were neither incorporated nor modified; Kujo validation covers the isolated documentation source pin."
+  },
+  "evidence_hashes": "source-artifacts.json",
+  "resulting_commits": "This evidence commit and the pushed heads are recorded in the PRs and consolidated Strata handoff; no self-referential commit hash is embedded."
+}

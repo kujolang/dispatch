@@ -1,0 +1,10 @@
+{"checks":19,"ok":true}
+{"checks":14,"ok":true}
+{"checks":10,"ok":true}
+{"checks":12,"ok":true}
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-uCG5A2","checks":9}
+PASS Eval branch activation consumes zero program units; inactive repair node has no attempt
+PASS subgraph receipt adds no execution unit; human decision is separate from three member dispatches
+PASS held optional reservation prevents graph sealing; release and cancellation remain explicit
+{"ok":true,"checks":3,"proofs":["Eval branch activation consumes zero program units; inactive repair node has no attempt","subgraph receipt adds no execution unit; human decision is separate from three member dispatches","held optional reservation prevents graph sealing; release and cancellation remain explicit"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-agmAQG"}
+{"ok":true,"checks":3,"proofs":["operator revoked at final revalidation cannot reserve","changed child authority cannot dispatch or release an old reservation","ordinary execution failure is not a Dispatch pre-admission refusal"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-x0LZDl"}

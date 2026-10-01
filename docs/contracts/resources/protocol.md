@@ -156,3 +156,18 @@ The Eval ceiling covers first-class Dispatch-managed evaluator invocations in th
 opt-in graph. Historical imported evaluation receipts and parent evaluation evidence
 are not retroactively counted as dispatched processes. Their existing authority
 contracts remain unchanged; this is not a claim to meter all external Eval activity.
+
+`complete` in a reported-token subtotal means that every consumed attempt in this
+bounded ledger has the two required fields from its installed source. It is not
+proof that arbitrary uninstrumented model calls were discovered. The installed
+adapter must map the supported attempt to one non-overlapping source invocation;
+multiple providers/calls without an exact supported aggregate remain outside this
+slice. SDK ledger scope stays `adapter_messages_and_tools`, not universal program
+usage. This is another reason these post-hoc subtotals do not enforce numeric token
+ceilings.
+
+A retained [operator report example](../../evidence/resource-accounting/resource-report-example.json)
+comes from the offline SDK-backed source-policy proof: one program consumed, one
+reserved, 41 reported input and 7 reported output tokens, 16 estimated component
+tokens, and unknown process wall time/cost. It is informational evidence, not a
+reservation or execution ticket.

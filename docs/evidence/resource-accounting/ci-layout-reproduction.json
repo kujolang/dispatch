@@ -1,0 +1,16 @@
+{
+  "baseline": "b724f369ab4101a46ea0d5493cc41fc3d0fa3b9c",
+  "command": [
+    "/Users/robertdevore/2026/Kujolang/validation/graph-attempt-accounting/kujo-verified",
+    "run",
+    "tests/parent_finalization_fixture.kujo",
+    "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/dispatch-ci-layout-M0ptSu/fixture",
+    "init"
+  ],
+  "cwd": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/dispatch-ci-layout-M0ptSu/dispatch",
+  "layout": ".ci/workcell exists; sibling workcell and Eval do not, matching declared CI checkout layout",
+  "exit": 4,
+  "stdout": "",
+  "stderr": "[KUJOVM001] [vm] Runtime Error: Module not found: workcell.src.evidence.preservation; Check that 'workcell.src.evidence.preservation' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.\n  --> 0:0\n   = help: Check that the module exists as <module>.kujo or as a dotted src/... path under the package root.\n\n",
+  "note": "Local reproduction of a pre-existing workflow prerequisite gap, not execution of GitHub Actions."
+}

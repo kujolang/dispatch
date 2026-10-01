@@ -1,0 +1,10 @@
+PASS condition fact and crash before activation do not let recovery invent a path
+PASS two fresh controllers publish exactly one branch activation
+PASS consumed downstream attempt cannot retry or change branch after crash
+PASS lost selected effect reply stays consumed; independent SQLite verification resolves it without retry
+PASS branch after_branch retains exact path without continuation
+PASS branch immutable retains exact path without continuation
+PASS fresh subgraph finalizers race for one receipt; parent then binds it
+PASS subgraph after_subgraph survives exact recovery without implied parent execution
+PASS subgraph immutable survives exact recovery without implied parent execution
+{"ok":true,"checks":9,"scenarios":["condition fact and crash before activation do not let recovery invent a path","two fresh controllers publish exactly one branch activation","consumed downstream attempt cannot retry or change branch after crash","lost selected effect reply stays consumed; independent SQLite verification resolves it without retry","branch after_branch retains exact path without continuation","branch immutable retains exact path without continuation","fresh subgraph finalizers race for one receipt; parent then binds it","subgraph after_subgraph survives exact recovery without implied parent execution","subgraph immutable survives exact recovery without implied parent execution"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-tBAfRg"}

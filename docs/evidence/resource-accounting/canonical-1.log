@@ -1,0 +1,55 @@
+Runtime directory durability contract passed.
+Dispatch release gate
+Runtime: /Users/robertdevore/2026/Kujolang/validation/graph-attempt-accounting/kujo-verified
+Shards: 24
+Source tests: 101
+
+Running smoke-gate regression checks...
+Source layout passed.
+Smoke gate tests passed (success, silent failure, diagnostics).
+Run locking, at-least-once crash replay, and external idempotency passed.
+Webhook JSONL validated: 150 unique events.
+Pinned installer bridge path resolved.
+Isolated bridge package smoke passed.
+{"status":"passed","route":"operator-approved localhost SDK/bridge HTTP route","model":"local-release-probe","requests":[{"method":"POST","path":"/v1/chat/completions","model":"local-release-probe"}],"remote_provider_certification":false}
+First workflow and scoped plugin walkthrough passed.
+Running focused integration suites...
+typescript_build passed.  Evidence: tests/tmp/dispatch-test-shards/logs/typescript_build.log
+preservation_binding passed.  Evidence: tests/tmp/dispatch-test-shards/logs/preservation_binding.log
+parent_finalization passed.  Evidence: tests/tmp/dispatch-test-shards/logs/parent_finalization.log
+static_policy_contracts passed.  Evidence: tests/tmp/dispatch-test-shards/logs/static_policy_contracts.log
+static_policy_integration passed.  Evidence: tests/tmp/dispatch-test-shards/logs/static_policy_integration.log
+static_subgraph_integration passed.  Evidence: tests/tmp/dispatch-test-shards/logs/static_subgraph_integration.log
+static_policy_edges passed.  Evidence: tests/tmp/dispatch-test-shards/logs/static_policy_edges.log
+static_policy_recovery failed (exit 1). Full evidence: tests/tmp/dispatch-test-shards/logs/static_policy_recovery.log
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: [KUJOVM001] [vm] Runtime Error: read_file_beneath[target_open_failed]: cannot open target 'tests/resource_eval_worker.kujo': No such file or directory (os error 2)
+  --> 0:0
+
+Call stack:
+  0 at descriptor
+
+
+
+4 !== 0
+
+    at command (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/node_composition_helpers.mjs:12:149)
+    at run (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/node_composition_helpers.mjs:14:205)
+    at setup (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/node_composition_helpers.mjs:16:1287)
+    at branchRun (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/static_policy_recovery.mjs:10:102)
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/static_policy_recovery.mjs:11:9
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 4,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0

@@ -1,0 +1,1196 @@
+### ability_assurance.log
+check passed: examples/application-assurance/gateway.kujo
+{"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/ability/tests/tmp/application-assurance-1790870433208","proof":[{"boundary":"before_business","businessBefore":0,"businessAfter":1,"receiptBefore":false},{"boundary":"before_business_commit","businessBefore":0,"businessAfter":1,"receiptBefore":false},{"boundary":"after_business_commit","businessBefore":1,"businessAfter":1,"receiptBefore":false},{"boundary":"before_receipt_commit","businessBefore":1,"businessAfter":1,"receiptBefore":false},{"boundary":"after_receipt_commit","businessBefore":1,"businessAfter":1,"receiptBefore":true},{"boundary":"before_reply","businessBefore":1,"businessAfter":1,"receiptBefore":true},{"contenders":6,"admitted":1,"replayed":3,"in_progress":2,"business":1},{"delayedAdmission":"revoked","business":0,"receipt":0},{"delayedAdmission":"expired","business":0,"receipt":0},{"fencedOldOwner":true,"business":1}],"commitFailed":"ability_idempotency_commit_failed","privacy":true}
+{"dispatchProof":[{"scenario":"absent","code":"REPLAY_COMPLETED","business":1},{"scenario":"commit-failed","code":"REPLAY_COMPLETED","business":1},{"scenario":"complete","code":"REPLAY_COMPLETED","business":1},{"scenario":"revoked","code":"ability_assurance_revoked","business":0},{"scenario":"expired","code":"assurance_expired_or_future","business":0},{"scenario":"corrupt","code":"ability_business_receipt_mismatch","business":0},{"scenario":"unavailable","code":"ability_business_effect_unverified","business":null},{"controllers":2,"admitted":1,"rejected":1},{"scenario":"controller-contention","code":"REPLAY_COMPLETED","business":1}],"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/ability/tests/tmp/application-assurance-1790870433208"}
+
+### assurance_capabilities.log
+PASS advisory capability schema: bounded, closed, three profiles, no executable authority
+
+### assurance_compatibility.log
+PASS compatibility: 60 legacy comparisons and required downgrade rejection
+
+### beta_contracts.log
+PASS beta policy/feature/configuration isolation and portable value bounds
+
+### beta_migration.log
+{"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/beta-migration-1790870248258","proofs":[{"family":"sqlite","scenario":"alpha","portable_identity_checks":0,"required":true,"fresh_controller":true,"checkpoint":true,"descendant":true,"logical_effects":1,"config_revision":"82a441f2a51426238fdac5ea837bf25be4ccb5b89a313c91a3bbbf5d5229873f"},{"family":"sqlite","scenario":"beta","portable_identity_checks":0,"required":true,"fresh_controller":true,"checkpoint":true,"descendant":true,"logical_effects":1,"config_revision":"db6557168576e2e116dd3006b47550defeee46f11d65501e5d2890f44624af64"},{"family":"sqlite","scenario":"alpha-in-beta","portable_identity_checks":0,"denied":"beta_unsupported_envelope","result_bytes_unchanged":true},{"family":"sqlite","scenario":"beta-in-alpha","portable_identity_checks":0,"denied":"compat_envelope_unsupported","result_bytes_unchanged":true},{"family":"git","scenario":"alpha","portable_identity_checks":0,"required":true,"fresh_controller":true,"checkpoint":true,"descendant":true,"logical_effects":1,"config_revision":"4de028db4e6f67b90cb8c165194f87bf1128fac308afa43805b8fd1170e38fbe"},{"family":"git","scenario":"beta","portable_identity_checks":0,"required":true,"fresh_controller":true,"checkpoint":true,"descendant":true,"logical_effects":1,"config_revision":"71823248468ba8b4778e8610632b7d8356c944214443b92b8c148261c87bfe76"},{"family":"git","scenario":"alpha-in-beta","portable_identity_checks":0,"denied":"beta_unsupported_envelope","result_bytes_unchanged":true},{"family":"git","scenario":"beta-in-alpha","portable_identity_checks":0,"denied":"compat_envelope_unsupported","result_bytes_unchanged":true},{"family":"ability","scenario":"alpha","portable_identity_checks":2,"required":true,"fresh_controller":true,"checkpoint":true,"descendant":true,"logical_effects":1,"config_revision":"d29c282154479dbdf13e32eaaf3ea447db682de312385b3ab044fd4cf8b6aa40"},{"family":"ability","scenario":"beta","portable_identity_checks":2,"required":true,"fresh_controller":true,"checkpoint":true,"descendant":true,"logical_effects":1,"config_revision":"0130af61bde03437cc15ca063283670da8d457cfd66f9db958c9a07ce178f85e"},{"family":"ability","scenario":"alpha-in-beta","portable_identity_checks":2,"denied":"beta_unsupported_envelope","result_bytes_unchanged":true},{"family":"ability","scenario":"beta-in-alpha","portable_identity_checks":2,"denied":"compat_envelope_unsupported","result_bytes_unchanged":true}],"privacy":true}
+
+### control_boundary.log
+
+============================================================
+Test Results
+============================================================
+  ✓ evaluation failure can pause at a durable review boundary (1680ms)
+  ✓ evaluation failure can fail the workflow without failing the action (1177ms)
+  ✓ evaluation warning can continue (2062ms)
+  ✓ descendant boundary drains an unrelated DAG branch before pausing (3213ms)
+  ✓ evaluation result cannot issue an orchestration action (289ms)
+  ✓ portable evaluation result resolves through workflow policy (297ms)
+  ✓ provider preservation and reexecution contracts cross policy without coupling (1872ms)
+  ✓ revision-bound intervention resumes without rerunning the producer (253ms)
+  ✓ retry evaluation creates an explicit new pending attempt (239ms)
+  ✓ stale intervention decision is rejected (234ms)
+  ✓ unsafe retry is rejected without an idempotency contract (235ms)
+  ✓ retry clean refuses to emulate a provider snapshot (243ms)
+  ✓ retry clean prepares a fresh provider-backed attempt (243ms)
+  ✓ retry clean still rejects unsafe external effects (237ms)
+
+Tests: 14 total, 14 passed, 0 failed
+Time:  12670ms
+============================================================
+
+All tests passed! ✨
+
+### decision_claim.log
+Decision claims: concurrent duplicate applied once; conflicting payload rejected.
+
+### dispatch-1.log
+
+============================================================
+Test Results
+============================================================
+  ✓ workflow creation includes required sections (213ms)
+  ✓ state persistence saves and reloads run (443ms)
+  ✓ dispatch blocks unsafe config paths without opt in (423ms)
+  ✓ dispatch unknown command prints usage snapshot (423ms)
+  ✓ invalid step output is not committed to the idempotency cache (680ms)
+
+Tests: 5 total, 5 passed, 0 failed
+Time:  2289ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-10.log
+
+============================================================
+Test Results
+============================================================
+  ✓ tool registry rejects invalid sources directories (189ms)
+  ✓ plugin registration injects custom tool and agent (214ms)
+  ✓ high volume run index listing remains deterministic (10134ms)
+  ✓ native atomic file writes content and leaves no temp residue (174ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  10790ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-11.log
+
+============================================================
+Test Results
+============================================================
+  ✓ retry behavior succeeds after transient failures (188ms)
+  ✓ runner executes workflow and writes final report (12303ms)
+  ✓ trace truncation preserves limits and summary metadata (158ms)
+  ✓ signed bundle supports key id rotation via a trusted key set (1072ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  13803ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-12.log
+
+============================================================
+Test Results
+============================================================
+  ✓ retry delay supports deterministic jitter (150ms)
+  ✓ report payload and markdown include lifecycle metadata (12742ms)
+  ✓ dispatch runs json exposes filtered and page catalogs (2729ms)
+  ✓ idempotency key reuses cached output instead of re-executing (858ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  16566ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-13.log
+
+============================================================
+Test Results
+============================================================
+  ✓ approval decision handling supports approve reject and pause (149ms)
+  ✓ run listing filters and catalog support automation workflows (980ms)
+  ✓ workflow config file supports parsing and cli override precedence (13745ms)
+  ✓ dispatch blocks unsafe webhook sink paths and supports cancel-after-step (2798ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  17760ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-14.log
+
+============================================================
+Test Results
+============================================================
+  ✓ approval rejects invalid simulated decision values (149ms)
+  ✓ cleanup command supports dry-run and apply pruning (1516ms)
+  ✓ tool policy parsing and enforcement supports allow deny normalization (151ms)
+  ✓ crud reliability report includes purpose-built reliability sections (201ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  2103ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-15.log
+
+============================================================
+Test Results
+============================================================
+  ✓ decision normalization matrix supports shared CLI and approval logic (170ms)
+  ✓ run pagination handles larger catalogs (5391ms)
+  ✓ policy profile aliases resolve and explicit lists override profile defaults (178ms)
+  ✓ declarative workflow loader validates and builds workflows from a spec (281ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  6103ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-16.log
+
+============================================================
+Test Results
+============================================================
+  ✓ cli args parser handles flags and positionals with schema (184ms)
+  ✓ dependency scheduling supports parallel-ready DAG steps (1870ms)
+  ✓ policy profile aliases work via config and cli override (14163ms)
+  ✓ built-in sample plugin injects a tool and agent handler and observes events (2141ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  18453ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-17.log
+
+============================================================
+Test Results
+============================================================
+  ✓ cli args parser returns missing value and unknown flag errors (183ms)
+  ✓ summarize run reports artifact availability (17267ms)
+  ✓ dispatch runs supports workflow filter (1748ms)
+  ✓ engine invokes a registered event hook for lifecycle events (13803ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  33104ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-18.log
+
+============================================================
+Test Results
+============================================================
+  ✓ cli args parser enforces required flags (185ms)
+  ✓ request changes pause can be resumed to completion (15746ms)
+  ✓ show inspect and doctor json envelopes are consistent (1916ms)
+  ✓ newly created run is registered in the catalog index while running (556ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  18526ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-19.log
+
+============================================================
+Test Results
+============================================================
+  ✓ step schema validation enforces input and output contracts (2955ms)
+  ✓ rejected approval ends workflow with failure (9787ms)
+  ✓ dispatch run tags persist and runs supports tags filter (2043ms)
+  ✓ dispatch CLI supports structured input, workflow-file, and plugin flags (28296ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  43188ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-2.log
+
+============================================================
+Test Results
+============================================================
+  ✓ workflow template selection supports known and unknown IDs (289ms)
+  ✓ run locks are process-owned and remain on disk for crash recovery (506ms)
+  ✓ dispatch blocks oversized config files (5027ms)
+  ✓ long run stress fixture keeps traces bounded (23428ms)
+  ✓ final report metadata reflects the completed run (15064ms)
+
+Tests: 5 total, 5 passed, 0 failed
+Time:  44428ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-20.log
+
+============================================================
+Test Results
+============================================================
+  ✓ step timeout and cancellation handling update run lifecycle (1439ms)
+  ✓ persisted artifacts redact sensitive values (675ms)
+  ✓ tool authorization policy supports deny and allow outcomes (1517ms)
+  ✓ run identifiers cannot escape the configured output root (196ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  3936ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-21.log
+
+============================================================
+Test Results
+============================================================
+  ✓ lifecycle hooks emit callback and webhook sink events (1044ms)
+  ✓ redaction preserves non-secret token metrics (190ms)
+  ✓ run export and import support round trip bundles (1340ms)
+  ✓ bundle import requires a valid state artifact (195ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  2879ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-22.log
+
+============================================================
+Test Results
+============================================================
+  ✓ doctor write persists repaired state changes (1048ms)
+  ✓ report artifacts redact sensitive fields (575ms)
+  ✓ signed bundle verification supports deterministic pass and fail paths (1388ms)
+  ✓ partial run indexes fall back to a complete state scan (817ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  3939ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-23.log
+
+============================================================
+Test Results
+============================================================
+  ✓ load run state fails safely on malformed json (677ms)
+  ✓ output root validation blocks dangerous paths and allows safe relative roots (241ms)
+  ✓ cli negative path matrix returns deterministic errors (1101ms)
+  ✓ doctor does not mark pending steps completed from index alone (437ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  2560ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-24.log
+
+============================================================
+Test Results
+============================================================
+  ✓ dispatch runs rejects invalid numeric flags (450ms)
+  ✓ dispatch blocks unsafe output roots without opt in (493ms)
+  ✓ dispatch help usage snapshot remains compatible (994ms)
+  ✓ truncated trace payload previews redact sensitive values (251ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  2286ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-3.log
+
+============================================================
+Test Results
+============================================================
+  ✓ workflow template introspection exposes summary metadata (461ms)
+  ✓ load run state backfills missing contract schema metadata (512ms)
+  ✓ canonical source path helpers enforce root boundaries (177ms)
+  ✓ corruption matrix covers malformed and missing artifact scenarios (582ms)
+  ✓ persisted declarative workflow definitions can resume (3192ms)
+
+Tests: 5 total, 5 passed, 0 failed
+Time:  5048ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-4.log
+
+============================================================
+Test Results
+============================================================
+  ✓ templates command supports text and json output (1458ms)
+  ✓ state repair can recover inconsistent running metadata (550ms)
+  ✓ doctor and cleanup persist mutation audit artifacts (2759ms)
+  ✓ optional tool step is skipped instead of failing the run when denied by policy (16381ms)
+  ✓ resume applies requested trace limits to persisted traces (11267ms)
+
+Tests: 5 total, 5 passed, 0 failed
+Time:  32572ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-5.log
+
+============================================================
+Test Results
+============================================================
+  ✓ crud reliability workflow template runs with fixture tools (15260ms)
+  ✓ trace generation creates events and final status (180ms)
+  ✓ strict mutation mode blocks destructive commands unless confirmed (1982ms)
+  ✓ approval handoff template completes offline and avoids the flaky tool (6963ms)
+  ✓ resume decision rejects a mismatched approval decision id (5830ms)
+
+Tests: 5 total, 5 passed, 0 failed
+Time:  30337ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-6.log
+
+============================================================
+Test Results
+============================================================
+  ✓ tool registry registers and executes tools (172ms)
+  ✓ trace markdown includes event counts and timeline (167ms)
+  ✓ src import smoke fixture runs successfully (534ms)
+  ✓ workflow template registry exposes the approval handoff template (346ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  1304ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-7.log
+
+============================================================
+Test Results
+============================================================
+  ✓ module-level source tool handler returns search results (177ms)
+  ✓ handoff creation includes required fields (144ms)
+  ✓ mutation audit rotation keeps active log bounded and rolls over (222ms)
+  ✓ webhook sink option appends lifecycle events as jsonl (7088ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  7710ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-8.log
+
+============================================================
+Test Results
+============================================================
+  ✓ tool payload adapters support custom mapping (150ms)
+  ✓ agent registry dispatch executes mapped and custom handlers (270ms)
+  ✓ doctor incremental mode supports recent count and explicit run IDs (1461ms)
+  ✓ report title reflects the workflow name (159ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  2116ms
+============================================================
+
+All tests passed! ✨
+
+### dispatch-9.log
+
+============================================================
+Test Results
+============================================================
+  ✓ local source lookup blocks unsafe source ids (154ms)
+  ✓ agent registry dispatch reports unknown handler mapping (197ms)
+  ✓ run index is created and scanner fallback works when index is malformed (680ms)
+  ✓ signed bundle uses a cryptographic sha256 mac and rejects wrong keys (1092ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  2206ms
+============================================================
+
+All tests passed! ✨
+
+### effect_assurance.log
+PASS sqlite before_commit: real SIGKILL, 45 assurance cases, Dispatch replay, one logical effect
+PASS sqlite after_commit: real SIGKILL, 45 assurance cases, Dispatch replay, one logical effect
+PASS sqlite expired: real effect, continuation blocked, state intact
+PASS sqlite non-idempotent: real effect, continuation blocked, state intact
+PASS git before_commit: real SIGKILL, 45 assurance cases, Dispatch replay, one logical effect
+PASS git after_commit: real SIGKILL, 45 assurance cases, Dispatch replay, one logical effect
+PASS git expired: real effect, continuation blocked, state intact
+PASS git non-idempotent: real effect, continuation blocked, state intact
+Evidence: /Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/effect-assurance-1790870338978/proof.json
+
+### effect_assurance_schema.log
+PASS assurance schema: valid example, required fields, digests, closed properties
+
+### effect_continuation.log
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/effect-continuation-S9AjYI","checks":39,"proofs":["valid-prefix-only-C","repeat-denied","D-denied","parent-replay-denied","cannot-select-A","cannot-select-B","cannot-select-D","unknown-prefix-blocks","A-no-phantom","B-same-attempt","after_admission-no-replay","after_mutation-no-replay","after_observation-no-replay","two-fresh-controllers-one-admission","stale-registration","stale-plan","stale-target","stale-authority","stale-config","stale-revocation","stale-environment","stale-environment-ref","stale-set","stale-preservation","state-revision","state-journal","state-selected-state","state-attempt","state-control","state-preservation","state-selection-removal","final-revalidation-status","final-revalidation-environment","actual-evidence-expiry","expiry-after-admission","orphan-claim-denies","retained-evidence-required","sqlite-authority-over-json-mirror","actual-baseline-reader-refuses-new-state"]}
+
+### effect_lifecycle_vectors.log
+{"checker":"kujo","ok":true,"vectors":6}
+
+### effect_selection_vectors.log
+{"checker":"kujo","ok":true,"vectors":4}
+
+### effect_set.log
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/effect-set-BlRqpm","scenarios":["A: two SIGKILLs; retained A/unknown B/unstarted C,D","B: claim without verifier","C: expiry/append-only renewal","D: two sink-key contenders","journal tamper refused"],"assessmentCases":29,"first":{"condition":"partial_or_uncertain","continuation":"review_required","effects":[{"blocked_by":null,"effect_id":"A","evidence_ref":"sha256:28cb6c322842596cb63fb0f154434b7e867a4544932ab9f1d37a1a1b254c23cf","freshness":"current","historical_observation":"committed","next_action":"retain_completion","observed_state":"committed","reported_state":"unknown"},{"blocked_by":null,"effect_id":"B","evidence_ref":null,"freshness":"missing","historical_observation":"unknown","next_action":"inspect_or_revalidate","observed_state":"unknown","reported_state":"unknown"},{"blocked_by":"B","effect_id":"C","evidence_ref":"sha256:51e056f8e0a51495f954212cca7a0fe8df2cfd55387e78fa35eea52b1b0224e8","freshness":"current","historical_observation":"not_started","next_action":"inspect_or_revalidate","observed_state":"not_started","reported_state":"not_started"},{"blocked_by":"B","effect_id":"D","evidence_ref":"sha256:29cfa410c59d66690517812e685e1cc0790a84e87d7a84f670fddac27c6922e8","freshness":"current","historical_observation":"not_started","next_action":"inspect_or_revalidate","observed_state":"not_started","reported_state":"not_started"}],"ok":true,"parent_replay":"prohibited"},"expired":{"condition":"partial_or_uncertain","continuation":"review_required","effects":[{"blocked_by":null,"effect_id":"A","evidence_ref":"sha256:28cb6c322842596cb63fb0f154434b7e867a4544932ab9f1d37a1a1b254c23cf","freshness":"stale","historical_observation":"committed","next_action":"inspect_or_revalidate","observed_state":"unknown","reported_state":"unknown"},{"blocked_by":"A","effect_id":"B","evidence_ref":null,"freshness":"missing","historical_observation":"unknown","next_action":"inspect_or_revalidate","observed_state":"unknown","reported_state":"unknown"},{"blocked_by":"A","effect_id":"C","evidence_ref":"sha256:51e056f8e0a51495f954212cca7a0fe8df2cfd55387e78fa35eea52b1b0224e8","freshness":"stale","historical_observation":"not_started","next_action":"inspect_or_revalidate","observed_state":"unknown","reported_state":"not_started"},{"blocked_by":"A","effect_id":"D","evidence_ref":"sha256:29cfa410c59d66690517812e685e1cc0790a84e87d7a84f670fddac27c6922e8","freshness":"stale","historical_observation":"not_started","next_action":"inspect_or_revalidate","observed_state":"unknown","reported_state":"not_started"}],"ok":true,"parent_replay":"prohibited"},"renewed":{"condition":"partial_or_uncertain","continuation":"review_required","effects":[{"blocked_by":null,"effect_id":"A","evidence_ref":"sha256:28cb6c322842596cb63fb0f154434b7e867a4544932ab9f1d37a1a1b254c23cf","freshness":"current","historical_observation":"committed","next_action":"retain_completion","observed_state":"committed","reported_state":"unknown"},{"blocked_by":null,"effect_id":"B","evidence_ref":null,"freshness":"missing","historical_observation":"unknown","next_action":"inspect_or_revalidate","observed_state":"unknown","reported_state":"unknown"},{"blocked_by":"B","effect_id":"C","evidence_ref":"sha256:51e056f8e0a51495f954212cca7a0fe8df2cfd55387e78fa35eea52b1b0224e8","freshness":"current","historical_observation":"not_started","next_action":"inspect_or_revalidate","observed_state":"not_started","reported_state":"not_started"},{"blocked_by":"B","effect_id":"D","evidence_ref":"sha256:29cfa410c59d66690517812e685e1cc0790a84e87d7a84f670fddac27c6922e8","freshness":"current","historical_observation":"not_started","next_action":"inspect_or_revalidate","observed_state":"not_started","reported_state":"not_started"}],"ok":true,"parent_replay":"prohibited"}}
+
+### effect_set_vectors.log
+{"checker":"kujo","ok":true,"vectors":7}
+
+### failure_gate_execution.log
+
+============================================================
+Test Results
+============================================================
+  ✓ terminal runs cannot execute pending descendants through the direct runner (2371ms)
+  ✓ execution failure enters review without running descendants or retrying effects (1379ms)
+  ✓ execution failure with no matching policy stops by default (983ms)
+  ✓ evaluator crash maps to error review without declaring a quality failure (1341ms)
+  ✓ a passed evaluation continues through the same neutral policy path (1681ms)
+  ✓ accepting a failed action continues without replaying its effect (2320ms)
+
+Tests: 6 total, 6 passed, 0 failed
+Time:  10224ms
+============================================================
+
+All tests passed! ✨
+
+### failure_gate_safety.log
+
+============================================================
+Test Results
+============================================================
+  ✓ submitted idempotency key does not authorize replay (93ms)
+  ✓ observed unknown partial effects override a pure configuration (90ms)
+  ✓ sink enforced idempotency needs an evidence reference (95ms)
+  ✓ destroyed workspace cannot be retried in place (107ms)
+  ✓ retained filesystem permits a declared same workspace adapter (106ms)
+  ✓ an evaluator decision cannot target an unrelated action (98ms)
+  ✓ terminal states reject continuation (161ms)
+  ✓ evaluation crash is indeterminate rather than failed quality (101ms)
+  ✓ negative checks and unknown contract versions fail closed (102ms)
+  ✓ policy outcome is producer neutral and deterministic (360ms)
+  ✓ evidence cannot promote itself to policy authority (111ms)
+  ✓ journal detects orphan append and tampered history (172ms)
+  ✓ expired preservation cannot authorize same workspace replay (110ms)
+  ✓ null idempotency metadata is not enforcement evidence (91ms)
+  ✓ continuation source cannot contradict its action (109ms)
+  ✓ tampered control history is detected even when JSON is valid (142ms)
+  ✓ an atomic event beyond an absent journal requires recovery (99ms)
+  ✓ review requests explain unavailable replay without granting new actions (122ms)
+  ✓ policy action availability work is bounded and duplicate actions reject (170ms)
+  ✓ compensation metadata does not prove external reversal or admit replay (90ms)
+
+Tests: 20 total, 20 passed, 0 failed
+Time:  2741ms
+============================================================
+
+All tests passed! ✨
+
+### git_participant_after.log
+{"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/git-participant-1790869973764","schema":"dispatch.git-participant-rehearsal/v1","boundary":"after_commit","ok":true,"actual_sigkill":true,"initial_observed_state":"committed","logical_effects":1,"admitted_processes":2,"duplicate_denials":2,"caller_denials":15,"negative_correlations":22,"fresh_controller":true,"checkpoint":true,"stale_checkpoint_denied":true,"descendant":true,"privacy":true,"ability_used":false,"policy":{"config_revision":"a08f6e9bf8897cbc32a6ac505ab6e219b60801c3ecf1a152bd7b5940093304f6","fallback":"deny","mode":"required","policy_sha256":"282092f3f0ee3b4ed58044a1f569e1b68a8938c9efe02d378140744934e46374","profile":"workcell.git-cas","profile_version":"1beta1","schema":"dispatch.assurance-negotiation/v1beta1"}}
+
+### git_participant_before.log
+{"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/git-participant-1790870019254","schema":"dispatch.git-participant-rehearsal/v1","boundary":"before_commit","ok":true,"actual_sigkill":true,"initial_observed_state":"not_started","logical_effects":1,"admitted_processes":2,"duplicate_denials":2,"caller_denials":15,"negative_correlations":22,"fresh_controller":true,"checkpoint":true,"stale_checkpoint_denied":true,"descendant":true,"privacy":true,"ability_used":false,"policy":{"config_revision":"3c65b3fed90e1ab99e1c819cfd5ee4a50a9fec26175c5288180979d6f290458e","fallback":"deny","mode":"required","policy_sha256":"104e8efbb72aed493e1936c8e1f30a14df0b5fb31f410487bf4efbfeca9316b4","profile":"workcell.git-cas","profile_version":"1beta1","schema":"dispatch.assurance-negotiation/v1beta1"}}
+
+### go_participant.log
+{"ok":true,"checks":152,"mcpChecks":5,"malformedChecks":9,"wireSHA256":"f87fd01de248eca96c685282b3ead0a95578f77f6c597f598fc9d587f0bec262","independence":"Go standard library; CLI and MCP share one codec"}
+
+### graph_attempt_authority.log
+{"ok":true,"checks":3,"proofs":["operator revoked at final revalidation cannot reserve","changed child authority cannot dispatch or release an old reservation","ordinary execution failure is not a Dispatch pre-admission refusal"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-TX7077"}
+
+### graph_attempt_binding_safety.log
+PASS downstream reservation blocks retry before child binding
+PASS retry cannot retire a terminal already bound by an undispatched program descendant
+{"ok":true,"checks":2,"proofs":["downstream reservation blocks retry before child binding","retry cannot retire a terminal already bound by an undispatched program descendant"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-gyI5Jy"}
+
+### graph_attempt_contracts.log
+{"checks":19,"ok":true}
+
+### graph_attempt_integration.log
+PASS A to safely refused B1 to independent B2 to C; exact inputs, lineage and exhausted graph finalize
+PASS two refused attempts exhaust node ceiling; no third attempt and original failures retained
+PASS graph budget exhaustion blocks retry without refund or fabricated terminal failure
+PASS operator revocation denies reservation without consuming capacity
+PASS changed producer bytes cannot become a newer retry input
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-UngA3q","checks":5,"proofs":["A to safely refused B1 to independent B2 to C; exact inputs, lineage and exhausted graph finalize","two refused attempts exhaust node ceiling; no third attempt and original failures retained","graph budget exhaustion blocks retry without refund or fabricated terminal failure","operator revocation denies reservation without consuming capacity","changed producer bytes cannot become a newer retry input"]}
+
+### graph_attempt_policy.log
+PASS Eval branch activation consumes zero program units; inactive repair node has no attempt
+PASS subgraph receipt adds no execution unit; human decision is separate from three member dispatches
+PASS held optional reservation prevents graph sealing; release and cancellation remain explicit
+{"ok":true,"checks":3,"proofs":["Eval branch activation consumes zero program units; inactive repair node has no attempt","subgraph receipt adds no execution unit; human decision is separate from three member dispatches","held optional reservation prevents graph sealing; release and cancellation remain explicit"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-4pardd"}
+
+### graph_attempt_recovery.log
+PASS two fresh controllers reserve exactly one last graph unit
+PASS release contention records one release and restores only never-dispatched capacity
+PASS crash A: durable reservation before binding releases without phantom execution
+PASS bound but undispatched reservation releases; its surviving input binding grants no admission
+PASS crash before_child_load: consumed dispatch is not redelivered, released or retried
+PASS crash before_node_admission: consumed dispatch is not redelivered, released or retried
+PASS crash after_node_admission: consumed dispatch is not redelivered, released or retried
+PASS same-node retry and next-attempt creation race publishes one new reserved instance
+PASS crash E: real SQLite mutation reply lost; consumed accounting cannot authorize replay
+PASS orphan reserve: immutable record/index gap repaired by fresh controller without execution
+PASS orphan release: immutable record/index gap repaired by fresh controller without execution
+PASS orphan retry: immutable record/index gap repaired by fresh controller without execution
+PASS crash F: durable terminal observation repairs stale accounting without refund or graph finalization
+PASS orphan child refusal remains sealed through exact retained-host repair
+{"ok":true,"checks":14,"proofs":["two fresh controllers reserve exactly one last graph unit","release contention records one release and restores only never-dispatched capacity","crash A: durable reservation before binding releases without phantom execution","bound but undispatched reservation releases; its surviving input binding grants no admission","crash before_child_load: consumed dispatch is not redelivered, released or retried","crash before_node_admission: consumed dispatch is not redelivered, released or retried","crash after_node_admission: consumed dispatch is not redelivered, released or retried","same-node retry and next-attempt creation race publishes one new reserved instance","crash E: real SQLite mutation reply lost; consumed accounting cannot authorize replay","orphan reserve: immutable record/index gap repaired by fresh controller without execution","orphan release: immutable record/index gap repaired by fresh controller without execution","orphan retry: immutable record/index gap repaired by fresh controller without execution","crash F: durable terminal observation repairs stale accounting without refund or graph finalization","orphan child refusal remains sealed through exact retained-host repair"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-FM4rvC"}
+
+### graph_attempt_smoke.log
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-DNV6VN","checks":9}
+
+### graph_attempt_vectors.log
+{"checker":"kujo","ok":true,"vectors":4}
+
+### hardening.log
+
+============================================================
+Test Results
+============================================================
+  ✓ persisted token budgets survive workflow reload without exposing credentials (475ms)
+  ✓ workflow loader rejects non-object steps with structured errors (132ms)
+  ✓ webhook sink appends preserve exact existing JSONL framing (110ms)
+  ✓ exhausted model token envelope blocks the next model round (96ms)
+  ✓ streaming rejects step ids that escape the run directory (90ms)
+  ✓ redaction preserves nested shapes and leaves the original data untouched (108ms)
+  ✓ library run creation rejects forbidden output roots before writing (164ms)
+  ✓ unrouted built-in agents propagate live model failures (118ms)
+
+Tests: 8 total, 8 passed, 0 failed
+Time:  1384ms
+============================================================
+
+All tests passed! ✨
+
+### heterogeneous_contracts.log
+{"checks":10,"ok":true}
+
+### heterogeneous_integration.log
+PASS unresolved program effects block parent and downstream
+PASS producer terminal is not Eval or human completion
+PASS wrong evaluation subject
+PASS wrong original result identity
+PASS stale evaluated output
+PASS wrong evaluator revision
+PASS incomplete evaluation
+PASS Eval terminal uses actual evaluation-result without execution-result
+PASS wrong human subject
+PASS stale human revision
+PASS wrong human input binding
+PASS unauthorized human actor
+PASS live human authority revocation between assessment and decision rejects
+PASS pending human prevents graph completion
+PASS authorized approval is immutable; conflicting denial rejects
+PASS heterogeneous join records why B proceeds and grants no effect admission
+PASS missing consumer output blocks its independent finalization
+PASS all node facts without graph decision stay nonterminal
+PASS changed required output cannot finalize graph
+PASS required membership cannot be downgraded
+PASS new required descendant invalidates anchored definition
+PASS stale graph assessment cannot become terminal authority
+PASS explicit graph success preserves independent node truth
+PASS anchored Eval fail policy yields failed graph and blocks B without rewriting A
+PASS optional cancellation is not execution; completion-only H independently gates graph success
+{"ok":true,"checks":25,"evidence":["/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-MyHzOZ/heterogeneous-success","/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-MyHzOZ/evaluation-failure","/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-MyHzOZ/optional-and-completion-only"]}
+
+### heterogeneous_policy.log
+PASS human abort retains decision semantics under graph policy
+PASS human cancel retains decision semantics under graph policy
+PASS optional Eval failure stays failed but does not fail required-success graph
+PASS Eval fail mapped to review remains blocked, not automatically terminal failure
+PASS unfinalized execution failure cannot become success or admit dependent
+PASS consumer uncertainty leaves successful producer history unchanged
+PASS optional cancellation cannot satisfy a success scheduling dependency
+{"ok":true,"checks":7}
+
+### heterogeneous_recovery.log
+PASS Eval terminal reply loss survives a fresh controller without a fake execution
+PASS actual human terminal orphan repairs exact decision but not graph completion
+PASS all durable terminal facts and recovery still require separate graph decision
+PASS two fresh finalizers: one exact durable graph terminal transition
+PASS graph crash before_terminal preserves exact terminal boundary
+PASS graph crash after_terminal preserves exact terminal boundary
+PASS graph crash immutable preserves exact terminal boundary
+PASS optional outstanding dispatch blocks graph finalization before child admission
+{"ok":true,"checks":8,"scenarios":["Eval terminal reply loss survives a fresh controller without a fake execution","actual human terminal orphan repairs exact decision but not graph completion","all durable terminal facts and recovery still require separate graph decision","two fresh finalizers: one exact durable graph terminal transition","graph crash before_terminal preserves exact terminal boundary","graph crash after_terminal preserves exact terminal boundary","graph crash immutable preserves exact terminal boundary","optional outstanding dispatch blocks graph finalization before child admission"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-62Axyk"}
+
+### heterogeneous_vectors.log
+{"checker":"kujo","ok":true,"vectors":7}
+
+### http_application_error.log
+{"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/http-ability-1790870126465","schema":"dispatch.http-ability-rehearsal/v1","scenario":"application-error","ok":true,"initial_business_effects":0,"business_effects":1,"receipt_rows":1,"negative_correlations":24,"invalid_http_requests_per_attempt":21,"concurrent_denied_per_attempt":1,"controller_restart":true,"server_restart":true,"standalone":true,"expired_stale_reuse_denied":true,"locked_replay_denial":true,"policy":{"config_revision":"5cbfea9b3437e325a004e57be1e7185a8406e6db6999768d51c6c80bec91760d","fallback":"deny","mode":"required","policy_sha256":"ed510bfb0dc3074632c13fcbc5189460366ef6f5fc930c55fb61ccdecbbcbf9c","profile":"ability.application-gateway","profile_version":"1beta1","schema":"dispatch.assurance-negotiation/v1beta1"},"initial_outcome":"application_error"}
+
+### http_response_loss.log
+{"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/http-ability-1790870062005","schema":"dispatch.http-ability-rehearsal/v1","scenario":"response-loss","ok":true,"initial_business_effects":1,"business_effects":1,"receipt_rows":1,"negative_correlations":24,"invalid_http_requests_per_attempt":21,"concurrent_denied_per_attempt":1,"controller_restart":true,"server_restart":true,"standalone":true,"expired_stale_reuse_denied":true,"locked_replay_denial":true,"policy":{"config_revision":"634cbdbd0a94fb1fe35cd75ca5fbdb17b64a40986d8b403c9e5271230c5672dd","fallback":"deny","mode":"required","policy_sha256":"0ac27acdc3b6d8815f439dacbcf1348386f01af56965ec688876e893b31f17e7","profile":"ability.application-gateway","profile_version":"1beta1","schema":"dispatch.assurance-negotiation/v1beta1"},"initial_outcome":"response_lost"}
+
+### http_timeout_before.log
+{"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/http-ability-1790870095623","schema":"dispatch.http-ability-rehearsal/v1","scenario":"timeout-before","ok":true,"initial_business_effects":0,"business_effects":1,"receipt_rows":1,"negative_correlations":24,"invalid_http_requests_per_attempt":21,"concurrent_denied_per_attempt":1,"controller_restart":true,"server_restart":true,"standalone":true,"expired_stale_reuse_denied":true,"locked_replay_denial":true,"policy":{"config_revision":"9a0c6a5b4f30c8dc32ba2ba0ac667870b0f771bc1eed0f294d77e46a6fcec245","fallback":"deny","mode":"required","policy_sha256":"ab2a5d278ba6d3d4f8b3e5859d382ffab3496d0c0e17f13f5d226eab6158b620","profile":"ability.application-gateway","profile_version":"1beta1","schema":"dispatch.assurance-negotiation/v1beta1"},"initial_outcome":"timeout"}
+
+### interop_history.log
+{"bytes_preserved":true,"differential":true,"fifth_namespace":true,"generic_mutations":true,"historical_families":4,"ok":true}
+
+### interop_oracles.log
+Frozen legacy reader hashes verified: 4
+
+### mcp_ability.log
+{"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/mcp-ability-1790870166190","scenario":"receipt-failure","schema":"dispatch.mcp-ability-rehearsal/v1","ok":true,"negative_correlations":21,"business_effects":1,"receipt_rows":1,"mcp_processes":7,"expired_admission_denied":true,"stale_admission_denied":true,"duplicate_admission_denied":true,"locked_replay_denial":true,"controller_restart":true,"beta_required":true,"checkpoint":true,"standalone":true,"receipt_commit_failed":true,"stdio_reply_lost":false,"dispatch_policy":{"config_revision":"249d33ceee8b04c46cee3dc8df1b80507e8035a82415281504e0aef4f38c959c","fallback":"deny","mode":"required","policy_sha256":"aa5114128e293980d4f39e115d69fb76d97f7ea3d6c7369d9b72fe48513f1346","profile":"ability.application-gateway","profile_version":"1beta1","schema":"dispatch.assurance-negotiation/v1beta1"},"first_result_sha256":"ca1ce6a4d3140dfb56e9280d1887891f4be1192979180a70ce83676d29e4ce85","second_result_sha256":"2f4408f91e7bedfde0585d4f2562026d95f972500df973799ddbefcf9abb577d"}
+
+### mcp_stdio_loss.log
+{"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/mcp-ability-1790870201250","scenario":"stdio-loss","schema":"dispatch.mcp-ability-rehearsal/v1","ok":true,"negative_correlations":21,"business_effects":1,"receipt_rows":1,"mcp_processes":7,"expired_admission_denied":true,"stale_admission_denied":true,"duplicate_admission_denied":true,"locked_replay_denial":true,"controller_restart":true,"beta_required":true,"checkpoint":true,"standalone":true,"receipt_commit_failed":false,"stdio_reply_lost":true,"dispatch_policy":{"config_revision":"e4b30b16bbe0411af9d5ec2bc5c8b013af69a2f00b97a7306183e2e3a15d5781","fallback":"deny","mode":"required","policy_sha256":"f82ab96c21e7087c6c24c6bf2d7186c49503c9b51d5d902d671da89fb1d60206","profile":"ability.application-gateway","profile_version":"1beta1","schema":"dispatch.assurance-negotiation/v1beta1"},"first_result_sha256":"2aa7b9070a0430c56b3f52b039fd6cdb2f6cb34819227aa55d5beba2efbd830d","second_result_sha256":"87aef78c7e39713ca3eb5e820c092c9f1159b0fd19cd2f352c75665ba61113f0"}
+
+### node_composition.log
+ROOT /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-ovZQYo/two
+PASS producer output exists without finalization: consumer blocked
+PASS unresolved producer effect prevents finalization
+PASS output missing prevents producer finalization
+PASS evaluation failure and operator revocation block terminal authority
+PASS effect completion and passing Eval still do not finalize producer
+PASS exact source name type digest revision and producer binding
+PASS binding survives fresh load; artifact mutation and absence deny execution
+PASS stale installed authority denies consumer
+PASS consumer executes independently with pinned provenance
+PASS all required independently finalized nodes complete existing DAG
+PASS historical consumer provenance cannot become a later producer version
+PASS completion-only edge does not transfer an artifact
+PASS bounded join requires both independently finalized producers
+PASS consumer failure cannot rewrite finalized producer
+PASS producer execution failure blocks dependent
+PASS fresh controller before_node_binding
+PASS fresh controller after_node_binding
+PASS fresh controller after_node_start_requested
+PASS consumed initial admission survives crash without fabricating execution
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-ovZQYo","checks":19,"scenarios":["producer output exists without finalization: consumer blocked","unresolved producer effect prevents finalization","output missing prevents producer finalization","evaluation failure and operator revocation block terminal authority","effect completion and passing Eval still do not finalize producer","exact source name type digest revision and producer binding","binding survives fresh load; artifact mutation and absence deny execution","stale installed authority denies consumer","consumer executes independently with pinned provenance","all required independently finalized nodes complete existing DAG","historical consumer provenance cannot become a later producer version","completion-only edge does not transfer an artifact","bounded join requires both independently finalized producers","consumer failure cannot rewrite finalized producer","producer execution failure blocks dependent","fresh controller before_node_binding","fresh controller after_node_binding","fresh controller after_node_start_requested","consumed initial admission survives crash without fabricating execution"]}
+
+### node_contracts.log
+{"checks":12,"ok":true}
+
+### node_policy.log
+PASS needs-changes evaluation blocks producer dependency
+PASS producer tool permission is not inherited by consumer
+PASS ordinary cancellation blocks consumer
+PASS failed terminal follows existing Eval policy and cannot satisfy dependency
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-x2JuGP","checks":4,"scenarios":["needs-changes evaluation blocks producer dependency","producer tool permission is not inherited by consumer","ordinary cancellation blocks consumer","failed terminal follows existing Eval policy and cannot satisfy dependency"]}
+
+### node_recovery.log
+{"contention":[{"ok":true,"reason":"node_requires_independent_finalization"},{"ok":false,"reason":"run_lock_timeout"}],"admissions":1}
+PASS two fresh graph controllers: one consumer admission and action
+PASS real observation crash: repair retains consumption and requires separate finalization
+PASS raw output orphan cannot synthesize a binding
+PASS real immutable orphan node_inputs_bound reconciled without implicit execution
+PASS real immutable orphan node_terminal_observed reconciled without implicit execution
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-nmXdVw","checks":5,"scenarios":["two fresh graph controllers: one consumer admission and action","real observation crash: repair retains consumption and requires separate finalization","raw output orphan cannot synthesize a binding","real immutable orphan node_inputs_bound reconciled without implicit execution","real immutable orphan node_terminal_observed reconciled without implicit execution"]}
+
+### node_vectors.log
+{"checker":"kujo","ok":true,"vectors":7}
+
+### operational_controls.log
+
+============================================================
+Test Results
+============================================================
+  ✓ Watchdog trace projection is metadata only and preserves workflow correlation (191ms)
+  ✓ retry backoff fails closed when it would cross the execution deadline (147ms)
+  ✓ unbounded custom tools are rejected before hard-deadline execution (715ms)
+  ✓ webhook delivery accepts only 2xx responses (166ms)
+  ✓ network callbacks require exact HTTPS allowlists and signing (168ms)
+  ✓ workflow loader validates budgets and bounded parallel controls (226ms)
+  ✓ workflow max steps budget fails closed before the next step (886ms)
+  ✓ webhook outbox summarizes latest durable delivery state (150ms)
+  ✓ OpenTelemetry artifact is valid OTLP JSON with correlated ids (144ms)
+
+Tests: 9 total, 9 passed, 0 failed
+Time:  2965ms
+============================================================
+
+All tests passed! ✨
+
+### parent_finalization.log
+PASS pending effects block parent
+PASS cancelled required selection is not completion
+PASS unresolved operator review blocks
+PASS real Workcell refs and original bytes preserved
+PASS stale authority
+PASS changed registration
+PASS wrong environment
+PASS operator authorization revoked
+PASS stale evaluation
+PASS wrong evaluation subject
+PASS missing/replaced output.txt
+PASS missing/replaced output-evidence.json
+PASS missing/replaced workcell/receipt.json
+PASS retained workspace missing
+PASS changed retained Git HEAD
+PASS stale run revision
+PASS new unresolved child
+PASS expired preservation
+PASS independent sink uncertainty blocks
+PASS legitimate new assessment invalidates candidate
+PASS generic approved review cannot bypass finalization
+PASS separate finalization without effect replay
+PASS Eval fail maps through existing policy
+PASS SIGKILL before decision remains nonterminal
+PASS SIGKILL after terminal reply loss is final
+PASS two independently assessed fresh controllers one durable finalization
+PASS producer success still requires parent finalization
+PASS anchored required descendant blocks terminal transition
+PASS mutable optional flag cannot waive anchored required child
+PASS live authority revoked inside finalization boundary
+PASS orphan durable finalization recovered by fresh controllers
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/parent-finalization-xM91UE","checks":31,"proofs":["pending effects block parent","cancelled required selection is not completion","unresolved operator review blocks","real Workcell refs and original bytes preserved","stale authority","changed registration","wrong environment","operator authorization revoked","stale evaluation","wrong evaluation subject","missing/replaced output.txt","missing/replaced output-evidence.json","missing/replaced workcell/receipt.json","retained workspace missing","changed retained Git HEAD","stale run revision","new unresolved child","expired preservation","independent sink uncertainty blocks","legitimate new assessment invalidates candidate","generic approved review cannot bypass finalization","separate finalization without effect replay","Eval fail maps through existing policy","SIGKILL before decision remains nonterminal","SIGKILL after terminal reply loss is final","two independently assessed fresh controllers one durable finalization","producer success still requires parent finalization","anchored required descendant blocks terminal transition","mutable optional flag cannot waive anchored required child","live authority revoked inside finalization boundary","orphan durable finalization recovered by fresh controllers"]}
+
+### parent_vectors.log
+{"checker":"kujo","ok":true,"vectors":2}
+
+### participant_sdk_parity.log
+{"ok":true,"schema":"kujo.participant-sdk-conformance/v1alpha1","cases":45,"comparison":"exact bytes, content references, normalized values, error/correlation categories"}
+
+### persisted_negotiation.log
+{"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/persisted-negotiation-1790869675995","proofs":[{"scenario":"required-fresh-controller-weaker-default","ok":true,"revision":"88deb119164fd54516dcf931e686f24d3538420a0384266ca26c4e3463946f00"},{"scenario":"revision-missing","code":"assurance_policy_revision_missing"},{"scenario":"revision-revoked","code":"assurance_policy_revision_revoked"},{"scenario":"revision-substituted","code":"assurance_configuration_mismatch"},{"scenario":"revision-changed-verifier","code":"assurance_configuration_mismatch"},{"scenario":"revision-implementation-replaced","code":"assurance_verifier_revision_mismatch"},{"scenario":"optional-absent","ok":true},{"scenario":"optional-unknown-profile","ok":true},{"scenario":"optional-unknown-envelope","ok":true},{"scenario":"optional-invalid-selected","code":"assurance_contract_invalid"},{"scenario":"optional-deleted-selected","code":"assurance_selected_evidence_unavailable"},{"scenario":"optional-expired","code":"assurance_expired_or_future"},{"scenario":"optional-revoked-selected","code":"assurance_policy_revision_revoked"},{"scenario":"delayed-revoke-before-action-and-running-restart","blocked":true},{"scenario":"delayed-expire-before-action-and-running-restart","blocked":true},{"scenario":"optional-deny","code":"compat_assurance_absent"},{"scenario":"oversized-association-no-authority-mutation","blocked":true},{"scenario":"manual-policy-tamper","blocked":true},{"scenario":"stale-checkpoint","code":"stale_checkpoint"},{"scenario":"selection-removed","code":"assurance_journal_state_mismatch"},{"scenario":"retained-r1-and-new-r2","ok":true},{"scenario":"state-rollback","code":"control_recovery_required"},{"scenario":"sqlite-authority-over-stale-json-and-weaker-backend","ok":true},{"scenario":"bundle-preserves-policy-without-claiming-portable-recovery","ok":true},{"scenario":"actual-63d8097-controller-refuses-protected-filesystem-sqlite-and-import","ok":true}]}
+
+### persisted_negotiation_adapters.log
+{"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/persisted-adapters-1790869916782","proofs":[{"family":"sqlite","required":true,"fresh_controller":true,"checkpoint":true,"descendant":true,"logical_effects":1,"config_revision":"6bfbbf66e8d03980d363b63986ef6778be2d60cdcb645c9587b518704d45c93a"},{"family":"git","required":true,"fresh_controller":true,"checkpoint":true,"descendant":true,"logical_effects":1,"config_revision":"95fac0e132517a8741ecbc628778d2c50c959139ca2debbe69512f47256f3e13"},{"family":"ability","required":true,"fresh_controller":true,"checkpoint":true,"descendant":true,"logical_effects":1,"config_revision":"4d2e0641924119e2ee04b400d271dd26d823b9a9ea03815b5e807df233226ec5"}],"privacy":true}
+
+### persisted_negotiation_contracts.log
+PASS persisted negotiation: closed policy, guarded codec, exact configuration commitments
+
+### persisted_negotiation_legacy.log
+PASS historical missing policy remains historical legacy; new legacy is explicit
+
+### persisted_negotiation_schemas.log
+PASS configuration/negotiation schemas: closed fields and required fallback denied
+
+### policy_precedence.log
+
+============================================================
+Test Results
+============================================================
+  ✓ policy precedence uses environment profile when config and cli are absent (13844ms)
+  ✓ policy precedence uses config profile when cli is absent (12288ms)
+  ✓ policy and config controls honor cli over config over env (2847ms)
+
+Tests: 3 total, 3 passed, 0 failed
+Time:  29011ms
+============================================================
+
+All tests passed! ✨
+
+### portable_clean_room.log
+{"checker":"independent-node","vectors":58,"ok":true}
+{"checker": "independent-python", "vectors": 58, "ok": true}
+{"checker":"independent-artifacts","artifacts":6,"structure_and_commitments":true,"live_authority":false}
+{"clean_room":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo-assurance-portability-oxRp2r","no_ecosystem_implementation":true}
+
+### portable_commitments.log
+{"checker":"kujo","ok":true,"vectors":58}
+
+### preservation_binding.log
+PASS historical inline recipe unchanged
+PASS implementation matches portable vector
+PASS reference binds original bytes
+PASS document and evidence have distinct identities
+PASS wrong content digest rejected
+PASS wrong environment rejected
+PASS wrong run rejected
+PASS wrong evidence subject rejected
+PASS malformed or unauthorized reference rejected {"$ref":null}
+PASS malformed or unauthorized reference rejected {"$ref":""}
+PASS malformed or unauthorized reference rejected {"$ref":"receipt.json","extra":true}
+PASS malformed or unauthorized reference rejected {"$ref":"https://untrusted.invalid/evidence"}
+PASS malformed or unauthorized reference rejected {"$ref":"../outside"}
+PASS malformed or unauthorized reference rejected {"$ref":"missing.json"}
+PASS wrong original document rejected
+PASS old codec still rejects refs
+Passed: 16
+Failed: 0
+
+### python_integration.log
+{"ok": true, "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/python-1790869426572680000", "proofs": [{"case": "before_commit", "termination": {"completion_knowledge": "unknown", "observed_state": "not_started", "phase": "before_commit", "returncode": -9, "signal": "SIGKILL"}, "required_revision_preserved": true, "fresh_controller": true, "logical_effects": 1}, {"case": "after_commit", "termination": {"completion_knowledge": "unknown", "observed_state": "committed", "phase": "after_commit", "returncode": -9, "signal": "SIGKILL"}, "required_revision_preserved": true, "fresh_controller": true, "logical_effects": 1}, {"case": "concurrency", "admitted": 1, "denied": 3, "logical_effects": 1}], "input_denials": 12, "installed_package": false}
+
+### python_isolation.log
+Looking in links: /Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/interop/python-participant/wheelhouse
+Processing ./interop/python-participant/wheelhouse/attrs-26.1.0-py3-none-any.whl
+Processing ./interop/python-participant/wheelhouse/jsonschema-4.23.0-py3-none-any.whl
+Processing ./interop/python-participant/wheelhouse/jsonschema_specifications-2025.9.1-py3-none-any.whl
+Processing ./interop/python-participant/wheelhouse/referencing-0.37.0-py3-none-any.whl
+Processing ./interop/python-participant/wheelhouse/rpds_py-0.30.0-cp310-cp310-macosx_10_12_x86_64.whl
+Processing ./interop/python-participant/wheelhouse/typing_extensions-4.16.0-py3-none-any.whl
+Installing collected packages: typing-extensions, rpds-py, attrs, referencing, jsonschema-specifications, jsonschema
+Successfully installed attrs-26.1.0 jsonschema-4.23.0 jsonschema-specifications-2025.9.1 referencing-0.37.0 rpds-py-0.30.0 typing-extensions-4.16.0
+test_action_attempts (test_codec.CodecTests) ... ok
+test_assets (test_codec.CodecTests) ... ok
+test_closed_extensions (test_codec.CodecTests) ... ok
+test_correlations (test_codec.CodecTests) ... ok
+test_isolated_environment (test_codec.CodecTests) ... ok
+test_limits (test_codec.CodecTests) ... ok
+test_python_numbers (test_codec.CodecTests) ... ok
+test_request (test_codec.CodecTests) ... ok
+test_roundtrip (test_codec.CodecTests) ... ok
+test_unicode (test_codec.CodecTests) ... ok
+test_vectors (test_codec.CodecTests) ... ok
+test_wire_mutations (test_codec.CodecTests) ... ok
+test_neutral_corpus (test_codec.ParityCorpusTests) ... ok
+test_shared_contract (test_sdk.SDKTests) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 1.347s
+
+OK
+{"ok": true, "external_copy": true, "network": false, "ecosystem_imports": false}
+
+### python_package.log
+test_action_attempts (test_codec.CodecTests) ... ok
+test_assets (test_codec.CodecTests) ... ok
+test_closed_extensions (test_codec.CodecTests) ... ok
+test_correlations (test_codec.CodecTests) ... ok
+test_isolated_environment (test_codec.CodecTests) ... ok
+test_limits (test_codec.CodecTests) ... ok
+test_python_numbers (test_codec.CodecTests) ... ok
+test_request (test_codec.CodecTests) ... ok
+test_roundtrip (test_codec.CodecTests) ... ok
+test_unicode (test_codec.CodecTests) ... ok
+test_vectors (test_codec.CodecTests) ... ok
+test_wire_mutations (test_codec.CodecTests) ... ok
+test_neutral_corpus (test_codec.ParityCorpusTests) ... ok
+test_shared_contract (test_sdk.SDKTests) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.534s
+
+OK
+
+### python_parity.log
+{"ok":true,"cases":28,"parserChecks":22,"comparison":"acceptance, owner-projected canonical bytes, SHA256 and semantics"}
+
+### reexecution_lifecycle.log
+PASS actual same reexecution, attempt identity, review barrier, and journal
+PASS actual clean reexecution, attempt identity, review barrier, and journal
+PASS actual idempotent reexecution, attempt identity, review barrier, and journal
+
+### resource_contracts.log
+{"checks":17,"ok":true}
+
+### resource_integration.log
+PASS Eval output and reservation do not authorize terminal completion or execution
+PASS terminated evaluator infrastructure failure retries exact result with a new Eval identity without rerunning program
+PASS Eval exhaustion denies new work but permits consumed Eval finalization; required remainder stays blocked
+PASS real isolated evaluator runtime report retained with process scope and exact digest
+PASS actual SDK context-ledger projection keeps offline reported fixture, estimates and unknown attempt coverage separate
+PASS duplicate accounting cannot add usage twice; corrupt retained measurement fails closed
+{"ok":true,"checks":6,"proofs":["Eval output and reservation do not authorize terminal completion or execution","terminated evaluator infrastructure failure retries exact result with a new Eval identity without rerunning program","Eval exhaustion denies new work but permits consumed Eval finalization; required remainder stays blocked","real isolated evaluator runtime report retained with process scope and exact digest","actual SDK context-ledger projection keeps offline reported fixture, estimates and unknown attempt coverage separate","duplicate accounting cannot add usage twice; corrupt retained measurement fails closed"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-IBwhxc"}
+
+### resource_limits.log
+{"checks":3,"ok":true}
+
+### resource_policy.log
+PASS fail-selected repair consumes program/Eval resources; inactive pass branch consumes nothing; zero capacity still permits graph finalization
+PASS mixed program/Eval plan is atomic, over-capacity plan reserves nothing, subgraph receipt grants no extra units
+PASS missing provider usage blocks ordinary program progression and explicit planning without inventing zero
+PASS source changes invalidate an observation candidate; exact provider-sourced facts allow later reservation
+{"ok":true,"checks":4,"proofs":["fail-selected repair consumes program/Eval resources; inactive pass branch consumes nothing; zero capacity still permits graph finalization","mixed program/Eval plan is atomic, over-capacity plan reserves nothing, subgraph receipt grants no extra units","missing provider usage blocks ordinary program progression and explicit planning without inventing zero","source changes invalidate an observation candidate; exact provider-sourced facts allow later reservation"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-2j3J9q"}
+
+### resource_recovery.log
+PASS fresh controllers cannot oversubscribe final program slot through resource plans
+PASS fresh controllers race for last Eval slot with exact source/revision-bound plans
+PASS two fresh releases publish one historical release without double refund
+PASS same future Eval reservation publishes once under contention
+PASS crash after committed reservation permits explicit release only before dispatch
+PASS Eval work with lost reply stays consumed; independent exact readback resolves without rerun, duplicate worker rejected
+PASS immutable sourced measurement/index publication gap reconstructs exact evidence and consumption without finalization
+PASS orphan reservation repairs; dispatch-before-worker crash is consumed and cannot be refunded or redelivered
+PASS fresh selected-branch contenders cannot share final capacity or reserve inactive work
+{"ok":true,"checks":9,"proofs":["fresh controllers cannot oversubscribe final program slot through resource plans","fresh controllers race for last Eval slot with exact source/revision-bound plans","two fresh releases publish one historical release without double refund","same future Eval reservation publishes once under contention","crash after committed reservation permits explicit release only before dispatch","Eval work with lost reply stays consumed; independent exact readback resolves without rerun, duplicate worker rejected","immutable sourced measurement/index publication gap reconstructs exact evidence and consumption without finalization","orphan reservation repairs; dispatch-before-worker crash is consumed and cannot be refunded or redelivered","fresh selected-branch contenders cannot share final capacity or reserve inactive work"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-HX6T64"}
+
+### resume_policy.log
+Resume policy case: v2/direct/env
+Resume policy case: v2/direct/config
+Resume policy case: v2/direct/allow
+Resume policy case: v2/model/env
+Resume policy case: v2/model/config
+Resume policy case: v2/model/allow
+Resume policy case: v1/direct/env
+Resume policy case: v1/direct/config
+Resume policy case: v1/direct/allow
+Resume policy case: v1/model/env
+Resume policy case: v1/model/config
+Resume policy case: v1/model/allow
+Resume policy: v1/v2 direct/model env/config denial and allowed controls pass; invalid policy preserves state.
+Legacy decision boundary: next approval pauses; concurrent delivery has one winner.
+Unsigned callback preflight preserves both v1/v2 review states.
+
+### retained_recovery.log
+{"passed":29,"proofs":["sqlite-stale-state-consumption","git-stale-state-consumption","orphan-control","exact-duplicate","cancel-tail","rebind-tail","torn","conflict","hash","ahead","missing-claim","lifecycle-orphan","stale-plan","revoked","expired","missing-workspace","sigkill-after_admission","sigkill-after_mutation","sigkill-after_observation","fresh-operator-contention","native-write-sigkill-effect_lifecycle_recorded","native-write-sigkill-retained_host_reconciled","native-write-sigkill-claim-consumption","real-workcell-retention-not-admission","real-workcell-preservation-expired-during-outage","real-workcell-workspace-missing","corrupt-materialization-checkpoint-rejected","workcell-git-changed-target","sqlite-authoritative-row-over-corrupt-mirror"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/sequential-effects-EJpSwn"}
+
+### retrieval_preferences.log
+
+============================================================
+Test Results
+============================================================
+  ✓ step run and workflow preference precedence preserves explicit clearing (147ms)
+  ✓ loaded workflow delivers run preference to tool and preserves it through disk reload (1235ms)
+  ✓ retry and approval resume preserve run selection and a later explicit clear (2525ms)
+
+Tests: 3 total, 3 passed, 0 failed
+Time:  3971ms
+============================================================
+
+All tests passed! ✨
+
+### review_checkpoint.log
+
+============================================================
+Test Results
+============================================================
+  ✓ checkpoint publication is immutable repeatable and leaves authority unchanged (1666ms)
+  ✓ missing or altered checkpoint bytes never authorize continuation (1667ms)
+  ✓ checkpoint refuses changed revision or in-flight work (1770ms)
+  ✓ orphan and torn journal prohibit checkpoint publication (2477ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  7671ms
+============================================================
+
+All tests passed! ✨
+
+### routing.log
+
+============================================================
+Test Results
+============================================================
+  ✓ legacy static routing preserves requested agent model (167ms)
+  ✓ quality first routing applies capability and quality floor (241ms)
+  ✓ provider cost latency tool and schema constraints reject incompatible routes (361ms)
+  ✓ deterministic tie break and decision id ignore candidate declaration order (293ms)
+  ✓ agent substitution requires execution compatibility (216ms)
+  ✓ no route error includes candidate evaluations (171ms)
+  ✓ effective agent clone changes model without mutating source (137ms)
+  ✓ deterministic evaluation supports accepted and configured failure outcomes (189ms)
+  ✓ failure classifier separates retry fallback and terminal failures (145ms)
+  ✓ runner persists route before execution and records explicit fallback (1706ms)
+  ✓ plugin style compatible agent participates in deterministic selection (220ms)
+  ✓ context reliability risk and output schema constraints are hard filters (205ms)
+  ✓ routing rejects unknown constrained risk incompatible schemas and unsupported policy modes (233ms)
+  ✓ cost latency and balanced objectives produce deterministic distinct choices (594ms)
+  ✓ AI SDK catalog metadata is authoritative over agent candidate claims (163ms)
+  ✓ upgrade and reroute overrides enforce their distinct semantics (368ms)
+  ✓ runner records same-route retry separately from fallback (1341ms)
+  ✓ persisted decision is reused and sensitive route fields are redacted (2097ms)
+  ✓ declarative loader preserves workflow agent and step routing contracts (207ms)
+  ✓ model catalog references reject absolute and traversal paths by default (155ms)
+  ✓ narrower policy layers cannot weaken broader routing constraints (170ms)
+  ✓ strict routing validation rejects unknown fields and providers (155ms)
+  ✓ generic model handler executes a declarative routed agent (1288ms)
+  ✓ cost-bounded live routes reject missing authoritative pricing (1106ms)
+  ✓ cost budgets reserve growing context when output pricing is explicitly zero (1138ms)
+  ✓ generic model handler executes only model-requested tools with bounded idempotent replay (200ms)
+  ✓ generic model handler fails closed when tool authorization denies a request (190ms)
+  ✓ built-in deterministic agent handlers enforce tool authorization (145ms)
+  ✓ generic model handler decrements the total token envelope across rounds (163ms)
+  ✓ generic model handler persists incremental stream events (171ms)
+  ✓ route evaluation pauses for native human review and resumes stored output (1727ms)
+
+Tests: 31 total, 31 passed, 0 failed
+Time:  16269ms
+============================================================
+
+All tests passed! ✨
+
+### sdk_ability.log
+{"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/sdk-ability-1790870227545","schema":"dispatch.sdk-ability-rehearsal/v1","ok":true,"negative_correlations":14,"business_effects":1,"receipt_rows":1,"sdk_processes":5,"duplicate_admission_denied":true,"locked_replay_denial":true,"controller_restart":true,"beta_required":true,"checkpoint":true,"standalone":true,"receipt_commit_failed":true,"dispatch_policy":{"config_revision":"4d11670ea2709e311eeaef063390f472c3060b9d6fa04286c9db4627cccfb774","fallback":"deny","mode":"required","policy_sha256":"3cc2fcffc2e144df12162d494636684bcf373ea4017bd89864431c4ea9c8adb1","profile":"ability.application-gateway","profile_version":"1beta1","schema":"dispatch.assurance-negotiation/v1beta1"},"first_result_sha256":"8af80cc1ec2372dcd23fdf32119db1948fc9b0e49c1a885c675a8e9f8f84e70e","second_result_sha256":"0501787c8257517f37c4ce7102613cb2bcead72553fae5b60742c69d88954c90"}
+
+### sdk_adapter.log
+
+============================================================
+Test Results
+============================================================
+  ✓ custom providers cannot select arbitrary process secret variables (11ms)
+  ✓ parse json from output supports trailing json line (7ms)
+  ✓ parse error details are redacted by default (7ms)
+  ✓ parse error details include raw output when debug enabled (7ms)
+  ✓ execution error message redacts stderr by default (6ms)
+  ✓ execution error message includes stderr when debug enabled (7ms)
+  ✓ bridge spawn command is direct argv without shell wrapper (6ms)
+  ✓ bridge timeout is configurable with a safe default (8ms)
+  ✓ bridge payload carries route provenance and structured output policy (16ms)
+  ✓ offline fixture model calls return in process without bridge execution (8ms)
+
+Tests: 10 total, 10 passed, 0 failed
+Time:  95ms
+============================================================
+
+All tests passed! ✨
+
+### sequential_effects.log
+{"ok":true,"roots":["/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/sequential-effects-ZOFJYf","/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/sequential-effects-eqCkE2"],"checks":80,"proofs":["sqlite-independent-C-D-lifecycles","sqlite-expiry-explicit-rebind-same-attempt","sqlite-cancel-retained-replacement-explicit","sqlite-after_admission-never-replay","sqlite-after_mutation-never-replay","sqlite-after_observation-never-replay","sqlite-race-cancel-cancel","sqlite-race-cancel-admit","sqlite-race-rebind-cancel","sqlite-race-rebind-rebind","sqlite-race-rebind-admit","sqlite-crash-before_rebind","sqlite-crash-after_rebind","sqlite-crash-before_cancel","sqlite-crash-after_cancel","sqlite-crash-before_selection","sqlite-crash-after_selection","sqlite-invalid-registration","sqlite-invalid-plan","sqlite-invalid-target","sqlite-invalid-authority","sqlite-invalid-configuration","sqlite-invalid-environment","sqlite-invalid-preservation","sqlite-final-revalidation","sqlite-expiry-after-rebind","sqlite-live-prefix-uncertainty-blocks","sqlite-orphan-claim-blocks","sqlite-pre-C-cursor-cannot-select-D","sqlite-retained-evidence-required","sqlite-expire-after-admission","sqlite-registration-after-admission","sqlite-state-revision","sqlite-state-journal","sqlite-state-allowed-actions","sqlite-state-effect-state","sqlite-state-parent-attempt","sqlite-parent-replay-denied","actual-old-reader-refuses-lifecycle","sqlite-authority-over-json-mirror","sqlite-two-fresh-controllers-one-admission","git-independent-C-D-lifecycles","git-expiry-explicit-rebind-same-attempt","git-cancel-retained-replacement-explicit","git-after_admission-never-replay","git-after_mutation-never-replay","git-after_observation-never-replay","git-race-cancel-cancel","git-race-cancel-admit","git-race-rebind-cancel","git-race-rebind-rebind","git-race-rebind-admit","git-crash-before_rebind","git-crash-after_rebind","git-crash-before_cancel","git-crash-after_cancel","git-crash-before_selection","git-crash-after_selection","git-invalid-registration","git-invalid-plan","git-invalid-target","git-invalid-authority","git-invalid-configuration","git-invalid-environment","git-invalid-preservation","git-final-revalidation","git-expiry-after-rebind","git-live-prefix-uncertainty-blocks","git-orphan-claim-blocks","git-pre-C-cursor-cannot-select-D","git-retained-evidence-required","git-expire-after-admission","git-registration-after-admission","git-state-revision","git-state-journal","git-state-allowed-actions","git-state-effect-state","git-state-parent-attempt","git-parent-replay-denied","git-two-fresh-controllers-one-admission"]}
+
+### state_store_sqlite.log
+
+============================================================
+Test Results
+============================================================
+  ✓ sqlite state store persists revisions and remains authoritative (643ms)
+
+Tests: 1 total, 1 passed, 0 failed
+Time:  650ms
+============================================================
+
+All tests passed! ✨
+
+### static_policy_contracts.log
+{"checks":14,"ok":true}
+
+### static_policy_edges.log
+PASS failed entry permits graph failure without inventing unentered group completion
+{"ok":true,"checks":2,"scenarios":["failed entry without group completion","closed terminal outcome predicate"]}
+
+### static_policy_integration.log
+PASS unfinalized Eval cannot activate pass
+PASS stale assessment and scheduling without activation reject pass
+PASS only selected path independently admitted pass
+PASS alternate later evaluation cannot flap consumed branch pass
+PASS conditional join and outcome omit inactive without success pass
+PASS unfinalized Eval cannot activate fail
+PASS stale assessment and scheduling without activation reject fail
+PASS only selected path independently admitted fail
+PASS alternate later evaluation cannot flap consumed branch fail
+PASS repair is new R execution and new E2 judgment, never retry A
+PASS conditional join and outcome omit inactive without success fail
+PASS authorized human approve_override routes without direct execution or rewritten decision
+PASS authorized human abort routes without direct execution or rewritten decision
+{"ok":true,"checks":13,"scenarios":["unfinalized Eval cannot activate pass","stale assessment and scheduling without activation reject pass","only selected path independently admitted pass","alternate later evaluation cannot flap consumed branch pass","conditional join and outcome omit inactive without success pass","unfinalized Eval cannot activate fail","stale assessment and scheduling without activation reject fail","only selected path independently admitted fail","alternate later evaluation cannot flap consumed branch fail","repair is new R execution and new E2 judgment, never retry A","conditional join and outcome omit inactive without success fail","authorized human approve_override routes without direct execution or rewritten decision","authorized human abort routes without direct execution or rewritten decision"]}
+
+### static_policy_recovery.log
+PASS condition fact and crash before activation do not let recovery invent a path
+PASS two fresh controllers publish exactly one branch activation
+PASS consumed downstream attempt cannot retry or change branch after crash
+PASS lost selected effect reply stays consumed; independent SQLite verification resolves it without retry
+PASS branch after_branch retains exact path without continuation
+PASS branch immutable retains exact path without continuation
+PASS fresh subgraph finalizers race for one receipt; parent then binds it
+PASS subgraph after_subgraph survives exact recovery without implied parent execution
+PASS subgraph immutable survives exact recovery without implied parent execution
+{"ok":true,"checks":9,"scenarios":["condition fact and crash before activation do not let recovery invent a path","two fresh controllers publish exactly one branch activation","consumed downstream attempt cannot retry or change branch after crash","lost selected effect reply stays consumed; independent SQLite verification resolves it without retry","branch after_branch retains exact path without continuation","branch immutable retains exact path without continuation","fresh subgraph finalizers race for one receipt; parent then binds it","subgraph after_subgraph survives exact recovery without implied parent execution","subgraph immutable survives exact recovery without implied parent execution"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-SvMh9j"}
+
+### static_policy_vectors.log
+{"checker":"kujo","ok":true,"vectors":7}
+
+### static_subgraph_integration.log
+PASS all internal facts without subgraph terminal event block parent
+PASS recovery cannot invent subgraph completion
+PASS parent binds exact subgraph receipt and output without copying internal terminal list
+PASS subgraph provenance and independent parent execution survive graph finalization
+PASS budget exhaustion blocks new dispatch but permits consumed A resolution
+PASS budget ceiling cannot be raised through a mutable workflow
+PASS anchored budget mutation rejects after run start
+PASS explicit failure-review strategy requires new authorized decision and preserves denial
+PASS required terminal rejection follows explicit fail policy
+PASS required terminal rejection follows explicit block policy
+PASS fanout optional rejection remains history while required siblings succeed
+PASS failed subgraph terminal seals unfinished unconsumed members and blocks parent
+{"ok":true,"checks":12,"scenarios":["all internal facts without subgraph terminal event block parent","recovery cannot invent subgraph completion","parent binds exact subgraph receipt and output without copying internal terminal list","subgraph provenance and independent parent execution survive graph finalization","budget exhaustion blocks new dispatch but permits consumed A resolution","budget ceiling cannot be raised through a mutable workflow","anchored budget mutation rejects after run start","explicit failure-review strategy requires new authorized decision and preserves denial","required terminal rejection follows explicit fail policy","required terminal rejection follows explicit block policy","fanout optional rejection remains history while required siblings succeed","failed subgraph terminal seals unfinished unconsumed members and blocks parent"]}
+
+### typescript_after.log
+{"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/typescript-1790869498509","package_substitution_denials":3,"installed_package":false,"artifact_tamper_denials":2,"historical_bytes_unchanged":true,"ok":true,"boundary":"after_commit","native_generic":true,"actual_sigkill":true,"controller_restart":true,"participant_restart":true,"checkpoint":true,"logical_effects":1,"concurrency":{"contenders":4,"admitted":1,"denied":3},"negative_correlations":15,"trust_denials":13,"no_new_reader":true,"privacy":true}
+
+### typescript_before.log
+{"root":"/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/tmp/typescript-1790869546402","package_substitution_denials":3,"installed_package":false,"artifact_tamper_denials":2,"historical_bytes_unchanged":true,"ok":true,"boundary":"before_commit","native_generic":true,"actual_sigkill":true,"controller_restart":true,"participant_restart":true,"checkpoint":true,"logical_effects":1,"concurrency":{"contenders":4,"admitted":1,"denied":3},"negative_correlations":15,"trust_denials":13,"no_new_reader":true,"privacy":true}
+
+### typescript_build.log
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/interop-typescript-rehearsal@0.0.0-experimental build
+> tsc
+
+
+### typescript_package.log
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/interop-typescript-rehearsal@0.0.0-experimental test
+> npm run build && node --test test/*.mjs
+
+npm warn Unknown env config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/interop-typescript-rehearsal@0.0.0-experimental build
+> tsc
+
+✔ native generic shape and deterministic independent codec (11.367501ms)
+✔ deny run_id (0.830521ms)
+✔ deny step_id (0.497818ms)
+✔ deny attempt_id (0.552026ms)
+✔ deny effect_id (0.745808ms)
+✔ deny execution_result_ref (0.856705ms)
+✔ deny assurance_ref (0.734978ms)
+✔ deny swapped refs (0.671452ms)
+✔ deny malformed ref ../../secret (0.505719ms)
+✔ deny malformed ref https://example.invalid (0.642591ms)
+✔ deny malformed ref sha256:ZZ (0.555226ms)
+✔ deny namespace (0.50282ms)
+✔ deny invocation_id (1.323482ms)
+✔ deny bad identifier (1.198779ms)
+✔ deny bad identifier (0.674613ms)
+✔ deny missing extension (0.360512ms)
+✔ deny unknown extension (0.542296ms)
+✔ deny duplicate extensions (0.552086ms)
+✔ deny nested value (0.425488ms)
+✔ deny oversize (0.529804ms)
+✔ deny reported is not commit (0.360699ms)
+✔ deny knowledge mismatch (0.507337ms)
+✔ wire canonical identity rejects whitespace/reordering/duplicates/invalid UTF8 (1.35483ms)
+✔ untrusted profile (0.28269ms)
+✔ untrusted repo (0.150332ms)
+✔ untrusted config_revision (0.115746ms)
+✔ untrusted dispatch_run_id (0.108438ms)
+✔ untrusted dispatch_step_id (0.108992ms)
+✔ untrusted dispatch_attempt_id (0.12919ms)
+✔ untrusted dispatch_effect_id (0.103467ms)
+✔ untrusted assurance_ref (0.235617ms)
+✔ untrusted trusted_root (0.112723ms)
+✔ untrusted verifier (0.139191ms)
+✔ untrusted principal (0.106842ms)
+✔ standalone requires host, no fabricated authority (0.294393ms)
+✔ extension identifier cannot contain newline call_id (0.445551ms)
+✔ extension identifier cannot contain newline process_instance_id (0.4082ms)
+✔ null effect extension is supported without fake effect facts (0.468019ms)
+✔ closed shape rejects joined-key collisions and inherited members (0.259477ms)
+✔ codec errors never echo malformed private input (0.619784ms)
+✔ published portable vectors independently reproduced (11.076984ms)
+✔ packaged assets retain exact published hashes (4.856181ms)
+✔ independent package runs away from all ecosystem checkouts and rejects schema substitution (2328.113099ms)
+✔ direct process without host cannot invent admission (359.320801ms)
+{"schema":"kujo.participant-sdk-conformance/v1alpha1","cases":[{"name":"roundtrip","code":"ok","hex":"7b226173737572616e63655f726566223a6e756c6c2c22636f6d706c6574696f6e5f6b6e6f776c65646765223a22756e6b6e6f776e222c226566666563745f657874656e73696f6e223a7b22736368656d61223a226578616d706c652e6566666563742d636f7272656c6174696f6e2f7631616c70686131222c2276616c756573223a7b22636f6d6d69746d656e74223a2261616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161222c226566666563745f616c696173223a22616c6961732d31227d7d2c22657865637574696f6e5f726573756c745f726566223a227368613235363a31313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131222c227061727469636970616e74223a7b22696e766f636174696f6e5f6964223a22696e766f636174696f6e2d31222c226e616d657370616365223a226578616d706c652e7265636f72646572227d2c227061727469636970616e745f657874656e73696f6e223a7b22736368656d61223a226578616d706c652e7265636f726465722d636f7272656c6174696f6e2f7631616c70686131222c2276616c756573223a7b2263616c6c5f6964223a2263616c6c2d31222c2270726f636573735f696e7374616e63655f6964223a2270726f636573732d31227d7d2c22736368656d61223a226b756a6f2e696e7465726f702d68616e646f66662f7631616c70686131222c227375626a656374223a7b22617474656d70745f6964223a2231222c226566666563745f6964223a226566666563742d31222c2272756e5f6964223a2272756e2d31222c22737465705f6964223a22737465702d31227d7d","ref":"sha256:80731b9f440c145f509af59d5212255ab57f970bffb0791fe8251748f3d6061b","value":{"assurance_ref":null,"completion_knowledge":"unknown","effect_extension":{"schema":"example.effect-correlation/v1alpha1","values":{"commitment":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","effect_alias":"alias-1"}},"execution_result_ref":"sha256:1111111111111111111111111111111111111111111111111111111111111111","participant":{"invocation_id":"invocation-1","namespace":"example.recorder"},"participant_extension":{"schema":"example.recorder-correlation/v1alpha1","values":{"call_id":"call-1","process_instance_id":"process-1"}},"schema":"kujo.interop-handoff/v1alpha1","subject":{"attempt_id":"1","effect_id":"effect-1","run_id":"run-1","step_id":"step-1"}}},{"name":"provisional","code":"ok","hex":"7b226173737572616e63655f726566223a6e756c6c2c22636f6d706c6574696f6e5f6b6e6f776c65646765223a22756e6b6e6f776e222c226566666563745f657874656e73696f6e223a7b22736368656d61223a226578616d706c652e6566666563742d636f7272656c6174696f6e2f7631616c70686131222c2276616c756573223a7b22636f6d6d69746d656e74223a2261616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161222c226566666563745f616c696173223a22616c6961732d31227d7d2c22657865637574696f6e5f726573756c745f726566223a227368613235363a31313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131222c227061727469636970616e74223a7b22696e766f636174696f6e5f6964223a22696e766f636174696f6e2d31222c226e616d657370616365223a226578616d706c652e7265636f72646572227d2c227061727469636970616e745f657874656e73696f6e223a7b22736368656d61223a226578616d706c652e7265636f726465722d636f7272656c6174696f6e2f7631616c70686131222c2276616c756573223a7b2263616c6c5f6964223a2263616c6c2d31222c2270726f636573735f696e7374616e63655f6964223a2270726f636573732d31227d7d2c22736368656d61223a226b756a6f2e696e7465726f702d68616e646f66662f7631616c70686131222c227375626a656374223a7b22617474656d70745f6964223a2231222c226566666563745f6964223a226566666563742d31222c2272756e5f6964223a2272756e2d31222c22737465705f6964223a22737465702d31227d7d","ref":"sha256:80731b9f440c145f509af59d5212255ab57f970bffb0791fe8251748f3d6061b","value":{"assurance_ref":null,"completion_knowledge":"unknown","effect_extension":{"schema":"example.effect-correlation/v1alpha1","values":{"commitment":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","effect_alias":"alias-1"}},"execution_result_ref":"sha256:1111111111111111111111111111111111111111111111111111111111111111","participant":{"invocation_id":"invocation-1","namespace":"example.recorder"},"participant_extension":{"schema":"example.recorder-correlation/v1alpha1","values":{"call_id":"call-1","process_instance_id":"process-1"}},"schema":"kujo.interop-handoff/v1alpha1","subject":{"attempt_id":"1","effect_id":"effect-1","run_id":"run-1","step_id":"step-1"}}},{"name":"terminal","code":"ok","hex":"7b226173737572616e63655f726566223a6e756c6c2c22636f6d706c6574696f6e5f6b6e6f776c65646765223a227265706f72746564222c226566666563745f657874656e73696f6e223a7b22736368656d61223a226578616d706c652e6566666563742d636f7272656c6174696f6e2f7631616c70686131222c2276616c756573223a7b22636f6d6d69746d656e74223a2261616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161222c226566666563745f616c696173223a22616c6961732d31227d7d2c22657865637574696f6e5f726573756c745f726566223a227368613235363a31313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131222c227061727469636970616e74223a7b22696e766f636174696f6e5f6964223a22696e766f636174696f6e2d31222c226e616d657370616365223a226578616d706c652e7265636f72646572227d2c227061727469636970616e745f657874656e73696f6e223a7b22736368656d61223a226578616d706c652e7265636f726465722d636f7272656c6174696f6e2f7631616c70686131222c2276616c756573223a7b2263616c6c5f6964223a2263616c6c2d31222c2270726f636573735f696e7374616e63655f6964223a2270726f636573732d31227d7d2c22736368656d61223a226b756a6f2e696e7465726f702d68616e646f66662f7631616c70686131222c227375626a656374223a7b22617474656d70745f6964223a2231222c226566666563745f6964223a226566666563742d31222c2272756e5f6964223a2272756e2d31222c22737465705f6964223a22737465702d31227d7d","ref":"sha256:6f3de8008e22d4f17b15c93a1af06532f9b697521bd95e29efd478daa76bb1e3","value":{"assurance_ref":null,"completion_knowledge":"reported","effect_extension":{"schema":"example.effect-correlation/v1alpha1","values":{"commitment":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","effect_alias":"alias-1"}},"execution_result_ref":"sha256:1111111111111111111111111111111111111111111111111111111111111111","participant":{"invocation_id":"invocation-1","namespace":"example.recorder"},"participant_extension":{"schema":"example.recorder-correlation/v1alpha1","values":{"call_id":"call-1","process_instance_id":"process-1"}},"schema":"kujo.interop-handoff/v1alpha1","subject":{"attempt_id":"1","effect_id":"effect-1","run_id":"run-1","step_id":"step-1"}}},{"name":"readback-unknown","code":"ok","hex":"7b226173737572616e63655f726566223a6e756c6c2c22636f6d706c6574696f6e5f6b6e6f776c65646765223a22756e6b6e6f776e222c226566666563745f657874656e73696f6e223a7b22736368656d61223a226578616d706c652e6566666563742d636f7272656c6174696f6e2f7631616c70686131222c2276616c756573223a7b22636f6d6d69746d656e74223a2261616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161222c226566666563745f616c696173223a22616c6961732d31227d7d2c22657865637574696f6e5f726573756c745f726566223a227368613235363a31313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131222c227061727469636970616e74223a7b22696e766f636174696f6e5f6964223a22696e766f636174696f6e2d31222c226e616d657370616365223a226578616d706c652e7265636f72646572227d2c227061727469636970616e745f657874656e73696f6e223a7b22736368656d61223a226578616d706c652e7265636f726465722d636f7272656c6174696f6e2f7631616c70686131222c2276616c756573223a7b2263616c6c5f6964223a2263616c6c2d31222c2270726f636573735f696e7374616e63655f6964223a2270726f636573732d31227d7d2c22736368656d61223a226b756a6f2e696e7465726f702d68616e646f66662f7631616c70686131222c227375626a656374223a7b22617474656d70745f6964223a2231222c226566666563745f6964223a226566666563742d31222c2272756e5f6964223a2272756e2d31222c22737465705f6964223a22737465702d31227d7d","ref":"sha256:80731b9f440c145f509af59d5212255ab57f970bffb0791fe8251748f3d6061b","value":{"assurance_ref":null,"completion_knowledge":"unknown","effect_extension":{"schema":"example.effect-correlation/v1alpha1","values":{"commitment":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","effect_alias":"alias-1"}},"execution_result_ref":"sha256:1111111111111111111111111111111111111111111111111111111111111111","participant":{"invocation_id":"invocation-1","namespace":"example.recorder"},"participant_extension":{"schema":"example.recorder-correlation/v1alpha1","values":{"call_id":"call-1","process_instance_id":"process-1"}},"schema":"kujo.interop-handoff/v1alpha1","subject":{"attempt_id":"1","effect_id":"effect-1","run_id":"run-1","step_id":"step-1"}}},{"name":"readback-selected","code":"ok","hex":"7b226173737572616e63655f726566223a227368613235363a32323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232222c22636f6d706c6574696f6e5f6b6e6f776c65646765223a22756e6b6e6f776e222c226566666563745f657874656e73696f6e223a7b22736368656d61223a226578616d706c652e6566666563742d636f7272656c6174696f6e2f7631616c70686131222c2276616c756573223a7b22636f6d6d69746d656e74223a2261616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161222c226566666563745f616c696173223a22616c6961732d31227d7d2c22657865637574696f6e5f726573756c745f726566223a227368613235363a31313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131222c227061727469636970616e74223a7b22696e766f636174696f6e5f6964223a22696e766f636174696f6e2d31222c226e616d657370616365223a226578616d706c652e7265636f72646572227d2c227061727469636970616e745f657874656e73696f6e223a7b22736368656d61223a226578616d706c652e7265636f726465722d636f7272656c6174696f6e2f7631616c70686131222c2276616c756573223a7b2263616c6c5f6964223a2263616c6c2d31222c2270726f636573735f696e7374616e63655f6964223a2270726f636573732d31227d7d2c22736368656d61223a226b756a6f2e696e7465726f702d68616e646f66662f7631616c70686131222c227375626a656374223a7b22617474656d70745f6964223a2231222c226566666563745f6964223a226566666563742d31222c2272756e5f6964223a2272756e2d31222c22737465705f6964223a22737465702d31227d7d","ref":"sha256:7d43a29eef2a137bfacfc76306fb8c52137c2a62a554bab662132e39f00921da","value":{"assurance_ref":"sha256:2222222222222222222222222222222222222222222222222222222222222222","completion_knowledge":"unknown","effect_extension":{"schema":"example.effect-correlation/v1alpha1","values":{"commitment":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","effect_alias":"alias-1"}},"execution_result_ref":"sha256:1111111111111111111111111111111111111111111111111111111111111111","participant":{"invocation_id":"invocation-1","namespace":"example.recorder"},"participant_extension":{"schema":"example.recorder-correlation/v1alpha1","values":{"call_id":"call-1","process_instance_id":"process-1"}},"schema":"kujo.interop-handoff/v1alpha1","subject":{"attempt_id":"1","effect_id":"effect-1","run_id":"run-1","step_id":"step-1"}}},{"name":"no-effect-extension","code":"ok","hex":"7b226173737572616e63655f726566223a6e756c6c2c22636f6d706c6574696f6e5f6b6e6f776c65646765223a22756e6b6e6f776e222c226566666563745f657874656e73696f6e223a6e756c6c2c22657865637574696f6e5f726573756c745f726566223a227368613235363a31313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131222c227061727469636970616e74223a7b22696e766f636174696f6e5f6964223a22696e766f636174696f6e2d31222c226e616d657370616365223a226578616d706c652e7265636f72646572227d2c227061727469636970616e745f657874656e73696f6e223a7b22736368656d61223a226578616d706c652e7265636f726465722d636f7272656c6174696f6e2f7631616c70686131222c2276616c756573223a7b2263616c6c5f6964223a2263616c6c2d31222c2270726f636573735f696e7374616e63655f6964223a2270726f636573732d31227d7d2c22736368656d61223a226b756a6f2e696e7465726f702d68616e646f66662f7631616c70686131222c227375626a656374223a7b22617474656d70745f6964223a2231222c226566666563745f6964223a226566666563742d31222c2272756e5f6964223a2272756e2d31222c22737465705f6964223a22737465702d31227d7d","ref":"sha256:f1bfc4b7f67faa02bc1131a1aa22f2394a5d744f3627c5f14da6ddc307e203d3","value":{"assurance_ref":null,"completion_knowledge":"unknown","effect_extension":null,"execution_result_ref":"sha256:1111111111111111111111111111111111111111111111111111111111111111","participant":{"invocation_id":"invocation-1","namespace":"example.recorder"},"participant_extension":{"schema":"example.recorder-correlation/v1alpha1","values":{"call_id":"call-1","process_instance_id":"process-1"}},"schema":"kujo.interop-handoff/v1alpha1","subject":{"attempt_id":"1","effect_id":"effect-1","run_id":"run-1","step_id":"step-1"}}},{"name":"wrong-provisional","code":"invalid_knowledge"},{"name":"wrong-terminal","code":"invalid_knowledge"},{"name":"matching","code":"match"},{"name":"subject.run_id","code":"subject_mismatch"},{"name":"subject.step_id","code":"subject_mismatch"},{"name":"subject.attempt_id","code":"subject_mismatch"},{"name":"subject.effect_id","code":"subject_mismatch"},{"name":"participant.invocation_id","code":"participant_mismatch"},{"name":"execution_result_ref","code":"result_ref_mismatch"},{"name":"assurance_ref","code":"assurance_ref_mismatch"},{"name":"participant_extension.values.call_id","code":"extension_mismatch"},{"name":"effect_extension.values.commitment","code":"extension_mismatch"},{"name":"completion_knowledge","code":"knowledge_mismatch"},{"name":"unknown-owner","code":"unsupported_extension"},{"name":"unknown-extension","code":"unsupported_extension"},{"name":"unknown-effect","code":"unsupported_extension"},{"name":"nested","code":"invalid_handoff"},{"name":"long-id","code":"invalid_handoff"},{"name":"newline-id","code":"invalid_handoff"},{"name":"opaque-attempt","code":"invalid_handoff"},{"name":"bad-ref","code":"invalid_handoff"},{"name":"uppercase-ref","code":"invalid_handoff"},{"name":"truth-not-knowledge","code":"invalid_handoff"},{"name":"missing-participant","code":"invalid_handoff"},{"name":"unknown-field","code":"invalid_handoff"},{"name":"oversize-extension","code":"invalid_handoff"},{"name":"whitespace","code":"invalid_handoff"},{"name":"reordered","code":"invalid_handoff"},{"name":"duplicate","code":"invalid_handoff"},{"name":"alternate_escape","code":"invalid_handoff"},{"name":"invalid_utf8","code":"invalid_handoff"},{"name":"oversize","code":"bounds_exceeded"},{"name":"surrogate","code":"invalid_handoff"},{"name":"registration-copy","code":"ok","hex":"7b226173737572616e63655f726566223a6e756c6c2c22636f6d706c6574696f6e5f6b6e6f776c65646765223a22756e6b6e6f776e222c226566666563745f657874656e73696f6e223a7b22736368656d61223a226578616d706c652e6566666563742d636f7272656c6174696f6e2f7631616c70686131222c2276616c756573223a7b22636f6d6d69746d656e74223a2261616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161222c226566666563745f616c696173223a22616c6961732d31227d7d2c22657865637574696f6e5f726573756c745f726566223a227368613235363a31313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131313131222c227061727469636970616e74223a7b22696e766f636174696f6e5f6964223a22696e766f636174696f6e2d31222c226e616d657370616365223a226578616d706c652e7265636f72646572227d2c227061727469636970616e745f657874656e73696f6e223a7b22736368656d61223a226578616d706c652e7265636f726465722d636f7272656c6174696f6e2f7631616c70686131222c2276616c756573223a7b2263616c6c5f6964223a2263616c6c2d31222c2270726f636573735f696e7374616e63655f6964223a2270726f636573732d31227d7d2c22736368656d61223a226b756a6f2e696e7465726f702d68616e646f66662f7631616c70686131222c227375626a656374223a7b22617474656d70745f6964223a2231222c226566666563745f6964223a226566666563742d31222c2272756e5f6964223a2272756e2d31222c22737465705f6964223a22737465702d31227d7d","ref":"sha256:80731b9f440c145f509af59d5212255ab57f970bffb0791fe8251748f3d6061b","value":{"assurance_ref":null,"completion_knowledge":"unknown","effect_extension":{"schema":"example.effect-correlation/v1alpha1","values":{"commitment":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","effect_alias":"alias-1"}},"execution_result_ref":"sha256:1111111111111111111111111111111111111111111111111111111111111111","participant":{"invocation_id":"invocation-1","namespace":"example.recorder"},"participant_extension":{"schema":"example.recorder-correlation/v1alpha1","values":{"call_id":"call-1","process_instance_id":"process-1"}},"schema":"kujo.interop-handoff/v1alpha1","subject":{"attempt_id":"1","effect_id":"effect-1","run_id":"run-1","step_id":"step-1"}}},{"name":"registration-unknown-type","code":"invalid_registration"},{"name":"registration-no-participant","code":"invalid_registration"},{"name":"cannot-install-effect-from-wire","code":"unsupported_extension"},{"name":"content-bytes","code":"ok","ref":"sha256:712450d3c4a79eea9509e75dc1dacdeff58034df538536cfae2da882bd8a0c50"},{"name":"bytes-only","code":"invalid_handoff"}]}
+✔ test/sdk-conformance.mjs (498.701375ms)
+ℹ tests 45
+ℹ suites 0
+ℹ pass 45
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3230.458939

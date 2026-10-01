@@ -1,0 +1,8 @@
+PASS fresh controllers cannot oversubscribe final program slot through resource plans
+PASS fresh controllers race for last Eval slot with exact source/revision-bound plans
+PASS two fresh releases publish one historical release without double refund
+PASS crash after committed reservation permits explicit release only before dispatch
+PASS Eval work with lost reply stays consumed; independent exact readback resolves without rerun, duplicate worker rejected
+PASS immutable sourced measurement/index publication gap reconstructs exact evidence and consumption without finalization
+PASS orphan reservation repairs; dispatch-before-worker crash is consumed and cannot be refunded or redelivered
+{"ok":true,"checks":7,"proofs":["fresh controllers cannot oversubscribe final program slot through resource plans","fresh controllers race for last Eval slot with exact source/revision-bound plans","two fresh releases publish one historical release without double refund","crash after committed reservation permits explicit release only before dispatch","Eval work with lost reply stays consumed; independent exact readback resolves without rerun, duplicate worker rejected","immutable sourced measurement/index publication gap reconstructs exact evidence and consumption without finalization","orphan reservation repairs; dispatch-before-worker crash is consumed and cannot be refunded or redelivered"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-vsXBB0"}
