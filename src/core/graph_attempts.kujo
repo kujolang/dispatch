@@ -91,7 +91,7 @@ export func fold_attempt(state, kind, data) {
 }
 export func attempt_history(state, events) {
     view := {"workflow_definition":dict_get_or(state, "workflow_definition", {})}
-    for event in events {if attempt_event(event["kind"])||contains(["node_start_requested", "node_terminal_observed"], event["kind"]) {view = fold_attempt(view, event["kind"], event["details"]["data"])}}
+    for event in events {if event["kind"] == "graph_resources_reserved" {for item in event["details"]["data"]["candidate"]["programs"] {ref := item["record_ref"];raw := read_file_beneath(state["run_dir"], "node-input/" + substring(ref, 7, 71) + ".raw", 1048576);need("sha256:" + sha256(raw) == ref, "resource_artifact_corrupt");view = fold_attempt(view, "graph_attempt_reserved", parse_json(raw))}};if attempt_event(event["kind"])||contains(["node_start_requested", "node_terminal_observed"], event["kind"]) {view = fold_attempt(view, event["kind"], event["details"]["data"])}}
     need(to_json(dict_get_or(view, "graph_attempts", {})) == to_json(dict_get_or(state, "graph_attempts", {})), "attempt_history_mismatch");return true
 }
 

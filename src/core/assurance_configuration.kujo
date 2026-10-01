@@ -22,7 +22,7 @@ export func configuration_revision(descriptor) {
 }
 # Host-owned bounded source manifest; paths never come from a producer or sidecar.
 export func implementation_digest(files) {
-    if type(files) != "array"||len(files) < 1||len(files) > 16 {throw("assurance_verifier_invalid")}
+    if type(files) != "array"||len(files) < 1||len(files) > 32 {throw("assurance_verifier_invalid")}
     hashes := []
     for file in files {hashes = push(hashes, sha256(read_file_beneath(file["root"], file["path"], 1048576)))}
     return sha256(to_json(hashes))

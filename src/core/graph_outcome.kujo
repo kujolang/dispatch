@@ -1,3 +1,4 @@
+from src.core.resource_ledger import resources_enabled, eval_budget, eval_current, resource_raw
 from src.core.graph_attempts import program_contract, accounting_enabled, accounting_budget, held_reservation
 from src.core.graph_policy import policy_enabled, path_state, failure_strategy, static_policy, dispatch_budget, policy_group
 # Installed local operator API. Inspect is informational; apply never runs nodes.
@@ -35,7 +36,8 @@ func local_facts(graph, id, decision, host) {
     contract := graph_contract(step);outcome := "completed";fact := null;policy := null
     if contract == "evaluation-result/v1" {
         input := binding["inputs"][0]
-        raw := host["read_evaluation"](id, binding);demand(type(raw) == "string"&&byte_length(raw) <= 1048576, "evaluation_limit")
+        raw := ""
+        if resources_enabled(graph) {row := eval_current(graph, id);demand(row != null&&row["dispatch"] != null&&row["resolution"] != null&&row["resolution"]["candidate"]["outcome"] == "completed"&&row["binding_ref"] == binding_ref, "eval_consumed_result_required");raw = resource_raw(graph, row["resolution"]["candidate"]["result_ref"])} else {raw = host["read_evaluation"](id, binding)};demand(type(raw) == "string"&&byte_length(raw) <= 1048576, "evaluation_limit")
         evaluation := parse_json(raw);demand(validate_evaluation_result(evaluation)["ok"], "evaluation_invalid")
         demand(same(evaluation["subject"], input["producer_subject"])&&same(evaluation["input_evidence_ids"], [input["result_ref"], input["content_ref"]]), "stale_evaluation_subject")
         demand(same(evaluation["evaluator"], step["config"]["evaluator"]), "evaluator_identity_mismatch")
@@ -56,6 +58,7 @@ func local_facts(graph, id, decision, host) {
         fact = "sha256:" + sha256(to_json(decision));raws = push(push(raws, to_json(decision)), to_json(review))
     }
     data := {"schema":"dispatch.node-terminal-candidate/v1alpha1", "node_id":id, "subject":subject(graph, id), "contract":contract, "binding_ref":binding_ref, "fact_ref":fact, "policy_ref":null, "outcome":outcome}
+    if contract == "evaluation-result/v1"&&resources_enabled(graph) {data["eval_attempt_id"] := eval_current(graph, id)["attempt_id"]}
     if policy != null {data["policy_ref"] := "sha256:" + sha256(to_json(policy))}
     return {"candidate":candidate(graph, data), "artifacts":raws}
 }
@@ -121,12 +124,17 @@ export func scoped_outcome_facts(graph, host, scope) {
         }
     }
     if accounting_enabled(graph)&&accounting_budget(graph)["reserved"] > 0 {policy_block = true}
+    if resources_enabled(graph) {
+        if eval_budget(graph)["reserved"] > 0 {policy_block = true}
+        for id in keys(dict_get_or(graph, "eval_attempts", {})) {for row in graph["eval_attempts"][id] {if row["dispatch"] != null&&row["resolution"] == null {inflight = true}}}
+    }
     if inflight == false&&policy_block == false {
         if required_failed {outcome = "failed"} else if required_cancelled {outcome = "cancelled"} else if pending == false {outcome = "completed"}
     }
     data := {"schema":"dispatch.graph-outcome-candidate/v1alpha1", "outcome":outcome, "nodes":nodes, "policy":"required-success/no-unfinished-admission/v1alpha1"}
     if policy_enabled(graph) {data["schema"] := "dispatch.graph-outcome-candidate/v1alpha2";data["policy"] := "static-active-path/v1alpha1";branches := [];for id in keys(dict_get_or(graph, "branch_activations", {})) {record := graph["branch_activations"][id];raw := portable_json(record);branches = push(branches, {"branch_id":id, "selected":record["candidate"]["selected"], "activation_ref":"sha256:" + sha256(raw)});raws = push(raws, raw)};data["branches"] := branches;data["subgraphs"] := groups;data["budget"] := dispatch_budget(graph)}
     if accounting_enabled(graph) {raw := to_json(dict_get_or(graph, "graph_attempts", {}));data["accounting_ref"] := "sha256:" + sha256(raw);raws = push(raws, raw)}
+    if resources_enabled(graph) {raw := to_json({"eval_attempts":dict_get_or(graph, "eval_attempts", {}), "sources":dict_get_or(graph, "resource_sources", {})});data["resources_ref"] := "sha256:" + sha256(raw);data["eval_budget"] := eval_budget(graph);raws = push(raws, raw)}
     return {"candidate":candidate(graph, data), "artifacts":raws}
 }
 func review_request(graph, id, host) {
