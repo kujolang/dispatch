@@ -134,6 +134,8 @@
 *.tmp-*
 *.bak
 *.log
+# Reviewed, hash-inventoried proof evidence; ordinary runtime logs stay ignored.
+!docs/evidence/resource-accounting/*.log
 
 # Optional local config files created by init commands. Uncomment in repos where
 # these are developer-local rather than shared project configuration.
@@ -141,4 +143,3 @@
 # /fence.toml
 # /.lens.toml
 # /packwrite.toml
-
