@@ -1,0 +1,4 @@
+from src.agents.context.ledger import context_ledger
+# Offline provider-response fixture through the actual SDK extraction surface.
+receipt := context_ledger([{"role":"user", "content":"bounded fixture"}], [], {"provider":"fixture-provider", "model":"fixture-model", "output_text":"fixture", "usage":{"usage_source":"provider", "input_tokens":41, "output_tokens":7}}, {})
+print(to_json(receipt))
