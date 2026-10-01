@@ -24,10 +24,6 @@
       "reason": "Existing ignored test needs fixture artifacts"
     },
     {
-      "gate": "Hosted GitHub Actions",
-      "reason": "Local canonical verification only; hosted CI result not claimed"
-    },
-    {
       "gate": "Unrelated full Kujo runtime suite",
       "reason": "Documentation-only isolated change; requested compatible format, contracts and locked release build passed"
     }
@@ -247,5 +243,36 @@
     "concurrent_kujo_note": "Unrelated runtime/benchmark edits advanced main independently. They were neither incorporated nor modified; Kujo validation covers the isolated documentation source pin."
   },
   "evidence_hashes": "source-artifacts.json",
-  "resulting_commits": "This evidence commit and the pushed heads are recorded in the PRs and consolidated Strata handoff; no self-referential commit hash is embedded."
+  "resulting_commits": "This evidence commit and the pushed heads are recorded in the PRs and consolidated Strata handoff; no self-referential commit hash is embedded.",
+  "verification_scope": "Full local Dispatch canonical gate and isolated compatible Kujo checks. This does not mean all hosted GitHub checks pass.",
+  "hosted_followup": {
+    "dispatch_artifact_guard": {
+      "original_run": "https://github.com/kujolang/dispatch/actions/runs/36890841402",
+      "original_status": "failed: committed evidence matched generic log ignore",
+      "fix_commit": "1745f7a106e8525883611ee664087b983f12ab05",
+      "fix": "Narrow reviewed-evidence exception; quiet Git ignore predicate honors negation while preserving ordinary log rejection",
+      "local_checks": 3,
+      "full_pushed_history_guard": "passed",
+      "workflow_yaml": "passed",
+      "initial_followup_failure": "Exception first appeared before a later duplicate *.log rule; moved to end. Original artifact-policy.txt retained."
+    },
+    "kujo_release_state": {
+      "run": "https://github.com/kujolang/kujo/actions/runs/36890843345",
+      "status": "failed; reproduced locally",
+      "cause": "v1.7.0 tag exists but unchanged stable docs/install defaults declare v1.6.0",
+      "baseline": "e65bb57b39814daa1552762778d2b051fbcf7013",
+      "unchanged_files": [
+        "README.md",
+        "Cargo.toml",
+        "install.sh",
+        "INSTALLATION.md",
+        ".github/actions/setup-kujo/action.yml",
+        ".github/scripts/check-release-state.sh"
+      ],
+      "ownership": "Separate release reconciliation; concurrent files preserved",
+      "capture": "cap_f1cfeb80-17b6-4724-a0b5-6c1193e003ea",
+      "signal": "sig_4c70588c-1cc7-4905-a35e-d9a1cdcb198b"
+    },
+    "other_hosted_checks": "Pending at publication; no hosted canonical success claimed"
+  }
 }

@@ -21,7 +21,13 @@ Kujo documentation source `51369e42b38efb4479af440c8370ac8a4fea3a7a` passed form
 the locked release build and 13 contract tests; two existing artifact-dependent
 tests remained explicitly ignored. Concurrent primary Kujo runtime edits were not
 incorporated. The evidence includes commands, warnings, source pins and verified
-SHA-256 inventories. Hosted CI is not claimed by these local results.
+SHA-256 inventories. Hosted canonical success is not claimed by these local results.
+Post-push artifact CI exposed the generic log-ignore rule rejecting intentionally
+retained evidence. A narrow policy exception and three guard tests now preserve
+reviewed logs while rejecting ordinary output. Kujo's separate release-state check
+fails because the existing `v1.7.0` tag conflicts with unchanged `v1.6.0` stable
+installation defaults; that release-owned mismatch is recorded, not hidden or
+folded into this resource tranche. See `hosted_followup` in the validation record.
 
 ## Implementation and authority
 

@@ -1,0 +1,8 @@
+release-state	Validate Cargo and release-status docs consistency	﻿2026-10-01T16:17:21.7982010Z ##[group]Run bash .github/scripts/check-release-state.sh
+release-state	Validate Cargo and release-status docs consistency	2026-10-01T16:17:21.7982636Z [36;1mbash .github/scripts/check-release-state.sh[0m
+release-state	Validate Cargo and release-status docs consistency	2026-10-01T16:17:21.8159119Z shell: /usr/bin/bash -e {0}
+release-state	Validate Cargo and release-status docs consistency	2026-10-01T16:17:21.8159582Z ##[endgroup]
+release-state	Validate Cargo and release-status docs consistency	2026-10-01T16:17:21.8305002Z [release-state] README.md matches Cargo.toml version: 1.7.0
+release-state	Validate Cargo and release-status docs consistency	2026-10-01T16:17:21.8346355Z [release-state] ERROR: README.md does not identify latest stable tag v1.7.0
+release-state	Validate Cargo and release-status docs consistency	2026-10-01T16:17:21.8347242Z [release-state] Expected to find: latest published stable release tag is `v1.7.0`
+release-state	Validate Cargo and release-status docs consistency	2026-10-01T16:17:21.8358044Z ##[error]Process completed with exit code 1.

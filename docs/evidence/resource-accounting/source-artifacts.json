@@ -33,9 +33,17 @@
     "tests/resource_model_fixture.kujo": "aa3abcaaf6ceca9f5a6d8fe923cfc1ce38828b3150d1dd3430437e50c9595c9d",
     "tests/resource_policy.mjs": "ce13ab3f472491950f6eb993f40a75990f45de22d6f029c4a67ba4b83739d76d",
     "tests/resource_recovery.mjs": "1907374566032992a5a7546e1069534f5bbbfde67e094c18b6c07fb691c6aefa",
-    "tests/static_policy_recovery.mjs": "726f947842154ce5f7bc62f3afa347138989b3fada1cdc20517393fd17c3a4d0"
+    "tests/static_policy_recovery.mjs": "726f947842154ce5f7bc62f3afa347138989b3fada1cdc20517393fd17c3a4d0",
+    ".gitignore": "d47f1dd147747f637fc56ab8f6f445062e50e5f9942baa8066c3bc8e3c3f02a4",
+    "config/kujo-tool-artifacts.gitignore": "eef2a74bf335dc4a6f8e86d698bba9f6a1026a0879e9783b3d4975243824af49",
+    ".github/scripts/check-kujo-tool-artifacts.sh": "4864632e435c4c58b02e23295d9b284a9286344bab497c05aff279e16af574b0",
+    ".github/workflows/kujo-tool-artifacts-guard.yml": "adf787fc8fa26440062178fe3493fb112a0bc468cd66358fcec328afa7ee1d9e",
+    "tests/artifact_policy_tests.sh": "82c97a56530a14c8b2ff7e0cb3fd836e5775fa55935e14460737bc55cfb63efb"
   },
   "evidence": {
+    "artifact-policy-fixed.txt": "5e08659b4551ebe0958da351f5a4634713a2a6431b16b72994239ec58a3e9fae",
+    "artifact-policy-history.txt": "75d153e90713501fb9afe40a3897b847218126e2adbe4d3112644f0c62ff79a7",
+    "artifact-policy.txt": "01d532d47066ed42e879fdc80c0a55acc440f8d0d57909a69d69747c230fa852",
     "baseline.log": "8d5cf865c18040263e58be61803cbd8fb569ec08d81d7577d9f9bedb72036056",
     "canonical-1.log": "1607b5e4959decda511cd968a89eb4c0fc6931e931e6175fb00d61a5c4660357",
     "canonical-2.log": "571a691f9e687d2713df27ac4585d3f0afccfba0021cb4a74de348d939e5700e",
@@ -52,6 +60,8 @@
     "fixed-heterogeneous_recovery.log": "cb319385c46d64ea86d6e7267f8877afef8f76ca4de08d49b7b8577ac877d4e8",
     "fixed-node_composition_recovery.log": "7157b255d49f26ca0cbe0e3a1b54bdfe726ff9543e1a75221dcf91709b943fe8",
     "fixed-static_policy_recovery.log": "033b85ef87b81fb7914025df78e4cc585a53d3bb93c32e030a4101c57acfcd83",
+    "hosted-artifact-failure.txt": "d07d1ced6506c58d08b5bfcfe8b1f5a441793573beca57361a4b5440f34f6884",
+    "hosted-kujo-release-failure.txt": "880654f13bd93dea0147a0b4dd5bd18ac9f7dad8e47ed2dca762f9dfc02eb866",
     "integration-1.log": "bb3b4320f3a98e2fd2ae828ee8a0f3a98122be7990858d040bb4752f3437c12d",
     "integration-2.log": "c826f60246045e2668b017956b58bfa840d92ff37dfd9761896ffe6c29132b9a",
     "integration-3.log": "4cdf8eb19b1882aa8be542c4b2925d9e92826ef2decfd899a464c01d2fb6324d",
@@ -64,6 +74,7 @@
     "kujo-contracts.log": "50b4520152b6530a30ad8d1c4737d3c117f3dd706b1c37d5ffb46063969c52d7",
     "kujo-fmt-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "kujo-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "kujo-release-state.txt": "db1cbeec8f5cb6150d98f2b80d8867f69b1fb30c38a7f340245f9efbe9f0bee2",
     "policy-1.log": "9f641618054e5c6ade1b23de0b3ddc45382cfbab9b063c56b81cff4c7b6e2ea6",
     "policy-2.log": "7f0425d69d0d3e7fcd60df46e87d75db0af23b7df4b79f0e6f96190457eacae6",
     "policy-3.log": "66970103aab53152f66d6fb8e826cf9b85dad6af0ee44e4fc7331ccb9469fd71",
@@ -76,6 +87,7 @@
     "tested-dispatch-commit.txt": "ebc16df5fe0232b0acc52f12ab1ccff4989f734473cc980917f03d43150d048a",
     "tested-kujo-commit.txt": "4615ef03960ce42240913dc2657e4855abe81bad44e26d0d9d17f2fa003cb3e7",
     "typescript-install.log": "5fb6a018720b50a08ec27efef21afc861a3b21c56407a234992e62ca8d7693fa",
-    "validation.json": "d8336a4d7307984b2bfddb27b08b28155fbbaaec965cf927ef6cbaa6db6010ea"
-  }
+    "validation.json": "2b9d7d9ef174383c5e5eefe5d8816bd9126c21aaf66a2ab56eed0b044d40e646"
+  },
+  "post_gate_packaging_commit": "1745f7a106e8525883611ee664087b983f12ab05"
 }
