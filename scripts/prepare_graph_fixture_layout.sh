@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# CI-only aliases for the existing bounded graph fixtures. Never replace a checkout.
+# CI/release aliases for the existing bounded graph fixtures. Never replace a checkout.
 set -euo pipefail
 workspace="${GITHUB_WORKSPACE:?GITHUB_WORKSPACE is required}"
+source_base="${DISPATCH_GRAPH_FIXTURE_ROOT:-$workspace/.ci}"
 for mapping in 'workcell:workcell-wave-f' 'eval:eval-wave-f' 'agents-sdk:agents-sdk-wave-d'; do
   name="${mapping%%:*}"
-  source_dir="$workspace/.ci/${mapping#*:}"
+  source_dir="$source_base/${mapping#*:}"
   alias_path="$workspace/../$name"
   test -d "$source_dir/src"
   if [[ -e "$alias_path" || -L "$alias_path" ]]; then

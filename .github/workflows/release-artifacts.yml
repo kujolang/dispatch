@@ -91,6 +91,22 @@ jobs:
           git clone --filter=blob:none https://github.com/kujolang/kennel.git .release/kennel-wave-d
           git -C .release/kennel-wave-d checkout --detach 093d44dddcebebd99bd8987e3efcb7e044dc45a7
           "$KUJO_BIN" run .release/kennel-wave-d/kennel.kujo --interpreter -- install --project-dir "$GITHUB_WORKSPACE/.release/agents-sdk-wave-d"
+      - name: Checkout retained-host Workcell graph fixture
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: kujolang/workcell
+          ref: 0f9595b79872d2500f0bb35a8cf6227171fd7eeb
+          path: .release/workcell-wave-f
+      - name: Checkout exact Eval graph contract
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: kujolang/eval
+          ref: 6a5ab09e5c24cc1a842b374afccb64da40db2874
+          path: .release/eval-wave-f
+      - name: Prepare bounded graph fixture module layout
+        run: |
+          bash tests/ci_graph_layout_tests.sh
+          DISPATCH_GRAPH_FIXTURE_ROOT="$GITHUB_WORKSPACE/.release" bash scripts/prepare_graph_fixture_layout.sh
       - name: Verify exact tagged source
         env:
           AI_SDK_PATH: ${{ github.workspace }}/.release/ai-sdk

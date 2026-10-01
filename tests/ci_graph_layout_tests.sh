@@ -9,6 +9,11 @@ GITHUB_WORKSPACE="$workspace" bash "$script"
 for name in workcell eval agents-sdk; do test -L "$fixture_root/$name"; done
 GITHUB_WORKSPACE="$workspace" bash "$script"
 echo 'PASS complete layout and exact idempotent reuse'
+release_workspace="$fixture_root/tag/dispatch"
+mkdir -p "$release_workspace/.release/workcell-wave-f/src" "$release_workspace/.release/eval-wave-f/src" "$release_workspace/.release/agents-sdk-wave-d/src"
+GITHUB_WORKSPACE="$release_workspace" DISPATCH_GRAPH_FIXTURE_ROOT="$release_workspace/.release" bash "$script"
+test "$(readlink "$fixture_root/tag/eval")" = "$release_workspace/.release/eval-wave-f"
+echo 'PASS tagged release layout uses the explicit source root'
 rm "$fixture_root/workcell"
 mkdir "$fixture_root/workcell"
 printf 'preserve\n' > "$fixture_root/workcell/user-file"
