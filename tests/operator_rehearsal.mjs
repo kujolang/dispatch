@@ -40,7 +40,7 @@ async function crashReservation(d){
  const report=await inspect(d);assert.equal(report.resources.report.programs.consumed,0);assert.equal(report.resources.report.programs.reserved,1);assert.equal(report.nodes.find(n=>n.node_id==='A').output,undefined);
  pass('real SIGKILL after immutable reservation; fresh recovery retains capacity without execution or replay');
 }
-async function happy(){const d=await initialize('happy');await crashReservation(d);await run(d);await finish(d,'A');await command(['review',d]);
+async function happy(){const d=await initialize('happy');const initial=await inspect(d);assert.ok(initial.nodes.filter(n=>n.kind==='program').every(n=>n.execution_state==='never_dispatched'));await crashReservation(d);await run(d);await finish(d,'A');await command(['review',d]);
  const before=snapshot(d),approval=await plan(d,'approve','H');await inspect(d);assert.deepEqual(snapshot(d),before);pass('inspection and candidate planning leave durable contents unchanged');
  const wrong=structuredClone(approval);wrong.request.decision.subject.run_id='wrong';assert.equal((await apply(d,wrong,true)).ok,false);await command(['review',d]);assert.equal((await apply(d,approval,true)).ok,false);await operation(d,'approve','H');const reviewed=await inspect(d);assert.equal(reviewed.resources.report.evaluations.consumed,0);pass('wrong/stale human decisions rejected; authorized approval does not dispatch Eval');
  await operation(d,'reserve','E');await operation(d,'eval-dispatch','E');await operation(d,'observe','E');await operation(d,'node-finalize','E');await operation(d,'branch');await operation(d,'reserve','B');await run(d);await finish(d,'B');await operation(d,'graph-finalize');

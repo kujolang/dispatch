@@ -250,7 +250,11 @@ func explain() {
     for step in graph["workflow_definition"]["steps"] {
         id := step["id"];item := {"node_id":id, "depends_on":step["depends_on"], "kind":step["config"]["kind"], "terminal":dict_get_or(dict_get_or(graph, "node_completions", {}), id, null), "binding":dict_get_or(dict_get_or(graph, "graph_node_bindings", {}), id, null)}
         if contains(["A", "B", "R"], id) {
-            child := state(base + "/" + id);item["status"] := child["status"];item["input_binding"] := dict_get_or(child, "node_input_binding", null);item["finalization"] := dict_get_or(child, "parent_finalization", null)
+            child := state(base + "/" + id);item["control_status"] := child["status"];item["execution_state"] := "never_dispatched"
+            if has_key(dict_get_or(graph, "node_dispatches", {}), id) {item["execution_state"] := "dispatch_consumed_completion_unknown"}
+            if dict_get_or(child["steps"][0], "execution_result", null) != null {item["execution_state"] := "result_recorded"}
+            if has_key(child, "parent_finalization") {item["execution_state"] := "independently_finalized"}
+            item["input_binding"] := dict_get_or(child, "node_input_binding", null);item["finalization"] := dict_get_or(child, "parent_finalization", null)
             if has_key(cfg(base + "/" + id), "effect_set") {item["effect"] := effect_call(id, {"operation":"inspect"})}
             if file_exists(base + "/" + id + "/output.json") {item["output"] := parse_json(read_file_beneath(base + "/" + id, "output.json", 65536));item["output_sha256"] := sha256(read_file_beneath(base + "/" + id, "output.json", 65536))}
         }

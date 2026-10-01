@@ -14,6 +14,7 @@ export func print_operator_report(report) {
         }
     } else {print("Graph facts unavailable: " + to_json(outcome))}
     for node in report["nodes"] {
+        if has_key(node, "execution_state") {print("Execution " + node["node_id"] + ": " + node["execution_state"] + " (durable facts, not process liveness)")}
         if has_key(node, "output_sha256") {print("Output " + node["node_id"] + ": sha256:" + node["output_sha256"]);print("  Sources: " + to_json(node["output"]["sources"]));print("  Source input: " + node["output"]["source_ref"])}
     }
     resource := report["resources"]
