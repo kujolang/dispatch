@@ -48,3 +48,18 @@ new work. Unavailable or estimated-only facts then block, including held work at
 final dispatch. Results, measurements, release and terminal publication remain
 possible at exhaustion. Recovery folds existing immutable records; it never
 refunds consumed dispatch, invents measurements or finalizes a graph.
+
+## Implementation discoveries
+
+The existing implementation manifest admitted at most 16 files. The source-bound
+resource controller needs 21 (including the reused schema and installed evaluator
+worker). The bounded host manifest now admits at most 32 regular files, each still
+limited to 1 MiB. Its ordered hash algorithm and every existing <=16-file digest are
+unchanged. This is a local verifier-inventory bound, not a participant wire change.
+
+The runtime schema includes `maxProperties` and `uniqueItems`, which Kujo's native
+schema subset does not implement. The original upstream schema is embedded as JSON
+bytes; those two constraints are enforced explicitly by the consumer while the
+existing validator handles its supported subset. Interoperable numeric bounds remain
+stricter than the producer's u64 range; counters beyond exact cross-consumer range
+reject instead of rounding. No runtime edit is required.
