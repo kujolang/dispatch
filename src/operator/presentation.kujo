@@ -24,7 +24,7 @@ export func print_operator_report(report) {
         print("Monetary cost [unknown]: unknown")
     } else {print("Resource facts unavailable: " + to_json(resource))}
     for id in keys(report["reviews"]) {review := report["reviews"][id];print("Retained review " + id + ": " + review["request"]["request_id"] + "; input " + review["binding_ref"])}
-    for id in keys(report["branches"]) {branch := report["branches"][id]["candidate"];print("Branch " + id + ": " + to_json(branch))}
+    for id in keys(report["branches"]) {branch := report["branches"][id]["candidate"];print("Branch " + id + ": " + branch["selected"] + "; active " + to_json(branch["active_nodes"]) + "; not selected " + to_json(branch["inactive_nodes"]));print("  Decision evidence: " + branch["source_fact_ref"])}
     recovery := report["recovery"]
     if recovery["ok"] {assessment := recovery["assessment"];print("Recovery: " + assessment["classification"] + "; safe repairs " + to_string(len(assessment["safe_repairs"])));print("Unresolved: " + to_json(assessment["unresolved"]))} else {print("Recovery unavailable: " + to_json(recovery))}
     print("Inspection grants no admission. Consumed attempts cannot replay. Use --json for exact bindings and attempt history.")
