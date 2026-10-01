@@ -2532,6 +2532,7 @@ test "dispatch help usage snapshot remains compatible" {
 	usage_snapshot := [
 		"kujo run dispatch.kujo run \"Research topic\" [--workflow-file workflow.json] [--input-json '{...}'] [--output-root outputs]",
 		"kujo run dispatch.kujo init [--dir dispatch-workflow] [--force]",
+		"kujo run dispatch.kujo operator --help (experimental local batch host)",
 		"kujo run dispatch.kujo catalog <generate|sync> <config.json> --output model-catalog.json",
 		"kujo run dispatch.kujo webhooks <status|replay> [--output-root outputs] [--url https-url] [--destination lifecycle] [--json]",
 		"kujo run dispatch.kujo demo \"Research topic\" [--workflow research-report] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs]",

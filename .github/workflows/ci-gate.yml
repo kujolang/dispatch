@@ -203,6 +203,9 @@ jobs:
           bash tests/ci_graph_layout_tests.sh
           bash scripts/prepare_graph_fixture_layout.sh
 
+      - name: Install pinned experimental operator host dependencies
+        run: bash scripts/install_operator_dependencies.sh
+
       - name: Run Dispatch release gate
         # Full static graph, real-process crash and resource proofs run serially.
         timeout-minutes: 300

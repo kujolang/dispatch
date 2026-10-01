@@ -198,3 +198,5 @@ tests/tmp/*
 
 # Reviewed, hash-inventoried proof evidence; ordinary runtime logs stay ignored.
 !docs/evidence/resource-accounting/*.log
+
+.operator-deps/

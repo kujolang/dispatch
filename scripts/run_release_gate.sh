@@ -119,6 +119,7 @@ run_suite node_policy env KUJO_BIN="$KUJO_BIN" node tests/node_composition_polic
 run_suite node_recovery env KUJO_BIN="$KUJO_BIN" node tests/node_composition_recovery.mjs
 run_suite node_vectors "$KUJO_BIN" run tests/portable_commitments.kujo tests/vectors/node-composition.json
 run_suite parent_vectors "$KUJO_BIN" run tests/portable_commitments.kujo tests/vectors/parent-finalization.json
+run_suite operator_rehearsal env KUJO_BIN="$KUJO_BIN" node tests/operator_rehearsal.mjs
 run_suite retained_recovery env KUJO_BIN="$KUJO_BIN" node tests/retained_recovery_integration.mjs
 run_suite effect_set env KUJO_BIN="$KUJO_BIN" node tests/effect_set_integration.mjs
 run_suite effect_continuation env KUJO_BIN="$KUJO_BIN" node tests/effect_continuation_integration.mjs

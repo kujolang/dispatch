@@ -64,3 +64,6 @@ Next: [author a workflow](../examples/quickstart-walkthrough.md), inspect
 [architecture and extension points](architecture-and-extension-diagrams.md),
 and read [enterprise deployment boundaries](enterprise-deployment.md) before
 enabling live providers.
+
+For the experimental typed-output, review, Eval and budget path, see the
+[operator rehearsal](operator-rehearsal.md).
