@@ -22,7 +22,7 @@ async function initialize(name,settings={}){const d=path.join(root,name),config=
 async function plan(d,action,id='graph'){return check(await command(['plan',d,action,id]))}
 async function apply(d,p,allowFailure=false){const file=path.join(evidence,`plan-${sequence}.json`);fs.writeFileSync(file,JSON.stringify(p));return command(['apply',d,file],{allowFailure})}
 async function operation(d,action,id='graph'){return check(await apply(d,await plan(d,action,id)))}
-async function run(d){return check(await command(['run',d]))}
+async function run(d){const r=check(await command(['run',d]));assert.equal(r.schema,'dispatch.operator-action/v1alpha1');assert.equal(r.run_state,undefined);return r}
 async function inspect(d){return check(await command(['inspect',d,'--json']))}
 async function finish(d,id){for(const action of ['refresh','select','admit','refresh','parent-finalize'])await operation(d,action,id);await run(d)}
 function snapshot(directory){const entries=[];function walk(d){for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())walk(p);else if(e.isFile()&&!e.name.endsWith('.lock'))entries.push([path.relative(directory,p),createHash('sha256').update(fs.readFileSync(p)).digest('hex')])}}walk(directory);return entries.sort((a,b)=>a[0].localeCompare(b[0]))}

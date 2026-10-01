@@ -277,5 +277,9 @@ try {
         if answer["ok"]&&dict_get_or(answer, "paused", false) {publish_facts()}
     } else {throw("operator_command_invalid")}
 } except err {answer = {"ok":false, "reason":to_string(err)}}
+if mode == "run"&&has_key(answer, "run_state") {
+    current := answer["run_state"]
+    answer = {"schema":"dispatch.operator-action/v1alpha1", "ok":answer["ok"], "run_id":current["run_id"], "revision":current["revision"], "control_status":current["status"], "paused":dict_get_or(answer, "paused", false), "reason":dict_get_or(answer, "reason", ""), "next":"inspect the workspace; use separate plans for effects, review and finalization"}
+}
 if answer["ok"] == false {answer["next"] := corrective_action(answer)}
 if mode == "inspect"&&answer["ok"]&&contains(arguments, "--json") == false {print_operator_report(answer)} else {print(to_json(answer))};if answer["ok"] == false {exit(1)}
