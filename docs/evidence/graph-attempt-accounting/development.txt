@@ -1,0 +1,267 @@
+===== dev-attempt-contracts-1.log =====
+{"checks":12,"ok":true}
+
+
+===== dev-attempt-contracts-2.log =====
+{"checks":14,"ok":true}
+
+
+===== dev-authority-1.log =====
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ {
++   binding_ref: 'sha256:e16b55d0e9cdfc9b125e650e0c12e898819b25f7baf67867d06052f218e4fadf',
++   consumer: {
++     attempt_id: '1',
++     run_id: 'run-1790806869846-5772',
++     step_id: 'action'
++   },
++   node_id: 'B'
++ }
+- null
+
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting/tests/graph_attempt_authority.mjs:5:460
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: {
+    binding_ref: 'sha256:e16b55d0e9cdfc9b125e650e0c12e898819b25f7baf67867d06052f218e4fadf',
+    consumer: {
+      attempt_id: '1',
+      run_id: 'run-1790806869846-5772',
+      step_id: 'action'
+    },
+    node_id: 'B'
+  },
+  expected: null,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+===== dev-bound-descendant-1.log =====
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"authority":"informational","candidate":{"action":"retry","authority_ref":"sha256:5a72174e614b2e6c85424e3fe15ec2f9000618ff1640a2491284d3a2c80d3acf","binding_ref":"sha256:ff73781af65775b555b4caeb88764fa3974a8b26cbfcdb4336fbf7b547fd51d6","candidate_id":"4f1704e02e327b1a8ba32dd3908b45e8a3ff03a700261eab21f6b6be241b1643","child_source_sha256":"c474fee77bd1051c77f6c3b58540f443529d92eb99e29c3363a6a6c2c9b7c6f5","graph":{"run_id":"run-1790807646189-2691","workflow_ref":"sha256:28fe509b297de34b1d58cfea99064daf7b215155e780d432452df2dbe860719e"},"journal":"cbcf9139616f81a869a80f1c6ae8e11da704173c2e1fe2c096b31529e2078c84","node_id":"B","ordinal":2,"previous_terminal_ref":"sha256:054034ec5916ddc9798fb49900332c2029173966ab25da32659749fbb490a57f","revision":6,"run_id":"run-1790807643094-2374","schema":"dispatch.attempt-candidate/v1alpha1","source_sha256":"cae0c86d5ffc73d81f92e7db6e2f55b9366b0512005c75fe95ffc8a4ea92a2ea"},"ok":true}
+
+true !== false
+
+    at file:///private/tmp/dispatch-attempt-evidence/bound-descendant-focused.mjs:14:647 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: true,
+  expected: false,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+===== dev-bound-descendant-2.log =====
+PASS retry cannot retire a terminal already bound by an undispatched program descendant
+{"ok":true,"checks":1,"proofs":["retry cannot retire a terminal already bound by an undispatched program descendant"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-cANCi1"}
+
+
+===== dev-contracts.log =====
+{"checks":14,"ok":true}
+
+
+===== dev-go-1.log =====
+node:internal/modules/esm/resolve:272
+    throw new ERR_MODULE_NOT_FOUND(
+          ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting/interop/typescript-participant/dist/codec.js' imported from /Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting/tests/go_participant_conformance.mjs
+    at finalizeResolution (node:internal/modules/esm/resolve:272:11)
+    at moduleResolve (node:internal/modules/esm/resolve:879:10)
+    at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:708:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:728:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:766:56)
+    at #resolve (node:internal/modules/esm/loader:690:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:610:35)
+    at node:internal/modules/esm/loader:639:32
+    at TracingChannel.tracePromise (node:diagnostics_channel:538:22) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting/interop/typescript-participant/dist/codec.js'
+}
+
+Node.js v26.7.0
+
+
+===== dev-go-2.log =====
+{"ok":true,"checks":150,"mcpChecks":5,"malformedChecks":9,"wireSHA256":"f87fd01de248eca96c685282b3ead0a95578f77f6c597f598fc9d587f0bec262","independence":"Go standard library; CLI and MCP share one codec"}
+
+
+===== dev-integration-1.log =====
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"authority":"informational","ok":false,"reason":"Error { line: 0, message: commitment_bound, stack: [<function with 4 params>, outcome_facts, scoped_outcome_facts, portable_json] }"}
+
+false !== true
+
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting/tests/graph_attempt_integration.mjs:14:111
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+===== dev-integration-2.log =====
+PASS A to safely refused B1 to independent B2 to C; exact inputs, lineage and exhausted graph finalize
+PASS two refused attempts exhaust node ceiling; no third attempt and original failures retained
+PASS graph budget exhaustion blocks retry without refund or fabricated terminal failure
+PASS operator revocation denies reservation without consuming capacity
+PASS changed producer bytes cannot become a newer retry input
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-YPyPTM","checks":5,"proofs":["A to safely refused B1 to independent B2 to C; exact inputs, lineage and exhausted graph finalize","two refused attempts exhaust node ceiling; no third attempt and original failures retained","graph budget exhaustion blocks retry without refund or fabricated terminal failure","operator revocation denies reservation without consuming capacity","changed producer bytes cannot become a newer retry input"]}
+
+
+===== dev-policy-1.log =====
+PASS Eval branch activation consumes zero program units; inactive repair node has no attempt
+
+
+===== dev-policy-2.log =====
+PASS Eval branch activation consumes zero program units; inactive repair node has no attempt
+PASS subgraph receipt adds no execution unit; human decision is separate from three member dispatches
+PASS held optional reservation prevents graph sealing; release and cancellation remain explicit
+{"ok":true,"checks":3,"proofs":["Eval branch activation consumes zero program units; inactive repair node has no attempt","subgraph receipt adds no execution unit; human decision is separate from three member dispatches","held optional reservation prevents graph sealing; release and cancellation remain explicit"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-FSGBLC"}
+
+
+===== dev-recovery-1.log =====
+PASS two fresh controllers reserve exactly one last graph unit
+PASS release contention records one release and restores only never-dispatched capacity
+PASS crash A: durable reservation before binding releases without phantom execution
+PASS crash before_child_load: consumed dispatch is not redelivered, released or retried
+PASS crash before_node_admission: consumed dispatch is not redelivered, released or retried
+PASS crash after_node_admission: consumed dispatch is not redelivered, released or retried
+PASS same-node retry and next-attempt creation race publishes one new reserved instance
+PASS crash E: real SQLite mutation reply lost; consumed accounting cannot authorize replay
+PASS orphan reserve: immutable record/index gap repaired by fresh controller without execution
+PASS orphan release: immutable record/index gap repaired by fresh controller without execution
+PASS orphan retry: immutable record/index gap repaired by fresh controller without execution
+{"ok":true,"checks":11,"proofs":["two fresh controllers reserve exactly one last graph unit","release contention records one release and restores only never-dispatched capacity","crash A: durable reservation before binding releases without phantom execution","crash before_child_load: consumed dispatch is not redelivered, released or retried","crash before_node_admission: consumed dispatch is not redelivered, released or retried","crash after_node_admission: consumed dispatch is not redelivered, released or retried","same-node retry and next-attempt creation race publishes one new reserved instance","crash E: real SQLite mutation reply lost; consumed accounting cannot authorize replay","orphan reserve: immutable record/index gap repaired by fresh controller without execution","orphan release: immutable record/index gap repaired by fresh controller without execution","orphan retry: immutable record/index gap repaired by fresh controller without execution"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-ty7bmZ"}
+
+
+===== dev-recovery-2.log =====
+PASS two fresh controllers reserve exactly one last graph unit
+PASS release contention records one release and restores only never-dispatched capacity
+PASS crash A: durable reservation before binding releases without phantom execution
+PASS crash before_child_load: consumed dispatch is not redelivered, released or retried
+PASS crash before_node_admission: consumed dispatch is not redelivered, released or retried
+PASS crash after_node_admission: consumed dispatch is not redelivered, released or retried
+PASS same-node retry and next-attempt creation race publishes one new reserved instance
+PASS crash E: real SQLite mutation reply lost; consumed accounting cannot authorize replay
+PASS orphan reserve: immutable record/index gap repaired by fresh controller without execution
+PASS orphan release: immutable record/index gap repaired by fresh controller without execution
+PASS orphan retry: immutable record/index gap repaired by fresh controller without execution
+{"ok":true,"checks":11,"proofs":["two fresh controllers reserve exactly one last graph unit","release contention records one release and restores only never-dispatched capacity","crash A: durable reservation before binding releases without phantom execution","crash before_child_load: consumed dispatch is not redelivered, released or retried","crash before_node_admission: consumed dispatch is not redelivered, released or retried","crash after_node_admission: consumed dispatch is not redelivered, released or retried","same-node retry and next-attempt creation race publishes one new reserved instance","crash E: real SQLite mutation reply lost; consumed accounting cannot authorize replay","orphan reserve: immutable record/index gap repaired by fresh controller without execution","orphan release: immutable record/index gap repaired by fresh controller without execution","orphan retry: immutable record/index gap repaired by fresh controller without execution"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-sd9bmJ"}
+
+
+===== dev-report-1.log =====
+[KUJOVM001] [vm] Runtime Error: Failed to evaluate module 'workcell.src.workspace.workspace': Module not found: src.util; Check that 'src.util' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  --> 0:0
+
+
+
+===== dev-report-2.log =====
+{"ok":true,"report":{"attempts":[{"accounting":"released","admission":"refused_before_admission","node_id":"A","ordinal":1,"previous_terminal_ref":null,"reservation_id":"50eb44fa3d2a4d8c62b6f671b25445b0f65e22d404c7ace494338435280f68a0","run_id":"run-1790806592341-7487","terminal":null,"work":"never_admitted"},{"accounting":"consumed","admission":"refused_before_admission","node_id":"A","ordinal":1,"previous_terminal_ref":null,"reservation_id":"6129051a48c617fae9a483d9b10dee62a6454e1dcb37ebde2afac7366a5b256b","run_id":"run-1790806592341-7487","terminal":{"authority_ref":"sha256:18a95ea74de4750028f8183517451851756ec8f64e1c80abb086a4c513a21f01","contract":"program-attempt/v1alpha1","facts_ref":"sha256:8b8fcc4b7f306f9e1b9d81fb117466eb2582732bf5fdfda05e46edf05e5b63c1","finalized_revision":3,"node_id":"A","outcome":"failed","schema":"dispatch.node-terminal/v1alpha1","subject":{"attempt_id":"1","run_id":"run-1790806592341-7487","step_id":"action"}},"work":"never_admitted"},{"accounting":"consumed","admission":"consumed","node_id":"A","ordinal":2,"previous_terminal_ref":"sha256:437d05bedca4b12ca8c09d89bf3bd4d166127cfebcfd266dbc77552c874c7a8e","reservation_id":"91fffb1be2240966b6273708554f0c9430acdbbfecdc24bf868ffa0f0fd7ae80","run_id":"run-1790806594809-8535","terminal":null,"work":"result_recorded"}],"authority":"informational","budget":{"available":6,"consumed":2,"exhausted":false,"limit":8,"nodes":[{"consumed":2,"limit":2,"node_id":"A","remaining":0,"reserved":0}],"on_exhaustion":"block","released":1,"reserved":0,"unit":"program_dispatches","used":2},"decision_instances":[],"evaluation_instances":[],"journal":"1a4ced9b5bf8a7dffaac15e57a68d1c9e2967ce1f04614feb82947de61368604","revision":11,"run_id":"run-1790806596627-9410","schema":"dispatch.attempt-accounting-report/v1alpha1"}}
+
+
+===== dev-result-recovery-1.log =====
+PASS crash F: durable terminal observation repairs stale accounting without refund or graph finalization
+PASS orphan child refusal remains sealed through exact retained-host repair
+{"ok":true,"checks":2,"proofs":["crash F: durable terminal observation repairs stale accounting without refund or graph finalization","orphan child refusal remains sealed through exact retained-host repair"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-XsUtYr"}
+
+
+===== dev-smoke-1.log =====
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: [KUJOVM001] [vm] Runtime Error: Failed to parse module 'src.core.retained_recovery': 273:1: Expected '}' to close function body but found Eof
+  --> 0:0
+
+
+
+4 !== 0
+
+    at command (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting/tests/node_composition_helpers.mjs:12:149)
+    at run (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting/tests/node_composition_helpers.mjs:14:205)
+    at setup (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting/tests/node_composition_helpers.mjs:16:1287)
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting/tests/graph_attempt_smoke.mjs:3:9
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 4,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+
+===== dev-smoke-2.log =====
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-lIcSt1","checks":8}
+
+
+===== dev-smoke-3.log =====
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-jsnRq2","checks":8}
+
+
+===== dev-ts-build.log =====
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/interop-typescript-rehearsal@0.0.0-experimental build
+> tsc
+
+
+
+===== dev-vectors-1.log =====
+{"checker":"kujo","ok":true,"vectors":2}
+
+
+===== dev-policy-1-interruption.json =====
+{
+  "reason": "Stop this development-only run before editing its pinned source to fix the independently reproduced ledger commitment_bound failure; full suite will rerun.",
+  "pids": [
+    64930,
+    68556
+  ],
+  "completed_checks": 1
+}
+
+
+===== canonical-wrapper-note.txt =====
+Replaced the unstarted canonical wait wrapper to use an immutable copy of the verified Kujo binary; no gate was interrupted.
+Canonical gate remains unstarted; final review is checking immutable downstream input bindings before source freeze.
+
+===== Canonical validator failure, reconstructed from retained conversation tool output =====
+Source: 74800d5ca01179f4c3e794b3fb26af93005cfd5c.
+Command: KUJO_BIN=/tmp/dispatch-attempt-evidence/kujo-verified DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh
+Result: exit 1 at graph_attempt_integration; Error: no schema with key or ref "https://json-schema.org/draft/2020-12/schema".
+The new test imported ajv/dist/ajv.js instead of ajv/dist/2020.js. Correction 9edf94a uses the installed Draft 2020-12 validator. The schema compiled and the corrected focused graph_attempt_integration.mjs passed all five checks, with exact input, lineage, graph/node ceilings, operator revocation and changed-artifact rejection. The full canonical rerun then progressed through smoke, parent finalization, static graph policy/recovery, attempt contracts/bindings/authority/smoke before a host restart. Its active integration log was incomplete; no full-gate result is inferred. Temporary transcripts were removed by restart; surviving per-suite logs are retained separately. A fresh complete gate is required and is recorded in canonical.txt only after completion.
