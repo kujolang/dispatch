@@ -1,0 +1,1 @@
+{"schema":"dispatch.batch-summary/v1alpha1","amounts":[12,18,20],"expected_total":50,"program_limit":2,"eval_limit":1}

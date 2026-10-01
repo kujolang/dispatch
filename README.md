@@ -765,3 +765,6 @@ Finalization does not schedule work, replay effects or change participant author
 Experimental sourced resource accounting and bounded Eval reservation planning are
 documented in [the resource contract](docs/contracts/resources/protocol.md). Existing
 runtime/provider artifacts remain observations; Dispatch owns budget authority.
+
+For the experimental typed-output, review, Eval and budget path, see the
+[operator rehearsal](docs/operator-rehearsal.md).

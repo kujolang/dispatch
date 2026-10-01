@@ -41,6 +41,7 @@ func print_help() {
     "Usage:",
     "  kujo run dispatch.kujo run \"Research topic\" [--workflow-file workflow.json] [--input-json '{...}'] [--output-root outputs]",
     "  kujo run dispatch.kujo init [--dir dispatch-workflow] [--force]",
+    "  kujo run dispatch.kujo operator --help (experimental local batch host)",
     "  kujo run dispatch.kujo catalog <generate|sync> <config.json> --output model-catalog.json",
     "  kujo run dispatch.kujo webhooks <status|replay> [--output-root outputs] [--url https-url] [--destination lifecycle] [--json]",
     "  kujo run dispatch.kujo demo \"Research topic\" [--workflow research-report] [--policy-profile staging] [--tags prod,project-a] [--yes] [--non-interactive] [--output-root outputs]",
@@ -2162,6 +2163,15 @@ while i < len(raw_args) {
     i := i + 1
 }
 
+if command == "operator" {
+    argv := ["bash", dispatch_root_path("scripts/operator.sh")]
+    for value in command_args {argv = push(argv, value)}
+    result := spawn_process(argv, {"inherit_env":true, "timeout_ms":300000, "max_output_bytes":4194304})
+    if result.stdout != "" {print(trim(result.stdout))}
+    if result.stderr != "" {print(trim(result.stderr))}
+    if result.success == false {exit(1)}
+    return
+}
 if command == "run"||command == "demo" {
     run_demo(command_args)
     return
