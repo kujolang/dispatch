@@ -1,0 +1,5 @@
+PASS fail-selected repair consumes program/Eval resources; inactive pass branch consumes nothing; zero capacity still permits graph finalization
+PASS mixed program/Eval plan is atomic, over-capacity plan reserves nothing, subgraph receipt grants no extra units
+PASS missing provider usage blocks ordinary program progression and explicit planning without inventing zero
+PASS source changes invalidate an observation candidate; exact provider-sourced facts allow later reservation
+{"ok":true,"checks":4,"proofs":["fail-selected repair consumes program/Eval resources; inactive pass branch consumes nothing; zero capacity still permits graph finalization","mixed program/Eval plan is atomic, over-capacity plan reserves nothing, subgraph receipt grants no extra units","missing provider usage blocks ordinary program progression and explicit planning without inventing zero","source changes invalidate an observation candidate; exact provider-sourced facts allow later reservation"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-d67VqJ"}

@@ -1,3 +1,4 @@
+from src.core.resource_operation import resource_operation
 from src.core.graph_policy_operation import graph_policy_operation
 from src.core.graph_outcome import graph_terminal_operation
 from src.core.node_transition import node_raw
@@ -28,7 +29,7 @@ func pointer(path) {return parse_json(read_file(path + "/pointer.json"))}
 func state(path) {p := pointer(path);loaded := load_run_state(path + "/runs", p["run_id"]);need(loaded["ok"]);return loaded["run_state"]}
 func inventory() {
     files := []
-    for path in ["src/core/graph_attempts.kujo", "src/core/graph_outcome.kujo", "src/core/graph_transition.kujo", "src/core/node_transition.kujo", "src/core/node_composition.kujo", "src/core/node_execution.kujo", "src/core/runner.kujo", "src/core/assurance_state.kujo", "src/core/retained_recovery.kujo", "src/core/control_journal.kujo", "src/core/graph_policy.kujo", "src/core/graph_policy_operation.kujo", "src/core/assurance_configuration.kujo", "src/adapters/sqlite_continuation.kujo", "tests/node_composition_fixture.kujo"] {files = push(files, {"root":os_getcwd(), "path":path})}
+    for path in ["src/core/runtime_resource_schema.kujo", "src/core/resource_ledger.kujo", "src/core/resource_facts.kujo", "src/core/resource_operation.kujo", "tests/resource_eval_worker.kujo", "src/core/graph_attempts.kujo", "src/core/graph_outcome.kujo", "src/core/graph_transition.kujo", "src/core/node_transition.kujo", "src/core/node_composition.kujo", "src/core/node_execution.kujo", "src/core/runner.kujo", "src/core/assurance_state.kujo", "src/core/retained_recovery.kujo", "src/core/control_journal.kujo", "src/core/graph_policy.kujo", "src/core/graph_policy_operation.kujo", "src/core/assurance_configuration.kujo", "src/adapters/sqlite_continuation.kujo", "tests/node_composition_fixture.kujo"] {files = push(files, {"root":os_getcwd(), "path":path})}
     files = push(files, {"root":os_getcwd() + "/../workcell", "path":"src/evidence/retained_workspace.kujo"});return files
 }
 func descriptor(path) {return {"schema":"dispatch.assurance-configuration/v1beta1", "mode":"required", "fallback":"deny", "profile":"dispatch.sqlite-unique", "profile_version":"1beta1", "issuer":"sqlite-local", "mechanism":"sqlite_unique_transaction", "verifier_id":"node-host", "verifier_version":"1", "verifier_sha256":implementation_digest(inventory()), "authority_sha256":sha256(path)}}
@@ -40,6 +41,18 @@ func graph_host(revision, current) {
         command := spawn_process([env("KUJO_BIN"), "run", "tests/node_composition_fixture.kujo", base, "start", selected], {"cwd":os_getcwd(), "inherit_env":true, "timeout_ms":120000, "max_output_bytes":1048576})
         need(command.success&&command.stderr == "");write_file(base + "/" + id + "/start-response.json", command.stdout, true);return parse_json(command.stdout)
     }}
+    host["evaluation_identity"] := func(id) {return {"name":"eval", "version":"2.0.0", "configuration_sha256":sha256(read_file_beneath(base + "/" + id, "eval-config.json", 65536))}}
+    host["start_evaluation"] := func(id, binding, attempt) {
+        path := base + "/" + id
+        result := spawn_process([env("KUJO_BIN"), "run", "--measurements", path + "/resource-" + attempt + "-runtime.json", "tests/resource_eval_worker.kujo", base, id, attempt], {"cwd":os_getcwd(), "inherit_env":true, "timeout_ms":120000, "max_output_bytes":1048576})
+        response := {"attempt_id":attempt, "binding_ref":"sha256:" + sha256(portable_json(binding)), "status":"completed", "evaluation_raw":result.stdout}
+        if result.timed_out||result.cancelled||result.stdout_truncated||result.stderr_truncated {throw("eval_termination_uncertain")}
+        if result.success == false {response = {"attempt_id":attempt, "binding_ref":"sha256:" + sha256(portable_json(binding)), "status":"infrastructure_failed", "reason":"installed evaluator worker terminated with an infrastructure error"}}
+        if dict_get_or(cfg(path), "wrong_subject", false)&&result.success {evaluation := parse_json(result.stdout);evaluation["subject"] := {"run_id":"wrong"};response["evaluation_raw"] := to_json(evaluation)}
+        write_file_atomic_beneath(path, "response-" + attempt + ".json", to_json(response), false);return response
+    }
+    host["read_evaluation_attempt"] := func(id, binding, attempt) {return parse_json(read_file_beneath(base + "/" + id, "response-" + attempt + ".json", 1048576))}
+    host["read_resource_source"] := func(subject, kind) {path := base + "/" + subject["node_id"];relative := "resource-" + subject["attempt_id"] + "-" + kind + ".json";if file_exists(path + "/" + relative) == false {return null};return {"subject":subject, "source_kind":kind, "raw":read_file_beneath(path, relative, 65536)}}
     host["resolve_attempt"] := func(id, run_id) {for suffix in [id, id + "-retry"] {path := base + "/" + suffix;if file_exists(path + "/pointer.json")&&pointer(path)["run_id"] == run_id {return {"root":path + "/runs", "run_id":run_id, "options":node_options(path)}}};throw("attempt_run_unavailable")}
     return {"status":dict_get_or(config, "status", "active"), "descriptor":config["descriptor"], "authority_sha256":config["descriptor"]["authority_sha256"], "implementation":inventory(), "verify":func(subject) {return null}, "node_host":host}
 }
@@ -79,10 +92,11 @@ func graph_workflow() {
         if contains(["parent-finalization/v1alpha1", "program-attempt/v1alpha1"], contract) {node_config["node_execution"] := {"schema":"dispatch.run-backed-node/v1alpha1", "run_id":pointer(base + "/" + node["id"])["run_id"], "step_id":"action", "inputs":node["inputs"], "outputs":outputs()}}
         else {node_config["inputs"] := node["inputs"];if contract == "evaluation-result/v1" {node_config["evaluator"] := {"name":"eval", "version":"2.0.0", "configuration_sha256":sha256(read_file(base + "/" + node["id"] + "/eval-config.json"))}}}
         if has_key(node, "max_attempts") {execution := node_config["node_execution"];execution["max_attempts"] := node["max_attempts"];if node["max_attempts"] == 2 {execution["retry_run_id"] := pointer(base + "/" + node["id"] + "-retry")["run_id"]};node_config["node_execution"] := execution}
-        for key in ["accept_terminal", "after_subgraphs", "on_unsuccessful"] {if has_key(node, key) {node_config[key] := node[key]}}
+        for key in ["max_eval_attempts", "accept_terminal", "after_subgraphs", "on_unsuccessful"] {if has_key(node, key) {node_config[key] := node[key]}}
         steps = push(steps, create_step(node["id"], node["id"], "tool", node_config))
     }
     metadata := {"node_composition":"dispatch.node-composition/v1alpha1"};if heterogeneous {metadata["graph_outcome"] := "dispatch.graph-outcome/v1alpha1"}
+    if has_key(definition, "graph_resources") {metadata["graph_resources"] := definition["graph_resources"]}
     if has_key(definition, "graph_accounting") {metadata["graph_accounting"] := definition["graph_accounting"]}
     if has_key(definition, "graph_policy") {metadata["graph_policy"] := definition["graph_policy"]}
     return create_workflow({"id":"static-composition", "metadata":metadata, "name":"Static node DAG", "description":"Separate data and scheduling", "input_schema":{"type":"dict"}, "output_schema":{"type":"dict"}, "agents":{}, "tools":[], "steps":steps, "routing":{"enabled":false}, "control":dict_get_or(definition, "control", {"policy_id":"graph", "policy_version":"1", "policies":[]}), "default_retry_policy":{"max_attempts":1}, "approval_config":{"auto_approve":false}, "memory_config":{}, "budgets":{}, "max_parallel_steps":1})
@@ -131,6 +145,8 @@ if mode == "init-node" {
     config := {"descriptor":descriptor(base)};write_file(base + "/host.json", to_json(config), true)
     created := create_negotiated_run(graph_workflow(), {}, base + "/runs", {}, config["descriptor"], graph_host);need(created["ok"])
     write_file(base + "/pointer.json", to_json({"run_id":created["run_state"]["run_id"], "run_dir":created["run_state"]["run_dir"]}), true);print(to_json({"ok":true}))
+} else if mode == "resource-op" {
+    request := parse_json(read_file(arguments[3]));print(to_json(resource_operation(base + "/runs", pointer(base)["run_id"], request, graph_options())))
 } else if mode == "policy-op" {
     request := parse_json(read_file(arguments[3]));print(to_json(graph_policy_operation(base + "/runs", pointer(base)["run_id"], request, graph_options())))
 } else if mode == "graph-op" {

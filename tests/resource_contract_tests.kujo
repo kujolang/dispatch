@@ -1,0 +1,29 @@
+from src.core.runtime_resource_schema import runtime_resource_schema
+from src.core.resource_ledger import validate_resources, eval_budget, fold_resource, eval_current, resource_guard
+from src.core.resource_facts import resource_source_facts
+checks := 0
+func check(ok) {if ok != true {throw("resource_contract_failed")};checks = checks + 1}
+func rejects(callback) {caught := false;try {callback()} except err {caught = true};check(caught)}
+func graph() {return {"workflow_definition":{"metadata":{"graph_accounting":"dispatch.graph-attempt-accounting/v1alpha1", "graph_resources":{"schema":"dispatch.graph-resources/v1alpha1", "max_eval_attempts":1, "require_provider_usage":false}}, "steps":[{"id":"E", "config":{"terminal_contract":"evaluation-result/v1", "max_eval_attempts":2}}, {"id":"F", "config":{"terminal_contract":"evaluation-result/v1"}}]}}}
+func reservation(id, candidate_id) {return {"candidate":{"candidate_id":candidate_id, "evaluations":[{"node_id":id, "ordinal":1, "binding_ref":"exact-input"}]}}}
+g := graph();check(validate_resources(g));check(eval_budget(g)["available"] == 1)
+g = fold_resource(g, "graph_resources_reserved", reservation("E", "r1"));check(eval_budget(g)["reserved"] == 1&&eval_budget(g)["consumed"] == 0)
+rejects(func() {fold_resource(g, "graph_resources_reserved", reservation("F", "r2"))})
+row := eval_current(g, "E");action := {"candidate":{"node_id":"E", "attempt_id":row["attempt_id"]}}
+released := fold_resource(g, "graph_eval_released", action);check(eval_budget(released)["available"] == 1&&eval_budget(released)["released"] == 1)
+rejects(func() {fold_resource(released, "graph_eval_dispatched", action)})
+g = fold_resource(g, "graph_eval_dispatched", action);check(eval_budget(g)["consumed"] == 1&&eval_budget(g)["reserved"] == 0)
+rejects(func() {fold_resource(g, "graph_eval_dispatched", action)})
+rejects(func() {fold_resource(g, "graph_eval_released", action)})
+rejects(func() {fold_resource(g, "graph_resources_reserved", reservation("E", "r3"))})
+model := {"serialization_version":"kujo.context-ledger/v1", "content_mode":"off", "accounting_scope":"adapter_messages_and_tools", "usage_source":"provider", "provider_usage":{"input_tokens":10, "output_tokens":null}, "components":[{"estimated_tokens":8, "estimator":"kujo.weighted-characters/v1"}]}
+fact := resource_source_facts("model", to_json(model));check(fact["class"] == "provider_reported"&&fact["reported"]["output_tokens"] == null&&fact["estimated"]["component_tokens"] == 8)
+model["usage_source"] := "fixture";fact = resource_source_facts("model", to_json(model));check(fact["class"] == "unknown"&&fact["reported"]["input_tokens"] == null&&fact["estimated"]["class"] == "estimated")
+model["usage_source"] := "provider";model["provider_usage"] := {"input_tokens":-1};rejects(func() {resource_source_facts("model", to_json(model))})
+strict := graph();p := strict["workflow_definition"]["metadata"]["graph_resources"];p["require_provider_usage"] := true;definition := strict["workflow_definition"];metadata := definition["metadata"];metadata["graph_resources"] := p;definition["metadata"] := metadata;strict["workflow_definition"] := definition
+strict["graph_attempts"] := {"B":[{"run_id":"B1", "dispatch":{}}]};rejects(func() {resource_guard(strict)})
+runtime := {"schema":"kujo.runtime-measurements/v1", "scope":"process", "runtime":"vm", "snapshot_consistency":"independent_counters", "waited_for_detached":false, "wall_ns":123, "cpu_seconds":null, "process_peak_rss_bytes":null, "counters":{"vm_entries":2}}
+counters := {};for key in runtime_resource_schema()["properties"]["counters"]["required"] {counters[key] := 0};runtime["counters"] := counters;runtime["runtime_version"] := "fixture";runtime["outcome"] := "success";runtime["unsupported"] := [];fact = resource_source_facts("runtime", to_json(runtime));check(fact["cpu_seconds"] == null&&fact["process_peak_rss_bytes"] == null&&fact["hard_policy_eligible"] == false)
+runtime["wall_ns"] := -1;rejects(func() {resource_source_facts("runtime", to_json(runtime))})
+invalid := graph();definition = invalid["workflow_definition"];metadata = definition["metadata"];p = metadata["graph_resources"];p["max_eval_attempts"] := 9;metadata["graph_resources"] := p;definition["metadata"] := metadata;invalid["workflow_definition"] := definition;rejects(func() {validate_resources(invalid)})
+print(to_json({"ok":true, "checks":checks}))

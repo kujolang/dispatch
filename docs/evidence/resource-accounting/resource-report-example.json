@@ -1,0 +1,115 @@
+{
+  "ok": true,
+  "report": {
+    "authority": "informational",
+    "eval_attempts": {},
+    "evaluations": {
+      "available": 0,
+      "consumed": 0,
+      "limit": 0,
+      "released": 0,
+      "reserved": 0,
+      "unit": "eval_dispatches"
+    },
+    "journal": "793f84e0723b573e994beaab1c7987a6b6186281f9805ffdabb115178b18fae3",
+    "monetary_cost": {
+      "class": "unknown",
+      "value": null
+    },
+    "programs": {
+      "available": 0,
+      "consumed": 1,
+      "exhausted": true,
+      "limit": 2,
+      "nodes": [
+        {
+          "consumed": 1,
+          "limit": 1,
+          "node_id": "A",
+          "remaining": 0,
+          "reserved": 0
+        },
+        {
+          "consumed": 0,
+          "limit": 1,
+          "node_id": "B",
+          "remaining": 0,
+          "reserved": 1
+        }
+      ],
+      "on_exhaustion": "block",
+      "released": 0,
+      "reserved": 1,
+      "unit": "program_dispatches",
+      "used": 1
+    },
+    "readings": [
+      {
+        "facts": {
+          "class": "unknown"
+        },
+        "source_kind": "runtime",
+        "source_ref": null,
+        "subject": {
+          "attempt_id": "run-1790857023932-6252",
+          "kind": "program",
+          "node_id": "A"
+        }
+      },
+      {
+        "facts": {
+          "class": "provider_reported",
+          "estimated": {
+            "class": "estimated",
+            "component_tokens": 16,
+            "scope": "adapter_components"
+          },
+          "monetary_cost": null,
+          "reported": {
+            "input_tokens": 41,
+            "output_tokens": 7
+          }
+        },
+        "source_kind": "model",
+        "source_ref": "sha256:e7bf8f68066444cad56a3f3c63ee89ebcdda427e2128a76359f13a8a4f1696d2",
+        "subject": {
+          "attempt_id": "run-1790857023932-6252",
+          "kind": "program",
+          "node_id": "A"
+        }
+      }
+    ],
+    "revision": 8,
+    "run_id": "run-1790857028144-7732",
+    "schema": "dispatch.resource-report/v1alpha1",
+    "totals": {
+      "estimated_component_tokens": {
+        "class": "estimated",
+        "known_sum": 16,
+        "total": 16,
+        "unknown_attempts": 0
+      },
+      "process_wall_ns": {
+        "class": "observed",
+        "known_sum": 0,
+        "scope": "sum_of_process_intervals_not_graph_elapsed_or_cpu",
+        "total": null,
+        "unknown_attempts": 1
+      },
+      "reported_input_tokens": {
+        "class": "provider_reported",
+        "complete": true,
+        "known_sum": 41,
+        "total": 41,
+        "unknown_attempts": 0
+      },
+      "reported_output_tokens": {
+        "class": "provider_reported",
+        "complete": true,
+        "known_sum": 7,
+        "total": 7,
+        "unknown_attempts": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,153 @@
+    Blocking waiting for file lock on build directory
+   Compiling serde_core v1.0.229
+   Compiling serde v1.0.229
+   Compiling ahash v0.8.12
+   Compiling either v1.18.0
+   Compiling num-conv v0.2.2
+   Compiling time-core v0.1.9
+   Compiling regex-automata v0.4.18
+   Compiling anyhow v1.0.104
+   Compiling num-rational v0.4.2
+   Compiling num-iter v0.1.46
+   Compiling plotters-backend v0.3.7
+   Compiling ciborium-io v0.2.2
+   Compiling bit-vec v0.6.3
+warning: unused import: `SequentialWriter`
+ --> vendor/tiny_http-0.12.0/src/util/mod.rs:7:28
+  |
+7 | pub use self::sequential::{SequentialWriter, SequentialWriterBuilder};
+  |                            ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: trait `MustBeShareDummy` is never used
+   --> vendor/tiny_http-0.12.0/src/lib.rs:164:7
+    |
+164 | trait MustBeShareDummy: Sync + Send {}
+    |       ^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)
+   Compiling ciborium-ll v0.2.2
+   Compiling cast v0.3.0
+   Compiling walkdir v2.5.0
+   Compiling iso8601 v0.6.6
+   Compiling time-macros v0.2.32
+   Compiling rayon v1.12.0
+   Compiling itertools v0.10.5
+   Compiling bit-set v0.5.3
+   Compiling plotters-svg v0.3.7
+   Compiling is-terminal v0.4.17
+   Compiling num-cmp v0.1.0
+   Compiling plotters v0.3.7
+   Compiling anes v0.1.6
+   Compiling wasmtime-jit-icache-coherence v26.0.1
+   Compiling num v0.4.3
+   Compiling oorandom v11.1.5
+   Compiling fraction v0.15.4
+   Compiling bytecount v0.6.9
+   Compiling time v0.3.55
+   Compiling criterion-plot v0.5.0
+   Compiling serde_json v1.0.151
+   Compiling csv v1.4.0
+   Compiling smallvec v1.15.2
+   Compiling ipnet v2.12.1
+   Compiling bincode v1.3.3
+   Compiling hyphenation_commons v0.8.4
+   Compiling serde_spanned v0.6.9
+   Compiling toml_datetime v0.6.11
+   Compiling serde_urlencoded v0.7.1
+   Compiling serde_yaml v0.9.34+deprecated
+   Compiling regex v1.13.1
+   Compiling parking_lot_core v0.9.12
+   Compiling icu_normalizer v2.3.0
+   Compiling hashbrown v0.14.5
+   Compiling hyper v1.11.1
+   Compiling parking_lot v0.12.5
+   Compiling prefix-trie v0.8.4
+   Compiling idna_adapter v1.2.2
+   Compiling string_cache v0.9.0
+   Compiling idna v1.1.0
+   Compiling web_atoms v0.2.6
+   Compiling tokio-postgres v0.7.18
+   Compiling regalloc2 v0.10.2
+   Compiling hyphenation v0.8.4
+   Compiling cap-primitives v4.0.2
+   Compiling nibble_vec v0.1.0
+   Compiling exr v1.74.2
+   Compiling radix_trie v0.2.1
+   Compiling url v2.5.8
+   Compiling hyper-util v0.1.20
+   Compiling markup5ever v0.39.0
+   Compiling cap-std v4.0.2
+   Compiling hickory-proto v0.26.1
+   Compiling tower-http v0.6.11
+   Compiling azul-layout v0.0.16
+   Compiling cranelift-codegen v0.113.1
+   Compiling hashlink v0.9.1
+   Compiling moka v0.12.16
+   Compiling hyper-tls v0.6.0
+   Compiling mysql_common v0.37.3
+   Compiling lopdf v0.44.0
+   Compiling toml_edit v0.22.27
+   Compiling reqwest v0.12.28
+   Compiling postgres-openssl v0.5.3
+   Compiling postgres v0.19.14
+   Compiling rusqlite v0.31.0
+   Compiling hickory-net v0.26.1
+   Compiling image v0.25.10
+   Compiling mysql_async v0.37.1
+   Compiling hickory-resolver v0.26.1
+   Compiling toml v0.8.23
+   Compiling cap-fs-ext v4.0.2
+   Compiling html5ever v0.39.0
+   Compiling rustyline v14.0.0
+   Compiling jsonwebtoken v10.4.0
+   Compiling zip v7.2.0
+   Compiling tinytemplate v1.2.1
+   Compiling fancy-regex v0.13.0
+   Compiling ciborium v0.2.2
+   Compiling jsonschema v0.18.3
+   Compiling criterion v0.5.1
+   Compiling cranelift-native v0.113.1
+   Compiling cranelift-frontend v0.113.1
+   Compiling cranelift-module v0.113.1
+   Compiling cranelift-jit v0.113.1
+   Compiling cranelift v0.113.1
+   Compiling printpdf v0.12.8
+   Compiling kujolang v1.7.0 (/Users/robertdevore/2026/Kujolang/kujo-repos/kujo-resource-accounting)
+    Finished `release` profile [optimized] target(s) in 66m 27s
+     Running tests/architecture_docs_contract.rs (target/release/deps/architecture_docs_contract-1ca474a0cabf10f0)
+
+running 1 test
+test architecture_doc_matches_current_runtime_posture ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/readme_contracts.rs (target/release/deps/readme_contracts-cb4a79fea93848c9)
+
+running 1 test
+test readme_covers_v1_status_cli_security_and_core_reference_links ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/workflow_control_contracts.rs (target/release/deps/workflow_control_contracts-6576866eab9dbf37)
+
+running 13 tests
+test actual_cross_component_failure_evidence_conforms ... ignored, requires the local Dispatch failure-gate golden-path handoff
+test actual_workspace_reexecution_artifacts_match_shared_schemas ... ignored, requires Dispatch tests/reexecution_lifecycle_fixture.kujo output
+test control_contracts_keep_secrets_as_references ... ok
+test workflow_control_schema_ids_and_contract_constants_are_unique ... ok
+test intervention_availability_is_additive_and_typed ... ok
+test portable_control_event_is_bounded_and_versioned ... ok
+test evaluation_result_cannot_issue_workflow_control_action ... ok
+test oversized_evidence_and_invalid_effect_enums_are_rejected ... ok
+test error_verdict_and_reexecution_modes_have_explicit_semantics ... ok
+test embedded_evidence_has_the_same_integrity_requirements_as_standalone ... ok
+test workflow_control_valid_fixtures_conform ... ok
+test workflow_control_rejects_missing_fields_bad_versions_and_bounds ... ok
+test producer_neutral_evaluations_preserve_error_and_rule_facts ... ok
+
+test result: ok. 11 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.05s
+

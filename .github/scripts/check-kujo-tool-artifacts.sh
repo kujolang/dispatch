@@ -55,7 +55,10 @@ git -C "$matcher_dir" init -q
 
 violations=()
 while IFS= read -r -d '' changed_path; do
-  if match="$(git -C "$matcher_dir" check-ignore --no-index -v -- "$changed_path" 2>/dev/null)"; then
+  # Verbose check-ignore also exits zero for a matching negation. Ask the quiet
+  # predicate first so explicit reviewed evidence exceptions retain Git semantics.
+  if git -C "$matcher_dir" check-ignore --no-index -q -- "$changed_path"; then
+    match="$(git -C "$matcher_dir" check-ignore --no-index -v -- "$changed_path")"
     violations+=("$changed_path ($match)")
   fi
 done < <(

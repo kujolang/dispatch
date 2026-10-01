@@ -4,6 +4,18 @@ Version source: `kennel.toml`; CLI and `kujo.toml` must agree. Historical releas
 entries are retained below. Experimental contract versions are independent of
 Dispatch's version.
 
+## Unreleased — sourced resources and Eval budgets
+
+- Add opt-in graph/node Eval ceilings with locked reservations, durable dispatch
+  consumption, exact-input evaluator retries and retained response reconciliation.
+- Add atomic bounded program/Eval reservation plans for ready active paths, reusing
+  existing graph and child locks. Inactive paths and group receipts consume no units.
+- Retain existing runtime and SDK usage artifacts with explicit source classes,
+  unknown coverage and optional fail-closed provider-usage prerequisites. No hard
+  token/time/currency budget or pricing is inferred from post-hoc measurements.
+- Preserve consumed work across crashes, contention and retained-host repair.
+  See [resource contracts](docs/contracts/resources/protocol.md).
+
 ## Unreleased — explicit graph attempt accounting
 
 - Add opt-in durable reservations, permanent dispatch consumption and explicit safe

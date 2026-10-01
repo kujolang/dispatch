@@ -761,3 +761,7 @@ protected parent after verifying effects, outputs, evaluation and operator revie
 See [the bounded contract](docs/contracts/parent-finalization/protocol.md) and
 [Wave F crosswalk](docs/contracts/parent-finalization/wave-f-crosswalk.md).
 Finalization does not schedule work, replay effects or change participant authority.
+
+Experimental sourced resource accounting and bounded Eval reservation planning are
+documented in [the resource contract](docs/contracts/resources/protocol.md). Existing
+runtime/provider artifacts remain observations; Dispatch owns budget authority.

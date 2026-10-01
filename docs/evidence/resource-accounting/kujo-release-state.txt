@@ -1,0 +1,3 @@
+[release-state] README.md matches Cargo.toml version: 1.7.0
+[release-state] ERROR: README.md does not identify latest stable tag v1.7.0
+[release-state] Expected to find: latest published stable release tag is `v1.7.0`

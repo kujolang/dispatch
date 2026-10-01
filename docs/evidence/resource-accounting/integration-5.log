@@ -1,0 +1,7 @@
+PASS Eval output and reservation do not authorize terminal completion or execution
+PASS terminated evaluator infrastructure failure retries exact result with a new Eval identity without rerunning program
+PASS Eval exhaustion denies new work but permits consumed Eval finalization; required remainder stays blocked
+PASS real isolated evaluator runtime report retained with process scope and exact digest
+PASS actual SDK context-ledger projection keeps offline reported fixture, estimates and unknown attempt coverage separate
+PASS duplicate accounting cannot add usage twice; corrupt retained measurement fails closed
+{"ok":true,"checks":6,"proofs":["Eval output and reservation do not authorize terminal completion or execution","terminated evaluator infrastructure failure retries exact result with a new Eval identity without rerunning program","Eval exhaustion denies new work but permits consumed Eval finalization; required remainder stays blocked","real isolated evaluator runtime report retained with process scope and exact digest","actual SDK context-ledger projection keeps offline reported fixture, estimates and unknown attempt coverage separate","duplicate accounting cannot add usage twice; corrupt retained measurement fails closed"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-leHs1I"}

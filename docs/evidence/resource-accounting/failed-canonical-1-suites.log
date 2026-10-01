@@ -1,0 +1,131 @@
+### parent_finalization.log
+PASS pending effects block parent
+PASS cancelled required selection is not completion
+PASS unresolved operator review blocks
+PASS real Workcell refs and original bytes preserved
+PASS stale authority
+PASS changed registration
+PASS wrong environment
+PASS operator authorization revoked
+PASS stale evaluation
+PASS wrong evaluation subject
+PASS missing/replaced output.txt
+PASS missing/replaced output-evidence.json
+PASS missing/replaced workcell/receipt.json
+PASS retained workspace missing
+PASS changed retained Git HEAD
+PASS stale run revision
+PASS new unresolved child
+PASS expired preservation
+PASS independent sink uncertainty blocks
+PASS legitimate new assessment invalidates candidate
+PASS generic approved review cannot bypass finalization
+PASS separate finalization without effect replay
+PASS Eval fail maps through existing policy
+PASS SIGKILL before decision remains nonterminal
+PASS SIGKILL after terminal reply loss is final
+PASS two independently assessed fresh controllers one durable finalization
+PASS producer success still requires parent finalization
+PASS anchored required descendant blocks terminal transition
+PASS mutable optional flag cannot waive anchored required child
+PASS live authority revoked inside finalization boundary
+PASS orphan durable finalization recovered by fresh controllers
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/parent-finalization-2rYG1w","checks":31,"proofs":["pending effects block parent","cancelled required selection is not completion","unresolved operator review blocks","real Workcell refs and original bytes preserved","stale authority","changed registration","wrong environment","operator authorization revoked","stale evaluation","wrong evaluation subject","missing/replaced output.txt","missing/replaced output-evidence.json","missing/replaced workcell/receipt.json","retained workspace missing","changed retained Git HEAD","stale run revision","new unresolved child","expired preservation","independent sink uncertainty blocks","legitimate new assessment invalidates candidate","generic approved review cannot bypass finalization","separate finalization without effect replay","Eval fail maps through existing policy","SIGKILL before decision remains nonterminal","SIGKILL after terminal reply loss is final","two independently assessed fresh controllers one durable finalization","producer success still requires parent finalization","anchored required descendant blocks terminal transition","mutable optional flag cannot waive anchored required child","live authority revoked inside finalization boundary","orphan durable finalization recovered by fresh controllers"]}
+
+### preservation_binding.log
+PASS historical inline recipe unchanged
+PASS implementation matches portable vector
+PASS reference binds original bytes
+PASS document and evidence have distinct identities
+PASS wrong content digest rejected
+PASS wrong environment rejected
+PASS wrong run rejected
+PASS wrong evidence subject rejected
+PASS malformed or unauthorized reference rejected {"$ref":null}
+PASS malformed or unauthorized reference rejected {"$ref":""}
+PASS malformed or unauthorized reference rejected {"$ref":"receipt.json","extra":true}
+PASS malformed or unauthorized reference rejected {"$ref":"https://untrusted.invalid/evidence"}
+PASS malformed or unauthorized reference rejected {"$ref":"../outside"}
+PASS malformed or unauthorized reference rejected {"$ref":"missing.json"}
+PASS wrong original document rejected
+PASS old codec still rejects refs
+Passed: 16
+Failed: 0
+
+### static_policy_contracts.log
+{"checks":14,"ok":true}
+
+### static_policy_edges.log
+PASS failed entry permits graph failure without inventing unentered group completion
+{"ok":true,"checks":2,"scenarios":["failed entry without group completion","closed terminal outcome predicate"]}
+
+### static_policy_integration.log
+PASS unfinalized Eval cannot activate pass
+PASS stale assessment and scheduling without activation reject pass
+PASS only selected path independently admitted pass
+PASS alternate later evaluation cannot flap consumed branch pass
+PASS conditional join and outcome omit inactive without success pass
+PASS unfinalized Eval cannot activate fail
+PASS stale assessment and scheduling without activation reject fail
+PASS only selected path independently admitted fail
+PASS alternate later evaluation cannot flap consumed branch fail
+PASS repair is new R execution and new E2 judgment, never retry A
+PASS conditional join and outcome omit inactive without success fail
+PASS authorized human approve_override routes without direct execution or rewritten decision
+PASS authorized human abort routes without direct execution or rewritten decision
+{"ok":true,"checks":13,"scenarios":["unfinalized Eval cannot activate pass","stale assessment and scheduling without activation reject pass","only selected path independently admitted pass","alternate later evaluation cannot flap consumed branch pass","conditional join and outcome omit inactive without success pass","unfinalized Eval cannot activate fail","stale assessment and scheduling without activation reject fail","only selected path independently admitted fail","alternate later evaluation cannot flap consumed branch fail","repair is new R execution and new E2 judgment, never retry A","conditional join and outcome omit inactive without success fail","authorized human approve_override routes without direct execution or rewritten decision","authorized human abort routes without direct execution or rewritten decision"]}
+
+### static_policy_recovery.log
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: [KUJOVM001] [vm] Runtime Error: read_file_beneath[target_open_failed]: cannot open target 'tests/resource_eval_worker.kujo': No such file or directory (os error 2)
+  --> 0:0
+
+Call stack:
+  0 at descriptor
+
+
+
+4 !== 0
+
+    at command (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/node_composition_helpers.mjs:12:149)
+    at run (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/node_composition_helpers.mjs:14:205)
+    at setup (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/node_composition_helpers.mjs:16:1287)
+    at branchRun (file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/static_policy_recovery.mjs:10:102)
+    at file:///Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/tests/static_policy_recovery.mjs:11:9
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 4,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.7.0
+
+### static_subgraph_integration.log
+PASS all internal facts without subgraph terminal event block parent
+PASS recovery cannot invent subgraph completion
+PASS parent binds exact subgraph receipt and output without copying internal terminal list
+PASS subgraph provenance and independent parent execution survive graph finalization
+PASS budget exhaustion blocks new dispatch but permits consumed A resolution
+PASS budget ceiling cannot be raised through a mutable workflow
+PASS anchored budget mutation rejects after run start
+PASS explicit failure-review strategy requires new authorized decision and preserves denial
+PASS required terminal rejection follows explicit fail policy
+PASS required terminal rejection follows explicit block policy
+PASS fanout optional rejection remains history while required siblings succeed
+PASS failed subgraph terminal seals unfinished unconsumed members and blocks parent
+{"ok":true,"checks":12,"scenarios":["all internal facts without subgraph terminal event block parent","recovery cannot invent subgraph completion","parent binds exact subgraph receipt and output without copying internal terminal list","subgraph provenance and independent parent execution survive graph finalization","budget exhaustion blocks new dispatch but permits consumed A resolution","budget ceiling cannot be raised through a mutable workflow","anchored budget mutation rejects after run start","explicit failure-review strategy requires new authorized decision and preserves denial","required terminal rejection follows explicit fail policy","required terminal rejection follows explicit block policy","fanout optional rejection remains history while required siblings succeed","failed subgraph terminal seals unfinished unconsumed members and blocks parent"]}
+
+### typescript_build.log
+npm warn Unknown user config "python". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> @kujolang/interop-typescript-rehearsal@0.0.0-experimental build
+> tsc
+

@@ -1,0 +1,30 @@
+Collecting attrs==26.1.0
+  Using cached attrs-26.1.0-py3-none-any.whl (67 kB)
+Collecting jsonschema==4.23.0
+  Using cached jsonschema-4.23.0-py3-none-any.whl (88 kB)
+Collecting jsonschema-specifications==2025.9.1
+  Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+Collecting referencing==0.37.0
+  Using cached referencing-0.37.0-py3-none-any.whl (26 kB)
+Collecting rpds-py==0.30.0
+  Using cached rpds_py-0.30.0-cp310-cp310-macosx_10_12_x86_64.whl (370 kB)
+Collecting typing-extensions==4.16.0
+  Using cached typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+Saved ./wheelhouse/attrs-26.1.0-py3-none-any.whl
+Saved ./wheelhouse/jsonschema-4.23.0-py3-none-any.whl
+Saved ./wheelhouse/jsonschema_specifications-2025.9.1-py3-none-any.whl
+Saved ./wheelhouse/referencing-0.37.0-py3-none-any.whl
+Saved ./wheelhouse/rpds_py-0.30.0-cp310-cp310-macosx_10_12_x86_64.whl
+Saved ./wheelhouse/typing_extensions-4.16.0-py3-none-any.whl
+Successfully downloaded attrs jsonschema jsonschema-specifications referencing rpds-py typing-extensions
+WARNING: You are using pip version 22.0.4; however, version 26.2.1 is available.
+You should consider upgrading via the '/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-resource-accounting/interop/python-participant/.venv/bin/python -m pip install --upgrade pip' command.
+Looking in links: wheelhouse
+Processing ./wheelhouse/attrs-26.1.0-py3-none-any.whl
+Processing ./wheelhouse/jsonschema-4.23.0-py3-none-any.whl
+Processing ./wheelhouse/jsonschema_specifications-2025.9.1-py3-none-any.whl
+Processing ./wheelhouse/referencing-0.37.0-py3-none-any.whl
+Processing ./wheelhouse/rpds_py-0.30.0-cp310-cp310-macosx_10_12_x86_64.whl
+Processing ./wheelhouse/typing_extensions-4.16.0-py3-none-any.whl
+Installing collected packages: typing-extensions, rpds-py, attrs, referencing, jsonschema-specifications, jsonschema
+Successfully installed attrs-26.1.0 jsonschema-4.23.0 jsonschema-specifications-2025.9.1 referencing-0.37.0 rpds-py-0.30.0 typing-extensions-4.16.0

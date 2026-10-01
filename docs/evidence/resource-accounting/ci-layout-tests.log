@@ -1,0 +1,5 @@
+PASS complete layout and exact idempotent reuse
+PASS tagged release layout uses the explicit source root
+PASS existing checkout is preserved and rejected
+PASS conflicting alias is preserved and rejected
+PASS missing dependency source rejects

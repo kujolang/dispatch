@@ -195,3 +195,6 @@ tests/tmp/*
 /.ci/participant-sdk-build/
 
 /.ci/participant-distribution/
+
+# Reviewed, hash-inventoried proof evidence; ordinary runtime logs stay ignored.
+!docs/evidence/resource-accounting/*.log

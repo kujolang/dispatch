@@ -1,0 +1,10 @@
+from src.core.assurance_configuration import implementation_digest
+from src.core.resource_ledger import validate_resources
+func need(ok) {if ok != true {throw("resource_limit_failed")}}
+files := [];for i in range(0, 32) {files = push(files, {"root":os_getcwd(), "path":"src/core/resource_facts.kujo"})}
+need(len(implementation_digest(files)) == 64)
+denied := false;try {implementation_digest(push(files, files[0]))} except err {denied = true};need(denied)
+# Existing ordered manifests retain their exact historical digest algorithm.
+old := [];hashes := [];for i in range(0, 16) {old = push(old, files[i]);hashes = push(hashes, sha256(read_file("src/core/resource_facts.kujo")))}
+need(implementation_digest(old) == sha256(to_json(hashes)))
+print(to_json({"ok":true, "checks":3}))

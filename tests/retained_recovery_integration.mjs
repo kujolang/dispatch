@@ -40,7 +40,15 @@ for(const name of ['orphan-control','exact-duplicate','cancel-tail','rebind-tail
  const d=setup('sqlite',name);assert.equal(refresh(d).ok,true);assert.equal(select(d).ok,true);
  const before=fs.readFileSync(statePath(d),'utf8');
  if(name==='cancel-tail'){assert.equal(active(d,'cancel',{reason:'operator_cancelled'}).ok,true);fs.writeFileSync(statePath(d),before);repair(d);assert.equal(active(d,'admit').ok,false)}
- else if(name==='rebind-tail'){assert.equal(refresh(d).ok,true);const basis=fs.readFileSync(statePath(d),'utf8');assert.equal(active(d,'rebind').ok,true);fs.writeFileSync(statePath(d),basis);repair(d);assert.equal(inspect(d).lifecycle.attempts[inspect(d).lifecycle.active].rebindings.length,1)}
+ else if(name==='rebind-tail'){
+  // Same-second refreshes correctly deduplicate identical evidence. Give the
+  // renewed observation an explicitly different validity window before rebind.
+  const cfg=read(join(d,'host.json'));cfg.evidence_seconds=600;write(join(d,'host.json'),cfg);
+  const refreshed=refresh(d);assert.equal(refreshed.ok,true,JSON.stringify(refreshed));
+  assert.notEqual(refreshed.lifecycle.basis_ref,refreshed.lifecycle.attempts[refreshed.lifecycle.active].basis_ref);
+  const basis=fs.readFileSync(statePath(d),'utf8'),rebound=active(d,'rebind');assert.equal(rebound.ok,true,JSON.stringify(rebound));
+  fs.writeFileSync(statePath(d),basis);repair(d);assert.equal(inspect(d).lifecycle.attempts[inspect(d).lifecycle.active].rebindings.length,1)
+ }
  else if(['orphan-control','exact-duplicate','stale-plan','revoked','expired','missing-workspace'].includes(name)){
   damage(d,dir=>{const p=join(dir,'control-events.jsonl'),lines=fs.readFileSync(p,'utf8').trim().split('\n');if(name==='exact-duplicate')lines.push(lines.at(-1));else lines.pop();fs.writeFileSync(p,lines.join('\n'))});
   if(name==='stale-plan'){const plan=recovery(d);damage(d,dir=>fs.writeFileSync(join(dir,'effect-lifecycle','unexpected.claim'),'bad'));assert.equal(recovery(d,'apply',plan.plan).ok,false)}
