@@ -4,6 +4,18 @@ Version source: `kennel.toml`; CLI and `kujo.toml` must agree. Historical releas
 entries are retained below. Experimental contract versions are independent of
 Dispatch's version.
 
+## Unreleased — explicit graph attempt accounting
+
+- Add opt-in durable reservations, permanent dispatch consumption and explicit safe
+  release under existing graph/child locks, with event-derived accounting reports.
+- Permit an explicitly authorized second child run for the same logical node only
+  after a sealed Dispatch pre-admission refusal, binding original inputs and lineage.
+  Consumed or uncertain work cannot use retry budget as replay permission.
+- Bind graph finalization and retained-host repair to exact accounting history;
+  branch/group control events and Eval/human instances remain separate units.
+- Add input-binding/v1alpha4 commitments without changing historical vectors or
+  participant/result bytes. See `docs/contracts/graph-attempts/` for proof boundaries.
+
 ## Unreleased — bounded parent finalization
 
 - Bind existing Workcell preservation `$ref` evidence through an additive exact-byte

@@ -1,0 +1,69 @@
+===== focused-authority.log =====
+{"ok":true,"checks":3,"proofs":["operator revoked at final revalidation cannot reserve","changed child authority cannot dispatch or release an old reservation","ordinary execution failure is not a Dispatch pre-admission refusal"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-MhJ5zg"}
+
+
+===== focused-binding-safety.log =====
+PASS downstream reservation blocks retry before child binding
+PASS retry cannot retire a terminal already bound by an undispatched program descendant
+{"ok":true,"checks":2,"proofs":["downstream reservation blocks retry before child binding","retry cannot retire a terminal already bound by an undispatched program descendant"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-uCaknN"}
+
+
+===== focused-contracts.log =====
+{"checks":14,"ok":true}
+{"checks":14,"ok":true}
+{"checks":10,"ok":true}
+{"checks":12,"ok":true}
+{"checker":"kujo","ok":true,"vectors":2}
+{"ok":true,"checks":150,"mcpChecks":5,"malformedChecks":9,"wireSHA256":"f87fd01de248eca96c685282b3ead0a95578f77f6c597f598fc9d587f0bec262","independence":"Go standard library; CLI and MCP share one codec"}
+
+
+===== focused-final-contracts.log =====
+{"checks":16,"ok":true}
+{"checker":"kujo","ok":true,"vectors":4}
+{"ok":true,"checks":152,"mcpChecks":5,"malformedChecks":9,"wireSHA256":"f87fd01de248eca96c685282b3ead0a95578f77f6c597f598fc9d587f0bec262","independence":"Go standard library; CLI and MCP share one codec"}
+
+
+===== focused-final-smoke.log =====
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-vw5QFI","checks":9}
+
+
+===== focused-integration.log =====
+PASS A to safely refused B1 to independent B2 to C; exact inputs, lineage and exhausted graph finalize
+PASS two refused attempts exhaust node ceiling; no third attempt and original failures retained
+PASS graph budget exhaustion blocks retry without refund or fabricated terminal failure
+PASS operator revocation denies reservation without consuming capacity
+PASS changed producer bytes cannot become a newer retry input
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-W8806Y","checks":5,"proofs":["A to safely refused B1 to independent B2 to C; exact inputs, lineage and exhausted graph finalize","two refused attempts exhaust node ceiling; no third attempt and original failures retained","graph budget exhaustion blocks retry without refund or fabricated terminal failure","operator revocation denies reservation without consuming capacity","changed producer bytes cannot become a newer retry input"]}
+
+
+===== focused-policy.log =====
+PASS Eval branch activation consumes zero program units; inactive repair node has no attempt
+PASS subgraph receipt adds no execution unit; human decision is separate from three member dispatches
+PASS held optional reservation prevents graph sealing; release and cancellation remain explicit
+{"ok":true,"checks":3,"proofs":["Eval branch activation consumes zero program units; inactive repair node has no attempt","subgraph receipt adds no execution unit; human decision is separate from three member dispatches","held optional reservation prevents graph sealing; release and cancellation remain explicit"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-b5z04P"}
+
+
+===== focused-recovery.log =====
+PASS two fresh controllers reserve exactly one last graph unit
+PASS release contention records one release and restores only never-dispatched capacity
+PASS crash A: durable reservation before binding releases without phantom execution
+PASS bound but undispatched reservation releases; its surviving input binding grants no admission
+PASS crash before_child_load: consumed dispatch is not redelivered, released or retried
+PASS crash before_node_admission: consumed dispatch is not redelivered, released or retried
+PASS crash after_node_admission: consumed dispatch is not redelivered, released or retried
+PASS same-node retry and next-attempt creation race publishes one new reserved instance
+PASS crash E: real SQLite mutation reply lost; consumed accounting cannot authorize replay
+PASS orphan reserve: immutable record/index gap repaired by fresh controller without execution
+PASS orphan release: immutable record/index gap repaired by fresh controller without execution
+PASS orphan retry: immutable record/index gap repaired by fresh controller without execution
+PASS crash F: durable terminal observation repairs stale accounting without refund or graph finalization
+PASS orphan child refusal remains sealed through exact retained-host repair
+{"ok":true,"checks":14,"proofs":["two fresh controllers reserve exactly one last graph unit","release contention records one release and restores only never-dispatched capacity","crash A: durable reservation before binding releases without phantom execution","bound but undispatched reservation releases; its surviving input binding grants no admission","crash before_child_load: consumed dispatch is not redelivered, released or retried","crash before_node_admission: consumed dispatch is not redelivered, released or retried","crash after_node_admission: consumed dispatch is not redelivered, released or retried","same-node retry and next-attempt creation race publishes one new reserved instance","crash E: real SQLite mutation reply lost; consumed accounting cannot authorize replay","orphan reserve: immutable record/index gap repaired by fresh controller without execution","orphan release: immutable record/index gap repaired by fresh controller without execution","orphan retry: immutable record/index gap repaired by fresh controller without execution","crash F: durable terminal observation repairs stale accounting without refund or graph finalization","orphan child refusal remains sealed through exact retained-host repair"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-KgCvE3"}
+
+
+===== focused-resource-smoke.log =====
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-h5FY8u","checks":9}
+
+
+===== focused-smoke.log =====
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-tmvTxx","checks":9}

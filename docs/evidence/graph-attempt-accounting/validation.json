@@ -1,0 +1,685 @@
+{
+  "schema": "dispatch.graph-attempt-accounting-validation/v1alpha1",
+  "verified": true,
+  "starting_commits": {
+    "dispatch": "27a87ecbe05566578484dac970616a20d78b0ff3",
+    "kujo": "da35f5b3d673e1ddc5d7bcaabacf5fdfe5bd2b30"
+  },
+  "tested_source_commit": "119de2e6f800e1cbceadcb01dec153c2e9394d19",
+  "kujo_documentation_commit": "2946f2a1a76700519292db3da8004ea1a9e31f61",
+  "related_repository_pins_at_validation": {
+    "dispatch": "27a87ecbe05566578484dac970616a20d78b0ff3",
+    "kujo": "0c67dd4b840d93431707f732dc25c0c4ea4a8078",
+    "workcell": "0f9595b79872d2500f0bb35a8cf6227171fd7eeb",
+    "eval": "6a5ab09e5c24cc1a842b374afccb64da40db2874",
+    "agents-sdk": "5a9d5525e511a293b743b1c44d9ef270fd491f9f",
+    "runledger": "97cb607a062efeecc7fcdc4e4a4e0308f90d45fe",
+    "watchdog": "fafea3abb594638e442127496ca6ac4c9bcd5390"
+  },
+  "commands": [
+    {
+      "command": "KUJO_BIN=/Users/robertdevore/2026/Kujolang/validation/graph-attempt-accounting/kujo-verified DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting",
+      "exit": 0,
+      "log": "canonical.txt",
+      "suite_commands": "scripts/run_release_gate.sh",
+      "suite_logs": "canonical-suites.txt"
+    },
+    {
+      "command": "cargo build --release --locked",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo-attempt-accounting",
+      "exit": 0
+    },
+    {
+      "command": "cargo fmt --check",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo-attempt-accounting",
+      "exit": 0
+    },
+    {
+      "command": "cargo test --release --locked --test architecture_docs_contract --test workflow_control_contracts --test readme_contracts",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo-attempt-accounting",
+      "exit": 0,
+      "passed": 13,
+      "failed": 0,
+      "ignored": 2
+    },
+    {
+      "command": "../kujo/target/release/kujo run tests/static_policy_contract_tests.kujo",
+      "phase": "baseline",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "passed": 14,
+      "exit": 0
+    },
+    {
+      "command": "../kujo/target/release/kujo run tests/heterogeneous_contract_tests.kujo",
+      "phase": "baseline",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "passed": 10,
+      "exit": 0
+    },
+    {
+      "command": "../kujo/target/release/kujo run tests/node_contract_tests.kujo",
+      "phase": "baseline",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "passed": 12,
+      "exit": 0
+    },
+    {
+      "command": "../kujo/target/release/kujo test-run tests/failure_gate_safety_tests.kujo -v",
+      "phase": "baseline",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "passed": 20,
+      "exit": 0
+    },
+    {
+      "command": "../kujo/target/release/kujo test-run tests/review_checkpoint_tests.kujo -v",
+      "phase": "baseline",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "passed": 4,
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=../kujo/target/release/kujo DISPATCH_OFFLINE_FIXTURE=true node tests/static_policy_edges.mjs",
+      "phase": "baseline",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "passed": 2,
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=../kujo/target/release/kujo DISPATCH_OFFLINE_FIXTURE=true node tests/heterogeneous_policy.mjs",
+      "phase": "baseline",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "passed": 7,
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=../kujo/target/release/kujo DISPATCH_OFFLINE_FIXTURE=true node tests/node_composition_policy.mjs",
+      "phase": "baseline",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "passed": 4,
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=../kujo/target/release/kujo DISPATCH_OFFLINE_FIXTURE=true node tests/effect_continuation_integration.mjs",
+      "phase": "baseline",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "passed": 39,
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=../kujo/target/release/kujo DISPATCH_OFFLINE_FIXTURE=true node tests/sequential_effect_integration.mjs",
+      "phase": "baseline",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "passed": 80,
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=../kujo/target/release/kujo DISPATCH_OFFLINE_FIXTURE=true node tests/retained_recovery_integration.mjs",
+      "phase": "baseline",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "passed": 29,
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=../kujo/target/release/kujo DISPATCH_OFFLINE_FIXTURE=true node tests/parent_finalization_integration.mjs",
+      "phase": "baseline",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch",
+      "passed": 31,
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=/Users/robertdevore/2026/Kujolang/validation/graph-attempt-accounting/kujo-verified DISPATCH_OFFLINE_FIXTURE=true node tests/graph_attempt_authority.mjs",
+      "phase": "canonical focused suite",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting",
+      "passed": 3,
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=/Users/robertdevore/2026/Kujolang/validation/graph-attempt-accounting/kujo-verified DISPATCH_OFFLINE_FIXTURE=true node tests/graph_attempt_binding_safety.mjs",
+      "phase": "canonical focused suite",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting",
+      "passed": 2,
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=/Users/robertdevore/2026/Kujolang/validation/graph-attempt-accounting/kujo-verified DISPATCH_OFFLINE_FIXTURE=true node tests/graph_attempt_smoke.mjs",
+      "phase": "canonical focused suite",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting",
+      "passed": 9,
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=/Users/robertdevore/2026/Kujolang/validation/graph-attempt-accounting/kujo-verified DISPATCH_OFFLINE_FIXTURE=true node tests/graph_attempt_integration.mjs",
+      "phase": "canonical focused suite",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting",
+      "passed": 5,
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=/Users/robertdevore/2026/Kujolang/validation/graph-attempt-accounting/kujo-verified DISPATCH_OFFLINE_FIXTURE=true node tests/graph_attempt_recovery.mjs",
+      "phase": "canonical focused suite",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting",
+      "passed": 14,
+      "exit": 0
+    },
+    {
+      "command": "KUJO_BIN=/Users/robertdevore/2026/Kujolang/validation/graph-attempt-accounting/kujo-verified DISPATCH_OFFLINE_FIXTURE=true node tests/graph_attempt_policy.mjs",
+      "phase": "canonical focused suite",
+      "cwd": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch-attempt-accounting",
+      "passed": 3,
+      "exit": 0
+    },
+    {
+      "command": "/Users/robertdevore/2026/Kujolang/validation/graph-attempt-accounting/kujo-verified run tests/graph_attempt_contract_tests.kujo",
+      "passed": 19,
+      "exit": 0
+    },
+    {
+      "command": "/Users/robertdevore/2026/Kujolang/validation/graph-attempt-accounting/kujo-verified run tests/portable_commitments.kujo tests/vectors/graph-attempts.json",
+      "vectors": 4,
+      "exit": 0
+    }
+  ],
+  "canonical": {
+    "exit": 0,
+    "passed_suite_groups": 106,
+    "suite_groups": [
+      "typescript_build",
+      "preservation_binding",
+      "parent_finalization",
+      "static_policy_contracts",
+      "static_policy_integration",
+      "static_subgraph_integration",
+      "static_policy_edges",
+      "static_policy_recovery",
+      "graph_attempt_vectors",
+      "graph_attempt_contracts",
+      "graph_attempt_binding_safety",
+      "graph_attempt_authority",
+      "graph_attempt_smoke",
+      "graph_attempt_integration",
+      "graph_attempt_recovery",
+      "graph_attempt_policy",
+      "static_policy_vectors",
+      "heterogeneous_contracts",
+      "heterogeneous_integration",
+      "heterogeneous_policy",
+      "heterogeneous_recovery",
+      "heterogeneous_vectors",
+      "node_contracts",
+      "node_composition",
+      "node_policy",
+      "node_recovery",
+      "node_vectors",
+      "parent_vectors",
+      "retained_recovery",
+      "effect_set",
+      "effect_continuation",
+      "sequential_effects",
+      "effect_lifecycle_vectors",
+      "effect_selection_vectors",
+      "effect_set_vectors",
+      "go_participant",
+      "typescript_package",
+      "python_package",
+      "python_parity",
+      "participant_sdk_parity",
+      "python_isolation",
+      "python_integration",
+      "typescript_after",
+      "typescript_before",
+      "control_boundary",
+      "failure_gate_safety",
+      "failure_gate_execution",
+      "review_checkpoint",
+      "persisted_negotiation_legacy",
+      "persisted_negotiation_schemas",
+      "persisted_negotiation_contracts",
+      "persisted_negotiation",
+      "persisted_negotiation_adapters",
+      "beta_contracts",
+      "portable_commitments",
+      "portable_clean_room",
+      "interop_oracles",
+      "interop_history",
+      "git_participant_after",
+      "git_participant_before",
+      "http_response_loss",
+      "http_timeout_before",
+      "http_application_error",
+      "mcp_ability",
+      "mcp_stdio_loss",
+      "sdk_ability",
+      "beta_migration",
+      "assurance_compatibility",
+      "assurance_capabilities",
+      "effect_assurance_schema",
+      "effect_assurance",
+      "ability_assurance",
+      "reexecution_lifecycle",
+      "resume_policy",
+      "decision_claim",
+      "sdk_adapter",
+      "policy_precedence",
+      "retrieval_preferences",
+      "routing",
+      "state_store_sqlite",
+      "operational_controls",
+      "hardening",
+      "dispatch-1",
+      "dispatch-2",
+      "dispatch-3",
+      "dispatch-4",
+      "dispatch-5",
+      "dispatch-6",
+      "dispatch-7",
+      "dispatch-8",
+      "dispatch-9",
+      "dispatch-10",
+      "dispatch-11",
+      "dispatch-12",
+      "dispatch-13",
+      "dispatch-14",
+      "dispatch-15",
+      "dispatch-16",
+      "dispatch-17",
+      "dispatch-18",
+      "dispatch-19",
+      "dispatch-20",
+      "dispatch-21",
+      "dispatch-22",
+      "dispatch-23",
+      "dispatch-24"
+    ],
+    "native_source_tests": 101,
+    "new_suites": {
+      "graph_attempt_authority": [
+        {
+          "ok": true,
+          "checks": 3,
+          "proofs": [
+            "operator revoked at final revalidation cannot reserve",
+            "changed child authority cannot dispatch or release an old reservation",
+            "ordinary execution failure is not a Dispatch pre-admission refusal"
+          ],
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-XWkedM"
+        }
+      ],
+      "graph_attempt_binding_safety": [
+        {
+          "ok": true,
+          "checks": 2,
+          "proofs": [
+            "downstream reservation blocks retry before child binding",
+            "retry cannot retire a terminal already bound by an undispatched program descendant"
+          ],
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-CjnIy1"
+        }
+      ],
+      "graph_attempt_contracts": [
+        {
+          "checks": 19,
+          "ok": true
+        }
+      ],
+      "graph_attempt_integration": [
+        {
+          "ok": true,
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-sTg3cI",
+          "checks": 5,
+          "proofs": [
+            "A to safely refused B1 to independent B2 to C; exact inputs, lineage and exhausted graph finalize",
+            "two refused attempts exhaust node ceiling; no third attempt and original failures retained",
+            "graph budget exhaustion blocks retry without refund or fabricated terminal failure",
+            "operator revocation denies reservation without consuming capacity",
+            "changed producer bytes cannot become a newer retry input"
+          ]
+        }
+      ],
+      "graph_attempt_policy": [
+        {
+          "ok": true,
+          "checks": 3,
+          "proofs": [
+            "Eval branch activation consumes zero program units; inactive repair node has no attempt",
+            "subgraph receipt adds no execution unit; human decision is separate from three member dispatches",
+            "held optional reservation prevents graph sealing; release and cancellation remain explicit"
+          ],
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-bnRRDe"
+        }
+      ],
+      "graph_attempt_recovery": [
+        {
+          "ok": true,
+          "checks": 14,
+          "proofs": [
+            "two fresh controllers reserve exactly one last graph unit",
+            "release contention records one release and restores only never-dispatched capacity",
+            "crash A: durable reservation before binding releases without phantom execution",
+            "bound but undispatched reservation releases; its surviving input binding grants no admission",
+            "crash before_child_load: consumed dispatch is not redelivered, released or retried",
+            "crash before_node_admission: consumed dispatch is not redelivered, released or retried",
+            "crash after_node_admission: consumed dispatch is not redelivered, released or retried",
+            "same-node retry and next-attempt creation race publishes one new reserved instance",
+            "crash E: real SQLite mutation reply lost; consumed accounting cannot authorize replay",
+            "orphan reserve: immutable record/index gap repaired by fresh controller without execution",
+            "orphan release: immutable record/index gap repaired by fresh controller without execution",
+            "orphan retry: immutable record/index gap repaired by fresh controller without execution",
+            "crash F: durable terminal observation repairs stale accounting without refund or graph finalization",
+            "orphan child refusal remains sealed through exact retained-host repair"
+          ],
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-cNBtCw"
+        }
+      ],
+      "graph_attempt_smoke": [
+        {
+          "ok": true,
+          "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-HnkHR6",
+          "checks": 9
+        }
+      ],
+      "graph_attempt_vectors": [
+        {
+          "checker": "kujo",
+          "ok": true,
+          "vectors": 4
+        }
+      ]
+    },
+    "counted_native_suites": {
+      "dispatch-8": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-17": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-16": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-9": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-14": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-15": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-11": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-10": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "sdk_adapter": {
+        "total": 10,
+        "passed": 10,
+        "failed": 0
+      },
+      "dispatch-12": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-13": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "routing": {
+        "total": 31,
+        "passed": 31,
+        "failed": 0
+      },
+      "operational_controls": {
+        "total": 9,
+        "passed": 9,
+        "failed": 0
+      },
+      "state_store_sqlite": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0
+      },
+      "hardening": {
+        "total": 8,
+        "passed": 8,
+        "failed": 0
+      },
+      "policy_precedence": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0
+      },
+      "control_boundary": {
+        "total": 14,
+        "passed": 14,
+        "failed": 0
+      },
+      "dispatch-1": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "dispatch-22": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-23": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "retrieval_preferences": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0
+      },
+      "dispatch-2": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "review_checkpoint": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-21": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-20": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-3": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "failure_gate_safety": {
+        "total": 20,
+        "passed": 20,
+        "failed": 0
+      },
+      "dispatch-7": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-24": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-18": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-19": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-6": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "dispatch-4": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "failure_gate_execution": {
+        "total": 6,
+        "passed": 6,
+        "failed": 0
+      },
+      "dispatch-5": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      }
+    },
+    "native_shard_assertions": 101,
+    "new_checks": 55,
+    "release_workload": {
+      "schema_version": "1.0",
+      "dispatch_commit": "119de2e6f800e1cbceadcb01dec153c2e9394d19",
+      "fixture": true,
+      "requested_runs": 3,
+      "completed_runs": 3,
+      "duration_seconds": 15,
+      "generated_at_epoch": 1790828281
+    },
+    "go_participant": {
+      "ok": true,
+      "checks": 152,
+      "mcpChecks": 5,
+      "malformedChecks": 9,
+      "wireSHA256": "f87fd01de248eca96c685282b3ead0a95578f77f6c597f598fc9d587f0bec262",
+      "independence": "Go standard library; CLI and MCP share one codec"
+    }
+  },
+  "skips": [
+    "Kujo actual_cross_component_failure_evidence_conforms: repository ignore; requires local Dispatch golden-path handoff",
+    "Kujo actual_workspace_reexecution_artifacts_match_shared_schemas: repository ignore; requires lifecycle fixture output",
+    "Remote provider certification not performed; localhost bridge route only",
+    "Related repositories unmodified: no separate full gates; Workcell and Eval exercised through Dispatch"
+  ],
+  "warnings": [
+    "Existing vendor tiny_http unused SequentialWriter import and MustBeShareDummy dead trait",
+    "Existing Strata npm unknown python configuration warning"
+  ],
+  "interruptions": [
+    "First canonical run failed at wrong AJV schema draft; fixed in 9edf94a and focused integration passed",
+    "Next canonical run interrupted by host restart; temporary originals lost; surviving per-suite logs retained; no full pass inferred",
+    "Post-restart canonical failed at legacy effect-set journal lacking workflow_definition; fixed by opt-in-safe defaults plus three contract negatives; focused effect-set passed before complete rerun"
+  ],
+  "toolchain": {
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)\nbinary: rustc\ncommit-hash: ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96\ncommit-date: 2026-05-25\nhost: x86_64-apple-darwin\nrelease: 1.96.0\nLLVM version: 22.1.2",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "node": "v26.7.0",
+    "npm": "11.19.0",
+    "go": "go version go1.25.3 darwin/amd64",
+    "python": "Python 3.10.5",
+    "host": "Darwin 25.6.0 x86_64"
+  },
+  "runtime": {
+    "baseline_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+    "original_focused_verified_sha256": "87925801fa5d6fb7da63a1a730c705455cae96895c75015b861518447908013c",
+    "canonical_sha256": "dbddb62bba1f08682a1c9b5cc74fa5a94fe9e1b2320b26b61fb857b82db71ad3",
+    "canonical_source": "clean Kujo main base plus docs-only 2946f2a; cargo build --release --locked after restart"
+  },
+  "artifacts": [
+    {
+      "path": "docs/evidence/graph-attempt-accounting/README.md",
+      "bytes": 670,
+      "sha256": "d1cd2bdc8bec03103bef9339d1902f7d6aa3d888d2f73ba6c98bb61aecc33793"
+    },
+    {
+      "path": "docs/evidence/graph-attempt-accounting/baseline.txt",
+      "bytes": 10910,
+      "sha256": "75a3aae36d7b66d1fd0359938f759a1724947cec01d6e585906483b8283ff43d"
+    },
+    {
+      "path": "docs/evidence/graph-attempt-accounting/canonical-suites.txt",
+      "bytes": 101192,
+      "sha256": "bd3698fdfad538d25e0f368aa2b90dee2ebd9c71f484aab6c01cdf78cbf4c62d"
+    },
+    {
+      "path": "docs/evidence/graph-attempt-accounting/canonical.txt",
+      "bytes": 14083,
+      "sha256": "4c13a38d32183be15254f1453ec4d8cec1b62ff97663bb47d2aae75e2d4fee6f"
+    },
+    {
+      "path": "docs/evidence/graph-attempt-accounting/development.txt",
+      "bytes": 17425,
+      "sha256": "ac6f1464a45041660e9fe4e353bbb7cd694e63aa724975e1ff6a7b45a3c87d3b"
+    },
+    {
+      "path": "docs/evidence/graph-attempt-accounting/environment-interruption.txt",
+      "bytes": 966,
+      "sha256": "0193439638d9e57de1ca78e06324cf774a50462f04dfd217c4a2b3fde9786f4b"
+    },
+    {
+      "path": "docs/evidence/graph-attempt-accounting/failed-canonical-effect-set.txt",
+      "bytes": 28922,
+      "sha256": "7ec3cec2545d1668bfa35c725e65bdb9cc1ae3ded47ac8b85c68a27134eba0d9"
+    },
+    {
+      "path": "docs/evidence/graph-attempt-accounting/focused.txt",
+      "bytes": 6219,
+      "sha256": "63f3902b5b51de8ecf94c75ac7e3619a834250ebeb374d4d42978aac4e5bd0ed"
+    },
+    {
+      "path": "docs/evidence/graph-attempt-accounting/interrupted-canonical-suites.txt",
+      "bytes": 10302,
+      "sha256": "d6bd8dd73a8f4d58a3774cab1bf9bfade2709c666868690a8ec1a2cd1b821843"
+    },
+    {
+      "path": "docs/evidence/graph-attempt-accounting/kujo-checks.txt",
+      "bytes": 3356,
+      "sha256": "fbf4cb944e27571f0bfae348961183d8b0bc83857d644f202a068782400d49a4"
+    },
+    {
+      "path": "docs/evidence/graph-attempt-accounting/legacy-correction.txt",
+      "bytes": 3911,
+      "sha256": "7bf61fdfee17f516705a15f5822cd97b8526a6be4e45eee2527ec132aa2a62f5"
+    },
+    {
+      "path": "docs/evidence/graph-attempt-accounting/source-artifacts.json",
+      "bytes": 12080,
+      "sha256": "5adab5dd8559d7bb2bb82e4ed437015a5b6ddd143a4671d1996269789732edea"
+    }
+  ],
+  "verified_at": "2026-10-01",
+  "source_contract_hashes": {
+    "schemas/node-input-binding-v1alpha4.schema.json": "f3f78b41162b2b2084ca40c868944efe5f6c1fcd5f96c671afafb053836a233f",
+    "schemas/node-terminal-v1alpha2.schema.json": "76b77c291e124da751d467a12bd88670c853b9d5dbdf1af63da1e87bdc69b683",
+    "tests/vectors/graph-attempts.json": "950454cda34d9c993340cd11f337e86fc80a2a1e2e32939453ef9406f0aa8b5e",
+    "../kujo-attempt-accounting/Cargo.lock": "26061df9462d1648acc59ce38380ab34bdc3253ad4c66008f125c7793dcdc7ac"
+  }
+}

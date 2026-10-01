@@ -94,6 +94,14 @@ run_suite static_policy_integration env KUJO_BIN="$KUJO_BIN" node tests/static_p
 run_suite static_subgraph_integration env KUJO_BIN="$KUJO_BIN" node tests/static_subgraph_integration.mjs
 run_suite static_policy_edges env KUJO_BIN="$KUJO_BIN" node tests/static_policy_edges.mjs
 run_suite static_policy_recovery env KUJO_BIN="$KUJO_BIN" node tests/static_policy_recovery.mjs
+run_suite graph_attempt_vectors "$KUJO_BIN" run tests/portable_commitments.kujo tests/vectors/graph-attempts.json
+run_suite graph_attempt_contracts "$KUJO_BIN" run tests/graph_attempt_contract_tests.kujo
+run_suite graph_attempt_binding_safety env KUJO_BIN="$KUJO_BIN" node tests/graph_attempt_binding_safety.mjs
+run_suite graph_attempt_authority env KUJO_BIN="$KUJO_BIN" node tests/graph_attempt_authority.mjs
+run_suite graph_attempt_smoke env KUJO_BIN="$KUJO_BIN" node tests/graph_attempt_smoke.mjs
+run_suite graph_attempt_integration env KUJO_BIN="$KUJO_BIN" node tests/graph_attempt_integration.mjs
+run_suite graph_attempt_recovery env KUJO_BIN="$KUJO_BIN" node tests/graph_attempt_recovery.mjs
+run_suite graph_attempt_policy env KUJO_BIN="$KUJO_BIN" node tests/graph_attempt_policy.mjs
 run_suite static_policy_vectors "$KUJO_BIN" run tests/portable_commitments.kujo tests/vectors/static-graph-policy.json
 run_suite heterogeneous_contracts "$KUJO_BIN" run tests/heterogeneous_contract_tests.kujo
 run_suite heterogeneous_integration env KUJO_BIN="$KUJO_BIN" node tests/heterogeneous_integration.mjs

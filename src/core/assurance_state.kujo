@@ -34,12 +34,13 @@ export func validate_assurance_policy(policy) {
 }
 # Additive controller requirements derive from the anchored workflow, not claims.
 export func node_controller_features(state, features) {
-    retained := [];for feature in features {if contains(["node-composition/v1alpha1", "node-input/v1alpha1", "heterogeneous-terminals/v1alpha1", "static-graph-policy/v1alpha1"], feature) == false {retained = push(retained, feature)}};features = retained
+    retained := [];for feature in features {if contains(["node-composition/v1alpha1", "node-input/v1alpha1", "heterogeneous-terminals/v1alpha1", "static-graph-policy/v1alpha1", "graph-attempt-accounting/v1alpha1"], feature) == false {retained = push(retained, feature)}};features = retained
     metadata := dict_get_or(dict_get_or(state, "workflow_definition", {}), "metadata", {})
     if dict_get_or(metadata, "node_composition", "") == "dispatch.node-composition/v1alpha1" {features = push(features, "node-composition/v1alpha1")}
     if dict_get_or(metadata, "node_input_required", "") == "dispatch.node-input/v1alpha1" {features = push(features, "node-input/v1alpha1")}
-    if dict_get_or(metadata, "graph_outcome", "") == "dispatch.graph-outcome/v1alpha1"||contains(["dispatch.node-input-binding/v1alpha2", "dispatch.node-input-binding/v1alpha3"], dict_get_or(dict_get_or(state, "node_input_binding", {}), "schema", "")) {features = push(features, "heterogeneous-terminals/v1alpha1")}
-    if has_key(metadata, "graph_policy")||dict_get_or(dict_get_or(state, "node_input_binding", {}), "schema", "") == "dispatch.node-input-binding/v1alpha3" {features = push(features, "static-graph-policy/v1alpha1")}
+    if dict_get_or(metadata, "graph_outcome", "") == "dispatch.graph-outcome/v1alpha1"||contains(["dispatch.node-input-binding/v1alpha2", "dispatch.node-input-binding/v1alpha3", "dispatch.node-input-binding/v1alpha4"], dict_get_or(dict_get_or(state, "node_input_binding", {}), "schema", "")) {features = push(features, "heterogeneous-terminals/v1alpha1")}
+    if has_key(metadata, "graph_policy")||contains(["dispatch.node-input-binding/v1alpha3", "dispatch.node-input-binding/v1alpha4"], dict_get_or(dict_get_or(state, "node_input_binding", {}), "schema", "")) {features = push(features, "static-graph-policy/v1alpha1")}
+    if has_key(metadata, "graph_accounting")||dict_get_or(dict_get_or(state, "node_input_binding", {}), "schema", "") == "dispatch.node-input-binding/v1alpha4" {features = push(features, "graph-attempt-accounting/v1alpha1")}
     return features
 }
 export func encode_authoritative_state(state) {

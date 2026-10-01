@@ -1,0 +1,107 @@
+===== baseline-contracts.log =====
+{"checks":14,"ok":true}
+{"checks":10,"ok":true}
+{"checks":12,"ok":true}
+
+============================================================
+Test Results
+============================================================
+  ✓ submitted idempotency key does not authorize replay (266ms)
+  ✓ observed unknown partial effects override a pure configuration (332ms)
+  ✓ sink enforced idempotency needs an evidence reference (261ms)
+  ✓ destroyed workspace cannot be retried in place (334ms)
+  ✓ retained filesystem permits a declared same workspace adapter (486ms)
+  ✓ an evaluator decision cannot target an unrelated action (335ms)
+  ✓ terminal states reject continuation (697ms)
+  ✓ evaluation crash is indeterminate rather than failed quality (465ms)
+  ✓ negative checks and unknown contract versions fail closed (340ms)
+  ✓ policy outcome is producer neutral and deterministic (1374ms)
+  ✓ evidence cannot promote itself to policy authority (476ms)
+  ✓ journal detects orphan append and tampered history (416ms)
+  ✓ expired preservation cannot authorize same workspace replay (282ms)
+  ✓ null idempotency metadata is not enforcement evidence (258ms)
+  ✓ continuation source cannot contradict its action (648ms)
+  ✓ tampered control history is detected even when JSON is valid (398ms)
+  ✓ an atomic event beyond an absent journal requires recovery (231ms)
+  ✓ review requests explain unavailable replay without granting new actions (798ms)
+  ✓ policy action availability work is bounded and duplicate actions reject (1031ms)
+  ✓ compensation metadata does not prove external reversal or admit replay (495ms)
+
+Tests: 20 total, 20 passed, 0 failed
+Time:  10572ms
+============================================================
+
+All tests passed! ✨
+
+============================================================
+Test Results
+============================================================
+  ✓ checkpoint publication is immutable repeatable and leaves authority unchanged (5959ms)
+  ✓ missing or altered checkpoint bytes never authorize continuation (4783ms)
+  ✓ checkpoint refuses changed revision or in-flight work (7567ms)
+  ✓ orphan and torn journal prohibit checkpoint publication (8479ms)
+
+Tests: 4 total, 4 passed, 0 failed
+Time:  27105ms
+============================================================
+
+All tests passed! ✨
+
+
+===== baseline-effects.log =====
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/effect-continuation-EHEXwe","checks":39,"proofs":["valid-prefix-only-C","repeat-denied","D-denied","parent-replay-denied","cannot-select-A","cannot-select-B","cannot-select-D","unknown-prefix-blocks","A-no-phantom","B-same-attempt","after_admission-no-replay","after_mutation-no-replay","after_observation-no-replay","two-fresh-controllers-one-admission","stale-registration","stale-plan","stale-target","stale-authority","stale-config","stale-revocation","stale-environment","stale-environment-ref","stale-set","stale-preservation","state-revision","state-journal","state-selected-state","state-attempt","state-control","state-preservation","state-selection-removal","final-revalidation-status","final-revalidation-environment","actual-evidence-expiry","expiry-after-admission","orphan-claim-denies","retained-evidence-required","sqlite-authority-over-json-mirror","actual-baseline-reader-refuses-new-state"]}
+{"ok":true,"roots":["/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/sequential-effects-y8U1sw","/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/sequential-effects-pZgF26"],"checks":80,"proofs":["sqlite-independent-C-D-lifecycles","sqlite-expiry-explicit-rebind-same-attempt","sqlite-cancel-retained-replacement-explicit","sqlite-after_admission-never-replay","sqlite-after_mutation-never-replay","sqlite-after_observation-never-replay","sqlite-race-cancel-cancel","sqlite-race-cancel-admit","sqlite-race-rebind-cancel","sqlite-race-rebind-rebind","sqlite-race-rebind-admit","sqlite-crash-before_rebind","sqlite-crash-after_rebind","sqlite-crash-before_cancel","sqlite-crash-after_cancel","sqlite-crash-before_selection","sqlite-crash-after_selection","sqlite-invalid-registration","sqlite-invalid-plan","sqlite-invalid-target","sqlite-invalid-authority","sqlite-invalid-configuration","sqlite-invalid-environment","sqlite-invalid-preservation","sqlite-final-revalidation","sqlite-expiry-after-rebind","sqlite-live-prefix-uncertainty-blocks","sqlite-orphan-claim-blocks","sqlite-pre-C-cursor-cannot-select-D","sqlite-retained-evidence-required","sqlite-expire-after-admission","sqlite-registration-after-admission","sqlite-state-revision","sqlite-state-journal","sqlite-state-allowed-actions","sqlite-state-effect-state","sqlite-state-parent-attempt","sqlite-parent-replay-denied","actual-old-reader-refuses-lifecycle","sqlite-authority-over-json-mirror","sqlite-two-fresh-controllers-one-admission","git-independent-C-D-lifecycles","git-expiry-explicit-rebind-same-attempt","git-cancel-retained-replacement-explicit","git-after_admission-never-replay","git-after_mutation-never-replay","git-after_observation-never-replay","git-race-cancel-cancel","git-race-cancel-admit","git-race-rebind-cancel","git-race-rebind-rebind","git-race-rebind-admit","git-crash-before_rebind","git-crash-after_rebind","git-crash-before_cancel","git-crash-after_cancel","git-crash-before_selection","git-crash-after_selection","git-invalid-registration","git-invalid-plan","git-invalid-target","git-invalid-authority","git-invalid-configuration","git-invalid-environment","git-invalid-preservation","git-final-revalidation","git-expiry-after-rebind","git-live-prefix-uncertainty-blocks","git-orphan-claim-blocks","git-pre-C-cursor-cannot-select-D","git-retained-evidence-required","git-expire-after-admission","git-registration-after-admission","git-state-revision","git-state-journal","git-state-allowed-actions","git-state-effect-state","git-state-parent-attempt","git-parent-replay-denied","git-two-fresh-controllers-one-admission"]}
+
+
+===== baseline-graph.log =====
+PASS failed entry permits graph failure without inventing unentered group completion
+{"ok":true,"checks":2,"scenarios":["failed entry without group completion","closed terminal outcome predicate"]}
+PASS human abort retains decision semantics under graph policy
+PASS human cancel retains decision semantics under graph policy
+PASS optional Eval failure stays failed but does not fail required-success graph
+PASS Eval fail mapped to review remains blocked, not automatically terminal failure
+PASS unfinalized execution failure cannot become success or admit dependent
+PASS consumer uncertainty leaves successful producer history unchanged
+PASS optional cancellation cannot satisfy a success scheduling dependency
+{"ok":true,"checks":7}
+PASS needs-changes evaluation blocks producer dependency
+PASS producer tool permission is not inherited by consumer
+PASS ordinary cancellation blocks consumer
+PASS failed terminal follows existing Eval policy and cannot satisfy dependency
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/node-composition-cJm7E8","checks":4,"scenarios":["needs-changes evaluation blocks producer dependency","producer tool permission is not inherited by consumer","ordinary cancellation blocks consumer","failed terminal follows existing Eval policy and cannot satisfy dependency"]}
+
+
+===== baseline-recovery.log =====
+{"passed":29,"proofs":["sqlite-stale-state-consumption","git-stale-state-consumption","orphan-control","exact-duplicate","cancel-tail","rebind-tail","torn","conflict","hash","ahead","missing-claim","lifecycle-orphan","stale-plan","revoked","expired","missing-workspace","sigkill-after_admission","sigkill-after_mutation","sigkill-after_observation","fresh-operator-contention","native-write-sigkill-effect_lifecycle_recorded","native-write-sigkill-retained_host_reconciled","native-write-sigkill-claim-consumption","real-workcell-retention-not-admission","real-workcell-preservation-expired-during-outage","real-workcell-workspace-missing","corrupt-materialization-checkpoint-rejected","workcell-git-changed-target","sqlite-authoritative-row-over-corrupt-mirror"],"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/sequential-effects-recKFV"}
+PASS pending effects block parent
+PASS cancelled required selection is not completion
+PASS unresolved operator review blocks
+PASS real Workcell refs and original bytes preserved
+PASS stale authority
+PASS changed registration
+PASS wrong environment
+PASS operator authorization revoked
+PASS stale evaluation
+PASS wrong evaluation subject
+PASS missing/replaced output.txt
+PASS missing/replaced output-evidence.json
+PASS missing/replaced workcell/receipt.json
+PASS retained workspace missing
+PASS changed retained Git HEAD
+PASS stale run revision
+PASS new unresolved child
+PASS expired preservation
+PASS independent sink uncertainty blocks
+PASS legitimate new assessment invalidates candidate
+PASS generic approved review cannot bypass finalization
+PASS separate finalization without effect replay
+PASS Eval fail maps through existing policy
+PASS SIGKILL before decision remains nonterminal
+PASS SIGKILL after terminal reply loss is final
+PASS two independently assessed fresh controllers one durable finalization
+PASS producer success still requires parent finalization
+PASS anchored required descendant blocks terminal transition
+PASS mutable optional flag cannot waive anchored required child
+PASS live authority revoked inside finalization boundary
+PASS orphan durable finalization recovered by fresh controllers
+{"ok":true,"root":"/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/parent-finalization-M804JJ","checks":31,"proofs":["pending effects block parent","cancelled required selection is not completion","unresolved operator review blocks","real Workcell refs and original bytes preserved","stale authority","changed registration","wrong environment","operator authorization revoked","stale evaluation","wrong evaluation subject","missing/replaced output.txt","missing/replaced output-evidence.json","missing/replaced workcell/receipt.json","retained workspace missing","changed retained Git HEAD","stale run revision","new unresolved child","expired preservation","independent sink uncertainty blocks","legitimate new assessment invalidates candidate","generic approved review cannot bypass finalization","separate finalization without effect replay","Eval fail maps through existing policy","SIGKILL before decision remains nonterminal","SIGKILL after terminal reply loss is final","two independently assessed fresh controllers one durable finalization","producer success still requires parent finalization","anchored required descendant blocks terminal transition","mutable optional flag cannot waive anchored required child","live authority revoked inside finalization boundary","orphan durable finalization recovered by fresh controllers"]}

@@ -1,3 +1,4 @@
+from src.core.graph_attempts import accounting_enabled, program_contract, attempt_run, fold_attempt, attempt_terminal_schema
 # Pure additive projections shared by the existing journal and retained recovery.
 from src.core.graph_transition import heterogeneous_graph, graph_contract, graph_event, apply_graph_transition, graph_history_projection
 from src.core.assurance_state import node_controller_features
@@ -15,7 +16,11 @@ export func node_raw(state, reference) {
 }
 export func node_claim_path(binding) {return "node-input/" + substring(node_reference(binding), 7, 71) + ".claim"}
 export func validate_node_binding_bytes(state, binding) {
-    require(contains(["dispatch.node-input-binding/v1alpha1", "dispatch.node-input-binding/v1alpha2", "dispatch.node-input-binding/v1alpha3"], binding["schema"])&&binding["consumer"]["run_id"] == state["run_id"], "node_binding_subject_mismatch")
+    require(contains(["dispatch.node-input-binding/v1alpha1", "dispatch.node-input-binding/v1alpha2", "dispatch.node-input-binding/v1alpha3", "dispatch.node-input-binding/v1alpha4"], binding["schema"])&&binding["consumer"]["run_id"] == state["run_id"], "node_binding_subject_mismatch")
+    if binding["schema"] == "dispatch.node-input-binding/v1alpha4" {
+        attempt := binding["attempt"];require(type(attempt["ordinal"]) == "int"&&contains([1, 2], attempt["ordinal"]), "node_attempt_ordinal_invalid")
+        if attempt["ordinal"] == 1 {require(attempt["previous_terminal_ref"] == null, "initial_attempt_lineage_invalid")} else {require(type(attempt["previous_terminal_ref"]) == "string"&&regex_match(attempt["previous_terminal_ref"], "^sha256:[0-9a-f]{64}$"), "retry_lineage_missing")}
+    }
     require(len(binding["inputs"]) <= 8&&len(binding["predecessors"]) <= 8, "node_input_limit")
     for reference in binding["artifacts"] {node_raw(state, reference)}
     for input in binding["inputs"] {
@@ -49,8 +54,13 @@ export func apply_node_transition(state, kind, details) {
         require(data["consumer"]["step_id"] == state["steps"][0]["id"]&&data["consumer"]["attempt_id"] == "1", "node_binding_subject_mismatch")
         validate_node_binding_bytes(state, data);state["node_input_binding"] := data
         state["required_features"] := node_controller_features(state, state["required_features"])
+    } else if kind == "node_execution_refused" {
+        require(composition_node(state)&&has_key(state, "node_execution_refusal") == 0&&has_key(state, "node_execution_admission") == 0&&state["steps"][0]["status"] == "pending", "node_refusal_conflict")
+        binding := state["node_input_binding"];require(binding["schema"] == "dispatch.node-input-binding/v1alpha4"&&data["binding_ref"] == node_reference(binding)&&data["reason"] == "required_resource_unavailable"&&data["resulting_revision"] == state["revision"] + 1, "node_refusal_invalid")
+        require(file_exists(state["run_dir"] + "/" + node_claim_path(binding)) == false, "node_refusal_after_consumption")
+        state["node_execution_refusal"] := data;state["status"] := "paused"
     } else if kind == "node_execution_admitted" {
-        require(composition_node(state)&&has_key(state, "node_execution_admission") == 0&&state["steps"][0]["status"] == "pending", "node_already_admitted")
+        require(composition_node(state)&&has_key(state, "node_execution_refusal") == 0&&has_key(state, "node_execution_admission") == 0&&state["steps"][0]["status"] == "pending", "node_already_admitted")
         require(data["binding_ref"] == node_reference(state["node_input_binding"]), "node_admission_binding_mismatch")
         state["node_execution_admission"] := data;validate_node_claim(state)
     } else if kind == "node_start_requested" {
@@ -58,7 +68,7 @@ export func apply_node_transition(state, kind, details) {
         dispatches := dict_get_or(state, "node_dispatches", {});id := data["node_id"]
         require(has_key(dispatches, id) == 0, "duplicate_node_dispatch")
         matched := false
-        for step in state["steps"] {if step["id"] == id {require(step["config"]["node_execution"]["run_id"] == data["consumer"]["run_id"]&&step["status"] == "pending", "node_dispatch_mismatch");matched = true}}
+        for step in state["steps"] {if step["id"] == id {require(attempt_run(state, id) == data["consumer"]["run_id"]&&step["status"] == "pending", "node_dispatch_mismatch");matched = true}}
         require(matched, "node_missing");dispatches[id] := data;state["node_dispatches"] := dispatches
     } else if kind == "node_terminal_observed" {
         require(composition_graph(state), "node_graph_required")
@@ -68,9 +78,9 @@ export func apply_node_transition(state, kind, details) {
         for i in range(0, len(steps)) {
             step := steps[i]
             if step["id"] == id {
-                expected_run := state["run_id"];if graph_contract(step) == "parent-finalization/v1alpha1" {expected_run = step["config"]["node_execution"]["run_id"]}
+                expected_run := state["run_id"];if program_contract(step) {expected_run = attempt_run(state, id)}
                 require(contains(["pending", "paused"], step["status"])&&expected_run == data["terminal"]["subject"]["run_id"], "node_terminal_subject_mismatch")
-                if heterogeneous_graph(state) {require(data["terminal"]["schema"] == "dispatch.node-terminal/v1alpha1"&&data["terminal"]["node_id"] == id&&data["terminal"]["contract"] == graph_contract(step)&&contains(["completed", "failed", "rejected", "cancelled"], data["terminal"]["outcome"]), "node_terminal_contract_mismatch")}
+                if heterogeneous_graph(state) {require(data["terminal"]["schema"] == attempt_terminal_schema(graph_contract(step))&&data["terminal"]["node_id"] == id&&data["terminal"]["contract"] == graph_contract(step)&&contains(["completed", "failed", "rejected", "cancelled"], data["terminal"]["outcome"]), "node_terminal_contract_mismatch")}
                 step["status"] := data["terminal"]["outcome"];step["output"] := data["terminal"];steps[i] := step;state["current_step_index"] := i + 1;matched = true
             }
         }
@@ -79,21 +89,25 @@ export func apply_node_transition(state, kind, details) {
         observed[id] := data;state["node_completions"] := observed;state["steps"] := steps
         usage := state["budget_usage"];usage["steps"] := usage["steps"] + 1;state["budget_usage"] := usage
     } else {throw("unsupported_node_transition")}
-    return state
+    state = fold_attempt(state, kind, data);return state
 }
 export func node_history_projection(state, events) {
     graph_history_projection(state, events)
-    binding := null;admission := null;completed := {};dispatches := {}
+    binding := null;admission := null;refusal := null;completed := {};dispatches := {}
     for event in events {
         kind := event["kind"]
+        if kind == "graph_attempt_retried" {id := event["details"]["data"]["candidate"]["node_id"];next := {};for key in keys(completed) {if key != id {next[key] := completed[key]}};completed = next;next = {};for key in keys(dispatches) {if key != id {next[key] := dispatches[key]}};dispatches = next}
+        if kind == "node_execution_refused" {require(refusal == null&&admission == null, "duplicate_node_refusal");refusal = event["details"]["data"]}
         if kind == "node_inputs_bound" {require(binding == null, "duplicate_node_binding");binding = event["details"]["data"]}
-        if kind == "node_execution_admitted" {require(admission == null, "duplicate_node_admission");admission = event["details"]["data"]}
+        if kind == "node_execution_admitted" {require(admission == null&&refusal == null, "duplicate_node_admission");admission = event["details"]["data"]}
         if kind == "node_start_requested" {data := event["details"]["data"];require(has_key(dispatches, data["node_id"]) == 0, "duplicate_node_dispatch");dispatches[data["node_id"]] := data}
         if kind == "node_terminal_observed" {data := event["details"]["data"];require(has_key(completed, data["node_id"]) == 0, "duplicate_node_terminal");completed[data["node_id"]] := data}
     }
     require(to_json(binding) == to_json(dict_get_or(state, "node_input_binding", null))&&to_json(admission) == to_json(dict_get_or(state, "node_execution_admission", null))&&to_json(completed) == to_json(dict_get_or(state, "node_completions", {})), "node_journal_state_mismatch")
     require(to_json(dispatches) == to_json(dict_get_or(state, "node_dispatches", {})), "node_dispatch_journal_mismatch")
     if binding != null {validate_node_binding_bytes(state, binding)}
+    require(to_json(refusal) == to_json(dict_get_or(state, "node_execution_refusal", null)), "node_refusal_history_mismatch")
+    if refusal != null {require(admission == null&&refusal["binding_ref"] == node_reference(binding)&&file_exists(state["run_dir"] + "/" + node_claim_path(binding)) == false, "refusal_consumption_conflict")}
     validate_node_claim(state)
     if composition_graph(state) {
         for step in state["steps"] {if contains(["completed", "skipped", "failed", "cancelled", "rejected"], step["status"]) {require(step["status"] != "skipped"&&has_key(completed, step["id"]), "node_terminal_authority_missing")}}
