@@ -109,3 +109,27 @@ recovery replays validated control projections, never decisions inferred from ar
 Remaining boundaries: nested/conditional groups, same-node retries, dynamic topology,
 distributed scheduling, remote trust, machine-loss recovery, mixed profiles,
 compensation, exactly-once, rollback, stable SDK and new language syntax.
+
+### Subgraph settlement scope correction (2026-10-07)
+
+A subgraph's terminal predicate covers its declared members. Held program/Eval
+reservations and unresolved Eval dispatches outside that membership do not block
+its terminal receipt. Member reservations and consumed unfinished member work
+still block, including optional members when a required member failed or cancelled.
+Graph-wide capacity validation remains mandatory; there is no local budget refund
+or new group ceiling. Whole-graph finalization continues to require settlement of
+all held reservations and consumed unfinished work across the graph.
+
+Previously `scoped_outcome_facts` restricted node facts to membership but applied
+these accounting blockers globally. This correction restores the existing group
+boundary; it adds no node type, nested group, cancellation propagation or dynamic
+admission. Receipts, source/revision checks, installed authority, locks, portable
+commitments and historical bytes are unchanged. Source-bound installations must
+retain their matching controller revision; this is not an automatic migration of
+existing runs to changed installed implementation hashes.
+
+`tests/subgraph_settlement_scope.mjs` exercises fresh controllers, stale/duplicate
+candidates, unrelated held work and SIGKILL after Eval dispatch. It also proves
+that optional member reservations and uncertain member Eval work still block
+failed/cancelled group settlement. Existing terminal crash/reconciliation and
+contention suites remain part of the canonical gate.

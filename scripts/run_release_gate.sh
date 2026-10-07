@@ -98,6 +98,7 @@ run_suite resource_contracts "$KUJO_BIN" run tests/resource_contract_tests.kujo
 run_suite resource_limits "$KUJO_BIN" run tests/resource_limits_tests.kujo
 run_suite resource_integration env KUJO_BIN="$KUJO_BIN" node tests/resource_integration.mjs
 run_suite resource_policy env KUJO_BIN="$KUJO_BIN" node tests/resource_policy.mjs
+run_suite subgraph_settlement_scope env KUJO_BIN="$KUJO_BIN" node tests/subgraph_settlement_scope.mjs
 run_suite resource_recovery env KUJO_BIN="$KUJO_BIN" node tests/resource_recovery.mjs
 run_suite graph_attempt_vectors "$KUJO_BIN" run tests/portable_commitments.kujo tests/vectors/graph-attempts.json
 run_suite graph_attempt_contracts "$KUJO_BIN" run tests/graph_attempt_contract_tests.kujo

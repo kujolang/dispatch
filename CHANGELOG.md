@@ -4,6 +4,15 @@ Version source: `kennel.toml`; CLI and `kujo.toml` must agree. Historical releas
 entries are retained below. Experimental contract versions are independent of
 Dispatch's version.
 
+## Unreleased — subgraph settlement correction
+
+- Restrict subgraph reservation and unfinished Eval settlement blockers to declared
+  members. Unrelated work still blocks whole-graph finalization, and global capacity
+  validation, immutable history and consumed-attempt protection are unchanged.
+- Add fresh-controller, stale/duplicate candidate and Eval crash regressions for
+  independent groups and failed/cancelled groups with unsettled optional members.
+  No public wire format or historical portable commitment changes.
+
 ## Unreleased — experimental operator rehearsal
 
 - Add a bounded installed batch-summary operator host with separate inspect,

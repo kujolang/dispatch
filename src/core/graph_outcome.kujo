@@ -123,10 +123,23 @@ export func scoped_outcome_facts(graph, host, scope) {
             }
         }
     }
-    if accounting_enabled(graph)&&accounting_budget(graph)["reserved"] > 0 {policy_block = true}
+    # A group settles only its members. Whole-graph settlement still includes
+    # every reservation and consumed invocation; capacity remains graph-wide.
+    if accounting_enabled(graph) {
+        accounting_budget(graph)
+        for id in keys(dict_get_or(graph, "graph_attempts", {})) {
+            if (scope == null||contains(scope, id))&&held_reservation(graph, id) {policy_block = true}
+        }
+    }
     if resources_enabled(graph) {
-        if eval_budget(graph)["reserved"] > 0 {policy_block = true}
-        for id in keys(dict_get_or(graph, "eval_attempts", {})) {for row in graph["eval_attempts"][id] {if row["dispatch"] != null&&row["resolution"] == null {inflight = true}}}
+        eval_budget(graph)
+        for id in keys(dict_get_or(graph, "eval_attempts", {})) {
+            if scope != null&&contains(scope, id) == false {continue}
+            for row in graph["eval_attempts"][id] {
+                if row["dispatch"] == null&&row["release"] == null {policy_block = true}
+                if row["dispatch"] != null&&row["resolution"] == null {inflight = true}
+            }
+        }
     }
     if inflight == false&&policy_block == false {
         if required_failed {outcome = "failed"} else if required_cancelled {outcome = "cancelled"} else if pending == false {outcome = "completed"}
