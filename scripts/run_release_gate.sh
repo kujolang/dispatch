@@ -166,6 +166,8 @@ run_suite effect_assurance_schema "$KUJO_BIN" run tests/effect_assurance_schema.
 run_suite effect_assurance env KUJO_BIN="$KUJO_BIN" node tests/effect_assurance_integration.mjs
 run_suite ability_assurance env KUJO_BIN="$KUJO_BIN" bash tests/ability_assurance_integration.sh
 run_suite reexecution_lifecycle "$KUJO_BIN" run tests/reexecution_lifecycle_fixture.kujo
+run_suite control_view "$KUJO_BIN" test-run tests/control_view_tests.kujo -v
+run_suite revision_bound_approval env KUJO_BIN="$KUJO_BIN" bash tests/revision_bound_approval_tests.sh
 run_suite resume_policy env KUJO_BIN="$KUJO_BIN" bash tests/resume_policy_tests.sh
 run_suite decision_claim env KUJO_BIN="$KUJO_BIN" bash tests/decision_claim_contract.sh
 run_suite sdk_adapter "$KUJO_BIN" test-run tests/sdk_adapter_tests.kujo -v

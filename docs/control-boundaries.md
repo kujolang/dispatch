@@ -66,6 +66,26 @@ attempt's tool context as `reexecution_descriptor` with
 materializing the clean environment. Inspectable-only descriptors and unsafe
 non-idempotent targets are rejected.
 
+`inspect <run-id> --json` adds a `control` observation with schema
+`kujo.control-view/v1`, `available: true`, `run_id`, `state_revision`, `run_status`, and the complete
+`human_intervention` and `current_control_boundary` objects (or `null`). It uses
+the authoritative state loader, including SQLite when present. If the serialized
+control view exceeds 64 KiB, it returns `available: false` and
+`reason: control_view_limit` instead of a partial approval object. This snapshot
+is not an authorization or a journal reconciliation: it can become stale as soon
+as it is read. Resume still validates under the run lock.
+
+Legacy approval decisions may now include a positive integer
+`expected_state_revision`. A mismatch is rejected before the decision is claimed.
+Omitting it preserves the legacy admission contract. All newly claimed legacy
+decisions retain a digest of the parsed JSON payload. Redelivering an identical
+applied decision returns `already_applied`, even after another gate opens;
+changing the payload under that decision ID returns `decision_conflict`.
+New claimed or failed receipts require explicit recovery and are never retried by
+redelivery. A revision-bound request cannot use a historical receipt without a
+digest as proof of an exact match. Actor metadata is attribution from the trusted
+local caller; embedding it does not authenticate a human or grant permission.
+
 Effect classes are `unknown`, `none`, `local_reversible`,
 `external_idempotent`, `external_non_idempotent`, and `destructive`. They do
 not imply rollback. They only constrain retry admission. Dispatch never claims
