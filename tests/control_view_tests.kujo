@@ -1,0 +1,37 @@
+test_setup {
+    from src.core.control_view import build_control_view
+}
+
+test "control view retains complete approval identity and revision" {
+    event := {"event_id": "review-one", "security": {"decision_id": "decision-one"}}
+    boundary := {"boundary_id": "boundary-one", "status": "open"}
+    view := build_control_view({"run_id": "run-one", "revision": 42, "status": "paused", "human_intervention": event, "current_control_boundary": boundary})
+    assert_true(view["available"])
+    assert_equal(view["state_revision"], 42)
+    assert_equal(to_json(view["human_intervention"]), to_json(event))
+    assert_equal(to_json(view["current_control_boundary"]), to_json(boundary))
+}
+
+test "oversized control objects are refused rather than truncated" {
+    large := "x"
+    for index in range(17) {large = large + large}
+    view := build_control_view({"run_id": "run-one", "revision": 42, "human_intervention": {"summary": large}})
+    assert_false(view["available"])
+    assert_equal(view["reason"], "control_view_limit")
+    assert_equal(has_key(view, "human_intervention"), 0)
+}
+
+test "absent control objects stay absent" {
+    view := build_control_view({"run_id": "run-one", "revision": 1, "status": "completed"})
+    assert_true(view["available"])
+    assert_equal(view["human_intervention"], null)
+    assert_equal(view["current_control_boundary"], null)
+}
+
+test "control view limit counts UTF-8 bytes" {
+    large := "界"
+    for index in range(15) {large = large + large}
+    view := build_control_view({"run_id": "run-one", "revision": 42, "human_intervention": {"summary": large}})
+    assert_false(view["available"])
+    assert_equal(view["reason"], "control_view_limit")
+}
