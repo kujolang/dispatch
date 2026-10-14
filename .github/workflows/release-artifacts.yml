@@ -69,6 +69,11 @@ jobs:
         run: |
           command -v node
           command -v sqlite3
+      - name: Install previous release runtime for upgrade rehearsal
+        id: previous-runtime
+        uses: kujolang/kujo/.github/actions/setup-kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c
+        with:
+          version: v1.6.0
       - name: Install reviewed Kujo release
         uses: kujolang/kujo/.github/actions/setup-kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c
         with:
@@ -110,6 +115,8 @@ jobs:
       - name: Install pinned experimental operator dependencies
         run: bash scripts/install_operator_dependencies.sh
       - name: Rehearse previous release upgrade, process restart and backup rollback
+        env:
+          KUJO_OLD_BIN: ${{ steps.previous-runtime.outputs.kujo-path }}
         run: bash tests/upgrade_1_3_rehearsal_tests.sh
 
       - name: Verify exact tagged source
