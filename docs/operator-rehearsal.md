@@ -7,24 +7,24 @@ participant code or topology.
 
 ## Install and configure
 
-Prerequisites: macOS or Linux, Bash, curl, tar, Git, and Kujo 1.6.0 with the
+Prerequisites: macOS or Linux, Bash, curl, tar, Git, and Kujo 1.8.1 with the
 `sync_directory_beneath` runtime primitive. No provider account is needed. The
 current release manifest pins a runtime **source commit**: its normal installer
-path needs Cargo. To use a binary-only installation, use the verified 1.6.0 release
+path needs Cargo. To use a binary-only installation, use the verified 1.8.1 release
 archive and its published SHA-256 file instead. Do not mistake an unavailable
 release named after a source SHA for a verified binary installation.
 
-The following binary-install manifest was rehearsed without Cargo. The installer
+The following binary-install manifest avoids Cargo. The installer
 verifies the runtime release checksum. Use a new prefix and run the commands from
 a fresh directory (the source refs below are intentionally pinned):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/fc53093f35e4236682bbbf5ab1ccc8d2b4df990c/install.sh -o install.sh
 cat > operator.refs <<'REFS'
-kujo=v1.6.0
+kujo=v1.8.1
 ai-sdk=5184a122590dd5698770b50d99b69ed11c7ec84a
 agents-sdk=5a9d5525e511a293b743b1c44d9ef270fd491f9f
-dispatch=21aac0d35d8709ea3b8cb09844315c7b14fde5bd
+dispatch=v1.4.0
 REFS
 bash install.sh --package dispatch --release-manifest "$PWD/operator.refs" \
   --prefix "$PWD/installed" --bin-dir "$PWD/bin"

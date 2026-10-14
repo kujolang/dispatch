@@ -48,7 +48,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/kujo
-          ref: 44af277848173664f72ca85f2a1b3b98d634ecdd
+          ref: 357796a1a868f2c80bc8f7b8edcc7d6aff384f04
           path: .release/kujo
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -69,10 +69,15 @@ jobs:
         run: |
           command -v node
           command -v sqlite3
-      - name: Install reviewed Kujo release
+      - name: Install previous release runtime for upgrade rehearsal
+        id: previous-runtime
         uses: kujolang/kujo/.github/actions/setup-kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c
         with:
           version: v1.6.0
+      - name: Install reviewed Kujo release
+        uses: kujolang/kujo/.github/actions/setup-kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c
+        with:
+          version: v1.8.1
       - run: echo "KUJO_BIN=$(command -v kujo)" >> "$GITHUB_ENV"
       - name: Checkout controlled Agents SDK participant
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -84,7 +89,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: kujolang/mcp
-          ref: 427a8b9ecfaee97cd66c6b35137bd1dc5fb16b54
+          ref: c6b2b17a65f66e4096cd4b68bc89b1a3fe352a46
           path: .release/mcp-wave-d
       - name: Install controlled participant dependencies
         run: |
@@ -101,12 +106,19 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: kujolang/eval
-          ref: 6a5ab09e5c24cc1a842b374afccb64da40db2874
+          ref: 71e66dff780d6930bcbe093c046bf31aa26411df
           path: .release/eval-wave-f
       - name: Prepare bounded graph fixture module layout
         run: |
           bash tests/ci_graph_layout_tests.sh
           DISPATCH_GRAPH_FIXTURE_ROOT="$GITHUB_WORKSPACE/.release" bash scripts/prepare_graph_fixture_layout.sh
+      - name: Install pinned experimental operator dependencies
+        run: bash scripts/install_operator_dependencies.sh
+      - name: Rehearse previous release upgrade, process restart and backup rollback
+        env:
+          KUJO_OLD_BIN: ${{ steps.previous-runtime.outputs.kujo-path }}
+        run: bash tests/upgrade_1_3_rehearsal_tests.sh
+
       - name: Verify exact tagged source
         env:
           AI_SDK_PATH: ${{ github.workspace }}/.release/ai-sdk
@@ -138,7 +150,7 @@ jobs:
           sha256sum "$artifact" > "$artifact.sha256"
           commit_sha="$(git rev-parse HEAD)"
           artifact_sha="$(awk '{print $1}' "$artifact.sha256")"
-          printf '{"schema_version":"1.0","tag":"%s","dispatch_commit":"%s","artifact":"%s","artifact_sha256":"%s","dependency_manifest":"release/dispatch-v1.3.0.refs"}\n' \
+          printf '{"schema_version":"1.0","tag":"%s","dispatch_commit":"%s","artifact":"%s","artifact_sha256":"%s","dependency_manifest":"release/dispatch-v1.4.0.refs"}\n' \
             "$GITHUB_REF_NAME" "$commit_sha" "$artifact" "$artifact_sha" \
             > "dispatch-${GITHUB_REF_NAME}-provenance.json"
       - name: Attest source artifact provenance
@@ -149,7 +161,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --title "Dispatch $GITHUB_REF_NAME" --notes-file docs/RELEASE_1_3_0.md
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --title "Dispatch $GITHUB_REF_NAME" --notes-file docs/RELEASE_1_4_0.md
           gh release upload "$GITHUB_REF_NAME" "dispatch-${GITHUB_REF_NAME}.tar.gz" "dispatch-${GITHUB_REF_NAME}.tar.gz.sha256" "dispatch-${GITHUB_REF_NAME}-provenance.json" --clobber
 
   clean-install:
@@ -165,7 +177,7 @@ jobs:
         run: |
           curl -fsSL "https://raw.githubusercontent.com/kujolang/kujo/fc53093f35e4236682bbbf5ab1ccc8d2b4df990c/install.sh" \
             | bash -s -- --package dispatch \
-                --release-manifest "https://raw.githubusercontent.com/kujolang/dispatch/${GITHUB_REF_NAME}/release/dispatch-v1.3.0.refs"
+                --release-manifest "https://raw.githubusercontent.com/kujolang/dispatch/${GITHUB_REF_NAME}/release/dispatch-v1.4.0.refs"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Verify installed workload outside source tree
         env:

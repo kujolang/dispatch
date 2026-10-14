@@ -14,6 +14,6 @@ while read -r repository revision; do
   printf '%s\n' "$revision" > "$destination/.operator-source-ref"
 done <<'PINS'
 workcell 0f9595b79872d2500f0bb35a8cf6227171fd7eeb
-eval 6a5ab09e5c24cc1a842b374afccb64da40db2874
+eval 71e66dff780d6930bcbe093c046bf31aa26411df
 PINS
 printf 'Installed pinned operator dependencies in %s\n' "$operator_deps"

@@ -4,7 +4,13 @@ Version source: `kennel.toml`; CLI and `kujo.toml` must agree. Historical releas
 entries are retained below. Experimental contract versions are independent of
 Dispatch's version.
 
-## Unreleased — subgraph settlement correction
+## [1.4.0] - 2026-10-14
+
+- Require published Kujo 1.8.1 for the released Eval companion and full operator path.
+
+- Bind legacy approvals to authoritative state revisions and durable decision receipts.
+
+### subgraph settlement correction
 
 - Restrict subgraph reservation and unfinished Eval settlement blockers to declared
   members. Unrelated work still blocks whole-graph finalization, and global capacity
@@ -13,7 +19,7 @@ Dispatch's version.
   independent groups and failed/cancelled groups with unsettled optional members.
   No public wire format or historical portable commitment changes.
 
-## Unreleased — experimental operator rehearsal
+### experimental operator rehearsal
 
 - Add a bounded installed batch-summary operator host with separate inspect,
   plan, apply, review and run commands over existing Dispatch control APIs.
@@ -21,7 +27,7 @@ Dispatch's version.
   experimental graph path; retain source-runtime and trusted-host boundaries.
 - Add installed-package failure, review, budget and real controller-crash proofs.
 
-## Unreleased — sourced resources and Eval budgets
+### sourced resources and Eval budgets
 
 - Add opt-in graph/node Eval ceilings with locked reservations, durable dispatch
   consumption, exact-input evaluator retries and retained response reconciliation.
@@ -33,7 +39,7 @@ Dispatch's version.
 - Preserve consumed work across crashes, contention and retained-host repair.
   See [resource contracts](docs/contracts/resources/protocol.md).
 
-## Unreleased — explicit graph attempt accounting
+### explicit graph attempt accounting
 
 - Add opt-in durable reservations, permanent dispatch consumption and explicit safe
   release under existing graph/child locks, with event-derived accounting reports.
@@ -45,7 +51,7 @@ Dispatch's version.
 - Add input-binding/v1alpha4 commitments without changing historical vectors or
   participant/result bytes. See `docs/contracts/graph-attempts/` for proof boundaries.
 
-## Unreleased — bounded parent finalization
+### bounded parent finalization
 
 - Bind existing Workcell preservation `$ref` evidence through an additive exact-byte
   document/evidence commitment and an installed bounded resolver.
@@ -55,7 +61,7 @@ Dispatch's version.
 - Reconstruct only an exact durable terminal decision through retained-host repair.
   Add real-process crash/contention proof and a concrete Wave F crosswalk.
 
-## Earlier unreleased — bounded sequential continuation
+### bounded sequential continuation
 
 - Add a separately feature-gated append-only lifecycle: explicit evidence rebind
   or cancellation for unconsumed selections, permanent admission consumption,
@@ -66,6 +72,20 @@ Dispatch's version.
 - Add lifecycle commitment vectors and real-process crash/contention/expiry tests.
   Historical result and participant bytes remain unchanged. See
   `docs/contracts/effect-set/sequential-continuation.md` for validation status.
+
+### Agents SDK Ability handoff
+
+- Add opt-in bounded content-addressed SDK/Ability correlation validation before
+  existing beta admission. Matching references do not authorize replay.
+- Add a real multi-process SDK publication/receipt-failure/review/replay fixture
+  to the release gate, with identity substitutions and standalone SDK coverage.
+
+### retained-host operator reconciliation
+
+- Add experimental `recover inspect|plan|apply` with bounded JSON inventory,
+  source-bound plans, locked journal/lifecycle repair and immutable operator evidence.
+- Preserve consumed attempts, cancellation/rebinding history and uncertainty through
+  retained-host publication gaps; repair never resumes execution.
 
 ## [1.3.0] - 2026-09-29
 
@@ -200,17 +220,3 @@ Dispatch's version.
 
 ### Added
 - Initial public Dispatch package metadata, core workflow orchestration engine, CLI commands, and baseline documentation.
-
-## Unreleased — Agents SDK Ability handoff
-
-- Add opt-in bounded content-addressed SDK/Ability correlation validation before
-  existing beta admission. Matching references do not authorize replay.
-- Add a real multi-process SDK publication/receipt-failure/review/replay fixture
-  to the release gate, with identity substitutions and standalone SDK coverage.
-
-## Unreleased — retained-host operator reconciliation
-
-- Add experimental `recover inspect|plan|apply` with bounded JSON inventory,
-  source-bound plans, locked journal/lifecycle repair and immutable operator evidence.
-- Preserve consumed attempts, cancellation/rebinding history and uncertainty through
-  retained-host publication gaps; repair never resumes execution.

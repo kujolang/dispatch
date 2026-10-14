@@ -1,0 +1,5 @@
+# Dispatch 1.4.0 installer closure; exact released Kujo 1.8.1, AI SDK 1.1.1 and Agents SDK 1.1.2.
+kujo=357796a1a868f2c80bc8f7b8edcc7d6aff384f04
+ai-sdk=5184a122590dd5698770b50d99b69ed11c7ec84a
+agents-sdk=5a9d5525e511a293b743b1c44d9ef270fd491f9f
+dispatch=v1.4.0
