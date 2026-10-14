@@ -122,11 +122,11 @@ jobs:
 
       - name: Verify immutable dependency closure and installer parser
         run: |
-          grep -qx "kujo=44af277848173664f72ca85f2a1b3b98d634ecdd" release/dispatch-v1.3.0.refs
-          grep -qx "ai-sdk=5184a122590dd5698770b50d99b69ed11c7ec84a" release/dispatch-v1.3.0.refs
-          grep -qx "agents-sdk=5a9d5525e511a293b743b1c44d9ef270fd491f9f" release/dispatch-v1.3.0.refs
-          grep -qx "dispatch=v1.3.0" release/dispatch-v1.3.0.refs
-          grep -qx "kujo=$KUJO_RUNTIME_REF" release/dispatch-v1.3.0-validation.refs
+          grep -qx "kujo=44af277848173664f72ca85f2a1b3b98d634ecdd" release/dispatch-v1.4.0.refs
+          grep -qx "ai-sdk=5184a122590dd5698770b50d99b69ed11c7ec84a" release/dispatch-v1.4.0.refs
+          grep -qx "agents-sdk=5a9d5525e511a293b743b1c44d9ef270fd491f9f" release/dispatch-v1.4.0.refs
+          grep -qx "dispatch=v1.4.0" release/dispatch-v1.4.0.refs
+          grep -qx "kujo=$KUJO_RUNTIME_REF" release/dispatch-v1.4.0-validation.refs
           test "$(git -C .ci/kujo rev-parse HEAD)" = "$KUJO_RUNTIME_REF"
           test "$(git -C .ci/kujo-old rev-parse HEAD)" = "123542ba17a0ef0150970a6c626b518946ff0bbb"
           test "$(git -C .ci/ai-sdk rev-parse HEAD)" = "5184a122590dd5698770b50d99b69ed11c7ec84a"
@@ -178,7 +178,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: kujolang/mcp
-          ref: 427a8b9ecfaee97cd66c6b35137bd1dc5fb16b54
+          ref: c6b2b17a65f66e4096cd4b68bc89b1a3fe352a46
           path: .ci/mcp-wave-d
 
       - name: Configure controlled MCP fixture
@@ -195,7 +195,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: kujolang/eval
-          ref: 6a5ab09e5c24cc1a842b374afccb64da40db2874
+          ref: 71e66dff780d6930bcbe093c046bf31aa26411df
           path: .ci/eval-wave-f
 
       - name: Prepare bounded graph fixture module layout
@@ -205,6 +205,9 @@ jobs:
 
       - name: Install pinned experimental operator host dependencies
         run: bash scripts/install_operator_dependencies.sh
+
+      - name: Rehearse previous release upgrade, process restart and backup rollback
+        run: bash tests/upgrade_1_3_rehearsal_tests.sh
 
       - name: Run Dispatch release gate
         # Full static graph, real-process crash and resource proofs run serially.
@@ -247,7 +250,7 @@ jobs:
         run: |
           candidate_dir="$RUNNER_TEMP/dispatch-candidate"
           candidate_manifest="$RUNNER_TEMP/dispatch-candidate.refs"
-          sed "s/^dispatch=v1.3.0$/dispatch=${GITHUB_SHA}/" release/dispatch-v1.3.0.refs > "$candidate_manifest"
+          sed "s/^dispatch=v1.4.0$/dispatch=${GITHUB_SHA}/" release/dispatch-v1.4.0.refs > "$candidate_manifest"
           grep -qx "dispatch=$(git rev-parse HEAD)" "$candidate_manifest"
           bash .ci/installer/install.sh --package dispatch --source \
             --release-manifest "$candidate_manifest" \
