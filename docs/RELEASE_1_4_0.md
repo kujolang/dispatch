@@ -22,11 +22,16 @@ Base workflows do not require the operator dependencies.
 ## Upgrade and recovery
 
 Stop all workers and back up the complete output root before upgrading. Resume
-persisted 1.3 runs with the new controller; roll back only from the untouched backup.
+supported stable 1.3 workflow state with the new controller; roll back only from the untouched backup.
 Never run old and new controllers concurrently over the same state. The release
 checks exercise filesystem and SQLite state, separate-process resume and backup
 rollback, plus real process termination, retained reservations and reconciliation.
 The older 1.2 upgrade rehearsal remains covered separately by CI.
+
+The upgrade rehearsal covers paused research-report workflows on both state
+backends. Experimental graph/operator authorities remain bound to their original
+installed source and dependency identities: retain that installation for their
+continuation. Automatic migration of experimental graph authorities is not claimed.
 
 ## Boundaries
 
@@ -37,3 +42,12 @@ hard currency/token/time budgets. No general machine-loss recovery, universal
 rollback, distributed lock service or exactly-once claim is made. Separate
 participant SDK packages remain unpublished. Offline and localhost integration
 checks do not certify remote model providers or hosted deployments.
+
+## Published verification
+
+[Candidate acceptance](https://github.com/kujolang/dispatch/actions/runs/38618066009)
+and [tagged artifact/clean-install acceptance](https://github.com/kujolang/dispatch/actions/runs/38629054322)
+passed on Linux and macOS. [Kennel publication](https://github.com/kujolang/kennel-registry/actions/runs/38637557845)
+passed; public archive identity, pinned AI SDK installation, and fresh-process
+filesystem/SQLite resume were independently verified. See the
+[execution receipt](https://github.com/kujolang/dispatch/blob/main/docs/audits/dispatch-1.4.0-release.md).
