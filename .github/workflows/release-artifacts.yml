@@ -48,7 +48,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/kujo
-          ref: 44af277848173664f72ca85f2a1b3b98d634ecdd
+          ref: 357796a1a868f2c80bc8f7b8edcc7d6aff384f04
           path: .release/kujo
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -72,7 +72,7 @@ jobs:
       - name: Install reviewed Kujo release
         uses: kujolang/kujo/.github/actions/setup-kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c
         with:
-          version: v1.6.0
+          version: v1.8.1
       - run: echo "KUJO_BIN=$(command -v kujo)" >> "$GITHUB_ENV"
       - name: Checkout controlled Agents SDK participant
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1

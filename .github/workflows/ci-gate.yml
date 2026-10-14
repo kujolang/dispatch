@@ -29,7 +29,7 @@ jobs:
       DISPATCH_OFFLINE_FIXTURE: "true"
       # Bump deliberately after compatibility verification and record the
       # Dispatch-to-Kujo pairing in the release evidence.
-      KUJO_RUNTIME_REF: "44af277848173664f72ca85f2a1b3b98d634ecdd"
+      KUJO_RUNTIME_REF: "357796a1a868f2c80bc8f7b8edcc7d6aff384f04"
       KUJO_V1_2_RUNTIME_REF: "123542ba17a0ef0150970a6c626b518946ff0bbb"
       RUSTUP_TOOLCHAIN: "1.96.0"
 
@@ -122,7 +122,7 @@ jobs:
 
       - name: Verify immutable dependency closure and installer parser
         run: |
-          grep -qx "kujo=44af277848173664f72ca85f2a1b3b98d634ecdd" release/dispatch-v1.4.0.refs
+          grep -qx "kujo=357796a1a868f2c80bc8f7b8edcc7d6aff384f04" release/dispatch-v1.4.0.refs
           grep -qx "ai-sdk=5184a122590dd5698770b50d99b69ed11c7ec84a" release/dispatch-v1.4.0.refs
           grep -qx "agents-sdk=5a9d5525e511a293b743b1c44d9ef270fd491f9f" release/dispatch-v1.4.0.refs
           grep -qx "dispatch=v1.4.0" release/dispatch-v1.4.0.refs
@@ -137,7 +137,7 @@ jobs:
       - name: Install reviewed Kujo release
         uses: kujolang/kujo/.github/actions/setup-kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c
         with:
-          version: v1.6.0
+          version: v1.8.1
       - name: Export runtime and SDK paths
         run: |
           echo "KUJO_BIN=$(command -v kujo)" >> "$GITHUB_ENV"

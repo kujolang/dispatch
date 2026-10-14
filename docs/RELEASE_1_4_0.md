@@ -8,7 +8,7 @@ subgraph settlement considers its declared members while preserving whole-graph 
 ## Installation and compatibility
 
 Install `dispatch@1.4.0` through Kennel, or use the Kujo installer with
-`release/dispatch-v1.4.0.refs`. Minimum runtime remains Kujo 1.6.0 on Linux/macOS.
+`release/dispatch-v1.4.0.refs`. Minimum runtime is Kujo 1.8.1 on Linux/macOS.
 The AI SDK dependency remains exactly `5184a122590dd5698770b50d99b69ed11c7ec84a`
 (AI SDK 1.1.1). Agents SDK 1.1.2 remains in the installer closure.
 

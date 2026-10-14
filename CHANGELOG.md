@@ -6,6 +6,8 @@ Dispatch's version.
 
 ## [1.4.0] - 2026-10-14
 
+- Require published Kujo 1.8.1 for the released Eval companion and full operator path.
+
 - Bind legacy approvals to authoritative state revisions and durable decision receipts.
 
 ### subgraph settlement correction

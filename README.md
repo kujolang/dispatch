@@ -25,7 +25,7 @@ multi-tenant service. Start with the credential-free fixture below, then use
 model and [the 1.3 follow-up review](docs/audits/next-review-v1.3-2026-09-22.md) for open work.
 For an existing deployment, read [the 1.3 upgrade guide](docs/UPGRADING_TO_1_3.md)
 before changing the runtime or sharing an output root with older workers.
-The supported release runtime is **Kujo 1.6.0 on Linux/macOS (POSIX)**.
+The supported release runtime is **Kujo 1.8.1 on Linux/macOS (POSIX)**.
 `release/dispatch-v1.4.0.refs` pins the installer closure;
 `release/dispatch-v1.4.0-validation.refs` pins the released companion integration
 cohort. Older candidate manifests remain historical evidence. The runtime supplies
@@ -217,7 +217,7 @@ SDK's `create_model_catalog`/`provider_model_catalog`, not a copied routing tabl
 
 ## Prerequisites
 
-- Kujo 1.6.0 on Linux/macOS, pinned to released source `44af277848173664f72ca85f2a1b3b98d634ecdd`
+- Kujo 1.8.1 on Linux/macOS, pinned to released source `357796a1a868f2c80bc8f7b8edcc7d6aff384f04`
 - AI SDK installed by the Kujo `ai` profile, or a local clone for source development
 - `dispatch` checked out locally
 
