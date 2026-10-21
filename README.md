@@ -1,13 +1,13 @@
 # Dispatch
 
-[![Version](https://img.shields.io/badge/version-1.4.0-black)](https://github.com/kujolang/dispatch/releases/tag/v1.4.0)
+[![Version](https://img.shields.io/badge/version-1.4.1-black)](https://github.com/kujolang/dispatch/releases/tag/v1.4.1)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 [![built with Kujo](https://img.shields.io/badge/built%20with-Kujo-white.svg)](https://github.com/kujolang/kujo)
 
 Dispatch 1.4 adds bounded graph controls, sourced resource accounting, retained-host
 recovery and an experimental installed operator. Durable approval decisions are
 bound to authoritative revisions and receipts.
-See [release notes](docs/RELEASE_1_4_0.md) and the [upgrade guide](docs/UPGRADING_TO_1_3.md).
+See [release notes](docs/RELEASE_1_4_1.md) and the [upgrade guide](docs/UPGRADING_TO_1_3.md).
 Effect assurance beta and participant interoperability alpha remain experimental,
 opt-in, and under a trusted local host. Separate participant SDK packages remain
 unpublished. A correlation match never authorizes replay.
@@ -26,8 +26,8 @@ model and [the 1.3 follow-up review](docs/audits/next-review-v1.3-2026-09-22.md)
 For an existing deployment, read [the 1.3 upgrade guide](docs/UPGRADING_TO_1_3.md)
 before changing the runtime or sharing an output root with older workers.
 The supported release runtime is **Kujo 1.8.1 on Linux/macOS (POSIX)**.
-`release/dispatch-v1.4.0.refs` pins the installer closure;
-`release/dispatch-v1.4.0-validation.refs` pins the released companion integration
+`release/dispatch-v1.4.1.refs` pins the installer closure;
+`release/dispatch-v1.4.1-validation.refs` pins the released companion integration
 cohort. Older candidate manifests remain historical evidence. The runtime supplies
 process-owned locks and confined directory durability. Quiesce old workers before
 upgrading; never mix lock protocols on a run directory. Live provider and target

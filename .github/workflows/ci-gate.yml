@@ -122,11 +122,11 @@ jobs:
 
       - name: Verify immutable dependency closure and installer parser
         run: |
-          grep -qx "kujo=357796a1a868f2c80bc8f7b8edcc7d6aff384f04" release/dispatch-v1.4.0.refs
-          grep -qx "ai-sdk=5184a122590dd5698770b50d99b69ed11c7ec84a" release/dispatch-v1.4.0.refs
-          grep -qx "agents-sdk=5a9d5525e511a293b743b1c44d9ef270fd491f9f" release/dispatch-v1.4.0.refs
-          grep -qx "dispatch=v1.4.0" release/dispatch-v1.4.0.refs
-          grep -qx "kujo=$KUJO_RUNTIME_REF" release/dispatch-v1.4.0-validation.refs
+          grep -qx "kujo=357796a1a868f2c80bc8f7b8edcc7d6aff384f04" release/dispatch-v1.4.1.refs
+          grep -qx "ai-sdk=5184a122590dd5698770b50d99b69ed11c7ec84a" release/dispatch-v1.4.1.refs
+          grep -qx "agents-sdk=5a9d5525e511a293b743b1c44d9ef270fd491f9f" release/dispatch-v1.4.1.refs
+          grep -qx "dispatch=v1.4.1" release/dispatch-v1.4.1.refs
+          grep -qx "kujo=$KUJO_RUNTIME_REF" release/dispatch-v1.4.1-validation.refs
           test "$(git -C .ci/kujo rev-parse HEAD)" = "$KUJO_RUNTIME_REF"
           test "$(git -C .ci/kujo-old rev-parse HEAD)" = "123542ba17a0ef0150970a6c626b518946ff0bbb"
           test "$(git -C .ci/ai-sdk rev-parse HEAD)" = "5184a122590dd5698770b50d99b69ed11c7ec84a"
@@ -257,7 +257,7 @@ jobs:
         run: |
           candidate_dir="$RUNNER_TEMP/dispatch-candidate"
           candidate_manifest="$RUNNER_TEMP/dispatch-candidate.refs"
-          sed "s/^dispatch=v1.4.0$/dispatch=${GITHUB_SHA}/" release/dispatch-v1.4.0.refs > "$candidate_manifest"
+          sed "s/^dispatch=v1.4.1$/dispatch=${GITHUB_SHA}/" release/dispatch-v1.4.1.refs > "$candidate_manifest"
           grep -qx "dispatch=$(git rev-parse HEAD)" "$candidate_manifest"
           bash .ci/installer/install.sh --package dispatch --source \
             --release-manifest "$candidate_manifest" \

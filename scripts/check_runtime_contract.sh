@@ -10,7 +10,7 @@ if sync_directory_beneath(env("DISPATCH_RUNTIME_PROBE_DIR"), "records") != true 
 }
 KUJO
 if ! DISPATCH_RUNTIME_PROBE_DIR="$probe" "$KUJO_BIN" run "$probe/probe.kujo" > "$probe/output" 2>&1; then
-    echo 'Dispatch requires Kujo 1.8.1 with sync_directory_beneath (see release/dispatch-v1.4.0.refs).' >&2
+    echo 'Dispatch requires Kujo 1.8.1 with sync_directory_beneath (see release/dispatch-v1.4.1.refs).' >&2
     cat "$probe/output" >&2
     exit 1
 fi

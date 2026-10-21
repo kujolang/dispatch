@@ -29,7 +29,7 @@ run_installed() {
 	)
 }
 version="$(run_installed version)"
-[[ "$version" == "Dispatch 1.4.0" ]]
+[[ "$version" == "Dispatch 1.4.1" ]]
 stage=reject_arbitrary_absolute_path
 if run_installed validate --workflow-file "$fixture_dir/work/outside.json" --json \
 	>"$fixture_dir/outside.log" 2>&1; then

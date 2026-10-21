@@ -4,6 +4,12 @@ Version source: `kennel.toml`; CLI and `kujo.toml` must agree. Historical releas
 entries are retained below. Experimental contract versions are independent of
 Dispatch's version.
 
+## [1.4.1] - 2026-10-21
+
+- Require patched Node.js 26.12.1 for interoperability checks and release tooling.
+- Preserve the reviewed Kujo 1.8.1 runtime and exact companion dependency closure.
+- Keep the existing workflow, approval, recovery, and experimental operator contracts.
+
 ## [1.4.0] - 2026-10-14
 
 - Require published Kujo 1.8.1 for the released Eval companion and full operator path.

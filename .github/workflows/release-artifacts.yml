@@ -150,7 +150,7 @@ jobs:
           sha256sum "$artifact" > "$artifact.sha256"
           commit_sha="$(git rev-parse HEAD)"
           artifact_sha="$(awk '{print $1}' "$artifact.sha256")"
-          printf '{"schema_version":"1.0","tag":"%s","dispatch_commit":"%s","artifact":"%s","artifact_sha256":"%s","dependency_manifest":"release/dispatch-v1.4.0.refs"}\n' \
+          printf '{"schema_version":"1.0","tag":"%s","dispatch_commit":"%s","artifact":"%s","artifact_sha256":"%s","dependency_manifest":"release/dispatch-v1.4.1.refs"}\n' \
             "$GITHUB_REF_NAME" "$commit_sha" "$artifact" "$artifact_sha" \
             > "dispatch-${GITHUB_REF_NAME}-provenance.json"
       - name: Attest source artifact provenance
@@ -161,7 +161,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --title "Dispatch $GITHUB_REF_NAME" --notes-file docs/RELEASE_1_4_0.md
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --title "Dispatch $GITHUB_REF_NAME" --notes-file docs/RELEASE_1_4_1.md
           gh release upload "$GITHUB_REF_NAME" "dispatch-${GITHUB_REF_NAME}.tar.gz" "dispatch-${GITHUB_REF_NAME}.tar.gz.sha256" "dispatch-${GITHUB_REF_NAME}-provenance.json" --clobber
 
   clean-install:
@@ -177,7 +177,7 @@ jobs:
         run: |
           curl -fsSL "https://raw.githubusercontent.com/kujolang/kujo/fc53093f35e4236682bbbf5ab1ccc8d2b4df990c/install.sh" \
             | bash -s -- --package dispatch \
-                --release-manifest "https://raw.githubusercontent.com/kujolang/dispatch/${GITHUB_REF_NAME}/release/dispatch-v1.4.0.refs"
+                --release-manifest "https://raw.githubusercontent.com/kujolang/dispatch/${GITHUB_REF_NAME}/release/dispatch-v1.4.1.refs"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Verify installed workload outside source tree
         env:

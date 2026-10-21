@@ -22,7 +22,7 @@ mkdir -p "$evidence_dir/work"
 echo "Installed-package evidence: $evidence_dir"
 (
 	cd "$evidence_dir/work"
-	[[ "$("$dispatch_bin" version)" == "Dispatch 1.4.0" ]]
+	[[ "$("$dispatch_bin" version)" == "Dispatch 1.4.1" ]]
 	"$dispatch_bin" validate --workflow-file "$package_root/examples/workflows/routed-review.json" --json \
 		>"$evidence_dir/validate.json"
 	if "$dispatch_bin" validate --workflow-file "$evidence_dir/outside.json" --json \
