@@ -31,7 +31,10 @@ mkdir -p tests/tmp
 evidence_dir="$(mktemp -d "$dispatch_root/tests/tmp/upgrade-rehearsal.XXXXXX")"
 echo "Upgrade evidence: $evidence_dir"
 mkdir -p "$evidence_dir/v1.3"
-git archive v1.3.0 | tar -xf - -C "$evidence_dir/v1.3"
+# Finish the producer before extraction: BSD tar may stop at the end marker
+# while git is still writing padding, making pipefail report SIGPIPE.
+git archive v1.3.0 --output="$evidence_dir/v1.3.tar"
+tar -xf "$evidence_dir/v1.3.tar" -C "$evidence_dir/v1.3"
 
 for backend in filesystem sqlite; do
 	root="$evidence_dir/v1.3/tests/tmp/$backend-runs"
