@@ -9,7 +9,7 @@ This directory is the canonical local fixture corpus for the built-in `research-
 Run the example from the repository root:
 
 ```bash
-kujo run --interpreter dispatch.kujo demo "Agent workflow reliability" --workflow research-report --yes --non-interactive
+kujo run dispatch.kujo demo "Agent workflow reliability" --workflow research-report --yes --non-interactive
 ```
 
 Expected output shape:

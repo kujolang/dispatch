@@ -652,7 +652,7 @@ Set `AI_SDK_PATH` to a directory that contains both `ai_sdk.kujo` and `providers
 
 - Verify `KUJO_BIN` resolves to a valid Kujo command, usually `kujo`.
 - Verify `DISPATCH_SDK_BRIDGE_SCRIPT` (if set) points to a valid file.
-- Run with `--interpreter` during development.
+- Use the default VM during development; select `--interpreter` only for runtime debugging.
 - Bridge parse and execution failures redact raw stdout/stderr by default; set `DISPATCH_SDK_DEBUG_OUTPUT=true` only for local debugging.
 
 ### Sources validation errors in demo mode

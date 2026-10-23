@@ -273,7 +273,7 @@ Dispatch loads and validates it before execution, then embeds the resolved catal
 
 ```bash
 cd /path/to/ai-sdk
-kujo run scripts/generate_model_catalog.kujo --interpreter -- \
+kujo run scripts/generate_model_catalog.kujo -- \
   examples/dispatch-model-catalog.config.json --output /path/to/dispatch/catalogs/production.json
 ```
 
