@@ -1,0 +1,8 @@
+from src.core.state import append_mutation_audit_record
+
+arguments := args()
+root := arguments[0]
+worker := to_int(arguments[1])
+for sequence in range(0, 25) {
+    append_mutation_audit_record(root, "audit_fixture", [{"worker": worker, "sequence": sequence}], {}, {"max_bytes": 4194304})
+}

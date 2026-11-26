@@ -164,11 +164,11 @@ func mutation_audit_rotate_size_due(existing_audit, next_line, max_bytes) {
     if max_bytes <= 0 {
         return false
     }
-    projected_size := len(existing_audit)
+    projected_size := byte_length(existing_audit)
     if trim(existing_audit) != "" {
         projected_size = projected_size + 1
     }
-    projected_size = projected_size + len(next_line)
+    projected_size = projected_size + byte_length(next_line)
     return projected_size > max_bytes
 }
 
@@ -290,25 +290,34 @@ func append_mutation_audit_record(output_root, operation_name, mutations, metada
         "mutations": mutations,
         "metadata": metadata
     }
-    existing := safe_read_file(audit_path, "")
-    line := to_json(record)
-    max_bytes := resolve_mutation_audit_max_bytes(rotation_settings)
-    max_backups := resolve_mutation_audit_max_backups(rotation_settings)
-    rotate_daily := resolve_mutation_audit_rotate_daily(rotation_settings)
-    should_rotate := mutation_audit_rotate_size_due(existing, line, max_bytes)
-    if rotate_daily&&mutation_audit_rotate_daily_due(existing) {
-        should_rotate = true
+    # Different runs share this output-root audit. Hold the same inode
+    # through the read, rotation, and publication of the new record.
+    audit_lock := file_lock(audit_path + ".dispatch-write.lock", 5000)
+    try {
+        existing := safe_read_file(audit_path, "")
+        line := to_json(record)
+        max_bytes := resolve_mutation_audit_max_bytes(rotation_settings)
+        max_backups := resolve_mutation_audit_max_backups(rotation_settings)
+        rotate_daily := resolve_mutation_audit_rotate_daily(rotation_settings)
+        should_rotate := mutation_audit_rotate_size_due(existing, line, max_bytes)
+        if rotate_daily&&mutation_audit_rotate_daily_due(existing) {
+            should_rotate = true
+        }
+        if should_rotate&&trim(existing) != "" {
+            backup_path := mutation_audit_backup_path(output_root, max_backups)
+            write_file_atomic(backup_path, existing, true)
+            existing = ""
+        }
+        if trim(existing) == "" {
+            write_file_atomic(audit_path, line, true)
+        } else {
+            write_file_atomic(audit_path, existing + "\n" + line, true)
+        }
+    } except err {
+        file_unlock(audit_lock)
+        throw(to_string(err))
     }
-    if should_rotate&&trim(existing) != "" {
-        backup_path := mutation_audit_backup_path(output_root, max_backups)
-        write_file_atomic(backup_path, existing, true)
-        existing = ""
-    }
-    if trim(existing) == "" {
-        write_file_atomic(audit_path, line, true)
-    } else {
-        write_file_atomic(audit_path, existing + "\n" + line, true)
-    }
+    file_unlock(audit_lock)
     return audit_path
 }
 
