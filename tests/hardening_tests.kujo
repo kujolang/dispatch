@@ -1,6 +1,6 @@
 test_setup {
 	from src.workflows.loader import load_workflow_from_spec
-	from src.core.state import create_run_state, load_run_state, append_mutation_audit_record
+	from src.core.state import create_run_state, load_run_state, append_mutation_audit_record, list_runs_with_diagnostics
 	from src.core.hooks import emit_hook_event
 	from src.core.utils import ensure_dir, redact_sensitive_data
 	from src.agents.agent import model_agent_output, run_agent_with_agent
@@ -129,4 +129,21 @@ test "mutation audit rotation uses UTF-8 bytes" {
     append_mutation_audit_record(root, "second", changes, {}, {"max_bytes": active_bytes * 2})
     assert_equal(parse_json(read_file(audit))["operation"], "second")
     assert_equal(file_size(audit), active_bytes)
+}
+
+test "a damaged catalog entry is rebuilt from authoritative state" {
+    root := "tests/tmp/hardening-catalog-" + to_string(current_timestamp())
+    workflow := load_workflow_from_spec({"id": "catalog", "name": "Catalog", "steps": [{"id": "gate", "type": "approval"}]})["workflow"]
+    state := create_run_state(workflow, {}, root, {})
+    index_path := root + "/.dispatch-run-index.json"
+    index := parse_json(read_file(index_path))
+    entries := index["runs"]
+    entries[state["run_id"]] := "damaged entry"
+    index["runs"] := entries
+    write_file(index_path, to_json(index), true)
+    catalog := list_runs_with_diagnostics(root)
+    assert_equal(catalog["diagnostics"]["index_source"], "scan")
+    assert_equal(len(catalog["runs"]), 1)
+    assert_equal(catalog["runs"][0]["run_id"], state["run_id"])
+    assert_equal(list_runs_with_diagnostics(root)["diagnostics"]["index_source"], "index")
 }

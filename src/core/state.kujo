@@ -72,21 +72,15 @@ func validate_run_id(raw_run_id) {
             }
         }
     }
-    allowed := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
-    i := 0
-    while i < len(run_id) {
-        ch := substring(run_id, i, i + 1)
-        if contains(allowed, ch) == 0 {
-            return {
-                "ok": false,
-                "error": {
-                    "code": "invalid_run_id",
-                    "message": "Run ID contains unsupported characters.",
-                    "retryable": false
-                }
+    if ! regex_match(run_id, "^[A-Za-z0-9_-]+$") {
+        return {
+            "ok": false,
+            "error": {
+                "code": "invalid_run_id",
+                "message": "Run ID contains unsupported characters.",
+                "retryable": false
             }
         }
-        i = i + 1
     }
     return {"ok": true, "run_id": run_id}
 }
@@ -352,6 +346,10 @@ func list_runs_from_index(output_root) {
     }
     runs := []
     for run_id in keys(runs_map) {
+        entry := runs_map[run_id]
+        if type(entry) != "dict" || trim(run_id) != run_id || ! validate_run_id(run_id)["ok"] {
+            continue
+        }
         run_dir := output_root + "/" + run_id
         if file_exists(run_dir + "/.dispatch-pruned") {
             continue
@@ -359,7 +357,6 @@ func list_runs_from_index(output_root) {
         if ! file_exists(run_dir + "/state.json") {
             continue
         }
-        entry := runs_map[run_id]
         entry["run_id"] := run_id
         entry["artifacts"] := build_artifact_flags(run_dir)
         entry["tags"] := normalize_run_tags(dict_get_or(entry, "tags", []))
@@ -776,28 +773,25 @@ func repair_run_state(run_state) {
     }
 }
 
-func run_is_newer(left_item, right_item) {
-    left_updated := to_string(dict_get_or(left_item, "updated_at", ""))
-    right_updated := to_string(dict_get_or(right_item, "updated_at", ""))
-    return left_updated > right_updated
-}
-
 func sort_runs_by_updated_desc(items) {
-    result := []
+    latest_at_time := {}
+    previous_at_time := []
     for item in items {
-        inserted := false
-        updated := []
-        for existing in result {
-            if inserted == false&&run_is_newer(item, existing) {
-                updated := push(updated, item)
-                inserted := true
-            }
-            updated := push(updated, existing)
+        timestamp := to_string(dict_get_or(item, "updated_at", ""))
+        previous_at_time = push(previous_at_time, dict_get_or(latest_at_time, timestamp, -1))
+        latest_at_time[timestamp] := len(previous_at_time) - 1
+    }
+
+    result := []
+    for timestamp in reverse(sort(keys(latest_at_time))) {
+        # Walk the equal-timestamp runs backwards, then restore input order.
+        group := []
+        index := latest_at_time[timestamp]
+        while index >= 0 {
+            group = push(group, items[index])
+            index = previous_at_time[index]
         }
-        if inserted == false {
-            updated := push(updated, item)
-        }
-        result := updated
+        for item in reverse(group) { result = push(result, item) }
     }
     return result
 }
