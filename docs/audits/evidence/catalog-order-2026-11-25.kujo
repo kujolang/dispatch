@@ -1,0 +1,11 @@
+from src.core.state import list_runs_with_diagnostics
+
+for root in args() {
+    started := current_timestamp()
+    catalog := list_runs_with_diagnostics(root)
+    elapsed := current_timestamp() - started
+    assert(catalog["diagnostics"]["index_source"] == "index", "benchmark must use the catalog index")
+    ids := []
+    for item in catalog["runs"] { ids = push(ids, item["run_id"]) }
+    print(len(ids), elapsed, sha256(to_json(ids)))
+}
