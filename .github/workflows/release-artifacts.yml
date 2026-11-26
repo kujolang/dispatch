@@ -50,11 +50,20 @@ jobs:
           repository: kujolang/kujo
           ref: 357796a1a868f2c80bc8f7b8edcc7d6aff384f04
           path: .release/kujo
+      - name: Resolve AI SDK commit from the tagged manifest
+        id: sdk-pin
+        shell: bash
+        run: |
+          sdk_commit="$(sed -nE 's/^ai-sdk = .*commit = "([0-9a-f]{40})".*/\1/p' kennel.toml)"
+          [[ "$sdk_commit" =~ ^[0-9a-f]{40}$ ]]
+          echo "commit=$sdk_commit" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/ai-sdk
-          ref: 5184a122590dd5698770b50d99b69ed11c7ec84a
+          ref: ${{ steps.sdk-pin.outputs.commit }}
           path: .release/ai-sdk
+          persist-credentials: false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/workcell

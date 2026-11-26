@@ -125,7 +125,8 @@ Dispatch uses the same pattern as `ai-chat`:
 2. `src/bridge/sdk_adapter.kujo` invokes the `src/bridge/bridge_chat.kujo` bridge process.
 3. The bridge runs with `AI_SDK_PATH` as module root and imports shared SDK modules from that external project.
 
-This keeps SDK behavior centralized in one repository (`ai-sdk`) while allowing Dispatch to remain lightweight.
+The source package records the shared provider SDK commit in `kennel.toml`.
+Use that revision when testing or developing the bridge from a source checkout.
 
 The bridge forwards AI SDK structured-output controls (`response_format`, `structured_output_schema`, and `structured_output_retryable`) when callers provide them. This keeps JSON-mode and schema validation policy in the SDK instead of reimplementing it in Dispatch.
 

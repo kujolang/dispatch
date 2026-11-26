@@ -30,7 +30,7 @@ output = "dist"
 artifacts = []
 
 [dependencies]
-ai-sdk = { source = "github:kujolang/ai-sdk", commit = "5184a122590dd5698770b50d99b69ed11c7ec84a" }
+ai-sdk = { source = "github:kujolang/ai-sdk", commit = "f3126dded28102f40d0ddecd50a559105c66f905" }
 
 [dev-dependencies]
 

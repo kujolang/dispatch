@@ -32,6 +32,7 @@ jobs:
       KUJO_RUNTIME_REF: "357796a1a868f2c80bc8f7b8edcc7d6aff384f04"
       KUJO_V1_2_RUNTIME_REF: "123542ba17a0ef0150970a6c626b518946ff0bbb"
       RUSTUP_TOOLCHAIN: "1.96.0"
+      AI_SDK_SOURCE_REF: "f3126dded28102f40d0ddecd50a559105c66f905"
 
     steps:
       - name: Checkout dispatch repository
@@ -91,8 +92,9 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/ai-sdk
-          ref: 5184a122590dd5698770b50d99b69ed11c7ec84a
+          ref: ${{ env.AI_SDK_SOURCE_REF }}
           path: .ci/ai-sdk
+          persist-credentials: false
           fetch-depth: 1
 
       - name: Checkout Agents SDK repository
@@ -129,7 +131,8 @@ jobs:
           grep -qx "kujo=$KUJO_RUNTIME_REF" release/dispatch-v1.4.1-validation.refs
           test "$(git -C .ci/kujo rev-parse HEAD)" = "$KUJO_RUNTIME_REF"
           test "$(git -C .ci/kujo-old rev-parse HEAD)" = "123542ba17a0ef0150970a6c626b518946ff0bbb"
-          test "$(git -C .ci/ai-sdk rev-parse HEAD)" = "5184a122590dd5698770b50d99b69ed11c7ec84a"
+          grep -Fq "$AI_SDK_SOURCE_REF" kennel.toml
+          test "$(git -C .ci/ai-sdk rev-parse HEAD)" = "$AI_SDK_SOURCE_REF"
           test "$(git -C .ci/agents-sdk rev-parse HEAD)" = "5a9d5525e511a293b743b1c44d9ef270fd491f9f"
           test -f .ci/ai-sdk/scripts/generate_model_catalog.kujo
           bash .ci/installer/tests/install_release_manifest.sh
