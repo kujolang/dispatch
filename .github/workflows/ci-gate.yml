@@ -52,6 +52,10 @@ jobs:
           go-version: '1.25.3'
           cache: false
 
+      - name: Select Python for the locked participant wheels
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
       - name: Install pinned Python participant dependencies
         run: bash interop/python-participant/bootstrap.sh
 
@@ -175,6 +179,10 @@ jobs:
           ref: 5a9d5525e511a293b743b1c44d9ef270fd491f9f
           path: .ci/agents-sdk-wave-d
 
+      - name: Select Python for the locked participant wheels
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
       - name: Install controlled participant dependencies
         run: |
           git clone --filter=blob:none https://github.com/kujolang/kennel.git .ci/kennel-wave-d
