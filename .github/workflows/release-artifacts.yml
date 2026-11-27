@@ -26,17 +26,18 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
+          persist-credentials: false
           fetch-depth: 0
       - name: Setup pinned interoperability Node runtime
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "26.12.1"
+          node-version: "26.13.1"
           package-manager-cache: false
 
       - name: Install pinned Go proof toolchain
         uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
         with:
-          go-version: '1.25.3'
+          go-version: '1.27.4'
           cache: false
 
       - name: Select Python for the locked participant wheels
@@ -51,6 +52,7 @@ jobs:
 
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
+          persist-credentials: false
           repository: kujolang/kujo
           ref: 357796a1a868f2c80bc8f7b8edcc7d6aff384f04
           path: .release/kujo
@@ -70,11 +72,13 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
+          persist-credentials: false
           repository: kujolang/workcell
           ref: 4ec4227f8190e05a329c2ee2975d77fce7872313
           path: .release/workcell
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
+          persist-credentials: false
           repository: kujolang/ability
           ref: 2dc7d4e9eb25e987544ac48793cd11d1999c45e0
           path: .release/ability
@@ -95,12 +99,14 @@ jobs:
       - name: Checkout controlled Agents SDK participant
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          persist-credentials: false
           repository: kujolang/agents-sdk
           ref: 5a9d5525e511a293b743b1c44d9ef270fd491f9f
           path: .release/agents-sdk-wave-d
       - name: Checkout controlled MCP participant
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          persist-credentials: false
           repository: kujolang/mcp
           ref: c6b2b17a65f66e4096cd4b68bc89b1a3fe352a46
           path: .release/mcp-wave-d
@@ -116,12 +122,14 @@ jobs:
       - name: Checkout retained-host Workcell graph fixture
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          persist-credentials: false
           repository: kujolang/workcell
           ref: 0f9595b79872d2500f0bb35a8cf6227171fd7eeb
           path: .release/workcell-wave-f
       - name: Checkout exact Eval graph contract
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          persist-credentials: false
           repository: kujolang/eval
           ref: 71e66dff780d6930bcbe093c046bf31aa26411df
           path: .release/eval-wave-f
@@ -155,6 +163,8 @@ jobs:
       attestations: write
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
       - name: Verify tag and package version
         run: |
           version="$(grep -E '^version' kennel.toml | head -1 | sed -E 's/.*"(.*)".*/\1/')"
